@@ -7299,7 +7299,7 @@ const pages = {
   'relatorios':'Relatórios','plano':'Plano e Pagamento','configuracoes':'Configurações','termos':'Termos e Privacidade'
 };
 
-function showPage(id){
+function showPage(id){document.querySelectorAll('[id^="page-"]').forEach(function(p){p.style.display="none";});var el=document.getElementById("page-"+id);if(el){el.style.display="block";el.style.width="100%";}
   // Esconder todas as pages
   document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
   document.getElementById('page-colaborador-view').style.display='none';
