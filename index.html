@@ -10051,8 +10051,14 @@ aplicarPermissoesAdmin();
       var overlay=document.getElementById('aflor-overlay');
       if(overlay)overlay.classList.add('hidden');
       setTimeout(function(){entrarComoColaborador(nome);},200);
+    } else {
+      var overlay=document.getElementById("aflor-overlay");
+      if(overlay)overlay.classList.remove("hidden");
     }
-  }catch(e){}
+  }catch(e){
+    var overlay=document.getElementById("aflor-overlay");
+    if(overlay)overlay.classList.remove("hidden");
+  }
 })();
 // ===== FIM ONBOARDING =====
 
