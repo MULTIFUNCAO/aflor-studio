@@ -143,7 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 .nav-badge{margin-left:auto;background:#fff;color:#111;font-size:10px;font-weight:800;padding:2px 6px;border-radius:20px}
 
 /* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:visible;min-height:0;height:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 .header{height:var(--header-h);background:#fff;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
 .header-title{font-size:17px;font-weight:700;color:#111}
 .header-actions{display:flex;align-items:center;gap:10px}
@@ -156,11 +156,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 .btn-icon{padding:8px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
 /* CONTENT */
-.content{flex:1;overflow-y:auto;padding:24px;background:#f4f4f4;min-height:0;height:auto}
+.content{flex:1;overflow-y:auto;padding:24px;background:#f4f4f4;min-height:0}
 
 /* PAGE */
-.page{display:none}
-.page.active{display:block}
+.page{}.page.active{}
 
 /* CARDS GRID */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
@@ -175,7 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 .ic-purple{background:#f0f0f0}
 
 /* TABLE */
-.table-card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible}
+.table-card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden}
 .table-header{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
 .table-header h3{font-size:15px;font-weight:700;color:#111}
 table{width:100%;border-collapse:collapse}
@@ -192,7 +191,7 @@ tr:hover td{background:#fafafa}
 .badge-purple{background:#f3e8ff;color:#6d28d9}
 
 /* CALENDAR */
-.calendar-container{background:#fff;border-radius:12px;border:1px solid var(--gray-200);overflow:visible}
+.calendar-container{background:#fff;border-radius:12px;border:1px solid var(--gray-200);overflow:hidden}
 .calendar-header{padding:14px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
 .calendar-nav{display:flex;align-items:center;gap:12px}
 .cal-btn{background:none;border:1px solid var(--gray-200);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--gray-600)}
@@ -204,7 +203,7 @@ tr:hover td{background:#fafafa}
 .slot{border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);height:48px;position:relative;cursor:pointer}
 .slot:hover{background:var(--blue-light)}
 .slot.occupied{background:var(--blue-light)}
-.appt{position:absolute;inset:2px;background:var(--blue);border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:visible}
+.appt{position:absolute;inset:2px;background:var(--blue);border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden}
 .appt.green{background:var(--green)}
 .appt.orange{background:var(--orange)}
 
@@ -653,7 +652,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div class="ob-step done">✓</div><div class="ob-line done"></div>
         <div class="ob-step done" style="background:#111">✓</div>
       </div>
-      <div id="ob-conf" style="position:relative;height:130px;display:flex;align-items:center;justify-content:center;overflow:visible">
+      <div id="ob-conf" style="position:relative;height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden">
         <div class="succ-ico">🌷</div>
       </div>
       <div style="font-size:22px;font-weight:900;color:#111;text-align:center;letter-spacing:2px;margin-bottom:4px">Tudo Pronto!</div>
@@ -836,7 +835,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div id="alert-global" class="alert alert-success"></div>
 
       <!-- HERO BANNER -->
-      <div style="background:linear-gradient(135deg,#111 0%,#2d2d2d 100%);border-radius:18px;padding:24px 28px;margin-bottom:18px;position:relative;overflow:visible">
+      <div style="background:linear-gradient(135deg,#111 0%,#2d2d2d 100%);border-radius:18px;padding:24px 28px;margin-bottom:18px;position:relative;overflow:hidden">
         <!-- Tulip decoration -->
         <div style="position:absolute;right:24px;top:50%;transform:translateY(-50%);opacity:.08">
           <svg width="120" height="140" viewBox="0 0 100 115" fill="none">
@@ -863,7 +862,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- KPI CARDS -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:visible" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#22c55e;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Receita do Mês</div>
           <div style="font-size:28px;font-weight:900;color:#22c55e;padding-left:6px">R$ 4.820</div>
@@ -872,7 +871,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
           </div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:visible" onclick="showPage('agenda')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('agenda')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#111;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Atendimentos Hoje</div>
           <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">8</div>
@@ -881,7 +880,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span style="font-size:10px;color:#aaa">5 concluídos</span>
           </div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:visible" onclick="showPage('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#8b5cf6;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Clientes Ativos</div>
           <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">142</div>
@@ -889,7 +888,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">+6 este mês</span>
           </div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:visible" onclick="showPage('relatorios')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('relatorios')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#f59e0b;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Ticket Médio</div>
           <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">R$ 85</div>
@@ -907,7 +906,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:32px;flex-shrink:0">🌷</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:4px">Florescimento</div>
-            <div style="height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:visible;margin-bottom:4px"><div style="height:100%;width:62%;background:#fff;border-radius:3px"></div></div>
+            <div style="height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:62%;background:#fff;border-radius:3px"></div></div>
             <div style="font-size:10px;color:rgba(255,255,255,.55)">🌿 62% · Próxima: Jardim</div>
           </div>
         </div>
@@ -934,7 +933,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- GRID INFERIOR -->
       <div style="display:grid;grid-template-columns:1fr 300px;gap:14px">
         <!-- Tabela atendimentos -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:visible">
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
             <div>
               <div style="font-size:14px;font-weight:800;color:#111">Atendimentos de Hoje</div>
@@ -963,7 +962,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <!-- Coluna lateral -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <!-- Colaboradores online -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:visible">
+          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Equipe Hoje</div>
             <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
               <div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">AF</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Ana Flor</div><div style="font-size:10px;color:#aaa">3 atend. hoje</div></div><span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span></div>
@@ -973,7 +972,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             </div>
           </div>
           <!-- Próximos agendamentos -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:visible">
+          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Próximos</div>
             <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
               <div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px">Amanhã</div>
@@ -1117,7 +1116,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <span style="font-size:12px;font-weight:700;color:#333">Receitas vs Despesas — Maio 2026</span>
           <span style="font-size:11px;color:#888">Sobra <strong style="color:#22c55e">R$ 3.580</strong> no final do mês</span>
         </div>
-        <div style="display:flex;gap:3px;height:14px;border-radius:7px;overflow:visible">
+        <div style="display:flex;gap:3px;height:14px;border-radius:7px;overflow:hidden">
           <div style="width:74%;background:#22c55e;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">74% Receitas</span></div>
           <div style="width:26%;background:#ef4444;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">26% Desp.</span></div>
         </div>
@@ -1148,7 +1147,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- TAB LANÇAMENTOS -->
       <div id="fluxo-view-lancamentos">
-        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible">
+        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div style="font-size:13px;font-weight:800">Lançamentos — Maio 2026</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1184,7 +1183,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- TAB SEMANAL -->
       <div id="fluxo-view-mensal" style="display:none">
-        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible;margin-bottom:14px">
+        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden;margin-bottom:14px">
           <table style="width:100%;border-collapse:collapse">
             <thead><tr style="background:#111;color:#fff">
               <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700">Semana</th>
@@ -1201,7 +1200,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 320</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 920</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 920</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:visible;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
+                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
               </tr>
               <tr style="border-bottom:1px solid #f5f5f5;background:#fafafa">
                 <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 2 · 08–14/Mai</td>
@@ -1209,7 +1208,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 280</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 800</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 1.720</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:visible;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
+                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
               </tr>
               <tr style="border-bottom:1px solid #f5f5f5">
                 <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 3 · 15–21/Mai</td>
@@ -1217,7 +1216,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 390</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 970</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 2.690</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:visible;width:120px"><div style="height:100%;width:78%;background:#22c55e;border-radius:3px"></div></div></td>
+                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:78%;background:#22c55e;border-radius:3px"></div></div></td>
               </tr>
               <tr style="border-bottom:1px solid #f5f5f5;background:#fafafa">
                 <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 4 · 22–26/Mai</td>
@@ -1225,7 +1224,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 250</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 890</td>
                 <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 3.580</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:visible;width:120px"><div style="height:100%;width:82%;background:#22c55e;border-radius:3px"></div></div></td>
+                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:82%;background:#22c55e;border-radius:3px"></div></div></td>
               </tr>
               <tr style="background:#111;color:#fff">
                 <td style="padding:12px 16px;font-size:13px;font-weight:900">TOTAL MAIO 2026</td>
@@ -1264,20 +1263,20 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- TAB CATEGORIAS -->
       <div id="fluxo-view-categorias" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible">
+          <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#22c55e">📥 Receitas por Categoria</div>
-            ${[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:visible"><div style="height:100%;width:'+r.pct+'%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das receitas</div></div>';}).join('')}
+            ${[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das receitas</div></div>';}).join('')}
           </div>
-          <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible">
+          <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#ef4444">📤 Despesas por Categoria</div>
-            ${[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:visible"><div style="height:100%;width:'+r.pct+'%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das despesas</div></div>';}).join('')}
+            ${[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das despesas</div></div>';}).join('')}
           </div>
         </div>
       </div>
 
       <!-- TAB DRE -->
       <div id="fluxo-view-dre" style="display:none">
-        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible">
+        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800">📑 DRE — Demonstrativo de Resultado · Maio 2026</div>
           <table style="width:100%;border-collapse:collapse">
             <tbody>
@@ -5447,7 +5446,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:10px;height:10px;border-radius:2px;background:#ef4444"></div>Data especial</div>
         </div>
         <!-- Grade do calendário -->
-        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:visible">
+        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#111">
             <div style="padding:8px;text-align:center;font-size:11px;font-weight:700;color:#fff">DOM</div>
             <div style="padding:8px;text-align:center;font-size:11px;font-weight:700;color:#fff">SEG</div>
@@ -5583,7 +5582,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
 
         <!-- Agenda do dia -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:visible">
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:14px;font-weight:800">📅 Minha Agenda Hoje</div>
             <span style="font-size:11px;color:#888">26/Mai/2026</span>
@@ -5592,7 +5591,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
 
         <!-- Minhas metas -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:visible">
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
             <div style="font-size:14px;font-weight:800">🎯 Minhas Metas e Tarefas</div>
             <div style="font-size:11px;color:#888;margin-top:2px">Definidas pelo administrador</div>
@@ -5601,7 +5600,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
 
         <!-- Comissões -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:visible">
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
             <div style="font-size:14px;font-weight:800">💰 Minhas Comissões</div>
             <div style="font-size:11px;color:#888;margin-top:2px">Maio 2026</div>
@@ -6617,7 +6616,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
 
-      <div class="form-card" style="padding:0;overflow:visible">
+      <div class="form-card" style="padding:0;overflow:hidden">
         <div class="termos-link-item" onclick="openModal('modal-termos-uso')">
           <div style="display:flex;align-items:center;gap:14px">
             <div style="width:40px;height:40px;background:var(--blue-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -7149,7 +7148,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full">
         <div style="display:flex;align-items:center;gap:16px;background:#f8f8f8;border-radius:12px;padding:16px">
           <div style="position:relative;flex-shrink:0">
-            <div id="colab-avatar" style="width:72px;height:72px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:visible;border:3px solid #e5e5e5">
+            <div id="colab-avatar" style="width:72px;height:72px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:hidden;border:3px solid #e5e5e5">
               <span id="colab-avatar-txt">?</span>
               <img id="colab-avatar-img" src="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>
             </div>
@@ -7300,37 +7299,38 @@ const pages = {
 };
 
 function showPage(id){
+  // Esconder todas as pages
+  document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
   document.getElementById('page-colaborador-view').style.display='none';
-  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  var pg=document.getElementById('page-'+id);
-  if(pg){pg.classList.add('active');pg.style.display='block';}
-  document.getElementById('page-title').textContent=pages[id]||id;
-  document.querySelectorAll('.nav-item').forEach(n=>{
-    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")){n.classList.add('active')}
+  // Nav
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    var oc=n.getAttribute('onclick')||'';
+    if(oc.indexOf("'"+id+"'")>-1)n.classList.add('active');
   });
-  // Renderizar páginas dinâmicas
-  setTimeout(function(){
-    // Force page visible first
-    var activePg=document.getElementById('page-'+id);
-    if(activePg){activePg.style.display='block';activePg.style.visibility='visible';}
-    if(id==='ia')renderIA();
-    if(id==='marketing')renderMarketing();
-    if(id==='fluxo')setTimeout(renderFluxo,50);
-    if(id==='treinamentos')renderTreinamentos();
-    if(id==='influenciadoras')renderInfluenciadoras();
-    if(id==='florescimento')renderFlorescimento();
-    if(id==='finpessoal')renderFinPessoal();
-    if(id==='clientes')renderClientes();
-    if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
-    if(id==='colaboradores')renderColabs();
-    if(id==='servicos'){renderServicos();setTimeout(renderServicos,50);}
-    if(id==='produtos'){renderProdutos();setTimeout(renderProdutos,50);}
-    if(id==='pacotes'){renderPacotes();setTimeout(renderPacotes,50);}
-    if(id==='agenda')renderAgenda();
-    if(id==='vendas')renderVendas();
-    if(id==='comandas')renderComandas();
-  },10);
+  // Mostrar page
+  var pg=document.getElementById('page-'+id);
+  if(pg){pg.style.display='block';}
+  // Title
+  var t=document.getElementById('page-title');
+  if(t)t.textContent=pages[id]||id;
+  // Renders
+  if(id==='ia')renderIA();
+  if(id==='marketing')renderMarketing();
+  if(id==='fluxo')renderFluxo();
+  if(id==='treinamentos')renderTreinamentos();
+  if(id==='influenciadoras')renderInfluenciadoras();
+  if(id==='florescimento')renderFlorescimento();
+  if(id==='finpessoal')renderFinPessoal();
+  if(id==='clientes')renderClientes();
+  if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
+  if(id==='colaboradores')renderColabs();
+  if(id==='servicos')renderServicos();
+  if(id==='produtos')renderProdutos();
+  if(id==='pacotes')renderPacotes();
+  if(id==='agenda')renderAgenda();
+  if(id==='vendas')renderVendas();
+  if(id==='comandas')renderComandas();
 }
 
 function openModal(id){document.getElementById(id).classList.add('open')}
@@ -8182,7 +8182,7 @@ function mkAvatar(c,size){
   var ini=initials(c.nome);
   var bg=c.cor||'#111';
   if(c.foto){
-    return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:visible;flex-shrink:0;border:2px solid #e5e5e5"><img src="'+c.foto+'" style="width:100%;height:100%;object-fit:cover"/></div>';
+    return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid #e5e5e5"><img src="'+c.foto+'" style="width:100%;height:100%;object-fit:cover"/></div>';
   }
   return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+(size<=28?9:11)+'px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.3)">'+ini+'</div>';
 }
@@ -8438,7 +8438,7 @@ function renderAgenda(){
         if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
-          <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:visible;cursor:pointer">
+          <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer">
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
@@ -8659,7 +8659,7 @@ function renderCalendario(){
       '<span style="font-size:12px;font-weight:'+(isH?'900':'600')+';color:#fff;background:'+(isH?'#111':'#ccc')+';width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%">'+d+'</span>'+
       (tf.length?'<span style="font-size:9px;background:#111;color:#fff;padding:1px 5px;border-radius:10px">'+tf.length+'</span>':'')+'</div>'+
       '<div style="display:flex;flex-direction:column;gap:2px">'+
-      tf.slice(0,2).map(t=>'<div style="font-size:9px;font-weight:600;background:'+(tiposCor[t.tipo]?.bg||'#111')+';color:'+(tiposCor[t.tipo]?.txt||'#fff')+';padding:2px 4px;border-radius:3px;overflow:visible;text-overflow:ellipsis;white-space:nowrap">'+t.titulo.substring(0,20)+'</div>').join('')+
+      tf.slice(0,2).map(t=>'<div style="font-size:9px;font-weight:600;background:'+(tiposCor[t.tipo]?.bg||'#111')+';color:'+(tiposCor[t.tipo]?.txt||'#fff')+';padding:2px 4px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.titulo.substring(0,20)+'</div>').join('')+
       (tf.length>2?'<div style="font-size:8px;color:#888">+'+( tf.length-2)+' mais</div>':'')+'</div></div>';
   }
   cal.innerHTML=html;
@@ -8770,7 +8770,7 @@ function renderTreinamentos(){
               <span>${t.concluidos.length} concluíram · ${t.pendentes.length} pendentes</span>
               <span style="font-weight:700;color:#111">${pct}%</span>
             </div>
-            <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:visible">
+            <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden">
               <div style="height:100%;width:${pct}%;background:${pct>=80?'#22c55e':pct>=40?'#f59e0b':'#111'};border-radius:3px"></div>
             </div>
           </div>
@@ -9038,7 +9038,7 @@ function renderFlorescimento(){
       <div style="font-size:13px;color:#666;margin-bottom:16px;max-width:400px;margin-left:auto;margin-right:auto">${etapa.desc}</div>
       <div style="font-size:36px;font-weight:900;margin-bottom:8px">${score}%</div>
       <div style="font-size:12px;color:#888;margin-bottom:12px">Pontuação geral do negócio</div>
-      <div style="height:10px;background:#f0f0f0;border-radius:5px;overflow:visible;max-width:400px;margin:0 auto 8px">
+      <div style="height:10px;background:#f0f0f0;border-radius:5px;overflow:hidden;max-width:400px;margin:0 auto 8px">
         <div style="height:100%;width:${score}%;background:#111;border-radius:5px;transition:.5s"></div>
       </div>
       <div style="font-size:11px;color:#888">${pctProxima}% para próxima fase ${score<100?'→ '+etapasFlor[etapasFlor.indexOf(etapa)+1]?.emoji+' '+etapasFlor[etapasFlor.indexOf(etapa)+1]?.nome:''}</div>
@@ -9137,7 +9137,7 @@ function renderFinPessoal(){
               <span>${m.nome}</span>
               <span style="color:#888">R$ ${m.atual.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
             </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:visible;margin-bottom:4px">
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin-bottom:4px">
               <div style="height:100%;width:${pct}%;background:#111;border-radius:4px"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#888">
@@ -9246,7 +9246,7 @@ function renderMetas(){
               <span>${m.atual} / ${m.alvo} ${m.unidade}</span>
               <span style="font-weight:700;color:#111">${pct}%</span>
             </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:visible">
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
               <div style="height:100%;width:${pct}%;background:${pct>=100?'#22c55e':pct>=60?'#f59e0b':'#111'};border-radius:4px;transition:.3s"></div>
             </div>
           </div>`:''}
@@ -9293,7 +9293,7 @@ function renderMetasColab(){
       <div style="font-size:10px;color:#aaa">conclusão geral</div>
     </div>
   </div>
-  <div style="height:6px;background:#333;border-radius:3px;margin-bottom:16px;overflow:visible"><div style="height:100%;width:${Math.round((concluidas/total)*100)||0}%;background:#fff;border-radius:3px"></div></div>
+  <div style="height:6px;background:#333;border-radius:3px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${Math.round((concluidas/total)*100)||0}%;background:#fff;border-radius:3px"></div></div>
   `+minhas.map(m=>{
     const sl=metaStatusLabel[m.status];
     const pct=getPct(m);
@@ -9314,7 +9314,7 @@ function renderMetasColab(){
               <span>Progresso: ${m.atual} / ${m.alvo} ${m.unidade}</span>
               <span style="font-weight:700;color:#111">${pct}%</span>
             </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:visible">
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
               <div style="height:100%;width:${pct}%;background:${pct>=100?'#22c55e':pct>=60?'#f59e0b':'#111'};border-radius:4px"></div>
             </div>
           </div>`:''}
@@ -9478,7 +9478,7 @@ function editarColab(idx){
       <div class="form-group full">
         <div style="display:flex;align-items:center;gap:16px;background:#f8f8f8;border-radius:12px;padding:16px">
           <div style="position:relative;flex-shrink:0">
-            <div id="edit-colab-av" style="width:72px;height:72px;border-radius:50%;background:${c.cor||'#111'};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:visible;border:3px solid #e5e5e5;position:relative">
+            <div id="edit-colab-av" style="width:72px;height:72px;border-radius:50%;background:${c.cor||'#111'};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;overflow:hidden;border:3px solid #e5e5e5;position:relative">
               ${avatarHtml}
             </div>
             <label for="edit-colab-foto" style="position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #fff" title="Enviar foto">
@@ -9914,7 +9914,7 @@ function entrarComoColaborador(nome){
           +'<div style="font-size:13px;font-weight:700">'+(m.tipo==='meta'?'🎯':'✅')+' '+m.titulo+'</div>'
           +'<span style="font-size:10px;font-weight:700;color:'+s.cor+'">'+s.txt+'</span></div>'
           +(m.desc?'<div style="font-size:11px;color:#666;margin-bottom:8px">'+m.desc+'</div>':'')
-          +(m.tipo==='meta'?'<div style="height:6px;background:#e5e5e5;border-radius:3px;overflow:visible;margin-bottom:6px"><div style="height:100%;width:'+pct+'%;background:'+(pct>=100?'#22c55e':'#111')+';border-radius:3px"></div></div>'
+          +(m.tipo==='meta'?'<div style="height:6px;background:#e5e5e5;border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:'+pct+'%;background:'+(pct>=100?'#22c55e':'#111')+';border-radius:3px"></div></div>'
             +'<div style="font-size:10px;color:#888;margin-bottom:6px">'+m.atual+' / '+m.alvo+' '+m.unidade+' · '+pct+'%</div>':'')
           +'<div style="display:flex;align-items:center;justify-content:space-between">'
           +'<span style="font-size:10px;color:#888">📅 Prazo: '+m.prazo+'</span>'
@@ -10034,6 +10034,7 @@ function obFinish(){
 }
 
 // Auto-login como admin
+document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
 aplicarPermissoesAdmin();
 // Ao carregar: verifica se já está logado
 (function(){
@@ -10070,4 +10071,3 @@ atualizarBadgeNav();
 renderMetas();</script>
 </body>
 </html>
- 
