@@ -1346,7 +1346,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
     </div>
 
-    <!-- SERVIÇOS -->
+    </div>
+<!-- SERVIÇOS -->
     <div class="page" id="page-servicos">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <select class="btn btn-outline btn-sm"><option>Todas as categorias</option><option>Cabelo</option><option>Bronzeamento</option><option>Manicure</option></select>
@@ -10034,9 +10035,8 @@ function obFinish(){
   try{localStorage.setItem('aflor_logado','1');}catch(e){}
 }
 
-// Auto-login como admin
+// Auto-login desabilitado
 document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
-aplicarPermissoesAdmin();
 // Ao carregar: verifica se já está logado
 (function(){
   try{
