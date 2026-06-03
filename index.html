@@ -389,7 +389,7 @@ async function carregarAgendamentosSupa() {
     if (error) { console.error("supa select:", error); return; }
     window._agendaExtra = window._agendaExtra || {};
     (data || []).forEach(function(a) {
-      var chave = a.prof + ":" + a.hora;
+      var chave = (a.prof || a.profissional || "") + ":" + a.hora;
       window._agendaExtra[chave] = a;
     });
     window._supaAgendamentos = data || [];
