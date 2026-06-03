@@ -10267,9 +10267,10 @@ window.salvarEdicaoAgendamento = async function() {
   
   // Atualizar localmente
   if (window._agendaExtra) {
-    var chaveAntiga = dados.prof + ":" + dados.hora;
+    var profKey = dados.prof || dados.profissional || "Ana Flor";
+    var chaveAntiga = profKey + ":" + dados.hora;
     var novaHora = novosDados.hora || dados.hora;
-    var chaveNova = dados.prof + ":" + novaHora;
+    var chaveNova = profKey + ":" + novaHora;
     // Remover chave antiga se hora mudou
     if (chaveAntiga !== chaveNova && window._agendaExtra[chaveAntiga]) {
       delete window._agendaExtra[chaveAntiga];
