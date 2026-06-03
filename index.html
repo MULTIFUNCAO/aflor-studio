@@ -371,8 +371,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 
 <script>
-var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co", "sb_publishable_zKf6ZHKkhsPFbtuAH-nbQQ_-z5C0MIF");
-
 // Salvar agendamento no Supabase
 async function salvarAgendamentoSupa(appt) {
   try {
@@ -400,6 +398,10 @@ async function carregarAgendamentosSupa() {
 
 // Carregar ao iniciar
 window.addEventListener("load", function() {
+  window._supa = supabase.createClient(
+      "https://nqwzbpinhkgxfboeursu.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk"
+    );
   setTimeout(carregarAgendamentosSupa, 1000);
 });
 </script>
