@@ -8273,6 +8273,7 @@ function agendaNavegar(dias){
   agendaDataAtual.setDate(agendaDataAtual.getDate()+dias);
   agendaAtualizarLabel();
   renderAgenda();
+  if(typeof window.carregarAgendamentosSupa==="function")window.carregarAgendamentosSupa();
 }
 
 function agendaHoje(){
