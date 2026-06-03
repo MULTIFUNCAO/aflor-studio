@@ -10152,6 +10152,7 @@ renderMetas();</script>
     );
     window.carregarAgendamentosSupa = async function(){
       window._agendaExtra = {};
+      renderAgenda();
       var hoje = agendaDataAtual instanceof Date ? agendaDataAtual : new Date();
       var dataKey = hoje.getFullYear()+"-"+(String(hoje.getMonth()+1).padStart(2,"0"))+"-"+(String(hoje.getDate()).padStart(2,"0"));
       var r = await window._supa.from("agendamentos").select("*").eq("data", dataKey);
