@@ -377,7 +377,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
   [style*="display: grid"] { grid-template-columns: 1fr !important; }
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <script>
 var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NjkwMTIsImV4cCI6MjA1OTU0NTAxMn0.N-bQoXbRHZMVPCOI0cQmouQ5aTFT0JW-QS1Nz3Qeyos");
 
@@ -10148,5 +10148,27 @@ renderClientes();
 renderRetornos();
 atualizarBadgeNav();
 renderMetas();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NjkwMTIsImV4cCI6MjA1OTU0NTAxMn0.N-bQoXbRHZMVPCOI0cQmouQ5aTFT0JW-QS1Nz3Qeyos");
+window.carregarAgendamentosSupa = async function(){
+  var r = await _supa.from("agendamentos").select("*");
+  if(r.error){console.error("supa:",r.error);return;}
+  window._agendaExtra = window._agendaExtra||{};
+  (r.data||[]).forEach(function(a){
+    var chave=a.prof+":"+a.hora;
+    window._agendaExtra[chave]=a;
+  });
+  window._supaAgendamentos = r.data||[];
+  console.log("supa: carregou",(r.data||[]).length,"agendamentos");
+  if(typeof renderAgenda==="function")renderAgenda();
+};
+window.salvarAgendamentoSupa = async function(appt){
+  var r = await _supa.from("agendamentos").insert([appt]);
+  if(r.error)console.error("supa save:",r.error);
+  else console.log("supa: salvo ok");
+};
+setTimeout(window.carregarAgendamentosSupa, 1500);
+</script>
 </body>
 </html>
