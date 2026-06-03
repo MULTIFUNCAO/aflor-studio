@@ -360,6 +360,14 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 
+<script>
+(function(){
+  try{
+    var saved=localStorage.getItem("aflor_agendamentos");
+    if(saved) window._agendaExtra=JSON.parse(saved);
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 
@@ -9729,6 +9737,7 @@ function salvarAgendamento(){
     agendaAppts[chave]=appt;
     window._agendaExtra=window._agendaExtra||{};
     window._agendaExtra[chave]=appt;
+    try{localStorage.setItem("aflor_agendamentos",JSON.stringify(window._agendaExtra));}catch(e){}
     var dObj=new Date(dataSel.value+'T00:00:00');
     var dKey=dObj.getDate()+'/'+(dObj.getMonth()+1)+'/'+dObj.getFullYear();
     agendaDataAtual=dObj;
