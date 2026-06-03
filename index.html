@@ -9770,7 +9770,7 @@ function salvarAgendamento(){
   if(dataSel&&dataSel.value&&profSel&&horaSel){
     var profNome=profSel.options[profSel.selectedIndex].text;
     var chave=profNome+':'+horaSel.value;
-    var appt={cliente:cliente,servico:servicoSel?servicoSel.options[servicoSel.selectedIndex].text:'',prof:profNome,hora:horaSel.value,data:dataSel.value,valor:'R$ 0,00',sinal:false,cls:'#7c3aed'};
+    var appt={cliente:cliente,servico:servicoSel?servicoSel.options[servicoSel.selectedIndex].text:'',prof:profNome,hora:horaSel.value,data:dataSel.value,valor:'R$ '+(servicoSel.options[servicoSel.selectedIndex].value||'0')+',00',sinal:false,cls:'#7c3aed'};
     agendaAppts[chave]=appt;
     window._agendaExtra=window._agendaExtra||{};
     window._agendaExtra[chave]=appt;
