@@ -377,6 +377,40 @@ tr.row-retorno-retornou td{background:#f0fff4}
   [style*="display: grid"] { grid-template-columns: 1fr !important; }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NjkwMTIsImV4cCI6MjA1OTU0NTAxMn0.N-bQoXbRHZMVPCOI0cQmouQ5aTFT0JW-QS1Nz3Qeyos");
+
+// Salvar agendamento no Supabase
+async function salvarAgendamentoSupa(appt) {
+  try {
+    var { error } = await _supa.from("agendamentos").insert([appt]);
+    if (error) console.error("supa insert:", error);
+    else console.log("supa: salvo ok");
+  } catch(e) { console.error("supa:", e); }
+}
+
+// Carregar agendamentos do Supabase
+async function carregarAgendamentosSupa() {
+  try {
+    var { data, error } = await _supa.from("agendamentos").select("*");
+    if (error) { console.error("supa select:", error); return; }
+    window._agendaExtra = window._agendaExtra || {};
+    (data || []).forEach(function(a) {
+      var chave = a.prof + ":" + a.hora;
+      window._agendaExtra[chave] = a;
+    });
+    window._supaAgendamentos = data || [];
+    console.log("supa: carregou", (data||[]).length, "agendamentos");
+    if (typeof renderAgenda === "function") renderAgenda();
+  } catch(e) { console.error("supa:", e); }
+}
+
+// Carregar ao iniciar
+window.addEventListener("load", function() {
+  setTimeout(carregarAgendamentosSupa, 1000);
+});
+</script>
 </head>
 <body>
 
@@ -9747,6 +9781,7 @@ function salvarAgendamento(){
     window._agendaExtra=window._agendaExtra||{};
     window._agendaExtra[chave]=appt;
     try{localStorage.setItem("aflor_agendamentos",JSON.stringify(window._agendaExtra));}catch(e){}
+    if(typeof salvarAgendamentoSupa==="function")salvarAgendamentoSupa({cliente:appt.cliente,servico:appt.servico,prof:appt.prof,data:appt.data,hora:appt.hora,valor:appt.valor,status:appt.status||"agendado",cls:appt.cls||""});
     var dObj=new Date(dataSel.value+'T00:00:00');
     var dKey=dObj.getDate()+'/'+(dObj.getMonth()+1)+'/'+dObj.getFullYear();
     agendaDataAtual=dObj;
