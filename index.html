@@ -10267,10 +10267,15 @@ window.salvarEdicaoAgendamento = async function() {
   
   // Atualizar localmente
   if (window._agendaExtra) {
-    var chave = dados.prof + ":" + dados.hora;
-    if (window._agendaExtra[chave]) {
-      Object.assign(window._agendaExtra[chave], novosDados);
+    var chaveAntiga = dados.prof + ":" + dados.hora;
+    var novaHora = novosDados.hora || dados.hora;
+    var chaveNova = dados.prof + ":" + novaHora;
+    // Remover chave antiga se hora mudou
+    if (chaveAntiga !== chaveNova && window._agendaExtra[chaveAntiga]) {
+      delete window._agendaExtra[chaveAntiga];
     }
+    // Salvar com nova chave
+    window._agendaExtra[chaveNova] = Object.assign({}, dados, novosDados);
   }
   
   // Atualizar no Supabase se tiver id
