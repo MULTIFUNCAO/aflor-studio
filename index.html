@@ -9855,6 +9855,49 @@ function updateSinalStatus(){
   if(lblPend)lblPend.style.borderColor=!pago?'#111':'#e5e5e5';
 }
 function criarComanda(){
+  // Salvar comanda no Supabase
+  if (window._supa && window._agendaPopupDados) {
+    var dados = window._agendaPopupDados;
+    var sinalAtivo = document.getElementById("cmd-sinal-ativo")?.checked;
+    var sinalValor = parseFloat(document.getElementById("cmd-sinal-agora")?.textContent?.replace("R$ ","").replace(",",".")) || 0;
+    var sinalStatus = document.querySelector("input[name=\"cmd-sinal-status\"]:checked")?.value || "pendente";
+    var total = parseFloat(document.getElementById("cmd-total")?.textContent?.replace("R$ ","").replace(",",".")) || 0;
+    var desconto = parseFloat(document.getElementById("cmd-desconto")?.value) || 0;
+    var formaPag = document.getElementById("cmd-forma-pag")?.value || "PIX";
+    var itens = [];
+    document.querySelectorAll("#cmd-itens-lista select").forEach(function(s){
+      itens.push({nome: s.options[s.selectedIndex]?.text, valor: parseFloat(s.value)||0});
+    });
+    window._supa.from("comandos").insert([{
+      agendamento_id: dados.id || null,
+      cliente: dados.cliente,
+      prof: dados.prof,
+      data: dados.data,
+      itens: JSON.stringify(itens),
+      total: total,
+      desconto: desconto,
+      forma_pagamento: formaPag,
+      sinal_ativo: sinalAtivo || false,
+      sinal_valor: sinalValor,
+      sinal_status: sinalStatus,
+      status: "aberto"
+    }]).then(function(r){
+      if(r.error) console.error("supa comanda:", r.error);
+      else console.log("supa: comanda salva ok");
+    });
+    // Atualizar sinal no agendamento
+    if (dados.id && sinalAtivo) {
+      window._supa.from("agendamentos").update({
+        sinal: sinalAtivo,
+        sinal_valor: sinalValor,
+        sinal_status: sinalStatus
+      }).eq("id", dados.id).then(function(r){
+        if(r.error) console.error("supa sinal:", r.error);
+        else { console.log("supa: sinal atualizado ok"); carregarAgendamentosSupa(); }
+      });
+    }
+  }
+
   var cliente=document.getElementById('cmd-cliente')?.value||'Cliente';
   var sinalAtivo=document.getElementById('cmd-sinal-ativo')?.checked;
   var sinalStatus=document.querySelector('input[name="cmd-sinal-status"]:checked')?.value||'pendente';
