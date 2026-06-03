@@ -10159,7 +10159,9 @@ renderMetas();</script>
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk"
     );
     window.carregarAgendamentosSupa = async function(){
-      var r = await window._supa.from("agendamentos").select("*");
+      var hoje = agendaDataAtual instanceof Date ? agendaDataAtual : new Date();
+      var dataKey = hoje.getFullYear()+"-"+(String(hoje.getMonth()+1).padStart(2,"0"))+"-"+(String(hoje.getDate()).padStart(2,"0"));
+      var r = await window._supa.from("agendamentos").select("*").eq("data", dataKey);
       if(r.error){console.error("supa:",r.error);return;}
       window._agendaExtra = window._agendaExtra||{};
       (r.data||[]).forEach(function(a){
