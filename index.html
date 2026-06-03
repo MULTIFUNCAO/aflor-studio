@@ -8287,6 +8287,7 @@ function agendaHoje(){
 // POPUP de agendamento
 var agendaPopupAtivo=null;
 function abrirAgendaPopup(key,dados,event){
+  window._agendaPopupDados = dados;
   // Fechar popup anterior
   fecharAgendaPopup();
   event.stopPropagation();
