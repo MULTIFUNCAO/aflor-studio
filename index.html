@@ -8401,7 +8401,8 @@ function renderAgenda(){
       return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
     }).join('');
   }
-  const grid=document.getElementById('agenda-grid');
+  (window._novosAgendamentos||[]).forEach(function(a){if(a&&a.data){agendamentosPorData[a.data]=agendamentosPorData[a.data]||[];agendamentosPorData[a.data].push(a);}});
+    const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
   const profs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
 
@@ -8429,7 +8430,8 @@ function renderAgenda(){
 
   var apptsDia=agendamentosPorData[dataKey]||{};
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
-  var temAgendamentos=Object.keys(apptsDia).length>0;
+  if(window._agendaExtra)Object.assign(apptsDia,window._agendaExtra);
+    var temAgendamentos=Object.keys(apptsDia).length>0;
 
   grid.innerHTML=hours.map(h=>`
     <div style="display:grid;grid-template-columns:70px repeat(6,1fr)">
@@ -9715,6 +9717,23 @@ function salvarAgendamento(){
   var msg='✅ Agendamento confirmado para '+cliente+'!';
   if(sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
   showAlert(msg);
+  // Adicionar ao agendaAppts para renderAgenda
+  var profSel=document.querySelector('#modal-agendar select');
+  var dataSel=document.querySelector('#modal-agendar input[type=date]');
+  var horaSel=document.querySelector('#modal-agendar input[type=time]');
+  var servicoSel=document.querySelectorAll('#modal-agendar select')[1];
+  if(dataSel&&dataSel.value&&profSel&&horaSel){
+    var profNome=profSel.options[profSel.selectedIndex].text;
+    var chave=profNome+':'+horaSel.value;
+    var appt={cliente:cliente,servico:servicoSel?servicoSel.options[servicoSel.selectedIndex].text:'',prof:profNome,hora:horaSel.value,data:dataSel.value,valor:'R$ 0,00',sinal:false,cls:'#7c3aed'};
+    agendaAppts[chave]=appt;
+    window._agendaExtra=window._agendaExtra||{};
+    window._agendaExtra[chave]=appt;
+    var dObj=new Date(dataSel.value+'T00:00:00');
+    var dKey=dObj.getDate()+'/'+(dObj.getMonth()+1)+'/'+dObj.getFullYear();
+    agendaDataAtual=dObj;
+    renderAgenda();
+  }
 }
 // ===== FIM AGENDAMENTO =====
 
