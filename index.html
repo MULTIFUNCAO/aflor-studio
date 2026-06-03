@@ -379,7 +379,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 
 <script>
-var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NjkwMTIsImV4cCI6MjA1OTU0NTAxMn0.N-bQoXbRHZMVPCOI0cQmouQ5aTFT0JW-QS1Nz3Qeyos");
+var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co", "sb_publishable_zKf6ZHKkhsPFbtuAH-nbQQ_-z5C0MIF");
 
 // Salvar agendamento no Supabase
 async function salvarAgendamentoSupa(appt) {
@@ -10150,7 +10150,7 @@ atualizarBadgeNav();
 renderMetas();</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5NjkwMTIsImV4cCI6MjA1OTU0NTAxMn0.N-bQoXbRHZMVPCOI0cQmouQ5aTFT0JW-QS1Nz3Qeyos");
+var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co","sb_publishable_zKf6ZHKkhsPFbtuAH-nbQQ_-z5C0MIF");
 window.carregarAgendamentosSupa = async function(){
   var r = await _supa.from("agendamentos").select("*");
   if(r.error){console.error("supa:",r.error);return;}
