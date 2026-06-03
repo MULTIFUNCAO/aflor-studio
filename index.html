@@ -10148,27 +10148,37 @@ renderClientes();
 renderRetornos();
 atualizarBadgeNav();
 renderMetas();</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <script>
-var _supa = supabase.createClient("https://nqwzbpinhkgxfboeursu.supabase.co","sb_publishable_zKf6ZHKkhsPFbtuAH-nbQQ_-z5C0MIF");
-window.carregarAgendamentosSupa = async function(){
-  var r = await _supa.from("agendamentos").select("*");
-  if(r.error){console.error("supa:",r.error);return;}
-  window._agendaExtra = window._agendaExtra||{};
-  (r.data||[]).forEach(function(a){
-    var chave=a.prof+":"+a.hora;
-    window._agendaExtra[chave]=a;
-  });
-  window._supaAgendamentos = r.data||[];
-  console.log("supa: carregou",(r.data||[]).length,"agendamentos");
-  if(typeof renderAgenda==="function")renderAgenda();
-};
-window.salvarAgendamentoSupa = async function(appt){
-  var r = await _supa.from("agendamentos").insert([appt]);
-  if(r.error)console.error("supa save:",r.error);
-  else console.log("supa: salvo ok");
-};
-setTimeout(window.carregarAgendamentosSupa, 1500);
+(function(){
+  var s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+  s.onload = function(){
+    window._supa = supabase.createClient(
+      "https://nqwzbpinhkgxfboeursu.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk"
+    );
+    window.carregarAgendamentosSupa = async function(){
+      var r = await window._supa.from("agendamentos").select("*");
+      if(r.error){console.error("supa:",r.error);return;}
+      window._agendaExtra = window._agendaExtra||{};
+      (r.data||[]).forEach(function(a){
+        var chave = a.prof+":"+a.hora;
+        window._agendaExtra[chave] = a;
+      });
+      window._supaAgendamentos = r.data||[];
+      console.log("supa: carregou",(r.data||[]).length,"agendamentos");
+      if(typeof renderAgenda==="function")renderAgenda();
+    };
+    window.salvarAgendamentoSupa = async function(appt){
+      var r = await window._supa.from("agendamentos").insert([appt]);
+      if(r.error)console.error("supa save:",r.error);
+      else{console.log("supa: salvo ok");window.carregarAgendamentosSupa();}
+    };
+    window.carregarAgendamentosSupa();
+  };
+  document.body.appendChild(s);
+})();
 </script>
 </body>
 </html>
