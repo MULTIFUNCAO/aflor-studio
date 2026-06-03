@@ -360,14 +360,6 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 
-<script>
-(function(){
-  try{
-    var saved=localStorage.getItem("aflor_agendamentos");
-    if(saved) window._agendaExtra=JSON.parse(saved);
-  }catch(e){}
-})();
-</script>
 <style id="mobile-fix">
 @media (max-width: 640px) {
   * { box-sizing: border-box !important; }
@@ -9780,7 +9772,6 @@ function salvarAgendamento(){
     agendaAppts[chave]=appt;
     window._agendaExtra=window._agendaExtra||{};
     window._agendaExtra[chave]=appt;
-    try{localStorage.setItem("aflor_agendamentos",JSON.stringify(window._agendaExtra));}catch(e){}
     if(typeof salvarAgendamentoSupa==="function")salvarAgendamentoSupa({cliente:appt.cliente,servico:appt.servico,prof:appt.prof,data:appt.data,hora:appt.hora,valor:appt.valor,status:appt.status||"agendado",cls:appt.cls||""});
     var dObj=new Date(dataSel.value+'T00:00:00');
     var dKey=dObj.getDate()+'/'+(dObj.getMonth()+1)+'/'+dObj.getFullYear();
