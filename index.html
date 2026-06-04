@@ -8356,7 +8356,7 @@ function abrirAgendaPopup(key,dados,event){
       <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">SINAL / ENTRADA</div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center">${sinalBadge.replace('margin-left:6px','margin-left:0')}</div>
-        <button style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="fecharAgendaPopup();showPage('comandas');setTimeout(function(){var el=document.getElementById('busca-comanda');if(el){el.value='${dados.cliente}';renderComandas();}},200);">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
+        <button style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="abrirComandaAtendimento(\'${dados.cliente}\',\'${dados.servico}\',\'${dados.valor}\')">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
       </div>
     </div>
     <!-- COMANDA -->
