@@ -10319,7 +10319,7 @@ async function confirmarPagamentoFinal() {
   if(error){ alert('Erro ao salvar: '+error.message); btn.textContent='✅ Confirmar'; btn.disabled=false; return; }
   document.getElementById('modal-pagamento-final').style.display='none';
   fecharAgendaPopup();
-  await carregarAgendaDia(window._diaAtual||new Date().toISOString().slice(0,10));
+  await carregarAgendamentosSupa();
   alert('✅ Pagamento confirmado!');
 }
 
