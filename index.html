@@ -10315,7 +10315,7 @@ async function confirmarPagamentoFinal() {
   if(!dados||!dados.id) { alert('Erro: ID do agendamento não encontrado'); return; }
   var btn = document.querySelector('#modal-pagamento-final button:last-child');
   btn.textContent = 'Salvando...'; btn.disabled = true;
-  var {error} = await _supa.from('agendamentos').update({status:'concluido',forma_pagamento:forma,pago:true}).eq('id',dados.id);
+  var {error} = await _supa.from('agendamentos').update({status:'concluido',pago:true}).eq('id',dados.id);
   if(error){ alert('Erro ao salvar: '+error.message); btn.textContent='✅ Confirmar'; btn.disabled=false; return; }
   document.getElementById('modal-pagamento-final').style.display='none';
   fecharAgendaPopup();
