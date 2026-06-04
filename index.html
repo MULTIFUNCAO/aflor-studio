@@ -8454,7 +8454,7 @@ function renderAgenda(){
       return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
     }).join('');
   }
-  (window._novosAgendamentos||[]).forEach(function(a){if(a&&a.data){agendamentosPorData[a.data]=agendamentosPorData[a.data]||[];agendamentosPorData[a.data].push(a);}});
+  (window._novosAgendamentos||[]).forEach(function(a){if(a&&a.data){var _aData=a.data&&a.data.replace(/-([0-9])$/,'-0$1').replace(/-([0-9])-/,'-0$1-');agendamentosPorData[_aData]=agendamentosPorData[_aData]||[];agendamentosPorData[_aData].push(a);}});
     const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
   const profs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
