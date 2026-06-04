@@ -8353,14 +8353,14 @@ function abrirAgendaPopup(key,dados,event){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">💰</span>
-        <div><div style="font-size:12px;color:#888">Valor</div><div style="font-size:13px;font-weight:700">${dados.valor}</div></div>
+        <div><div style="font-size:12px;color:#888">Valor</div><div style="font-size:13px;font-weight:700">${typeof dados.valor==="number"?"R$ "+dados.valor.toFixed(2).replace(".",","):dados.valor}</div></div>
       </div>
     </div>
     <div style="background:#f8f8f8;border-radius:9px;padding:11px;margin-bottom:14px;border:1px solid #e5e5e5">
       <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">SINAL / ENTRADA</div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center">${sinalBadge.replace('margin-left:6px','margin-left:0')}</div>
-        <button style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="abrirComandaAtendimento(\'${dados.cliente}\',\'${dados.servico}\',\'${dados.valor}\')">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
+        <button style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="abrirComandaAtendimento(\'${dados.cliente}\',\'${dados.servico}\',\'${typeof dados.valor==="number"?"R$ "+dados.valor.toFixed(2).replace(".",","):dados.valor}\')">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
       </div>
     </div>
     <!-- COMANDA -->
@@ -8372,7 +8372,7 @@ function abrirAgendaPopup(key,dados,event){
       <div style="border-top:1px solid #f0f0f0;padding-top:8px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
           <span style="color:#555">${dados.servico}</span>
-          <span style="font-weight:700">${dados.valor}</span>
+          <span style="font-weight:700">${typeof dados.valor==="number"?"R$ "+dados.valor.toFixed(2).replace(".",","):dados.valor}</span>
         </div>
         ${dados.sinal?`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
           <span style="color:#888">(-) Sinal pago</span>
