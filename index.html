@@ -10184,7 +10184,7 @@ function obFinish(){
   var overlay=document.getElementById('aflor-overlay');
   if(overlay)overlay.classList.add('hidden');
   // Salva que o usuário já fez login
-  try{localStorage.setItem('aflor_logado','1');}catch(e){}
+  try{localStorage.setItem('aflor_logado','admin');}catch(e){}
 }
 
 // Auto-login desabilitado
@@ -10193,7 +10193,7 @@ document.querySelectorAll('.page').forEach(function(p){p.style.display='none';})
 (function(){
   try{
     var saved=localStorage.getItem('aflor_logado');
-    if(saved==='admin'){
+    if(saved==='admin'||saved==='1'){
       var overlay=document.getElementById('aflor-overlay');
       if(overlay)overlay.classList.add('hidden');
       aplicarPermissoesAdmin();
