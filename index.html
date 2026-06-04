@@ -8486,7 +8486,7 @@ function renderAgenda(){
     },
   };
 
-  var apptsDia=(function(){var raw=window._supaAgenda[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora){var _prof=a.profissional||"Ana Flor";obj[_prof+":"+a.hora]=a;}});return obj;})();
+  var apptsDia=(function(){var raw=window._supaAgenda[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora){var _prof=a.profissional||"Ana Flor";var _hp=a.hora.split(":");var _hm=parseInt(_hp[0])*60+parseInt(_hp[1]);var _slot=_hm<(_hm-_hm%30+15)?_hm-_hm%30:_hm-_hm%30;var _sh=String(Math.floor(_slot/60)).padStart(2,"0")+":"+String(_slot%60).padStart(2,"0");obj[_prof+":"+_sh]=a;}});return obj;})();
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
   if(window._agendaExtra){var _ex=window._agendaExtra;Object.keys(_ex).forEach(function(k){var _a=_ex[k];if(_a&&_a.data){var _p=_a.data.split("-");var _dk=parseInt(_p[2])+"/"+(parseInt(_p[1]))+"/"+_p[0];if(_dk===dataKey)apptsDia[k]=_a;}else{apptsDia[k]=_a;}});}
     var temAgendamentos=Object.keys(apptsDia).length>0;
@@ -10244,7 +10244,7 @@ window.salvarEdicaoAgendamento = async function() {
   };
   
   // Salvar no Supabase
-      if(window._supa&&dados.id){window._supa["from"]("agendamentos").update({cliente:novosDados.cliente,servico:novosDados.servico,hora:novosDados.hora,valor:novosDados.valor,observacao:novosDados.obs}).eq("id",dados.id).then(function(){carregarAgendamentosSupa();});}
+      if(window._supa&&dados.id){window._supa["from"]("agendamentos").update({cliente:novosDados.cliente,servico:novosDados.servico,hora:novosDados.hora,valor:novosDados.valor,observacao:novosDados.obs,profissional:dados.profissional||"Ana Flor"}).eq("id",dados.id).then(function(){carregarAgendamentosSupa();});}
       // Atualizar localmente
   if (window._agendaExtra) {
     var profKey = dados.prof || dados.profissional || "Ana Flor";
