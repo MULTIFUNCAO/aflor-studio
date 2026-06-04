@@ -382,6 +382,7 @@ async function salvarAgendamentoSupa(appt) {
 
 // Carregar agendamentos do Supabase
 async function carregarAgendamentosSupa() {
+  if (!window._supa) { setTimeout(carregarAgendamentosSupa, 500); return; }
   try {
     var { data, error } = await _supa.from("agendamentos").select("*");
     if (error) { console.error("supa select:", error); return; }
