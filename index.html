@@ -404,11 +404,11 @@ async function carregarAgendamentosSupa() {
 
 // Carregar ao iniciar
 window.addEventListener("load", function() {
-  window._supa = supabase.createClient(
+  if (typeof supabase === "undefined") { setTimeout(function(){ if(window._supa) return; carregarAgendamentosSupa(); }, 2000); } else { window._supa = supabase.createClient(
       "https://nqwzbpinhkgxfboeursu.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk"
     );
-  setTimeout(carregarAgendamentosSupa, 1000);
+  setTimeout(carregarAgendamentosSupa, 1000) };
 });
 </script>
 </head>
