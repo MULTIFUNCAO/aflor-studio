@@ -8380,7 +8380,7 @@ function abrirAgendaPopup(key,dados,event){
         </div>`:''}
         <div style="border-top:1px dashed #e5e5e5;margin:7px 0;padding-top:7px;display:flex;justify-content:space-between;font-size:13px;font-weight:800">
           <span>Total a pagar</span>
-          <span style="color:#111">${dados.sinal&&(dados.sinalPago||dados.sinal)?(()=>{var t=parseFloat((dados.valor||'0').replace('R$ ','').replace(',','.'));var s=parseFloat((dados.sinalValor||'0').replace('R$ ','').replace(',','.'));return 'R$ '+(t-s).toFixed(2).replace('.',',');})():dados.valor}</span>
+          <span style="color:#111">${dados.sinal&&(dados.sinalPago||dados.sinal)?(()=>{var t=parseFloat(dados.valor||0);var s=parseFloat(dados.sinalValor||0);return 'R$ '+(t-s).toFixed(2).replace('.',',');})():dados.valor}</span>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
