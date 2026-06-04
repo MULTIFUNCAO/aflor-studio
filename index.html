@@ -8486,7 +8486,7 @@ function renderAgenda(){
     },
   };
 
-  var apptsDia=window._agendaPorData[dataKey]||{};
+  var apptsDia=(function(){var arr=window._agendaPorData[dataKey]||[];var obj={};arr.forEach(function(a){if(a&&a.hora)obj[a.hora]=a;});return obj;})();
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
   if(window._agendaExtra)Object.assign(apptsDia,window._agendaExtra);
     var temAgendamentos=Object.keys(apptsDia).length>0;
