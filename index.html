@@ -10192,12 +10192,7 @@ renderMetas();</script>
 (function(){
   var s = document.createElement("script");
   s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-  s.onload = function(){
-    window._supa = supabase.createClient(
-      "https://nqwzbpinhkgxfboeursu.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk"
-    );
-    window.carregarAgendamentosSupa = async function(){
+  s.onload = function(){    window.carregarAgendamentosSupa = async function(){
       window._agendaExtra = {};
       renderAgenda();
       var hoje = agendaDataAtual instanceof Date ? agendaDataAtual : new Date();
