@@ -10193,36 +10193,6 @@ atualizarBadgeNav();
 renderMetas();</script>
 
 <script>
-(function(){
-  var s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
-  s.onload = function(){    window.carregarAgendamentosSupa = async function(){
-      window._agendaExtra = {};
-      renderAgenda();
-      var hoje = agendaDataAtual instanceof Date ? agendaDataAtual : new Date();
-      var dataKey = hoje.getFullYear()+"-"+(String(hoje.getMonth()+1).padStart(2,"0"))+"-"+(String(hoje.getDate()).padStart(2,"0"));
-      var r = await window._supa.from("agendamentos").select("*").eq("data", dataKey);
-      if(r.error){console.error("supa:",r.error);return;}
-      window._agendaExtra = window._agendaExtra||{};
-      (r.data||[]).forEach(function(a){
-        var chave = a.prof+":"+a.hora;
-        window._agendaExtra[chave] = a;
-      });
-      window._supaAgendamentos = r.data||[];
-      console.log("supa: carregou",(r.data||[]).length,"agendamentos");
-      if(typeof renderAgenda==="function")renderAgenda();
-    };
-    window.salvarAgendamentoSupa = async function(appt){
-      var r = await window._supa.from("agendamentos").insert([appt]);
-      if(r.error)console.error("supa save:",r.error);
-      else{console.log("supa: salvo ok");window.carregarAgendamentosSupa();}
-    };
-    window.carregarAgendamentosSupa();
-  };
-  document.body.appendChild(s);
-})();
-</script>
-<script>
 window.editarAgendamentoAtivo = function() {
   var dados = window._agendaPopupDados;
   if (!dados) { alert("Erro: dados do agendamento não encontrados"); return; }
