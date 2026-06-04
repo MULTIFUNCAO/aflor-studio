@@ -8171,7 +8171,7 @@ function confirmarRetorno(i){
 
 
 function reabrirSinalSupa(id){
-  window._supa.from("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){
+  window._supa["from"]("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){
     carregarAgendamentosSupa();
     var p=document.getElementById("popup-agendamento");
     if(p)p.style.display="none";
@@ -9905,7 +9905,7 @@ function criarComanda(){
     });
     // Atualizar sinal no agendamento
     if (dados.id && sinalAtivo) {
-      window._supa.from("agendamentos").update({
+      window._supa["from"]("agendamentos").update({
         sinal: sinalAtivo,
         sinal_valor: sinalValor,
         sinal_status: sinalStatus
@@ -10264,7 +10264,7 @@ window.salvarEdicaoAgendamento = async function() {
   
   // Atualizar no Supabase se tiver id
   if (dados.id && window._supa) {
-    var r = await window._supa.from("agendamentos").update(novosDados).eq("id", dados.id);
+    var r = await window._supa["from"]("agendamentos").update(novosDados).eq("id", dados.id);
     if (r.error) console.error("supa update:", r.error);
     else console.log("supa: editado ok");
   }
