@@ -8150,7 +8150,7 @@ function renderRetornos(){
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           </button>
           <button class="btn btn-primary btn-sm" onclick="confirmarRetorno(${i})">✓ Retornou</button>
-        `:`<button class="btn btn-outline btn-sm" onclick="reabrirRetorno(${i})">Reabrir</button>`}
+        `:`<button class="btn btn-outline btn-sm" onclick="reabrirSinalSupa(dados.id)">Reabrir</button>`}
         <button onclick="deleteRetorno(${i})" class="btn btn-outline btn-sm" style="color:var(--red)">✕</button>
       </div>
     </div>`;
@@ -8170,6 +8170,7 @@ function confirmarRetorno(i){
 }
 
 
+function reabrirSinalSupa(id){if(!window._supa||!id)return;window._supa["from"]("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){carregarAgendamentosSupa();var p=document.getElementById("popup-agendamento");if(p)p.style.display="none";});}
 function reabrirSinalSupa(id){if(!window._supa||!id)return;window._supa["from"]("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){carregarAgendamentosSupa();var p=document.getElementById("popup-agendamento");if(p)p.style.display="none";});}
 function reabrirRetorno(i){
   retornos[i].status='pendente';
