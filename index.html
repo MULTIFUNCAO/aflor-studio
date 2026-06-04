@@ -8457,9 +8457,9 @@ function renderAgenda(){
       return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
     }).join('');
   }
-  window._agendaPorData={};
-    window._agendaPorData={};
-    (window._novosAgendamentos||[]).forEach(function(a){if(a&&a.data){var _aParts=a.data?a.data.split('-'):[];var _aData=_aParts.length===3?parseInt(_aParts[2])+'/'+(parseInt(_aParts[1]))+'/'+_aParts[0]:a.data;window._agendaPorData[_aData]=window._agendaPorData[_aData]||[];window._agendaPorData[_aData].push(a);}});
+  window._supaAgenda={};
+    window._supaAgenda={};
+    (window._novosAgendamentos||[]).forEach(function(a){if(a&&a.data){var _aParts=a.data?a.data.split('-'):[];var _aData=_aParts.length===3?parseInt(_aParts[2])+'/'+(parseInt(_aParts[1]))+'/'+_aParts[0]:a.data;window._supaAgenda[_aData]=window._supaAgenda[_aData]||[];window._supaAgenda[_aData].push(a);}});
     const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
   const profs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
@@ -8486,7 +8486,7 @@ function renderAgenda(){
     },
   };
 
-  var apptsDia=(function(){var raw=window._agendaPorData[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora&&a.profissional)obj[a.profissional+":"+a.hora]=a;});return obj;})();
+  var apptsDia=(function(){var raw=window._supaAgenda[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora&&a.profissional)obj[a.profissional+":"+a.hora]=a;});return obj;})();
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
   if(window._agendaExtra)Object.assign(apptsDia,window._agendaExtra);
     var temAgendamentos=Object.keys(apptsDia).length>0;
