@@ -8170,13 +8170,7 @@ function confirmarRetorno(i){
 }
 
 
-function reabrirSinalSupa(id){
-  window._supa["from"]("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){
-    carregarAgendamentosSupa();
-    var p=document.getElementById("popup-agendamento");
-    if(p)p.style.display="none";
-  });
-}
+function reabrirSinalSupa(id){if(!window._supa||!id)return;window._supa["from"]("agendamentos").update({sinal:false,sinal_valor:null}).eq("id",id).then(function(){carregarAgendamentosSupa();var p=document.getElementById("popup-agendamento");if(p)p.style.display="none";});}
 function reabrirRetorno(i){
   retornos[i].status='pendente';
   renderRetornos();
