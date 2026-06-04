@@ -8302,6 +8302,10 @@ function agendaHoje(){
 var agendaPopupAtivo=null;
 function abrirAgendaPopup(key,dados,event){
   window._agendaPopupDados = dados;
+  // Enriquecer dados com campos derivados
+  dados.sinalPago = dados.sinal_status==="pago"||dados.sinal_pago||false;
+  dados.sinalValor = parseFloat(dados.sinal_valor||0);
+  dados.valor = (function(){var v=parseFloat((dados.valor_num||"0").toString())||0;if(!v&&dados.servico){var m=dados.servico.match(/R\$\s*([\d.,]+)/);if(m)v=parseFloat(m[1].replace(",","."))||0;}return v;})();
   // Fechar popup anterior
   fecharAgendaPopup();
   event.stopPropagation();
