@@ -391,6 +391,7 @@ async function carregarAgendamentosSupa() {
       window._agendaExtra[chave] = a;
     });
     window._supaAgendamentos = data || [];
+      window._novosAgendamentos = data || [];
     console.log("supa: carregou", (data||[]).length, "agendamentos");
     if (typeof renderAgenda === "function") renderAgenda();
   } catch(e) { console.error("supa:", e); }
