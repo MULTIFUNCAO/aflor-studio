@@ -378,7 +378,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 // Salvar agendamento no Supabase
 async function salvarAgendamentoSupa(appt) {
   try {
-    var { error } = await _supa.from("agendamentos").insert([appt]);
+    var { error } = await _supa.from("agendamentos").update({cliente:appt.cliente,servico:appt.servico,hora:appt.hora,valor:appt.valor,observacao:appt.observacao}).eq("id",appt.id);
     if (error) console.error("supa insert:", error);
     else console.log("supa: salvo ok");
   } catch(e) { console.error("supa:", e); }
@@ -7973,7 +7973,7 @@ function renderComandas(){
     <td style="font-size:12px;color:var(--gray-500)">${c.pgto}</td>
     <td>
       <span class="badge ${c.status==='Fechada'?'badge-gray':'badge-green'}">${c.status}</span>
-      ${c.sinal?`<span class="badge ${c.sinalStatus==='pago'?'badge-green':'badge-yellow'}" style="margin-left:4px">${c.sinalStatus==='pago'?'✅ Sinal pago':'⏳ Sinal pendente'} ${c.sinal}</span>`:''}
+      ${c.sinal?`<span class="badge ${c.sinalStatus==='pago'?'badge-green':'badge-yellow'}" style="margin-left:4px">${c.sinalStatus==='pago'?'✅ Sinal pago':'⏳ Sinal pendente'}</span>`:''}
     </td>
     <td><button class="btn btn-outline btn-sm" onclick="openModal('modal-comanda')">Ver</button></td>
   </tr>`).join('');
