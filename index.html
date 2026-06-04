@@ -10243,7 +10243,9 @@ window.salvarEdicaoAgendamento = async function() {
     obs: document.getElementById("edit-obs").value
   };
   
-  // Atualizar localmente
+  // Salvar no Supabase
+      if(window._supa&&dados.id){window._supa["from"]("agendamentos").update({cliente:novosDados.cliente,servico:novosDados.servico,hora:novosDados.hora,valor:novosDados.valor,observacao:novosDados.obs}).eq("id",dados.id).then(function(){carregarAgendamentosSupa();});}
+      // Atualizar localmente
   if (window._agendaExtra) {
     var profKey = dados.prof || dados.profissional || "Ana Flor";
     var chaveAntiga = profKey + ":" + dados.hora;
