@@ -8356,7 +8356,7 @@ function abrirAgendaPopup(key,dados,event){
       <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">SINAL / ENTRADA</div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center">${sinalBadge.replace('margin-left:6px','margin-left:0')}</div>
-        <button onclick="toggleSinalPopup('${key}')" style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="openModal('modal-comanda')">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
+        <button style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer" onclick="fecharAgendaPopup();setTimeout(function(){openModal('modal-comanda')},100);">${(dados.sinalPago||dados.sinal)?'Reabrir':'✅ Confirmar sinal'}</button>
       </div>
     </div>
     <!-- COMANDA -->
@@ -9435,7 +9435,7 @@ function salvarMeta(){
   const tipo=document.querySelector('input[name="meta-tipo"]:checked')?.value||'tarefa';
   const prio=document.querySelector('input[name="meta-prio"]:checked')?.value||'media';
   const funcSel=document.getElementById('meta-colab');
-  const funcs=[...funcSel.selectedOptions].map(o=>o.value);
+  const funcs=Array.from(funcSel.selectedOptions).map(o=>o.value);
   if(!funcs.length){showAlert('Selecione pelo menos um colaborador!');return;}
   const nova={
     id:metaIdCounter++,tipo,
