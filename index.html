@@ -8486,7 +8486,7 @@ function renderAgenda(){
     },
   };
 
-  var apptsDia=(function(){var arr=window._agendaPorData[dataKey]||[];var obj={};arr.forEach(function(a){if(a&&a.hora&&a.profissional)obj[a.profissional+":"+a.hora]=a;});return obj;})();
+  var apptsDia=(function(){var raw=window._agendaPorData[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora&&a.profissional)obj[a.profissional+":"+a.hora]=a;});return obj;})();
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
   if(window._agendaExtra)Object.assign(apptsDia,window._agendaExtra);
     var temAgendamentos=Object.keys(apptsDia).length>0;
