@@ -7378,19 +7378,19 @@ const pages = {
   'relatorios':'Relatórios','plano':'Plano e Pagamento','configuracoes':'Configurações','termos':'Termos e Privacidade'
 };
 
-function showPage(id){document.querySelectorAll('[id^="page-"]').forEach(function(p){p.style.display="none";});var el=document.getElementById("page-"+id);if(el){el.style.display="block";el.style.width="100%";}
+function showPage(id){
   // Esconder todas as pages
   document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});
-  document.getElementById('page-colaborador-view').style.display='none';
+  document.querySelectorAll('[id^="page-"]').forEach(function(p){p.style.display='none';});
   // Nav
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(n){
     var oc=n.getAttribute('onclick')||'';
     if(oc.indexOf("'"+id+"'")>-1)n.classList.add('active');
   });
-  // Mostrar page
+  // Mostrar a page correta
   var pg=document.getElementById('page-'+id);
-  if(pg){pg.style.display='block';}
+  if(pg){pg.style.display='block';pg.style.width='100%';}
   // Title
   var t=document.getElementById('page-title');
   if(t)t.textContent=pages[id]||id;
