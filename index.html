@@ -8486,7 +8486,7 @@ function renderAgenda(){
     },
   };
 
-  var apptsDia=(function(){var raw=window._supaAgenda[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora&&a.profissional)obj[a.profissional+":"+a.hora]=a;});return obj;})();
+  var apptsDia=(function(){var raw=window._supaAgenda[dataKey];var arr=Array.isArray(raw)?raw:[];var obj={};arr.forEach(function(a){if(a&&a.hora){var _prof=a.profissional||"Ana Flor";obj[_prof+":"+a.hora]=a;}});return obj;})();
   agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
   if(window._agendaExtra){var _ex=window._agendaExtra;Object.keys(_ex).forEach(function(k){var _a=_ex[k];if(_a&&_a.data){var _p=_a.data.split("-");var _dk=parseInt(_p[2])+"/"+(parseInt(_p[1]))+"/"+_p[0];if(_dk===dataKey)apptsDia[k]=_a;}else{apptsDia[k]=_a;}});}
     var temAgendamentos=Object.keys(apptsDia).length>0;
