@@ -8500,7 +8500,7 @@ function renderAgenda(){
         if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
-          <div style="position:absolute;left:3px;right:3px;background:${a.cls};border-radius:8px;padding:5px 8px;font-size:11px;font-weight:600;color:#fff;overflow:hidden;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.18);top:${(function(){var _hp=a.hora.split(":");var _hm=parseInt(_hp[0])*60+parseInt(_hp[1]);var _sm=parseInt(h.split(":")[0])*60+parseInt(h.split(":")[1]);return Math.max(0,Math.round((_hm-_sm)*50/30))})()}px;height:${Math.round((a.duracao||45)*50/30)-4}px;min-height:28px;box-sizing:border-box">
+          <div style="position:absolute;left:3px;right:3px;background:${a.cls}22;border-left:3px solid ${a.cls};border-radius:6px;padding:4px 7px;font-size:11px;font-weight:600;color:#1a1a2e;overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.10);top:${(function(){var _hp=a.hora.split(":");var _hm=parseInt(_hp[0])*60+parseInt(_hp[1]);var _sm=parseInt(h.split(":")[0])*60+parseInt(h.split(":")[1]);return Math.max(0,Math.round((_hm-_sm)*50/30))})()}px;height:${Math.round((a.duracao||45)*50/30)-4}px;min-height:28px;box-sizing:border-box">
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
