@@ -6372,7 +6372,7 @@ function abrirCaixa(){
       var d=document.createElement('div');
       d.id='card-detalhe-'+t; d.style.cssText='display:none;margin-bottom:12px';
       d.innerHTML='<div class="table-card" style="border-top:3px solid '+cores[t]+'"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:'+cores[t]+'">'+nomes[t]+'</div><button onclick="toggleCardDetalhe(''+t+'')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div id="card-lista-'+t+'" style="min-height:60px"></div>'+(t==='entradas'||t==='saidas'?'<div style="padding:12px 20px;background:#f9fafb;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:#666">Total</span><span id="card-total-'+t+'-rodape" style="font-size:14px;font-weight:800;color:'+cores[t]+'">R$ 0,00</span></div>':'')+'</div>';
-      abView.insertBefore(d, abView.children[1]||null);
+      var refEl=document.getElementById('caixa-mov-count');var refParent=refEl?refEl.closest('.table-card'):null;abView.insertBefore(d, refParent||null);
     }
     // Garantir onclick nos cards
     var btn=document.getElementById('card-btn-'+t);
