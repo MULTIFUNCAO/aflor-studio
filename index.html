@@ -4695,8 +4695,10 @@ function renderAgenda(){
     }).then(function(r){return r.json();}).then(function(rows){
       var obj={};
       rows.forEach(function(a){
-        var k=(a.profissional||'?')+':'+(a.hora||'00:00');
-        obj[k]={cliente:a.cliente||'',tel:a.telefone||'',servico:a.servico||'',prof:a.profissional||'',hora:a.hora||'',duracao:a.duracao||'60 min',valor:a.valor||'R$ 0,00',cls:a.status==='Concluído'?'#22c55e':a.status==='Pendente'?'#f59e0b':'#8b5cf6',sinal:!!a.sinal,sinalPago:!!a.sinal_pago,sinalValor:a.sinal_valor||''};
+        var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+        var profNome=mapaNomes[a.profissional]||a.profissional||'?';
+        var k=profNome+':'+(a.hora||'00:00');
+        obj[k]={cliente:a.cliente||'',tel:a.telefone||'',servico:a.servico||'',prof:profNome,hora:a.hora||'',duracao:a.duracao||'60 min',valor:a.valor||'R$ 0,00',cls:a.status==='Concluído'?'#22c55e':a.status==='Pendente'?'#f59e0b':'#8b5cf6',sinal:!!a.sinal,sinalPago:!!a.sinal_pago,sinalValor:a.sinal_valor||''};
       });
       agendamentosPorData[dataKey]=obj;
       renderAgenda();
