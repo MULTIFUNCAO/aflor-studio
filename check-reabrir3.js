@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var idx=c.indexOf('reabrirRetorno');var idx2=c.lastIndexOf('reabrirRetorno');console.log('1o:',JSON.stringify(c.substring(idx-20,idx+60)));console.log('2o:',JSON.stringify(c.substring(idx2-100,idx2+60)));

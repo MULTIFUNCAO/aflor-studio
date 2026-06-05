@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var lines=c.split('\n');var idx=8467;console.log('linha 8465:',JSON.stringify(lines[8464]));console.log('linha 8466:',JSON.stringify(lines[8465]));console.log('linha 8467:',JSON.stringify(lines[8466]));console.log('linha 8468:',JSON.stringify(lines[8467]));

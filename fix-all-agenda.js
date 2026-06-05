@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var before=c.split('agendamentosPorData').length-1;c=c.split('agendamentosPorData').join('window._agendaPorData');var after=c.split('agendamentosPorData').length-1;fs.writeFileSync('index.html',c);console.log('substituiu:',before,'restantes:',after);

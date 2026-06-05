@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var old="agendamentosPorData[a.data].push(a);";var novo="agendamentosPorData[_aData].push(a);";if(c.includes(old)){c=c.split(old).join(novo);fs.writeFileSync('index.html',c);console.log('ok');}else{console.log('nao achou');}

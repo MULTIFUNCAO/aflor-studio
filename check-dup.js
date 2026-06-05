@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var count=(c.match(/agendamentosPorData=\{/g)||[]).length;console.log('count:',count);var idx=c.indexOf('agendamentosPorData={');var idx2=c.indexOf('agendamentosPorData={',idx+1);console.log('1o linha:',c.substring(0,idx).split('\n').length);console.log('2o linha:',c.substring(0,idx2).split('\n').length);

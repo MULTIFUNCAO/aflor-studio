@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var old='dados.sinalPago?';var novo='(dados.sinalPago||dados.sinal)?';var count=(c.match(/dados\.sinalPago\?/g)||[]).length;console.log('ocorrencias:',count);c=c.split(old).join(novo);fs.writeFileSync('index.html',c);console.log('ok');

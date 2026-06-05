@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var idx=c.indexOf('Sinal pago');var idx2=c.indexOf('Sinal pago',idx+1);console.log('2o:',JSON.stringify(c.substring(idx2-200,idx2+50)));

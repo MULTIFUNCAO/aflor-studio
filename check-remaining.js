@@ -1,0 +1,1 @@
+var fs=require('fs');var c=fs.readFileSync('index.html','utf8');var count=(c.match(/agendamentosPorData/g)||[]).length;console.log('restantes:',count);var idx=c.indexOf('agendamentosPorData');if(idx>-1)console.log('contexto:',JSON.stringify(c.substring(idx-20,idx+60)));
