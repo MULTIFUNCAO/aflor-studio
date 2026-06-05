@@ -4691,7 +4691,7 @@ function renderAgenda(){
   if(!agendamentosPorData[dataKey]){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
-    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=*',{
+    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs',{
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
     }).then(function(r){return r.json();}).then(function(rows){
       var obj={};
