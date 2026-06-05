@@ -4667,7 +4667,7 @@ function renderAgenda(){
   // Data atual formatada para chave
   var d=agendaDataAtual;
   var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
-  var isHoje=(d.getDate()===26&&d.getMonth()===4&&d.getFullYear()===2026);
+  var hoje2=new Date(); var isHoje=(d.getDate()===hoje2.getDate()&&d.getMonth()===hoje2.getMonth()&&d.getFullYear()===hoje2.getFullYear());
 
   // Agendamentos por data — adicione mais datas aqui
   var agendamentosPorData={
@@ -4686,8 +4686,24 @@ function renderAgenda(){
     },
   };
 
+  if(!agendamentosPorData[dataKey]){
+    var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
+    var dataISO=anoD+'-'+mesD+'-'+diaD;
+    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=*',{
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    }).then(function(r){return r.json();}).then(function(rows){
+      var obj={};
+      rows.forEach(function(a){
+        var k=(a.profissional||'?')+':'+(a.hora||'00:00');
+        obj[k]={cliente:a.cliente||'',tel:a.telefone||'',servico:a.servico||'',prof:a.profissional||'',hora:a.hora||'',duracao:a.duracao||'60 min',valor:a.valor||'R$ 0,00',cls:a.status==='Concluído'?'#22c55e':a.status==='Pendente'?'#f59e0b':'#8b5cf6',sinal:!!a.sinal,sinalPago:!!a.sinal_pago,sinalValor:a.sinal_valor||''};
+      });
+      agendamentosPorData[dataKey]=obj;
+      renderAgenda();
+    });
+    agendamentosPorData[dataKey]={};
+  }
   var apptsDia=agendamentosPorData[dataKey]||{};
-  agendaDiaAtual=apptsDia; // salva globalmente para o popup acessar
+  agendaDiaAtual=apptsDia;
   var temAgendamentos=Object.keys(apptsDia).length>0;
 
   grid.innerHTML=hours.map(h=>`
