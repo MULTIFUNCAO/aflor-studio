@@ -5993,7 +5993,7 @@ function salvarAgendamento(){
   var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
   var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
-  var obj={cliente:cliente,data:data,hora:hora.substring(0,5),profissional:profSupa,servico:servico,valor:'R$ '+parseFloat(valor||0).toFixed(2).replace('.',','),status:'Pendente',sinal:sinalAtivo,sinal_pago:sinalStatus==='pago',sinal_valor:sinalAgora,duracao:'60 min'};
+  var obj={cliente:cliente,data:data,hora:hora.substring(0,5),profissional:profSupa,servico:servico,valor:'R$ '+parseFloat(valor||0).toFixed(2).replace('.',','),status:'Pendente',sinal:git reset --hard origin/main && git push origin mainsinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalAgora};
   fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){return r.json();}).then(function(){
     var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
     var profAgenda=mapaNomes[profSupa]||prof;
