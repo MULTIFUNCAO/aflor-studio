@@ -10370,5 +10370,18 @@ async function confirmarPagamentoFinal() {
     </div>
   </div>
 </div>
+
+<script>
+(function fixPageNesting(){
+  var allPages = document.querySelectorAll('[id^="page-"]');
+  allPages.forEach(function(pg){
+    var parent = pg.parentElement;
+    if(parent && parent.id && parent.id.startsWith('page-') && parent.id !== pg.id){
+      console.warn('fixPageNesting: movendo', pg.id, 'de dentro de', parent.id);
+      parent.parentElement.insertBefore(pg, parent.nextSibling);
+    }
+  });
+})();
+</script>
 </body>
 </html>
