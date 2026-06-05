@@ -6404,6 +6404,59 @@ function confirmarFechamentoCaixa(){
   document.getElementById('caixa-fechado-view').style.display='block';
   showAlert('Caixa fechado!');
 }
+
+function toggleCardDetalhe(tipo){
+  var paineis=['entradas','saidas','saldo','sinal'];
+  paineis.forEach(function(t){
+    var painel=document.getElementById('card-detalhe-'+t);
+    var arrow=document.getElementById('card-arrow-'+t);
+    var card=document.getElementById('card-btn-'+t);
+    if(t===tipo){
+      var aberto=painel&&painel.style.display!=='none';
+      if(painel) painel.style.display=aberto?'none':'block';
+      if(arrow) arrow.style.transform=aberto?'':'rotate(180deg)';
+      if(card) card.style.boxShadow=aberto?'':'0 0 0 2px '+({entradas:'#22c55e',saidas:'#ef4444',saldo:'#8b5cf6',sinal:'#f59e0b'}[t]||'#ccc');
+      if(!aberto) renderCardDetalhe(tipo);
+    } else {
+      if(painel) painel.style.display='none';
+      if(arrow) arrow.style.transform='';
+      if(card) card.style.boxShadow='';
+    }
+  });
+}
+function renderCardDetalhe(tipo){
+  var movs=caixaState.movimentos;
+  if(tipo==='entradas'){
+    var lista=movs.filter(function(m){return m.tipo==='entrada';});
+    var html=lista.length===0?'<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Nenhuma entrada.</div>':lista.map(function(m){var icone={dinheiro:'$',pix:'P',cartao:'C'}[m.forma]||'';return '<div style="padding:12px 20px;border-bottom:1px solid #f8f8f8;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.descricao+'</div><div style="font-size:11px;color:var(--gray-400)">'+m.categoria+' · '+m.forma+' · '+m.hora+'</div></div><div style="font-size:14px;font-weight:800;color:#22c55e">+ '+fmtCaixa(m.valor)+'</div></div>';}).join('');
+    document.getElementById('card-lista-entradas').innerHTML=html;
+    document.getElementById('card-total-entradas-rodape').textContent=fmtCaixa(lista.reduce(function(s,m){return s+m.valor;},0));
+  } else if(tipo==='saidas'){
+    var lista=movs.filter(function(m){return m.tipo==='saida';});
+    var html=lista.length===0?'<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Nenhuma saida.</div>':lista.map(function(m){return '<div style="padding:12px 20px;border-bottom:1px solid #f8f8f8;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.descricao+'</div><div style="font-size:11px;color:var(--gray-400)">'+m.categoria+' · '+m.forma+' · '+m.hora+'</div></div><div style="font-size:14px;font-weight:800;color:#ef4444">- '+fmtCaixa(m.valor)+'</div></div>';}).join('');
+    document.getElementById('card-lista-saidas').innerHTML=html;
+    document.getElementById('card-total-saidas-rodape').textContent=fmtCaixa(lista.reduce(function(s,m){return s+m.valor;},0));
+  } else if(tipo==='saldo'){
+    var entradas=movs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+    var saidas=movs.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
+    var saldo=caixaState.troco+entradas-saidas;
+    var cor=saldo>=0?'#22c55e':'#ef4444';
+    var formas={dinheiro:0,pix:0,cartao:0};
+    movs.forEach(function(m){if(m.tipo==='entrada')formas[m.forma]=(formas[m.forma]||0)+m.valor;});
+    var html='<div style="display:flex;flex-direction:column">';
+    html+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5"><span style="font-size:13px;color:var(--gray-400)">Sinal de caixa</span><span style="font-weight:700;color:#f59e0b">'+fmtCaixa(caixaState.troco)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5"><span style="font-size:13px;color:#22c55e">Entradas</span><span style="font-weight:700;color:#22c55e">+ '+fmtCaixa(entradas)+'</span></div>';
+    if(formas.dinheiro)html+='<div style="display:flex;justify-content:space-between;padding:7px 0 7px 16px;border-bottom:1px solid #f5f5f5"><span style="font-size:12px;color:var(--gray-400)">Dinheiro</span><span style="font-size:12px">'+fmtCaixa(formas.dinheiro)+'</span></div>';
+    if(formas.pix)html+='<div style="display:flex;justify-content:space-between;padding:7px 0 7px 16px;border-bottom:1px solid #f5f5f5"><span style="font-size:12px;color:var(--gray-400)">PIX</span><span style="font-size:12px">'+fmtCaixa(formas.pix)+'</span></div>';
+    if(formas.cartao)html+='<div style="display:flex;justify-content:space-between;padding:7px 0 7px 16px;border-bottom:1px solid #f5f5f5"><span style="font-size:12px;color:var(--gray-400)">Cartao</span><span style="font-size:12px">'+fmtCaixa(formas.cartao)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f5f5"><span style="font-size:13px;color:#ef4444">Saidas</span><span style="font-weight:700;color:#ef4444">- '+fmtCaixa(saidas)+'</span></div>';
+    html+='<div style="display:flex;justify-content:space-between;padding:14px 0"><span style="font-size:14px;font-weight:800">Saldo em caixa</span><span style="font-size:18px;font-weight:800;color:'+cor+'">'+fmtCaixa(saldo)+'</span></div></div>';
+    document.getElementById('card-lista-saldo').innerHTML=html;
+  } else if(tipo==='sinal'){
+    var el=document.getElementById('card-sinal-valor');
+    if(el) el.textContent=fmtCaixa(caixaState.troco);
+  }
+}
 </script>
 
 <div id="modal-movimento-caixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
