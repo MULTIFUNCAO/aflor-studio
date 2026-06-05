@@ -849,8 +849,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
           <div>
-            <div style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Terça-feira, 26 de maio de 2026</div>
-            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px">Bom dia, Ana Flor! 🌷</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="dashboard-data-hoje"></div>
+            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px" data-saudacao>Bom dia, Ana Flor! 🌷</div>
             <div style="font-size:13px;color:rgba(255,255,255,.6)">AFLOR / STUDIO · Guarulhos/SP</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
@@ -6478,6 +6478,19 @@ function renderCardDetalhe(tipo){
     if(el) el.textContent=fmtCaixa(caixaState.troco);
   }
 }
+
+(function(){
+  var el=document.getElementById("dashboard-data-hoje");
+  if(!el)return;
+  var dias=["Domingo","Segunda-feira","Terca-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sabado"];
+  var meses=["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  var hoje=new Date();
+  el.textContent=dias[hoje.getDay()]+", "+hoje.getDate()+" de "+meses[hoje.getMonth()]+" de "+hoje.getFullYear();
+  var hora=hoje.getHours();
+  var saud=hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
+  var elS=document.querySelector("[data-saudacao]");
+  if(elS)elS.textContent=saud+", Ana Flor! 🌷";
+})();
 </script>
 
 <div id="modal-movimento-caixa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
