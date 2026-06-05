@@ -823,7 +823,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Buscar
       </button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-agendar')">
+      <button class="btn btn-primary btn-sm" onclick="abrirModalAgendar()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agendar
       </button>
@@ -1014,7 +1014,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Lara</option>
             <option>Angélica</option>
           </select>
-          <button class="btn btn-primary" onclick="openModal('modal-agendar')">
+          <button class="btn btn-primary" onclick="abrirModalAgendar()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agendar
           </button>
@@ -3131,10 +3131,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="form-grid">
       <div class="form-group full"><label>Cliente</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
-      <div class="form-group"><label>Data</label><input type="date" value="2026-05-26"/></div>
-      <div class="form-group"><label>Horário</label><input type="time" value="09:00"/></div>
+      <div class="form-group"><label>Data</label><input type="date" id="ag-data" value="2026-05-26"/></div>
+      <div class="form-group"><label>Horário</label><input type="time" id="ag-hora" value="09:00"/></div>
       <div class="form-group"><label>Profissional</label>
-        <select><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
+        <select id="ag-prof"><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
       </div>
       <div class="form-group"><label>Serviço</label>
         <select id="ag-servico" onchange="agCalcSinal()">
@@ -3218,6 +3218,49 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
       <button class="btn btn-outline" onclick="closeModal('modal-agendar')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarAgendamento()">✅ Confirmar Agendamento</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirmar-pagamento">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">💳 Confirmar Pagamento e Comanda</span>
+      <button class="modal-close" onclick="closeModal('modal-confirmar-pagamento')">✕</button>
+    </div>
+    <div style="background:#f8f8f8;border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid #e5e5e5">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Atendimento</div>
+      <div id="pg-cliente" style="font-size:15px;font-weight:800;color:#111;margin-bottom:4px">—</div>
+      <div id="pg-servico" style="font-size:12px;color:#555;margin-bottom:2px">—</div>
+      <div id="pg-prof" style="font-size:11px;color:#888">—</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;gap:12px">
+        <span style="font-size:13px;color:#555;flex-shrink:0">Valor total do serviço</span>
+        <input type="number" id="pg-valor-total" min="0" step="0.01" oninput="pgRecalcularSaldo()" placeholder="0,00" style="width:140px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;font-weight:800;color:#111;text-align:right;outline:none"/>
+      </div>
+      <div id="pg-linha-sinal" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0">
+        <span style="font-size:13px;color:#555">(-) Sinal já pago</span>
+        <span id="pg-sinal-pago" style="font-size:14px;font-weight:700;color:#2d2d2d">R$ 0,00</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px;background:#fffbeb;border-radius:10px;border:1.5px solid #fde68a;margin-top:4px">
+        <span style="font-size:14px;font-weight:800;color:#92400e">Saldo restante a pagar</span>
+        <span id="pg-valor-restante" style="font-size:20px;font-weight:900;color:#d4af37">R$ 0,00</span>
+      </div>
+    </div>
+    <div class="form-group full" id="pg-area-forma">
+      <label>Forma de pagamento do saldo</label>
+      <select id="pg-forma-pagamento" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
+        <option value="">Selecione...</option>
+        <option value="Pix">Pix</option>
+        <option value="Cartão de Crédito">Cartão de Crédito</option>
+        <option value="Cartão de Débito">Cartão de Débito</option>
+        <option value="Dinheiro">Dinheiro</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirmar-pagamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarFechamentoPagamento()" style="background:#d4af37;border-color:#d4af37;color:#1a1a1a;font-weight:800">✅ Confirmar Fechamento</button>
     </div>
   </div>
 </div>
@@ -4518,6 +4561,47 @@ function agendaHoje(){
 
 // POPUP de agendamento
 var agendaPopupAtivo=null;
+
+function formatMoedaBR(v){
+  return 'R$ '+Number(v||0).toFixed(2).replace('.',',');
+}
+
+function nomeServicoAgendamento(dados){
+  var svc=(dados.servico||'').trim();
+  var idx=svc.search(/\s[—\-]\s*R\$/i);
+  if(idx>0)return svc.substring(0,idx).trim();
+  return svc.split(' — ')[0].split(' - ')[0].trim()||svc;
+}
+
+function lerValorServicoAgendamento(dados){
+  if(!dados)return 0;
+  var v=parseMoedaBR(dados.valor);
+  if(v>0)return v;
+  if(typeof dados.valor_num==='number'&&!isNaN(dados.valor_num)&&dados.valor_num>0)return dados.valor_num;
+  var m=(dados.servico||'').match(/R\$\s*([\d.,]+)/i);
+  if(m)return parseMoedaBR('R$ '+m[1]);
+  return 0;
+}
+
+function calcComandaPopup(key){
+  var dados=agendaDiaAtual[key];
+  if(!dados)return {servicoVal:0,sinalInput:0,abate:0,totalPagar:0,sinalPago:false,nome:''};
+  var elInput=document.getElementById('popup-sinal-valor');
+  var sinalInput=elInput?parseFloat(elInput.value):NaN;
+  if(isNaN(sinalInput))sinalInput=lerSinalAgendamento(dados).valor;
+  var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
+  var servicoVal=lerValorServicoAgendamento(dados);
+  var abate=sinalPago?sinalInput:0;
+  return {
+    servicoVal:servicoVal,
+    sinalInput:sinalInput,
+    abate:abate,
+    totalPagar:Math.max(0,servicoVal-abate),
+    sinalPago:sinalPago,
+    nome:nomeServicoAgendamento(dados)
+  };
+}
+
 function abrirAgendaPopup(key,dados,event){
   // Fechar popup anterior
   fecharAgendaPopup();
@@ -4534,11 +4618,17 @@ function abrirAgendaPopup(key,dados,event){
   if(y+600>window.innerHeight)y=Math.max(10,window.innerHeight-620);
   popup.style.left=x+'px';
   popup.style.top=y+'px';
-  var sinalBadge=dados.sinal?
-    (dados.sinalPago?
-      '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-left:6px">✅ Sinal pago '+dados.sinalValor+'</span>':
-      '<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-left:6px">⏳ Sinal pendente '+dados.sinalValor+'</span>'
-    ):'<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-left:6px">Sem sinal</span>';
+  var sinalInfoPg=lerSinalAgendamento(dados);
+  var servicoValPg=lerValorServicoAgendamento(dados);
+  var nomeSvcPg=nomeServicoAgendamento(dados);
+  var sinalInputPg=sinalInfoPg.valor;
+  var abatePg=sinalInfoPg.pago?sinalInputPg:0;
+  var totalPagarPg=Math.max(0,servicoValPg-abatePg);
+  var sinalStatusHtml=sinalInfoPg.pago?
+    '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">✅ Sinal pago</span>':
+    (sinalInfoPg.temSinal||sinalInfoPg.valor>0?
+      '<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">⏳ Sinal pendente</span>':
+      '<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">Sem sinal</span>');
   popup.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div style="font-size:14px;font-weight:800;color:#111">Detalhes do Atendimento</div>
@@ -4566,15 +4656,17 @@ function abrirAgendaPopup(key,dados,event){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">💰</span>
-        <div><div style="font-size:12px;color:#888">Valor</div><div style="font-size:13px;font-weight:700">${dados.valor}</div></div>
+        <div><div style="font-size:12px;color:#888">Valor</div><div id="popup-valor-servico" style="font-size:13px;font-weight:700">${formatMoedaBR(servicoValPg)}</div></div>
       </div>
     </div>
     <div style="background:#f8f8f8;border-radius:9px;padding:11px;margin-bottom:14px;border:1px solid #e5e5e5">
-      <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">SINAL / ENTRADA</div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center">${sinalBadge.replace('margin-left:6px','margin-left:0')}</div>
-        <button onclick="toggleSinalPopup('${key}')" style="font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:5px 10px;cursor:pointer">${dados.sinalPago?'Reabrir':'✅ Confirmar sinal'}</button>
+      <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:8px">SINAL / ENTRADA</div>
+      <div style="display:flex;align-items:center;margin-bottom:10px" id="popup-sinal-status">${sinalStatusHtml}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <label style="font-size:12px;color:#555;font-weight:600">Valor do sinal (R$)</label>
+        <input type="number" id="popup-sinal-valor" min="0" step="0.01" value="${sinalInfoPg.valor.toFixed(2)}" oninput="popupRecalcularComanda('${key}')" style="width:110px;padding:7px 9px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:700;color:#111;text-align:right;outline:none"/>
       </div>
+      <button id="popup-sinal-btn" onclick="toggleSinalPopup('${key}')" style="width:100%;font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:8px 10px;cursor:pointer">${dados.sinalPago?'Reabrir':'✅ Confirmar sinal'}</button>
     </div>
     <!-- COMANDA -->
     <div style="background:#fff;border:2px solid #111;border-radius:9px;padding:11px;margin-bottom:14px">
@@ -4584,20 +4676,20 @@ function abrirAgendaPopup(key,dados,event){
       </div>
       <div style="border-top:1px solid #f0f0f0;padding-top:8px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-          <span style="color:#555">${dados.servico}</span>
-          <span style="font-weight:700">${dados.valor}</span>
+          <span id="popup-servico-nome" style="color:#555">${nomeSvcPg}</span>
+          <span id="popup-servico-valor" style="font-weight:700">${formatMoedaBR(servicoValPg)}</span>
         </div>
-        ${dados.sinal?`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+        <div id="popup-linha-sinal-abate" style="display:${sinalInfoPg.pago&&abatePg>0?'flex':'none'};justify-content:space-between;font-size:11px;margin-bottom:5px">
           <span style="color:#888">(-) Sinal pago</span>
-          <span style="color:#22c55e;font-weight:700">- ${dados.sinalValor||'R$ 0,00'}</span>
-        </div>`:''}
+          <span id="popup-sinal-abate-valor" style="color:#22c55e;font-weight:700">- ${formatMoedaBR(abatePg)}</span>
+        </div>
         <div style="border-top:1px dashed #e5e5e5;margin:7px 0;padding-top:7px;display:flex;justify-content:space-between;font-size:13px;font-weight:800">
           <span>Total a pagar</span>
-          <span style="color:#111">${dados.sinal&&dados.sinalPago?(()=>{var t=parseFloat((dados.valor||'0').replace('R$ ','').replace(',','.'));var s=parseFloat((dados.sinalValor||'0').replace('R$ ','').replace(',','.'));return 'R$ '+(t-s).toFixed(2).replace('.',',');})():dados.valor}</span>
+          <span id="popup-total-pagar" style="color:#111">R$ ${totalPagarPg.toFixed(2).replace('.',',')}</span>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
-        <button onclick="abrirComandaAtendimento('${dados.cliente}','${dados.servico}','${dados.valor}')" style="flex:1;padding:8px;background:#111;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💳 Registrar Pagamento</button>
+        <button onclick="abrirConfirmarPagamento('${key}')" style="flex:1;padding:8px;background:#111;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💳 Registrar Pagamento</button>
         <button onclick="fecharAgendaPopup();showPage('comandas')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
       </div>
     </div>
@@ -4609,13 +4701,131 @@ function abrirAgendaPopup(key,dados,event){
   document.body.appendChild(popup);
   agendaPopupAtivo=key;
 }
+var pagamentoCtx=null;
+
+function lerSinalAgendamento(dados){
+  var sinalVal=0;
+  if(typeof dados.sinal_valor==='number'&&!isNaN(dados.sinal_valor))sinalVal=dados.sinal_valor;
+  else if(dados.sinalValor)sinalVal=parseMoedaBR(dados.sinalValor);
+  var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
+  var temSinal=!!dados.sinal||sinalVal>0||sinalPago;
+  var sinalAbate=sinalPago?sinalVal:0;
+  return {valor:sinalVal,pago:sinalPago,temSinal:temSinal,abate:sinalAbate};
+}
+
+function pgRecalcularSaldo(){
+  if(!pagamentoCtx)return;
+  var total=parseFloat(document.getElementById('pg-valor-total')?.value)||0;
+  var restante=Math.max(0,total-pagamentoCtx.sinalAbate);
+  pagamentoCtx.total=total;
+  pagamentoCtx.restante=restante;
+  document.getElementById('pg-valor-restante').textContent=fmtCaixa(restante);
+  var areaForma=document.getElementById('pg-area-forma');
+  if(areaForma)areaForma.style.display=restante>0?'block':'none';
+}
+
+function abrirConfirmarPagamento(key){
+  var elSinalInput=document.getElementById('popup-sinal-valor');
+  if(elSinalInput)sincronizarSinalLocal(key,parseFloat(elSinalInput.value)||0);
+  var dados=agendaDiaAtual[key];
+  if(!dados){showAlert('Agendamento não encontrado.');return;}
+  fecharAgendaPopup();
+  var total=lerValorServicoAgendamento(dados);
+  var sinalInput=parseFloat(document.getElementById('popup-sinal-valor')?.value);
+  if(isNaN(sinalInput))sinalInput=lerSinalAgendamento(dados).valor;
+  var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
+  var sinalAbate=sinalPago?sinalInput:0;
+  var restante=Math.max(0,total-sinalAbate);
+  var sinal={valor:sinalInput,abate:sinalAbate,temSinal:!!dados.sinal||sinalInput>0};
+  pagamentoCtx={key:key,dados:dados,total:total,sinal:sinal.valor,sinalAbate:sinal.abate,restante:restante,supaId:dados.id||null};
+  document.getElementById('pg-cliente').textContent=dados.cliente;
+  document.getElementById('pg-servico').textContent=dados.servico;
+  document.getElementById('pg-prof').textContent=dados.prof?'Profissional: '+dados.prof:'';
+  document.getElementById('pg-valor-total').value=total.toFixed(2);
+  document.getElementById('pg-sinal-pago').textContent=fmtCaixa(sinal.abate);
+  document.getElementById('pg-valor-restante').textContent=fmtCaixa(restante);
+  var rowSinal=document.getElementById('pg-linha-sinal');
+  if(rowSinal)rowSinal.style.display=sinal.temSinal?'flex':'none';
+  var areaForma=document.getElementById('pg-area-forma');
+  if(areaForma)areaForma.style.display=restante>0?'block':'none';
+  document.getElementById('pg-forma-pagamento').value='';
+  openModal('modal-confirmar-pagamento');
+}
+
+function lancarEntradaCaixaAuto(desc,valor,forma){
+  var mapaForma={'Pix':'pix','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro'};
+  var formaKey=mapaForma[forma]||'pix';
+  if(!caixaState.aberto){
+    caixaState.aberto=true;
+    caixaState.troco=caixaState.troco||0;
+    caixaState.horaAbertura=new Date();
+    if(!caixaState.movimentos)caixaState.movimentos=[];
+    var agora=caixaState.horaAbertura;
+    var elHora=document.getElementById('caixa-hora-abertura');
+    var elData=document.getElementById('caixa-data-abertura');
+    var elTroco=document.getElementById('caixa-troco-display');
+    if(elHora)elHora.textContent=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
+    if(elData)elData.textContent=agora.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
+    if(elTroco)elTroco.textContent=fmtCaixa(caixaState.troco);
+    document.getElementById('caixa-fechado-view').style.display='none';
+    document.getElementById('caixa-aberto-view').style.display='block';
+    document.getElementById('caixa-fechamento-view').style.display='none';
+  }
+  var agora=new Date();
+  caixaState.movimentos.push({id:movIdCounter++,tipo:'entrada',categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaKey,hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0')});
+  atualizarTotaisCaixa();
+}
+
+function confirmarFechamentoPagamento(){
+  if(!pagamentoCtx){return;}
+  pgRecalcularSaldo();
+  var forma=document.getElementById('pg-forma-pagamento').value;
+  if(pagamentoCtx.restante>0&&!forma){showAlert('Selecione a forma de pagamento do saldo.');return;}
+  var ctx=pagamentoCtx;
+  var key=ctx.key;
+  var valorTotalFmt='R$ '+ctx.total.toFixed(2).replace('.',',');
+
+  function finalizarLocal(){
+    var a=agendaDiaAtual[key];
+    if(a){a.status='Concluído';a.sinalPago=true;a.sinal_status='pago';a.valor=valorTotalFmt;}
+    var d=agendaDataAtual;
+    var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+    if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+      agendamentosPorData[dataKey][key].status='Concluído';
+      agendamentosPorData[dataKey][key].sinalPago=true;
+      agendamentosPorData[dataKey][key].sinal_status='pago';
+      agendamentosPorData[dataKey][key].valor=valorTotalFmt;
+    }
+    if(ctx.restante>0){
+      lancarEntradaCaixaAuto(ctx.dados.servico+' — '+ctx.dados.cliente,ctx.restante,forma);
+    }
+    closeModal('modal-confirmar-pagamento');
+    renderAgenda();
+    showAlert('✅ Atendimento finalizado! Pagamento registrado no caixa.');
+    pagamentoCtx=null;
+  }
+
+  if(ctx.supaId){
+    fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt})
+    }).then(function(r){
+      if(!r.ok)return r.json().then(function(e){throw e;});
+      return r.json();
+    }).then(function(){finalizarLocal();}).catch(function(){
+      showAlert('Erro ao atualizar agendamento. Tente novamente.');
+    });
+  } else {
+    finalizarLocal();
+  }
+}
+
 function abrirComandaAtendimento(cliente, servico, valor){
   fecharAgendaPopup();
-  // Preencher modal de comanda com dados do atendimento
   var elCliente=document.getElementById('cmd-cliente');
   var elDesc=document.getElementById('cmd-desconto');
   if(elCliente)elCliente.value=cliente;
-  // Selecionar o serviço correto no select
   var selItens=document.querySelectorAll('#cmd-itens-lista select');
   if(selItens.length>0){
     Array.from(selItens[0].options).forEach(function(opt){
@@ -4634,17 +4844,116 @@ function fecharAgendaPopup(){
   if(p)p.remove();
   agendaPopupAtivo=null;
 }
+
+function sincronizarSinalLocal(key,valorNum){
+  var a=agendaDiaAtual[key];
+  if(!a)return;
+  a.sinal_valor=valorNum;
+  a.sinalValor=valorNum>0?('R$ '+valorNum.toFixed(2).replace('.',',')):'';
+  a.sinal=valorNum>0||!!a.sinal;
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+    var c=agendamentosPorData[dataKey][key];
+    c.sinal_valor=valorNum;
+    c.sinalValor=a.sinalValor;
+    c.sinal=a.sinal;
+  }
+}
+
+function atualizarPopupComandaUI(key){
+  var dados=agendaDiaAtual[key];
+  if(!dados)return;
+  var calc=calcComandaPopup(key);
+  var sinal=lerSinalAgendamento(dados);
+  var elStatus=document.getElementById('popup-sinal-status');
+  if(elStatus){
+    if(sinal.pago){
+      elStatus.innerHTML='<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">✅ Sinal pago</span>';
+    } else if(sinal.temSinal||calc.sinalInput>0){
+      elStatus.innerHTML='<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">⏳ Sinal pendente</span>';
+    } else {
+      elStatus.innerHTML='<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">Sem sinal</span>';
+    }
+  }
+  var elBtn=document.getElementById('popup-sinal-btn');
+  if(elBtn)elBtn.textContent=sinal.pago?'Reabrir':'✅ Confirmar sinal';
+  var elNome=document.getElementById('popup-servico-nome');
+  if(elNome)elNome.textContent=calc.nome;
+  var elServicoVal=document.getElementById('popup-servico-valor');
+  if(elServicoVal)elServicoVal.textContent=formatMoedaBR(calc.servicoVal);
+  var elValorHeader=document.getElementById('popup-valor-servico');
+  if(elValorHeader)elValorHeader.textContent=formatMoedaBR(calc.servicoVal);
+  var linhaAbate=document.getElementById('popup-linha-sinal-abate');
+  var elAbate=document.getElementById('popup-sinal-abate-valor');
+  if(linhaAbate){
+    if(calc.sinalPago&&calc.sinalInput>0){
+      linhaAbate.style.display='flex';
+      if(elAbate)elAbate.textContent='- '+formatMoedaBR(calc.sinalInput);
+    } else {
+      linhaAbate.style.display='none';
+    }
+  }
+  var elTotal=document.getElementById('popup-total-pagar');
+  if(elTotal)elTotal.textContent=formatMoedaBR(calc.totalPagar);
+}
+
+function popupRecalcularComanda(key){
+  var valorNum=parseFloat(document.getElementById('popup-sinal-valor')?.value)||0;
+  sincronizarSinalLocal(key,valorNum);
+  atualizarPopupComandaUI(key);
+}
+
 function toggleSinalPopup(key){
   var a=agendaDiaAtual[key]||agendaAppts[key];
-  if(a){
-    a.sinalPago=!a.sinalPago;
-    fecharAgendaPopup();
+  if(!a){
+    showAlert('Agendamento não encontrado.');
+    return;
+  }
+  var sinalVal=parseFloat(document.getElementById('popup-sinal-valor')?.value)||0;
+  sincronizarSinalLocal(key,sinalVal);
+  var eraPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
+  var novoPago=!eraPago;
+  a.sinalPago=novoPago;
+  a.sinal_status=novoPago?'pago':'pendente';
+  a.sinal=sinalVal>0||!!a.sinal;
+  if(!novoPago)a.status='Pendente';
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+    var c=agendamentosPorData[dataKey][key];
+    c.sinalPago=novoPago;
+    c.sinal_status=novoPago?'pago':'pendente';
+    c.sinal_valor=sinalVal;
+    c.sinalValor=a.sinalValor;
+    c.sinal=a.sinal;
+    if(!novoPago)c.status='Pendente';
+  }
+  function finalizarSinal(){
+    atualizarPopupComandaUI(key);
     renderAgenda();
-    showAlert(a.sinalPago?'✅ Sinal confirmado!':'⏳ Sinal marcado como pendente');
+    showAlert(novoPago?'✅ Sinal confirmado!':'⏳ Sinal reaberto — atendimento pendente.');
+  }
+  var patch={sinal_valor:sinalVal,sinal:sinalVal>0};
+  if(novoPago){
+    patch.sinal_status='pago';
   } else {
-    fecharAgendaPopup();
-    showAlert('Sinal atualizado!');
-    renderAgenda();
+    patch.status='Pendente';
+    patch.sinal_status='pendente';
+  }
+  if(a.id){
+    fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+a.id,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(patch)
+    }).then(function(r){
+      if(!r.ok)return r.json().then(function(e){throw e;});
+      finalizarSinal();
+    }).catch(function(){
+      showAlert('Erro ao salvar sinal. Tente novamente.');
+    });
+  } else {
+    finalizarSinal();
   }
 }
 // Fechar popup ao clicar fora
@@ -4660,6 +4969,19 @@ var agendaAppts={
   'Ana Flor:14:30':{cliente:'Laura Dentista',tel:'(11) 94567-8901',servico:'Pedicure',prof:'Ana Flor',hora:'14:30',duracao:'45 min',valor:'R$ 50,00',cls:'#333',sinal:true,sinalPago:true,sinalValor:'R$ 25,00'},
   'Vi:16:00':{cliente:'Alessandra Say',tel:'(11) 95678-9012',servico:'Manicure',prof:'Vi',hora:'16:00',duracao:'45 min',valor:'R$ 40,00',cls:'#8b5cf6',sinal:true,sinalPago:false,sinalValor:'R$ 20,00'},
 };
+
+function corBlocoAgenda(a){
+  if(!a) return '#4a4a4a';
+  var st=(a.status||'').toLowerCase();
+  var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
+  var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
+  if(concluido) return '#d4af37';
+  if(sinalPago) return '#2d2d2d';
+  return '#4a4a4a';
+}
+function corTextoBlocoAgenda(cor){
+  return cor==='#d4af37'||cor==='#f59e0b'?'#1a1a1a':'#ffffff';
+}
 
 function renderAgenda(){
   const profNames=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
@@ -4693,15 +5015,33 @@ function renderAgenda(){
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs',{
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-    }).then(function(r){return r.json();}).then(function(rows){
+    }).then(function(r){
+      if(!r.ok) return r.json().then(function(err){ throw err; });
+      return r.json();
+    }).then(function(rows){
       var obj={};
-      rows.forEach(function(a){
-        var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
-        var profNome=mapaNomes[a.profissional]||a.profissional||'?';
-        var k=profNome+':'+(a.hora||'00:00');
-        obj[k]={cliente:a.cliente||'',tel:a.telefone||'',servico:a.servico||'',prof:profNome,hora:a.hora||'',duracao:a.duracao||'60 min',valor:a.valor||'R$ 0,00',cls:a.status==='Concluído'?'#22c55e':a.status==='Pendente'?'#f59e0b':'#8b5cf6',sinal:!!a.sinal,sinalPago:!!a.sinal_pago,sinalValor:a.sinal_valor||''};
-      });
+      if(Array.isArray(rows)){
+        rows.forEach(function(a){
+          var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+          var profNome=mapaNomes[a.profissional]||a.profissional||'?';
+          var horaSlot=normalizarHoraAgenda((a.hora||'00:00').substring(0,5));
+          var k=profNome+':'+horaSlot;
+          var sinalNum=typeof a.sinal_valor==='number'?a.sinal_valor:parseFloat(a.sinal_valor)||0;
+          var sinalFmt=sinalNum>0?'R$ '+sinalNum.toFixed(2).replace('.',','):'';
+          var valNum=parseMoedaBR(a.valor);
+          if(valNum<=0){
+            var mSvc=(a.servico||'').match(/R\$\s*([\d.,]+)/i);
+            if(mSvc)valNum=parseMoedaBR('R$ '+mSvc[1]);
+          }
+          var valFmt=valNum>0?formatMoedaBR(valNum):(a.valor||'R$ 0,00');
+          obj[k]={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:'60 min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt};
+        });
+      }
       agendamentosPorData[dataKey]=obj;
+      renderAgenda();
+    }).catch(function(err){
+      console.error('Erro ao carregar agendamentos:',err);
+      agendamentosPorData[dataKey]={};
       renderAgenda();
     });
     agendamentosPorData[dataKey]={};
@@ -4716,10 +5056,12 @@ function renderAgenda(){
       ${profs.map(p=>{
         const key=`${p}:${h}`;
         const a=apptsDia[key];
-        if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        if(!a) return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
+        const corBloco=corBlocoAgenda(a);
+        const corTexto=corTextoBlocoAgenda(corBloco);
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
-          <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer">
+          <div style="position:absolute;inset:2px;background:${corBloco};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:${corTexto};overflow:hidden;cursor:pointer">
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
@@ -4727,7 +5069,7 @@ function renderAgenda(){
         </div>`;
       }).join('')}
     </div>
-  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openModal(\'modal-agendar\')">+ Novo agendamento</button></div>');
+  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
   agendaAtualizarLabel();
 }
 
@@ -5980,33 +6322,69 @@ function agSetPct(pct){
   var el=document.getElementById('ag-sinal-pct');
   if(el){el.value=pct;agCalcSinal();}
 }
+function parseMoedaBR(s){
+  if(typeof s==='number')return s;
+  return parseFloat(String(s||'0').replace('R$ ','').replace(/\./g,'').replace(',','.'))||0;
+}
+function normalizarHoraAgenda(hora){
+  var p=(hora||'').split(':');
+  var h=parseInt(p[0],10)||0,m=parseInt(p[1]||0,10)||0;
+  m=Math.round(m/30)*30;
+  if(m===60){h++;m=0;}
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function abrirModalAgendar(prof,hora){
+  var d=agendaDataAtual;
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var elData=document.getElementById('ag-data');
+  var elHora=document.getElementById('ag-hora');
+  var elProf=document.getElementById('ag-prof');
+  if(elData)elData.value=iso;
+  if(elHora)elHora.value=hora||elHora.value||'09:00';
+  if(elProf&&prof)elProf.value=prof;
+  openModal('modal-agendar');
+}
 function salvarAgendamento(){
-  var cliente=document.getElementById('ag-cliente')?.value||'Cliente';
+  var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
   var data=document.getElementById('ag-data')?.value||'';
-  var hora=document.getElementById('ag-hora')?.value||'';
+  var hora=normalizarHoraAgenda(document.getElementById('ag-hora')?.value||'');
   var prof=document.getElementById('ag-prof')?.value||'';
+  if(!cliente||!data||!hora||!prof){
+    showAlert('Preencha cliente, data, horário e profissional.');
+    return;
+  }
   var selServ=document.getElementById('ag-servico');
   var servico=(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0];
   var valor=(selServ?.options[selServ?.selectedIndex]?.text||'').split('R$ ')[1]||'0';
+  var valorFmt='R$ '+parseFloat(valor||0).toFixed(2).replace('.',',');
   var sinalAtivo=document.getElementById('ag-sinal-ativo')?.checked;
   var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
   var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
+  var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
   var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
-  var obj={cliente:cliente,data:data,hora:hora.substring(0,5),profissional:profSupa,servico:servico,valor:'R$ '+parseFloat(valor||0).toFixed(2).replace('.',','),status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalAgora};
-  fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){return r.json();}).then(function(){
+  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum};
+  fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){
+    if(!r.ok)return r.json().then(function(err){throw err;});
+    return r.json();
+  }).then(function(rows){
+    var inserted=Array.isArray(rows)?rows[0]:rows;
+    var supaId=inserted&&inserted.id?inserted.id:null;
     var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
     var profAgenda=mapaNomes[profSupa]||prof;
     var partes=data.split('-');
-    var dataKey=parseInt(partes[2])+'/'+parseInt(partes[1])+'/'+partes[0];
+    var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
-    agendamentosPorData[dataKey][profAgenda+':'+hora.substring(0,5)]={cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora.substring(0,5),duracao:'60 min',valor:'R$ '+parseFloat(valor||0).toFixed(2).replace('.',','),cls:'#8b5cf6',sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinalValor:sinalAgora};
+    agendamentosPorData[dataKey][profAgenda+':'+hora]={id:supaId,cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora,duracao:'60 min',valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:''};
+    agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
+    closeModal('modal-agendar');
     renderAgenda();
-  }).catch(function(){});
-  closeModal('modal-agendar');
-  var msg='✅ Agendamento confirmado para '+cliente+'!';
-  if(sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
-  showAlert(msg);
+    var msg='✅ Agendamento confirmado para '+cliente+'!';
+    if(sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
+    showAlert(msg);
+  }).catch(function(){
+    showAlert('Erro ao salvar agendamento. Verifique os dados e tente novamente.');
+  });
 }
 // ===== FIM AGENDAMENTO =====
 
