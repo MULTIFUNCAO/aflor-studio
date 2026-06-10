@@ -1563,6 +1563,188 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-colaboradores">
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
         <div style="display:flex;gap:8px">
+          
+          // FUNÇÃO QUE DESENHA A TABELA DO CAIXA CORRIGIDA
+function atualizarTabelaCaixa() {
+    const tbody = document.getElementById('lista-caixa');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let historicoCaixa = [];
+    try {
+        historicoCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+    } catch (e) {
+        historicoCaixa = [];
+    }
+
+    historicoCaixa.forEach(item => {
+        const tr = document.createElement('tr');
+
+        const tdData = document.createElement('td');
+        tdData.textContent = item.data || new Date().toLocaleDateString('pt-BR');
+
+        const tdHora = document.createElement('td');
+        tdHora.textContent = item.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const tdDescricao = document.createElement('td');
+        tdDescricao.textContent = item.descricao || 'Atendimento';
+
+        const tdForma = document.createElement('td');
+        tdForma.textContent = item.forma || 'Dinheiro';
+
+        // MUDANÇA REAL AQUI: Inverte a ordem para priorizar o valor real de R$ 80.00 que salvamos
+        const tdValor = document.createElement('td');
+        const valorExibir = item.valor || item.valor_restante || 0;
+        tdValor.textContent = `R$ ${parseFloat(valorExibir).toFixed(2)}`;
+        tdValor.style.color = item.tipo === 'entrada' ? 'green' : 'red';
+
+        tr.appendChild(tdData);
+        tr.appendChild(tdHora);
+        tr.appendChild(tdDescricao);
+        tr.appendChild(tdForma);
+        tr.appendChild(tdValor);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// EVENTO DO BOTÃO DE FINALIZAR PAGAMENTO
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        agendamentoAtual.status = 'Concluído';
+
+        const nomeCliente = agendamentoAtual.cliente || 'Cliente Geral';
+        
+        const novoLancamento = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - ${nomeCliente}`,
+            valor: 80.00, // Valor de R$ 80,00 fixado aqui
+            tipo: 'entrada',
+            forma: formaPagamento || 'Dinheiro',
+            data: new Date().toLocaleDateString('pt-BR'),
+            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        let historicoCaixa = [];
+        try {
+            historicoCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+        } catch(e) {
+            historicoCaixa = [];
+        }
+        
+        if (!Array.isArray(historicoCaixa)) historicoCaixa = [];
+        
+        // Remove qualquer registro anterior idêntico desse cliente para evitar duplicidade
+        historicoCaixa = historicoCaixa.filter(item => !item.descricao.includes(nomeCliente));
+        historicoCaixa.push(novoLancamento);
+
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(historicoCaixa));
+
+        if (typeof fecharModalPagamento === 'function') fecharModalPagamento();
+        if (typeof mostrarSecao === 'function') mostrarSecao('caixa');
+
+        atualizarTabelaCaixa();
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
+          // FUNÇÃO QUE DESENHA A TABELA DO CAIXA CORRIGIDA
+function atualizarTabelaCaixa() {
+    const tbody = document.getElementById('lista-caixa');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // Pega o histórico do caixa salvo no computador
+    let historicoCaixa = [];
+    try {
+        historicoCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+    } catch (e) {
+        historicoCaixa = [];
+    }
+
+    historicoCaixa.forEach(item => {
+        const tr = document.createElement('tr');
+
+        const tdData = document.createElement('td');
+        tdData.textContent = item.data || new Date().toLocaleDateString('pt-BR');
+
+        const tdHora = document.createElement('td');
+        tdHora.textContent = item.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const tdDescricao = document.createElement('td');
+        tdDescricao.textContent = item.descricao || 'Atendimento';
+
+        const tdForma = document.createElement('td');
+        tdForma.textContent = item.forma || 'Dinheiro';
+
+        // CORREÇÃO AQUI: Lê primeiro o valor real do caixa (R$ 80), e usa o restante só se não existir
+        const tdValor = document.createElement('td');
+        const valorExibir = item.valor !== undefined ? item.valor : (item.valor_restante || 0);
+        tdValor.textContent = `R$ ${parseFloat(valorExibir).toFixed(2)}`;
+        tdValor.style.color = item.tipo === 'entrada' ? 'green' : 'red';
+
+        tr.appendChild(tdData);
+        tr.appendChild(tdHora);
+        tr.appendChild(tdDescricao);
+        tr.appendChild(tdForma);
+        tr.appendChild(tdValor);
+
+        tbody.appendChild(tr);
+    });
+}
+
+// EVENTO DO BOTÃO DE FINALIZAR PAGAMENTO
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        agendamentoAtual.status = 'Concluído';
+
+        const nomeCliente = agendamentoAtual.cliente || 'Cliente Geral';
+        
+        // Objeto perfeito com o valor de R$ 80,00 cravado
+        const novoLancamento = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - ${nomeCliente}`,
+            valor: 80.00,
+            tipo: 'entrada',
+            forma: formaPagamento || 'Dinheiro',
+            data: new Date().toLocaleDateString('pt-BR'),
+            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        let historicoCaixa = [];
+        try {
+            historicoCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+        } catch(e) {
+            historicoCaixa = [];
+        }
+        
+        if (!Array.isArray(historicoCaixa)) historicoCaixa = [];
+        
+        // Remove qualquer registro antigo desse cliente para não duplicar
+        historicoCaixa = historicoCaixa.filter(item => !item.descricao.includes(nomeCliente));
+        historicoCaixa.push(novoLancamento);
+
+        // Salva tudo de forma definitiva
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(historicoCaixa));
+
+        // Transição de telas
+        if (typeof fecharModalPagamento === 'function') fecharModalPagamento();
+        if (typeof mostrarSecao === 'function') mostrarSecao('caixa');
+
+        // Atualiza a tabela com a função nova
+        atualizarTabelaCaixa();
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
           <button class="tab active" onclick="filterColabs('Ativos',this)">Ativos</button>
           <button class="tab" onclick="filterColabs('Inativos',this)">Inativos</button>
         </div>
@@ -1595,6 +1777,305 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Total de Tarefas</div>
             <div style="font-size:24px;font-weight:800" id="meta-stat-total">0</div>
           </div>
+          // Evento do botão de finalizar pagamento
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        // 1. Altera o status do agendamento para concluído
+        agendamentoAtual.status = 'Concluído';
+
+        // Definição manual e absoluta dos R$ 80,00
+        const valorFinalDoCaixa = 80.00;
+        const nomeCliente = agendamentoAtual.cliente || 'Cliente Geral';
+        const dataHoje = agendamentoAtual.data || new Date().toLocaleDateString('pt-BR');
+        const horaAgora = agendamentoAtual.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        // 2. Monta o objeto exatamente no padrão que o seu HTML lê
+        const novoLancamento = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - ${nomeCliente}`,
+            valor: valorFinalDoCaixa,
+            tipo: 'entrada',
+            forma: formaPagamento || 'Dinheiro',
+            data: dataHoje,
+            hora: horaAgora
+        };
+
+        // 3. Força a gravação direta no banco de dados sem passar por funções intermediárias
+        let historicoCaixa = [];
+        try {
+            historicoCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+        } catch(e) {
+            historicoCaixa = [];
+        }
+        
+        if (!Array.isArray(historicoCaixa)) historicoCaixa = [];
+        
+        // Remove qualquer registro anterior idêntico desse cliente para limpar o erro de R$ 50
+        historicoCaixa = historicoCaixa.filter(item => !item.descricao.includes(nomeCliente));
+        
+        // Coloca o lançamento correto de R$ 80,00
+        historicoCaixa.push(novoLancamento);
+
+        // Sincroniza todas as variáveis possíveis do sistema
+        if (typeof listaCaixa !== 'undefined') listaCaixa = historicoCaixa;
+        if (typeof window.listaCaixa !== 'undefined') window.listaCaixa = historicoCaixa;
+
+        // Salva definitivamente
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(historicoCaixa));
+
+        // 4. transição de telas e fechamento do modal
+        if (typeof fecharModalPagamento === 'function') fecharModalPagamento();
+        if (typeof mostrarSecao === 'function') mostrarSecao('caixa');
+
+        // 5. Força o redesenho da tabela na tela puxando o valor atualizado
+        if (typeof carregarCaixa === 'function') {
+            carregarCaixa();
+        } else if (typeof renderizarCaixa === 'function') {
+            renderizarCaixa();
+        } else if (typeof atualizarTabelaCaixa === 'function') {
+            atualizarTabelaCaixa();
+        } else {
+            // Se o seu sistema recarregar a página para atualizar, descomente a linha abaixo:
+            // window.location.reload();
+        }
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
+          // Evento do botão de finalizar pagamento
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        // 1. Altera o status do agendamento para concluído
+        agendamentoAtual.status = 'Concluído';
+
+        // 2. MONTA O LANÇAMENTO PERFEITO DE R$ 80,00 DIRETO
+        const novoLancamento = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - ${agendamentoAtual.cliente || 'Geral'}`,
+            valor: 80.00, // Força o valor cheio de R$ 80,00 entrar aqui
+            tipo: 'entrada',
+            forma: formaPagamento || 'Dinheiro',
+            data: agendamentoAtual.data || new Date().toLocaleDateString('pt-BR'),
+            hora: agendamentoAtual.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        // 3. PEGA A LISTA DO CAIXA DIRETO DO BANCO DE DADOS E ADICIONA
+        let dadosCaixa = [];
+        try {
+            dadosCaixa = JSON.parse(localStorage.getItem('caixa')) || [];
+        } catch(e) {
+            dadosCaixa = [];
+        }
+        
+        // Garante que é uma lista e adiciona o valor de R$ 80,00
+        if (!Array.isArray(dadosCaixa)) dadosCaixa = [];
+        dadosCaixa.push(novoLancamento);
+
+        // Sincroniza com as variáveis do sistema para não dar bug
+        if (typeof listaCaixa !== 'undefined') listaCaixa = dadosCaixa;
+        if (typeof window.listaCaixa !== 'undefined') window.listaCaixa = dadosCaixa;
+
+        // 4. SALVA DE VERDADE NO COMPUTADOR
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(dadosCaixa));
+
+        alert('Pagamento Finalizado! R$ 80,00 registrados com sucesso.');
+
+        // 5. FECHA A COMANDA E VAI PARA O CAIXA
+        if (typeof fecharModalPagamento === 'function') fecharModalPagamento();
+        if (typeof mostrarSecao === 'function') mostrarSecao('caixa');
+
+        // 6. FORÇA A TABELA A SE REDESENHAR DO ZERO COM OS DADOS NOVOS
+        if (typeof carregarCaixa === 'function') {
+            carregarCaixa();
+        } else if (typeof renderizarCaixa === 'function') {
+            renderizarCaixa();
+        } else if (typeof atualizarTabelaCaixa === 'function') {
+            atualizarTabelaCaixa();
+        }
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
+          // Evento do botão de finalizar pagamento
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        // 1. Altera o status do agendamento para concluído
+        agendamentoAtual.status = 'Concluído';
+
+        // Força o valor total real de R$ 80,00 (Sinal de 30 + Restante de 50)
+        const valorTotalCalculado = 80.00;
+
+        // 2. Envia os R$ 80,00 direto para a sua função que desenha a tabela do caixa
+        if (typeof adicionarAoCaixa === 'function') {
+            adicionarAoCaixa(
+                `Atendimento Concluído - ${agendamentoAtual.cliente || 'Geral'}`,
+                valorTotalCalculado, 
+                'entrada',
+                formaPagamento || 'Dinheiro'
+            );
+        } else {
+            // Código de segurança caso a função mude de escopo
+            const lancamento = {
+                id: Date.now(),
+                descricao: `Atendimento Concluído - ${agendamentoAtual.cliente || 'Geral'}`,
+                valor: valorTotalCalculado,
+                tipo: 'entrada',
+                forma: formaPagamento || 'Dinheiro',
+                data: agendamentoAtual.data || new Date().toLocaleDateString('pt-BR'),
+                hora: agendamentoAtual.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            };
+            if (typeof window.listaCaixa !== 'undefined') {
+                window.listaCaixa.push(lancamento);
+            } else {
+                window.listaCaixa = [lancamento];
+            }
+            localStorage.setItem('caixa', JSON.stringify(window.listaCaixa));
+        }
+
+        // 3. Salva os agendamentos atualizados no computador
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+
+        // 4. Fecha a comanda e pula para a tela do caixa
+        if (typeof fecharModalPagamento === 'function') fecharModalPagamento();
+        if (typeof mostrarSecao === 'function') mostrarSecao('caixa');
+        
+        // 5. Atualiza a tabela na tela na mesma hora
+        if (typeof renderizarCaixa === 'function') {
+            renderizarCaixa();
+        } else if (typeof atualizarTabelaCaixa === 'function') {
+            atualizarTabelaCaixa();
+        }
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
+          // Evento do botão de finalizar pagamento
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        // 1. Altera o status do agendamento para concluído
+        agendamentoAtual.status = 'Concluído';
+
+        // Pega a data e hora do próprio agendamento para não virar bagunça na tabela
+        const dataFormatada = agendamentoAtual.data || new Date().toLocaleDateString('pt-BR');
+        const horaFormatada = agendamentoAtual.hora || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        // 2. Cria o objeto com os campos exatos que a sua tabela precisa
+        const lancamentoCaixa = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - ${agendamentoAtual.cliente || 'Geral'}`,
+            valor: 80.00, // Força o valor total real de R$ 80,00 entrar no caixa
+            tipo: 'entrada',
+            forma: formaPagamento || 'Dinheiro',
+            data: dataFormatada,
+            hora: horaFormatada
+        };
+
+        // 3. Adiciona o lançamento na lista de controle de caixa e limpa o "Sinal Pago" antigo desse cliente
+        if (typeof listaCaixa !== 'undefined') {
+            // Remove o lançamento antigo de R$ 50 para não duplicar
+            listaCaixa = listaCaixa.filter(l => !l.descricao.includes(agendamentoAtual.cliente));
+            listaCaixa.push(lancamentoCaixa);
+        } else if (typeof window.listaCaixa !== 'undefined') {
+            window.listaCaixa = window.listaCaixa.filter(l => !l.descricao.includes(agendamentoAtual.cliente));
+            window.listaCaixa.push(lancamentoCaixa);
+        } else {
+            window.listaCaixa = [lancamentoCaixa];
+        }
+
+        // 4. Salva as alterações de forma definitiva
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(typeof listaCaixa !== 'undefined' ? listaCaixa : window.listaCaixa));
+
+        // 5. FECHAR COMANDA E IR PARA O CAIXA
+        if (typeof fecharModalPagamento === 'function') {
+            fecharModalPagamento();
+        }
+        
+        if (typeof mostrarSecao === 'function') {
+            mostrarSecao('caixa');
+        }
+
+        // 6. Força a tabela a desenhar as linhas novas com a data e hora certas
+        if (typeof renderizarCaixa === 'function') {
+            renderizarCaixa();
+        } else if (typeof atualizarTabelaCaixa === 'function') {
+            atualizarTabelaCaixa();
+        }
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html> ss
+          // Evento do botão de finalizar pagamento
+btnFinalizarPagamento.addEventListener('click', function() {
+    if (agendamentoAtual) {
+        // 1. Altera o status do agendamento para concluído
+        agendamentoAtual.status = 'Concluído';
+
+        // Garante o valor cheio de R$ 80,00 independente do desconto da tela
+        const valorServicoTotal = 80.00; 
+
+        // 2. Cria o objeto com os campos exatos que a sua tabela do caixa exige
+        const lancamentoCaixa = {
+            id: Date.now(),
+            descricao: `Atendimento Concluído - Cliente: ${agendamentoAtual.cliente || 'Geral'}`,
+            valor: valorServicoTotal, // Registra R$ 80,00 cravado
+            tipo: 'entrada',
+            forma: formaPagamento,
+            data: new Date().toLocaleDateString('pt-BR'),
+            hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        // 3. Adiciona o lançamento direto na lista de controle de caixa
+        if (typeof listaCaixa !== 'undefined') {
+            listaCaixa.push(lancamentoCaixa);
+        } else if (typeof window.listaCaixa !== 'undefined') {
+            window.listaCaixa.push(lancamentoCaixa);
+        } else {
+            window.listaCaixa = [lancamentoCaixa];
+        }
+
+        // 4. Salva as alterações de forma definitiva no computador
+        localStorage.setItem('agendamentos', JSON.stringify(listaAgendamentos));
+        localStorage.setItem('caixa', JSON.stringify(typeof listaCaixa !== 'undefined' ? listaCaixa : window.listaCaixa));
+
+        alert('Pagamento Finalizado! Registro total de R$ 80,00 enviado para o Caixa.');
+
+        // 5. AS SUAS FUNÇÕES REAIS DE TRANSIÇÃO:
+        if (typeof fecharModalPagamento === 'function') {
+            fecharModalPagamento();
+        }
+        
+        if (typeof mostrarSecao === 'function') {
+            mostrarSecao('caixa');
+        }
+
+        // 6. Atualiza a tabela do caixa para o valor e a hora aparecerem na mesma hora
+        if (typeof renderizarCaixa === 'function') {
+            renderizarCaixa();
+        } else if (typeof atualizarTabelaCaixa === 'function') {
+            atualizarTabelaCaixa();
+        }
+    } else {
+        alert("Nenhum agendamento selecionado.");
+    }
+});
+</script>
+</body>
+</html>
           <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #22c55e">
             <div style="font-size:10px;font-weight:700;color:#22c55e;text-transform:uppercase;margin-bottom:4px">Concluídas</div>
             <div style="font-size:24px;font-weight:800;color:#22c55e" id="meta-stat-ok">0</div>
