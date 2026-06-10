@@ -3719,6 +3719,14 @@ btnFinalizarPagamento.addEventListener('click', function() {
                   <span style="font-size:12px;font-weight:600">✅ Já foi pago</span>
                 </label>
               </div>
+              <div style="margin-top:10px">
+                <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                  <button type="button" onclick="agSetFormaSinal(this,'Pix')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
+                  <button type="button" onclick="agSetFormaSinal(this,'Dinheiro')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
+                  <button type="button" onclick="agSetFormaSinal(this,'Link')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5459,6 +5467,15 @@ function atualizarPopupComandaUI(key){
   if(elTotal)elTotal.textContent=formatMoedaBR(calc.totalPagar);
 }
 
+var agFormaSinal = '';
+function agSetFormaSinal(btn, forma){
+  agFormaSinal = forma;
+  document.querySelectorAll('.ag-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+  btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
+}
+
 var popupFormaSinal = '';
 function popupSetFormaSinal(btn, forma){
   popupFormaSinal = forma;
@@ -6951,10 +6968,20 @@ function salvarAgendamento(){
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
     agendamentosPorData[dataKey][profAgenda+':'+hora]={id:supaId,cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora,duracao:'60 min',valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:''};
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
+    // Se sinal já foi pago, lançar no caixa imediatamente
+    if(sinalAtivo && sinalStatus==='pago' && sinalValNum>0){
+      lancarEntradaCaixaAuto('Sinal — '+servico+' — '+cliente, sinalValNum, agFormaSinal||'pix');
+    }
+    // Resetar forma do sinal
+    agFormaSinal = '';
+    document.querySelectorAll('.ag-forma-btn').forEach(function(b){
+      b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+    });
     closeModal('modal-agendar');
     renderAgenda();
     var msg='✅ Agendamento confirmado para '+cliente+'!';
-    if(sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
+    if(sinalAtivo&&sinalStatus==='pago')msg+=' 💰 Sinal de '+sinalAgora+' registrado no caixa!';
+    else if(sinalAtivo)msg+=' Sinal: '+sinalAgora+' ⏳ pendente';
     showAlert(msg);
   }).catch(function(){
     showAlert('Erro ao salvar agendamento. Verifique os dados e tente novamente.');
