@@ -3724,6 +3724,10 @@ btnFinalizarPagamento.addEventListener('click', function() {
         <span style="font-size:13px;color:#555">(-) Sinal já pago</span>
         <span id="pg-sinal-pago" style="font-size:14px;font-weight:700;color:#2d2d2d">R$ 0,00</span>
       </div>
+      <div id="pg-linha-forma-sinal" style="display:none;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
+        <span style="font-size:12px;color:#888">Forma do sinal</span>
+        <span id="pg-forma-sinal-txt" style="font-size:12px;font-weight:700;color:#555;background:#f0f0f0;padding:3px 10px;border-radius:20px"></span>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 12px;background:#fffbeb;border-radius:10px;border:1.5px solid #fde68a;margin-top:4px">
         <span style="font-size:14px;font-weight:800;color:#92400e">Saldo restante a pagar</span>
         <span id="pg-valor-restante" style="font-size:20px;font-weight:900;color:#d4af37">R$ 0,00</span>
@@ -3733,10 +3737,11 @@ btnFinalizarPagamento.addEventListener('click', function() {
       <label>Forma de pagamento do saldo</label>
       <select id="pg-forma-pagamento" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
         <option value="">Selecione...</option>
-        <option value="Pix">Pix</option>
-        <option value="Cartão de Crédito">Cartão de Crédito</option>
-        <option value="Cartão de Débito">Cartão de Débito</option>
-        <option value="Dinheiro">Dinheiro</option>
+        <option value="Pix">📱 Pix</option>
+        <option value="Dinheiro">💵 Dinheiro</option>
+        <option value="Link de Pagamento">🔗 Link de Pagamento</option>
+        <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+        <option value="Cartão de Débito">💳 Cartão de Débito</option>
       </select>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
@@ -5238,9 +5243,18 @@ function abrirConfirmarPagamento(key){
   document.getElementById('pg-valor-restante').textContent=fmtCaixa(restante);
   var rowSinal=document.getElementById('pg-linha-sinal');
   if(rowSinal)rowSinal.style.display=sinal.temSinal?'flex':'none';
+  // Mostrar forma de pagamento do sinal
+  var rowFormaSinal=document.getElementById('pg-linha-forma-sinal');
+  var elFormaSinalTxt=document.getElementById('pg-forma-sinal-txt');
+  if(popupFormaSinal&&sinal.abate>0){
+    if(rowFormaSinal)rowFormaSinal.style.display='flex';
+    if(elFormaSinalTxt)elFormaSinalTxt.textContent=popupFormaSinal;
+  } else {
+    if(rowFormaSinal)rowFormaSinal.style.display='none';
+  }
   var areaForma=document.getElementById('pg-area-forma');
   if(areaForma)areaForma.style.display=restante>0?'block':'none';
-  document.getElementById('pg-forma-pagamento').value='';
+  document.getElementById('pg-forma-pagamento').value=popupFormaSinal||'';
   openModal('modal-confirmar-pagamento');
 }
 
