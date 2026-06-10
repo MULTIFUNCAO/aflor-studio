@@ -4133,7 +4133,7 @@ btnFinalizarPagamento.addEventListener('click', function() {
 
 <script>
 var agendamentosPorData={
-    '26/5/2026': agendaAppts,
+    '26/5/2026': {},
     '27/5/2026': {
       'Ana Flor:10:00':{cliente:'Andreia De Paula',tel:'(11) 98765-4321',servico:'Pedicure',prof:'Ana Flor',hora:'10:00',duracao:'45 min',valor:'R$ 50,00',cls:'#22c55e',sinal:true,sinalPago:true,sinalValor:'R$ 25,00'},
       'Edu:14:00':{cliente:'Janaine Brito',tel:'(11) 96789-0123',servico:'Design de Sobrancelhas',prof:'Edu',hora:'14:00',duracao:'30 min',valor:'R$ 12,00',cls:'#555',sinal:false,sinalPago:false,sinalValor:null},
@@ -4234,6 +4234,14 @@ document.addEventListener('click',function(e){
   if(sb.contains(e.target))return;
   closeSidebar();
 });
+// Fechar busca agenda ao clicar fora
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('busca-agenda-dropdown');
+  var btn=document.getElementById('btn-busca-agenda');
+  if(dd&&btn&&dd.style.display==='block'&&!dd.contains(e.target)&&!btn.contains(e.target)){
+    dd.style.display='none';
+  }
+});
 // Fechar ao clicar em item do menu
 document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
@@ -4252,7 +4260,7 @@ function setTheme(color,el){
 }
 
 // DATA
-const vendas=[
+var vendas=[
   {data:'23/Mai/26',hora:'15:10',cliente:'Mãe Ana',desc:'Manicure Pedicure',valor:'R$ 80,00',status:'Pendente'},
   {data:'23/Mai/26',hora:'11:00',cliente:'Denilda',desc:'Corte de Cabelo',valor:'R$ 100,00',status:'Pendente'},
   {data:'23/Mai/26',hora:'12:35',cliente:'Adriana - Casa Devi',desc:'Hidratação - Lavatório',valor:'R$ 40,00',status:'Pago'},
@@ -4263,14 +4271,14 @@ const vendas=[
   {data:'23/Mai/26',hora:'09:00',cliente:'Janaine Brito',desc:'Design de Sobrancelhas Com Henna',valor:'R$ 12,00',status:'Pago'},
 ];
 
-const comandas=[
+var comandas=[
   {n:'#10356',cliente:'Julia Barrozo',data:'13/Mai/2026',total:'R$ 160,00',pgto:'Cartão de Crédito',status:'Fechada',sinal:'R$ 80,00',sinalStatus:'pago'},
   {n:'#10355',cliente:'Mãe Ana',data:'23/Mai/2026',total:'R$ 80,00',pgto:'PIX',status:'Fechada',sinal:'R$ 40,00',sinalStatus:'pago'},
   {n:'#10354',cliente:'Denilda',data:'23/Mai/2026',total:'R$ 100,00',pgto:'Dinheiro',status:'Aberta',sinal:'R$ 30,00',sinalStatus:'pendente'},
   {n:'#10353',cliente:'Alessandra Say',data:'23/Mai/2026',total:'R$ 140,00',pgto:'PIX',status:'Fechada',sinal:null,sinalStatus:null},
 ];
 
-const remuneracoes=[
+var remuneracoes=[
   {nome:'Aluno',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Ana Flor',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'blue'},
   {nome:'Angélica',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
@@ -4749,7 +4757,7 @@ const clientes=[
 ];
 
 
-const colaboradores=[
+var colaboradores=[
   {nome:'Thiago dos Santos',email:'aflorschool@gmail.com',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'blue'},
   {nome:'Ana',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'pink'},
   {nome:'Eduardo',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'orange'},
@@ -5608,15 +5616,6 @@ function toggleBuscaAgenda(){
   if(!aberto)setTimeout(function(){var inp=document.getElementById('busca-agenda-input');if(inp)inp.focus();},50);
 }
 
-// Fechar busca ao clicar fora
-document.addEventListener('click',function(e){
-  var dd=document.getElementById('busca-agenda-dropdown');
-  var btn=document.getElementById('btn-busca-agenda');
-  if(dd&&btn&&!dd.contains(e.target)&&!btn.contains(e.target)){
-    dd.style.display='none';
-  }
-});
-
 function buscarAgendamentos(termo){
   var res=document.getElementById('busca-agenda-resultados');
   if(!res)return;
@@ -6071,7 +6070,7 @@ function renderMarketing(){
 
 // ===== TREINAMENTOS =====
 var treinoAtivo='todos';
-const treinos=[
+var treinos=[
   {id:1,cat:'tecnica',titulo:'Coloração Avançada — Técnicas e Tendências',desc:'Dominar técnicas de balayage, babylights e coloração fantasy',tipo:'video',duracao:'2h30',instructor:'Ana Flor',nivel:'Avançado',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jeny','Vi']},
   {id:2,cat:'atendimento',titulo:'Protocolo de Atendimento ao Cliente',desc:'Padrões de atendimento, linguagem e experiência do cliente',tipo:'pdf',duracao:'45 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:true,concluidos:['Ana Flor','Edu','Jeny'],pendentes:['Vi','Lara','Angélica']},
   {id:3,cat:'gestao',titulo:'Introdução ao Sistema A Flor Business',desc:'Onboarding completo da plataforma de gestão',tipo:'video',duracao:'1h',instructor:'Thiago dos Santos',nivel:'Iniciante',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jeny','Vi','Lara','Angélica']},
