@@ -1817,14 +1817,82 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
     <!-- FINANCEIRO PESSOAL -->
     <div class="page" id="page-finpessoal">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <h2 style="font-size:18px;font-weight:800;color:#111;margin-bottom:2px">💝 Financeiro Pessoal</h2>
-          <p style="font-size:12px;color:#888">Organize sua vida financeira pessoal separado da empresa</p>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-lancamento-pessoal')">+ Lançamento</button>
+      <!-- TABS -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #f0f0f0;padding-bottom:0">
+        <button class="tab active" id="fin-tab-prolabore" onclick="switchFinTab('prolabore',this)" style="border-radius:8px 8px 0 0">💰 Pró-Labore</button>
+        <button class="tab" id="fin-tab-lancamentos" onclick="switchFinTab('lancamentos',this)" style="border-radius:8px 8px 0 0">📋 Lançamentos</button>
       </div>
-      <div id="finpessoal-content"></div>
+
+      <!-- TAB PRÓ-LABORE -->
+      <div id="fin-view-prolabore">
+        <!-- Cards de resumo -->
+        <div id="prolabore-resumo" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+
+        <!-- Config sócios -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:800;color:#111">👥 Sócios e Pró-Labore</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-prolabore-socio')">+ Adicionar Sócio</button>
+        </div>
+        <div id="prolabore-socios-list"></div>
+
+        <!-- DRE simples -->
+        <div style="margin-top:16px">
+          <div style="font-size:14px;font-weight:800;color:#111;margin-bottom:10px">📊 Demonstrativo do Mês</div>
+          <div id="prolabore-dre"></div>
+        </div>
+      </div>
+
+      <!-- TAB LANÇAMENTOS -->
+      <div id="fin-view-lancamentos" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <h2 style="font-size:18px;font-weight:800;color:#111;margin-bottom:2px">💝 Financeiro Pessoal</h2>
+            <p style="font-size:12px;color:#888">Organize sua vida financeira pessoal separado da empresa</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-lancamento-pessoal')">+ Lançamento</button>
+        </div>
+        <div id="finpessoal-content"></div>
+      </div>
+    </div>
+
+    <!-- MODAL SÓCIO PRÓ-LABORE -->
+    <div class="modal-overlay" id="modal-prolabore-socio">
+      <div class="modal" style="width:480px">
+        <div class="modal-header">
+          <span class="modal-title" id="modal-socio-titulo">👤 Adicionar Sócio</span>
+          <button class="modal-close" onclick="closeModal('modal-prolabore-socio')">✕</button>
+        </div>
+        <div class="form-grid">
+          <input type="hidden" id="socio-edit-idx" value="-1"/>
+          <div class="form-group full"><label>Nome do Sócio *</label><input id="socio-nome" placeholder="Ex: Ana Flor"/></div>
+          <div class="form-group full">
+            <label>Tipo de Retirada *</label>
+            <div style="display:flex;gap:8px">
+              <label id="lbl-tipo-fixo" onclick="setSocioTipo('fixo')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #111;border-radius:10px;cursor:pointer;background:#f5f5f5">
+                <span style="font-size:18px">💵</span>
+                <div><div style="font-size:12px;font-weight:700">Valor Fixo</div><div style="font-size:10px;color:#888">Retirada fixa mensal</div></div>
+              </label>
+              <label id="lbl-tipo-pct" onclick="setSocioTipo('percentual')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
+                <span style="font-size:18px">📊</span>
+                <div><div style="font-size:12px;font-weight:700">Percentual</div><div style="font-size:10px;color:#888">% do faturamento</div></div>
+              </label>
+            </div>
+            <input type="hidden" id="socio-tipo" value="fixo"/>
+          </div>
+          <div class="form-group" id="campo-valor-fixo"><label>Valor Fixo Mensal (R$)</label><input type="number" id="socio-valor-fixo" placeholder="Ex: 3000" min="0" step="0.01"/></div>
+          <div class="form-group" id="campo-percentual" style="display:none"><label>Percentual do Faturamento (%)</label>
+            <input type="number" id="socio-percentual" placeholder="Ex: 10" min="0" max="100" step="0.1"/>
+            <div style="font-size:11px;color:#888;margin-top:4px">💡 Para serviços, recomenda-se entre 8% e 15%</div>
+          </div>
+          <div class="form-group full"><label>Participação na Sociedade (%)</label>
+            <input type="number" id="socio-participacao" placeholder="Ex: 50" min="0" max="100" step="1"/>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+          <button class="btn btn-outline" onclick="closeModal('modal-prolabore-socio')">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarSocio()">✅ Salvar</button>
+        </div>
+      </div>
     </div>
 
     <!-- RELATÓRIOS -->
@@ -4129,7 +4197,7 @@ function showPage(id){
     if(id==='treinamentos')renderTreinamentos();
     if(id==='influenciadoras')renderInfluenciadoras();
     if(id==='florescimento')renderFlorescimento();
-    if(id==='finpessoal')renderFinPessoal();
+    if(id==='finpessoal'){renderProlabore();}
     if(id==='clientes')renderClientes();
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
@@ -4145,8 +4213,15 @@ function showPage(id){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
-  // Resetar modal de serviço sempre que abrir
-  if(id === 'modal-servico'){
+  if(id === 'modal-prolabore-socio'){
+    document.getElementById('socio-edit-idx').value='-1';
+    document.getElementById('socio-nome').value='';
+    document.getElementById('socio-participacao').value='';
+    document.getElementById('socio-valor-fixo').value='';
+    document.getElementById('socio-percentual').value='';
+    document.getElementById('modal-socio-titulo').textContent='👤 Adicionar Sócio';
+    setSocioTipo('fixo');
+  }
     var n=document.getElementById('srv-nome'); if(n) n.value='';
     var p=document.getElementById('srv-preco'); if(p) p.value='';
     var c=document.getElementById('srv-cat'); if(c) c.value='Cabelo';
@@ -4200,6 +4275,202 @@ document.addEventListener('click',function(e){
 document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
+
+// ===== PRÓ-LABORE =====
+var prolaboreSocios = JSON.parse(localStorage.getItem('flora_socios')||'[]');
+var _socioTipo = 'fixo';
+
+function switchFinTab(tab, el){
+  document.querySelectorAll('#page-finpessoal .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('fin-view-prolabore').style.display = tab==='prolabore'?'block':'none';
+  document.getElementById('fin-view-lancamentos').style.display = tab==='lancamentos'?'block':'none';
+  if(tab==='prolabore') renderProlabore();
+  if(tab==='lancamentos') renderFinPessoal();
+}
+
+function setSocioTipo(tipo){
+  _socioTipo = tipo;
+  document.getElementById('socio-tipo').value = tipo;
+  var lFixo = document.getElementById('lbl-tipo-fixo');
+  var lPct = document.getElementById('lbl-tipo-pct');
+  var cFixo = document.getElementById('campo-valor-fixo');
+  var cPct = document.getElementById('campo-percentual');
+  if(tipo==='fixo'){
+    lFixo.style.border='2px solid #111'; lFixo.style.background='#f5f5f5';
+    lPct.style.border='2px solid #ddd'; lPct.style.background='#fff';
+    cFixo.style.display=''; cPct.style.display='none';
+  } else {
+    lPct.style.border='2px solid #111'; lPct.style.background='#f5f5f5';
+    lFixo.style.border='2px solid #ddd'; lFixo.style.background='#fff';
+    cPct.style.display=''; cFixo.style.display='none';
+  }
+}
+
+function salvarSocio(){
+  var nome = (document.getElementById('socio-nome').value||'').trim();
+  if(!nome){ alert('Informe o nome do sócio.'); return; }
+  var tipo = document.getElementById('socio-tipo').value;
+  var valorFixo = parseFloat(document.getElementById('socio-valor-fixo').value)||0;
+  var percentual = parseFloat(document.getElementById('socio-percentual').value)||0;
+  var participacao = parseFloat(document.getElementById('socio-participacao').value)||0;
+  if(tipo==='fixo' && valorFixo<=0){ alert('Informe o valor fixo.'); return; }
+  if(tipo==='percentual' && percentual<=0){ alert('Informe o percentual.'); return; }
+
+  var idx = parseInt(document.getElementById('socio-edit-idx').value);
+  var socio = { nome, tipo, valorFixo, percentual, participacao };
+  if(idx >= 0) prolaboreSocios[idx] = socio;
+  else prolaboreSocios.push(socio);
+  localStorage.setItem('flora_socios', JSON.stringify(prolaboreSocios));
+  closeModal('modal-prolabore-socio');
+  renderProlabore();
+}
+
+function editarSocio(idx){
+  var s = prolaboreSocios[idx];
+  if(!s) return;
+  document.getElementById('socio-edit-idx').value = idx;
+  document.getElementById('socio-nome').value = s.nome;
+  document.getElementById('socio-participacao').value = s.participacao||'';
+  document.getElementById('socio-valor-fixo').value = s.valorFixo||'';
+  document.getElementById('socio-percentual').value = s.percentual||'';
+  setSocioTipo(s.tipo||'fixo');
+  document.getElementById('modal-socio-titulo').textContent = '✏️ Editar Sócio';
+  openModal('modal-prolabore-socio');
+}
+
+function removerSocio(idx){
+  if(!confirm('Remover este sócio?')) return;
+  prolaboreSocios.splice(idx,1);
+  localStorage.setItem('flora_socios', JSON.stringify(prolaboreSocios));
+  renderProlabore();
+}
+
+function getFaturamentoMes(){
+  // Busca faturamento dos movimentos do caixa
+  var total = 0;
+  try {
+    var cs = JSON.parse(localStorage.getItem('caixaState')||'null');
+    if(cs && cs.movimentos){
+      cs.movimentos.forEach(function(m){ if(m.tipo==='entrada') total+=parseFloat(m.valor)||0; });
+    }
+    if(total===0){
+      var mov = JSON.parse(localStorage.getItem('caixaMovimentos')||'[]');
+      mov.forEach(function(m){ if(m.tipo==='entrada') total+=parseFloat(m.valor)||0; });
+    }
+  } catch(e){}
+  return total;
+}
+
+function getDespesasMes(){
+  var total = 0;
+  try {
+    var cs = JSON.parse(localStorage.getItem('caixaState')||'null');
+    if(cs && cs.movimentos){
+      cs.movimentos.forEach(function(m){ if(m.tipo==='saida'||m.tipo==='saída') total+=parseFloat(m.valor)||0; });
+    }
+  } catch(e){}
+  return total;
+}
+
+function renderProlabore(){
+  var faturamento = getFaturamentoMes();
+  var despesas = getDespesasMes();
+  var totalProlabore = 0;
+
+  // Calcular pró-labore por sócio
+  var sociosComCalc = prolaboreSocios.map(function(s){
+    var pl = s.tipo==='fixo' ? s.valorFixo : (faturamento * (s.percentual/100));
+    totalProlabore += pl;
+    return Object.assign({}, s, { prolaboreMes: pl, prolaboreDia: pl/30 });
+  });
+
+  var lucro = faturamento - despesas - totalProlabore;
+
+  // Cards de resumo
+  var resumoEl = document.getElementById('prolabore-resumo');
+  if(resumoEl){
+    resumoEl.innerHTML = [
+      {label:'Faturamento Bruto', val:faturamento, cor:'#22c55e', bg:'#dcfce7', emoji:'💰'},
+      {label:'Pró-Labore Total', val:totalProlabore, cor:'#8b5cf6', bg:'#ede9fe', emoji:'👤'},
+      {label:'Despesas', val:despesas, cor:'#ef4444', bg:'#fee2e2', emoji:'📤'},
+      {label:'Lucro Líquido', val:lucro, cor: lucro>=0?'#111':'#ef4444', bg: lucro>=0?'#f5f5f5':'#fee2e2', emoji:'📈'},
+    ].map(function(c){
+      return '<div style="background:'+c.bg+';border-radius:12px;padding:14px;border-left:4px solid '+c.cor+'">'
+        +'<div style="font-size:10px;font-weight:700;color:'+c.cor+';text-transform:uppercase;margin-bottom:4px">'+c.emoji+' '+c.label+'</div>'
+        +'<div style="font-size:20px;font-weight:900;color:'+c.cor+'">R$ '+c.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // Lista de sócios
+  var listEl = document.getElementById('prolabore-socios-list');
+  if(listEl){
+    if(sociosComCalc.length===0){
+      listEl.innerHTML = '<div style="text-align:center;padding:32px;background:#f8f8f8;border-radius:12px;color:#aaa">'
+        +'<div style="font-size:32px;margin-bottom:8px">👤</div>'
+        +'<div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">Nenhum sócio cadastrado</div>'
+        +'<div style="font-size:12px">Clique em <b>+ Adicionar Sócio</b> para configurar o pró-labore</div>'
+        +'</div>';
+    } else {
+      listEl.innerHTML = sociosComCalc.map(function(s,idx){
+        return '<div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px;margin-bottom:10px">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+            +'<div style="display:flex;align-items:center;gap:10px">'
+              +'<div style="width:40px;height:40px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff">'+s.nome.split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase()+'</div>'
+              +'<div>'
+                +'<div style="font-size:14px;font-weight:800;color:#111">'+s.nome+'</div>'
+                +'<div style="font-size:11px;color:#888">'+(s.participacao?s.participacao+'% de participação · ':'')+(s.tipo==='fixo'?'Valor fixo':'Percentual: '+s.percentual+'%')+'</div>'
+              +'</div>'
+            +'</div>'
+            +'<div style="display:flex;gap:6px">'
+              +'<button onclick="editarSocio('+idx+')" class="btn btn-outline btn-sm">✏️</button>'
+              +'<button onclick="removerSocio('+idx+')" class="btn btn-outline btn-sm" style="color:#ef4444;border-color:#ef4444">✕</button>'
+            +'</div>'
+          +'</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+            +'<div style="background:#ede9fe;border-radius:8px;padding:10px">'
+              +'<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:2px">PRÓL. DIÁRIO (médio)</div>'
+              +'<div style="font-size:18px;font-weight:800;color:#7c3aed">R$ '+s.prolaboreDia.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+            +'</div>'
+            +'<div style="background:#f5f3ff;border-radius:8px;padding:10px">'
+              +'<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:2px">PRÓL. MENSAL</div>'
+              +'<div style="font-size:18px;font-weight:800;color:#111">R$ '+s.prolaboreMes.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+            +'</div>'
+          +'</div>'
+        +'</div>';
+      }).join('');
+    }
+  }
+
+  // DRE
+  var dreEl = document.getElementById('prolabore-dre');
+  if(dreEl){
+    var pctPl = faturamento>0?((totalProlabore/faturamento)*100).toFixed(1):0;
+    var pctDesp = faturamento>0?((despesas/faturamento)*100).toFixed(1):0;
+    var pctLucro = faturamento>0?((lucro/faturamento)*100).toFixed(1):0;
+    dreEl.innerHTML = '<div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">'
+      +[
+        {label:'(+) Faturamento Bruto', val:faturamento, cor:'#22c55e', pct:100, bold:true},
+        {label:'(-) Pró-Labore', val:totalProlabore, cor:'#8b5cf6', pct:pctPl, bold:false},
+        {label:'(-) Despesas Operacionais', val:despesas, cor:'#ef4444', pct:pctDesp, bold:false},
+        {label:'(=) Lucro Líquido', val:lucro, cor:lucro>=0?'#111':'#ef4444', pct:pctLucro, bold:true, separator:true},
+      ].map(function(r){
+        return (r.separator?'<div style="height:2px;background:#f0f0f0"></div>':'')
+          +'<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f5f5f5">'
+            +'<div style="display:flex;align-items:center;gap:10px;flex:1">'
+              +'<div style="font-size:'+(r.bold?'13':'12')+'px;font-weight:'+(r.bold?'800':'600')+';color:#333">'+r.label+'</div>'
+              +'<div style="flex:1;height:4px;background:#f0f0f0;border-radius:2px;max-width:120px;overflow:hidden"><div style="height:100%;width:'+Math.min(Math.abs(r.pct),100)+'%;background:'+r.cor+';border-radius:2px"></div></div>'
+              +'<div style="font-size:10px;color:#aaa">'+r.pct+'%</div>'
+            +'</div>'
+            +'<div style="font-size:'+(r.bold?'15':'13')+'px;font-weight:800;color:'+r.cor+'">R$ '+Math.abs(r.val).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+          +'</div>';
+      }).join('')
+      +'</div>'
+      +'<div style="text-align:center;font-size:11px;color:#aaa;margin-top:8px">Dados baseados nos lançamentos do Controle de Caixa deste mês</div>';
+  }
+}
+// ===== FIM PRÓ-LABORE =====
 
 // ===== WHATSAPP =====
 function enviarWhatsApp(nome, tel, tipo) {
