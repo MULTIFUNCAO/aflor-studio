@@ -4291,25 +4291,56 @@ btnFinalizarPagamento.addEventListener('click', function() {
 </div>
 
 <div class="modal-overlay" id="modal-servico">
-  <div class="modal">
+  <div class="modal" style="width:520px">
     <div class="modal-header">
       <span class="modal-title">Novo Serviço</span>
       <button class="modal-close" onclick="closeModal('modal-servico')">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group full"><label>Nome do Serviço</label><input placeholder="Ex: Escova Progressiva"/></div>
-      <div class="form-group"><label>Categoria</label>
-        <select><option>Cabelo</option><option>Manicure</option><option>Bronzeamento</option><option>Estética</option><option>Sobrancelha</option></select>
+      <div class="form-group full"><label>Nome do Serviço *</label><input id="srv-nome" placeholder="Ex: Escova Progressiva"/></div>
+
+      <!-- Categoria com opção de criar nova -->
+      <div class="form-group full">
+        <label>Categoria *</label>
+        <div style="display:flex;gap:8px">
+          <select id="srv-cat" style="flex:1" onchange="toggleNovaCategoria()">
+            <option>Cabelo</option>
+            <option>Manicure</option>
+            <option>Pedicure</option>
+            <option>Bronzeamento</option>
+            <option>Estética</option>
+            <option>Sobrancelha</option>
+            <option>Unhas</option>
+            <option value="__nova__">➕ Nova categoria...</option>
+          </select>
+        </div>
+        <input id="srv-cat-nova" placeholder="Digite o nome da nova categoria" style="display:none;margin-top:6px;width:100%;padding:9px 11px;border:1.5px solid #111;border-radius:9px;font-size:13px;font-family:inherit;outline:none"/>
       </div>
+
       <div class="form-group"><label>Duração</label>
-        <select><option>30min</option><option>45min</option><option>1h</option><option>1h30</option><option>2h</option></select>
+        <select id="srv-dur"><option>30min</option><option>45min</option><option>1h</option><option>1h30</option><option>2h</option><option>2h30</option><option>3h</option><option>4h</option></select>
       </div>
-      <div class="form-group"><label>Preço (R$)</label><input type="number" placeholder="0,00"/></div>
-      <div class="form-group"><label>Comissão (%)</label><input type="number" placeholder="50"/></div>
+      <div class="form-group"><label>Preço (R$) *</label><input type="number" id="srv-preco" placeholder="0,00" min="0" step="0.01"/></div>
+
+      <!-- Profissionais com percentual individual -->
+      <div class="form-group full">
+        <label>Profissionais e Comissão</label>
+        <div id="srv-profs-wrap" style="display:flex;flex-direction:column;gap:6px">
+          <div class="srv-prof-row" style="display:flex;gap:8px;align-items:center">
+            <select style="flex:2;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">— Selecione —</option>
+              <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option>
+            </select>
+            <input type="number" placeholder="%" min="0" max="100" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none" value="50"/>
+            <button onclick="removeSrvProfRow(this)" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px">✕</button>
+          </div>
+        </div>
+        <button onclick="addSrvProfRow()" style="margin-top:8px;background:none;border:1.5px dashed #ddd;border-radius:9px;padding:7px 14px;font-size:12px;color:#888;cursor:pointer;width:100%">+ Adicionar profissional</button>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-servico')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveModal('modal-servico','Serviço cadastrado com sucesso!')">Salvar</button>
+      <button class="btn btn-primary" onclick="salvarServico()">✅ Salvar Serviço</button>
     </div>
   </div>
 </div>
@@ -4337,6 +4368,104 @@ btnFinalizarPagamento.addEventListener('click', function() {
     </div>
   </div>
 </div>
+
+<script>
+// ===== SERVIÇO — CATEGORIA CUSTOMIZADA E PROFISSIONAIS =====
+var catServicoExtras = [];
+
+function toggleNovaCategoria(){
+  var sel = document.getElementById('srv-cat');
+  var inp = document.getElementById('srv-cat-nova');
+  if(!sel || !inp) return;
+  if(sel.value === '__nova__'){
+    inp.style.display = 'block';
+    inp.focus();
+  } else {
+    inp.style.display = 'none';
+    inp.value = '';
+  }
+}
+
+function addSrvProfRow(){
+  var wrap = document.getElementById('srv-profs-wrap');
+  if(!wrap) return;
+  var row = document.createElement('div');
+  row.className = 'srv-prof-row';
+  row.style.cssText = 'display:flex;gap:8px;align-items:center';
+  row.innerHTML = '<select style="flex:2;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none">'
+    +'<option value="">— Selecione —</option>'
+    +'<option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option>'
+    +'</select>'
+    +'<input type="number" placeholder="%" min="0" max="100" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none" value="50"/>'
+    +'<button onclick="removeSrvProfRow(this)" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px">✕</button>';
+  wrap.appendChild(row);
+}
+
+function removeSrvProfRow(btn){
+  var wrap = document.getElementById('srv-profs-wrap');
+  if(wrap && wrap.querySelectorAll('.srv-prof-row').length > 1){
+    btn.closest('.srv-prof-row').remove();
+  }
+}
+
+function salvarServico(){
+  var nome = (document.getElementById('srv-nome')||{}).value||'';
+  nome = nome.trim();
+  if(!nome){ alert('Informe o nome do serviço.'); return; }
+
+  var catSel = (document.getElementById('srv-cat')||{}).value||'';
+  var catNova = ((document.getElementById('srv-cat-nova')||{}).value||'').trim();
+  var cat = catSel === '__nova__' ? catNova : catSel;
+  if(!cat){ alert('Informe ou selecione uma categoria.'); return; }
+
+  // Adicionar nova categoria ao select para uso futuro
+  if(catSel === '__nova__' && catNova && !catServicoExtras.includes(catNova)){
+    catServicoExtras.push(catNova);
+    var sel = document.getElementById('srv-cat');
+    var opt = document.createElement('option');
+    opt.value = catNova; opt.text = catNova;
+    sel.insertBefore(opt, sel.querySelector('option[value="__nova__"]'));
+    sel.value = catNova;
+  }
+
+  var preco = parseFloat((document.getElementById('srv-preco')||{}).value||0);
+  if(!preco || preco<=0){ alert('Informe um preço válido.'); return; }
+  var dur = (document.getElementById('srv-dur')||{}).value||'1h';
+
+  // Coletar profissionais
+  var profs = [];
+  document.querySelectorAll('#srv-profs-wrap .srv-prof-row').forEach(function(row){
+    var profSel = row.querySelector('select');
+    var pctInp = row.querySelector('input[type="number"]');
+    if(profSel && profSel.value && pctInp){
+      profs.push({ nome: profSel.value, pct: parseFloat(pctInp.value)||0 });
+    }
+  });
+
+  // Salvar no sistema de serviços
+  if(typeof servicosList !== 'undefined'){
+    servicosList.push({ nome:nome, cat:cat, dur:dur, preco:preco.toFixed(2), profs:profs, cor:'#6366f1' });
+    renderServicos();
+  }
+
+  closeModal('modal-servico');
+  document.getElementById('srv-nome').value='';
+  document.getElementById('srv-preco').value='';
+  document.getElementById('srv-cat-nova').style.display='none';
+  document.getElementById('srv-cat-nova').value='';
+  document.getElementById('srv-cat').value='Cabelo';
+  // Resetar profissionais para 1 linha
+  var wrap = document.getElementById('srv-profs-wrap');
+  if(wrap){
+    wrap.querySelectorAll('.srv-prof-row').forEach(function(r,i){ if(i>0) r.remove(); });
+    var first = wrap.querySelector('select'); if(first) first.value='';
+  }
+
+  if(typeof showToast === 'function') showToast('Serviço cadastrado com sucesso!');
+  else alert('Serviço cadastrado com sucesso!');
+}
+// ===== FIM SERVIÇO =====
+</script>
 
 <script>
 // ===== DESPESAS =====
