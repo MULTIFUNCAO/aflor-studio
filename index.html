@@ -3103,6 +3103,44 @@ btnFinalizarPagamento.addEventListener('click', function() {
   </div>
 </div>
 
+<!-- MODAL LANÇAMENTO PESSOAL -->
+<div class="modal-overlay" id="modal-lancamento-pessoal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">💝 Novo Lançamento Pessoal</span>
+      <button class="modal-close" onclick="closeModal('modal-lancamento-pessoal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tipo *</label>
+        <div style="display:flex;gap:8px">
+          <label id="lbl-pes-receita" onclick="setTipoLancPes('receita')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #22c55e;border-radius:10px;cursor:pointer;background:#dcfce7">
+            <span style="font-size:18px">📥</span><div><div style="font-size:12px;font-weight:700;color:#15803d">Receita</div><div style="font-size:10px;color:#166534">Entrada pessoal</div></div>
+          </label>
+          <label id="lbl-pes-despesa" onclick="setTipoLancPes('despesa')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
+            <span style="font-size:18px">📤</span><div><div style="font-size:12px;font-weight:700;color:#333">Despesa</div><div style="font-size:10px;color:#888">Saída pessoal</div></div>
+          </label>
+        </div>
+        <input type="hidden" id="pes-tipo-val" value="receita"/>
+      </div>
+      <div class="form-group full"><label>Descrição *</label><input id="pes-desc" placeholder="Ex: Salário, Aluguel, Mercado..."/></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="pes-data"/></div>
+      <div class="form-group"><label>Valor (R$) *</label><input type="number" id="pes-val" placeholder="0,00" min="0" step="0.01"/></div>
+      <div class="form-group full"><label>Categoria</label>
+        <select id="pes-cat">
+          <option>Renda</option><option>Extra</option><option>Moradia</option>
+          <option>Alimentação</option><option>Saúde</option><option>Educação</option>
+          <option>Transporte</option><option>Lazer</option><option>Vestuário</option><option>Outros</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-lancamento-pessoal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLancamentoPessoal()">✅ Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOVA CAMPANHA -->
 <div class="modal-overlay" id="modal-nova-campanha">
   <div class="modal" style="width:540px">
@@ -6695,30 +6733,66 @@ function renderFlorescimento(){
 
 // ===== FINANCEIRO PESSOAL =====
 const finPessoalData={
-  saldo:3240.00,
-  receitas:[
-    {desc:'Pró-labore',valor:2500,data:'01/05',cat:'Renda'},
-    {desc:'Lucro distribuído',valor:800,data:'15/05',cat:'Renda'},
-    {desc:'Freelance treinamento',valor:400,data:'20/05',cat:'Extra'},
-  ],
-  despesas:[
-    {desc:'Aluguel apartamento',valor:1200,data:'05/05',cat:'Moradia'},
-    {desc:'Mercado',valor:380,data:'10/05',cat:'Alimentação'},
-    {desc:'Plano de saúde',valor:220,data:'01/05',cat:'Saúde'},
-    {desc:'Curso online',valor:197,data:'12/05',cat:'Educação'},
-    {desc:'Netflix / Spotify',valor:63,data:'01/05',cat:'Lazer'},
-  ],
-  metas:[
-    {nome:'Viagem para o Nordeste',valor:3000,atual:1200,prazo:'12/2026'},
-    {nome:'Fundo de emergência',valor:10000,atual:4500,prazo:'06/2027'},
-  ],
+  receitas:[],
+  despesas:[],
+  metas:[],
 };
+// ===== FINANCEIRO PESSOAL =====
+var _tipoLancPes = 'receita';
+function setTipoLancPes(t){
+  _tipoLancPes = t;
+  document.getElementById('pes-tipo-val').value = t;
+  var r = document.getElementById('lbl-pes-receita');
+  var d = document.getElementById('lbl-pes-despesa');
+  if(t==='receita'){
+    r.style.border='2px solid #22c55e'; r.style.background='#dcfce7';
+    d.style.border='2px solid #ddd'; d.style.background='#fff';
+  } else {
+    d.style.border='2px solid #ef4444'; d.style.background='#fee2e2';
+    r.style.border='2px solid #ddd'; r.style.background='#fff';
+  }
+}
+function salvarLancamentoPessoal(){
+  var desc = document.getElementById('pes-desc').value.trim();
+  var dataVal = document.getElementById('pes-data').value;
+  var valor = parseFloat(document.getElementById('pes-val').value);
+  var cat = document.getElementById('pes-cat').value;
+  if(!desc){ alert('Informe a descrição.'); return; }
+  if(!dataVal){ alert('Informe a data.'); return; }
+  if(!valor || valor <= 0){ alert('Informe um valor válido.'); return; }
+  var partes = dataVal.split('-');
+  var dataFmt = partes[2]+'/'+partes[1]+'/'+partes[0];
+  var item = { desc: desc, valor: valor, data: dataFmt, cat: cat };
+  if(_tipoLancPes === 'receita'){
+    finPessoalData.receitas.push(item);
+  } else {
+    finPessoalData.despesas.push(item);
+  }
+  closeModal('modal-lancamento-pessoal');
+  // limpar campos
+  document.getElementById('pes-desc').value='';
+  document.getElementById('pes-data').value='';
+  document.getElementById('pes-val').value='';
+  setTipoLancPes('receita');
+  renderFinPessoal();
+}
+// ===========================
+
 function renderFinPessoal(){
+  var hoje = new Date();
+  var dd = String(hoje.getDate()).padStart(2,'0');
+  var mm = String(hoje.getMonth()+1).padStart(2,'0');
+  var yyyy = hoje.getFullYear();
+  var dataHoje = yyyy+'-'+mm+'-'+dd;
+  var el = document.getElementById('pes-data');
+  if(el && !el.value) el.value = dataHoje;
+
   const c=document.getElementById('finpessoal-content');
   if(!c)return;
   const totalR=finPessoalData.receitas.reduce((a,b)=>a+b.valor,0);
   const totalD=finPessoalData.despesas.reduce((a,b)=>a+b.valor,0);
   const saldo=totalR-totalD;
+  const semDados = finPessoalData.receitas.length===0 && finPessoalData.despesas.length===0;
   c.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
       <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #22c55e">
@@ -6734,42 +6808,29 @@ function renderFinPessoal(){
         <div style="font-size:22px;font-weight:800;color:#fff">R$ ${saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
       </div>
     </div>
+    ${semDados ? `<div style="text-align:center;padding:48px 20px;color:#aaa">
+      <div style="font-size:40px;margin-bottom:12px">💝</div>
+      <div style="font-size:15px;font-weight:700;color:#555;margin-bottom:6px">Nenhum lançamento ainda</div>
+      <div style="font-size:13px">Clique em <b>+ Lançamento</b> para adicionar suas receitas e despesas pessoais.</div>
+    </div>` : `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div class="table-card">
         <div class="table-header"><h3>💚 Receitas</h3></div>
-        ${finPessoalData.receitas.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f5f5f5">
-          <div><div style="font-size:12px;font-weight:600">${r.desc}</div><div style="font-size:10px;color:#888">${r.cat} · ${r.data}</div></div>
-          <span style="font-size:13px;font-weight:700;color:#22c55e">+R$ ${r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-        </div>`).join('')}
+        ${finPessoalData.receitas.length===0 ? '<div style="padding:20px;text-align:center;color:#aaa;font-size:12px">Nenhuma receita lançada</div>' :
+          finPessoalData.receitas.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f5f5f5">
+            <div><div style="font-size:12px;font-weight:600">${r.desc}</div><div style="font-size:10px;color:#888">${r.cat} · ${r.data}</div></div>
+            <span style="font-size:13px;font-weight:700;color:#22c55e">+R$ ${r.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          </div>`).join('')}
       </div>
       <div class="table-card">
         <div class="table-header"><h3>❤️ Despesas</h3></div>
-        ${finPessoalData.despesas.map(d=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f5f5f5">
-          <div><div style="font-size:12px;font-weight:600">${d.desc}</div><div style="font-size:10px;color:#888">${d.cat} · ${d.data}</div></div>
-          <span style="font-size:13px;font-weight:700;color:#ef4444">-R$ ${d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-        </div>`).join('')}
+        ${finPessoalData.despesas.length===0 ? '<div style="padding:20px;text-align:center;color:#aaa;font-size:12px">Nenhuma despesa lançada</div>' :
+          finPessoalData.despesas.map(d=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f5f5f5">
+            <div><div style="font-size:12px;font-weight:600">${d.desc}</div><div style="font-size:10px;color:#888">${d.cat} · ${d.data}</div></div>
+            <span style="font-size:13px;font-weight:700;color:#ef4444">-R$ ${d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          </div>`).join('')}
       </div>
-    </div>
-    <div class="table-card">
-      <div class="table-header"><h3>🎯 Metas Pessoais</h3></div>
-      <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
-        ${finPessoalData.metas.map(m=>{
-          const pct=Math.round((m.atual/m.valor)*100);
-          return`<div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px">
-              <span>${m.nome}</span>
-              <span style="color:#888">R$ ${m.atual.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin-bottom:4px">
-              <div style="height:100%;width:${pct}%;background:#111;border-radius:4px"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#888">
-              <span>${pct}% concluído</span><span>Prazo: ${m.prazo}</span>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
+    </div>`}`;
 }
 // ===== FIM FIN PESSOAL =====
 
