@@ -5370,19 +5370,15 @@ function confirmarFechamentoPagamento(){
     pagamentoCtx=null;
   }
 
+  // Finalizar localmente sempre (não espera Supabase)
+  finalizarLocal();
+  // Tentar salvar no Supabase em paralelo (silencioso)
   if(ctx.supaId){
     fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{
       method:'PATCH',
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt})
-    }).then(function(r){
-      if(!r.ok)return r.json().then(function(e){throw e;});
-      return r.json();
-    }).then(function(){finalizarLocal();}).catch(function(){
-      showAlert('Erro ao atualizar agendamento. Tente novamente.');
-    });
-  } else {
-    finalizarLocal();
+    }).catch(function(e){console.warn('Supabase sync:', e);});
   }
 }
 
