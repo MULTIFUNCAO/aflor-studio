@@ -5563,16 +5563,21 @@ var agendaAppts={
 };
 
 function corBlocoAgenda(a){
-  if(!a) return '#4a4a4a';
+  if(!a) return '#111111';
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  if(concluido) return '#d4af37';
-  if(sinalPago) return '#2d2d2d';
-  return '#4a4a4a';
+  // Verde: concluído/comanda fechada
+  if(concluido) return '#16a34a';
+  // Amarelo: sinal pago, ainda não finalizado
+  if(sinalPago) return '#d97706';
+  // Preto: agendado sem sinal
+  return '#111111';
 }
 function corTextoBlocoAgenda(cor){
-  return cor==='#d4af37'||cor==='#f59e0b'?'#1a1a1a':'#ffffff';
+  // Amarelo precisa de texto escuro para legibilidade
+  if(cor==='#d97706') return '#1a1a1a';
+  return '#ffffff';
 }
 
 function renderAgenda(){
