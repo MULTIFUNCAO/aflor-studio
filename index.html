@@ -4600,7 +4600,18 @@ function showPage(id){
   },10);
 }
 
-function openModal(id){document.getElementById(id).classList.add('open')}
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  // Resetar modal de serviço sempre que abrir
+  if(id === 'modal-servico'){
+    var n=document.getElementById('srv-nome'); if(n) n.value='';
+    var p=document.getElementById('srv-preco'); if(p) p.value='';
+    var c=document.getElementById('srv-cat'); if(c) c.value='Cabelo';
+    var cn=document.getElementById('srv-cat-nova'); if(cn){cn.style.display='none';cn.value='';}
+    var wrap=document.getElementById('srv-profs-wrap');
+    if(wrap){wrap.querySelectorAll('.srv-prof-row').forEach(function(r,i){if(i>0)r.remove();});var first=wrap.querySelector('select');if(first)first.value='';}
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function saveModal(id,msg){closeModal(id);showAlert(msg)}
 
