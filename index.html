@@ -1449,18 +1449,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- DESPESAS -->
     <div class="page" id="page-despesas">
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-        <input placeholder="🔍 Buscar despesa..." style="width:300px"/>
+        <input id="despesa-busca" placeholder="🔍 Buscar despesa..." style="width:300px" oninput="renderDespesasList()"/>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-despesa')">+ Nova Despesa</button>
       </div>
-      <div class="table-card">
+      <div class="table-card" id="despesas-table-wrap">
         <table>
           <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>15/mai</td><td>Produtos capilares</td><td><span class="badge badge-blue">Insumos</span></td><td style="font-weight:700;color:var(--red)">R$ 280,00</td><td><span class="badge badge-green">Pago</span></td></tr>
-            <tr><td>10/mai</td><td>Aluguel</td><td><span class="badge badge-purple" style="background:#f3e8ff;color:#6d28d9">Fixo</span></td><td style="font-weight:700;color:var(--red)">R$ 1.500,00</td><td><span class="badge badge-green">Pago</span></td></tr>
-            <tr><td>05/mai</td><td>Conta de luz</td><td><span class="badge badge-yellow">Utilidades</span></td><td style="font-weight:700;color:var(--red)">R$ 145,00</td><td><span class="badge badge-green">Pago</span></td></tr>
-            <tr><td>01/jun</td><td>Aluguel</td><td><span class="badge badge-purple" style="background:#f3e8ff;color:#6d28d9">Fixo</span></td><td style="font-weight:700;color:var(--red)">R$ 1.500,00</td><td><span class="badge badge-yellow">Pendente</span></td></tr>
-          </tbody>
+          <tbody id="despesas-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -4326,22 +4321,86 @@ btnFinalizarPagamento.addEventListener('click', function() {
       <button class="modal-close" onclick="closeModal('modal-despesa')">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group full"><label>Descrição</label><input placeholder="Ex: Produtos capilares"/></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="number" placeholder="0,00"/></div>
-      <div class="form-group"><label>Data</label><input type="date" value="2026-05-26"/></div>
+      <div class="form-group full"><label>Descrição *</label><input id="desp-desc" placeholder="Ex: Produtos capilares"/></div>
+      <div class="form-group"><label>Valor (R$) *</label><input type="number" id="desp-val" placeholder="0,00" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="desp-data"/></div>
       <div class="form-group"><label>Categoria</label>
-        <select><option>Insumos</option><option>Fixo</option><option>Utilidades</option><option>Marketing</option><option>Outros</option></select>
+        <select id="desp-cat"><option>Insumos</option><option>Fixo</option><option>Utilidades</option><option>Marketing</option><option>Comissões</option><option>Outros</option></select>
       </div>
       <div class="form-group"><label>Status</label>
-        <select><option>Pago</option><option>Pendente</option></select>
+        <select id="desp-status"><option>Pago</option><option>Pendente</option></select>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-despesa')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveModal('modal-despesa','Despesa registrada com sucesso!')">Salvar</button>
+      <button class="btn btn-primary" onclick="salvarDespesa()">✅ Salvar</button>
     </div>
   </div>
 </div>
+
+<script>
+// ===== DESPESAS =====
+var despesasList = [];
+
+function renderDespesasList(){
+  var tbody = document.getElementById('despesas-tbody');
+  if(!tbody) return;
+  var busca = (document.getElementById('despesa-busca')||{}).value||'';
+  busca = busca.toLowerCase();
+  var lista = despesasList.filter(function(d){
+    return !busca || d.desc.toLowerCase().includes(busca) || d.cat.toLowerCase().includes(busca);
+  });
+  if(lista.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#aaa">'
+      + (despesasList.length===0 ? '📋 Nenhuma despesa cadastrada ainda. Clique em <b>+ Nova Despesa</b> para começar.' : '🔍 Nenhuma despesa encontrada para "<b>'+busca+'</b>".')
+      + '</td></tr>';
+    return;
+  }
+  var catBadge = {
+    'Insumos':'badge-blue','Fixo':'badge-purple','Utilidades':'badge-yellow',
+    'Marketing':'badge-green','Comissões':'badge-orange','Outros':'badge-gray'
+  };
+  tbody.innerHTML = lista.map(function(d){
+    var badgeCls = catBadge[d.cat]||'badge-gray';
+    var badgePurple = d.cat==='Fixo' ? ' style="background:#f3e8ff;color:#6d28d9"' : '';
+    var statusCls = d.status==='Pago' ? 'badge-green' : 'badge-yellow';
+    return '<tr>'
+      +'<td>'+d.data+'</td>'
+      +'<td>'+d.desc+'</td>'
+      +'<td><span class="badge '+badgeCls+'"'+badgePurple+'>'+d.cat+'</span></td>'
+      +'<td style="font-weight:700;color:var(--red)">R$ '+Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td>'
+      +'<td><span class="badge '+statusCls+'">'+d.status+'</span></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function salvarDespesa(){
+  var desc = (document.getElementById('desp-desc')||{}).value||'';
+  var val = parseFloat((document.getElementById('desp-val')||{}).value||0);
+  var dataVal = (document.getElementById('desp-data')||{}).value||'';
+  var cat = (document.getElementById('desp-cat')||{}).value||'Outros';
+  var status = (document.getElementById('desp-status')||{}).value||'Pago';
+  desc = desc.trim();
+  if(!desc){ alert('Informe a descrição.'); return; }
+  if(!val || val<=0){ alert('Informe um valor válido.'); return; }
+  if(!dataVal){ alert('Informe a data.'); return; }
+  var p = dataVal.split('-');
+  var dataFmt = p[2]+'/'+(['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][parseInt(p[1])-1]||p[1]);
+  despesasList.unshift({ desc:desc, valor:val, data:dataFmt, cat:cat, status:status });
+  closeModal('modal-despesa');
+  document.getElementById('desp-desc').value='';
+  document.getElementById('desp-val').value='';
+  renderDespesasList();
+}
+
+// Inicializar data do modal de despesa
+document.addEventListener('DOMContentLoaded', function(){
+  var el = document.getElementById('desp-data');
+  if(el){ var h=new Date(); el.value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0'); }
+  renderDespesasList();
+});
+// ===== FIM DESPESAS =====
+</script>
 
 <script>
 var agendamentosPorData={
