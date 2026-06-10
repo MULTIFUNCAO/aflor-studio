@@ -5243,18 +5243,19 @@ function abrirConfirmarPagamento(key){
   document.getElementById('pg-valor-restante').textContent=fmtCaixa(restante);
   var rowSinal=document.getElementById('pg-linha-sinal');
   if(rowSinal)rowSinal.style.display=sinal.temSinal?'flex':'none';
-  // Mostrar forma de pagamento do sinal
+  // Recuperar forma do sinal do agendamento
+  var formaSinalSalva = (dados && dados.formaSinal) || popupFormaSinal || '';
   var rowFormaSinal=document.getElementById('pg-linha-forma-sinal');
   var elFormaSinalTxt=document.getElementById('pg-forma-sinal-txt');
-  if(popupFormaSinal&&sinal.abate>0){
+  if(formaSinalSalva && sinal.abate>0){
     if(rowFormaSinal)rowFormaSinal.style.display='flex';
-    if(elFormaSinalTxt)elFormaSinalTxt.textContent=popupFormaSinal;
+    if(elFormaSinalTxt)elFormaSinalTxt.textContent=formaSinalSalva;
   } else {
     if(rowFormaSinal)rowFormaSinal.style.display='none';
   }
   var areaForma=document.getElementById('pg-area-forma');
   if(areaForma)areaForma.style.display=restante>0?'block':'none';
-  document.getElementById('pg-forma-pagamento').value=popupFormaSinal||'';
+  document.getElementById('pg-forma-pagamento').value=formaSinalSalva||'';
   openModal('modal-confirmar-pagamento');
 }
 
@@ -5407,6 +5408,10 @@ function atualizarPopupComandaUI(key){
 var popupFormaSinal = '';
 function popupSetFormaSinal(btn, forma){
   popupFormaSinal = forma;
+  // Salvar no agendamento atual para persistir após fechar popup
+  if(agendaPopupAtivo && agendaDiaAtual[agendaPopupAtivo]){
+    agendaDiaAtual[agendaPopupAtivo].formaSinal = forma;
+  }
   document.querySelectorAll('.popup-forma-btn').forEach(function(b){
     b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
   });
