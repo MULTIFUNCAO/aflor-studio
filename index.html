@@ -6621,7 +6621,7 @@ function renderFlorescimento(){
       ${etapasFlor.map(e=>`<div style="text-align:center;padding:12px 8px;border-radius:10px;border:2px solid ${score>=e.min?e.cor:'#e5e5e5'};background:${score>=e.min?e.cor+'15':'#fff'}">
         <div style="font-size:24px">${e.emoji}</div>
         <div style="font-size:10px;font-weight:700;margin-top:4px;color:${score>=e.min?e.cor:'#bbb'}">${e.nome}</div>
-        ${score>=e.min?'<div style="font-size:10px;color:#22c55e">✓ Atingido</div>':'<div style="font-size:9px;color:#bbb">A partir de ${e.min}%</div>'}
+        ${score>=e.min?'<div style="font-size:10px;color:#22c55e">✓ Atingido</div>':'<div style="font-size:9px;color:#bbb">A partir de '+e.min+'%</div>'}
       </div>`).join('')}
     </div>
     <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px">
