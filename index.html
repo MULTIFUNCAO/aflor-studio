@@ -5565,14 +5565,14 @@ function corBlocoAgenda(a){
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
   // Verde: concluído/comanda fechada
   if(concluido) return '#16a34a';
-  // Amarelo: sinal pago, ainda não finalizado
-  if(sinalPago) return '#d97706';
-  // Preto: agendado sem sinal
+  // Amarelo vivo: sinal pago, atendimento pendente
+  if(sinalPago) return '#facc15';
+  // Preto puro: agendado sem sinal
   return '#111111';
 }
 function corTextoBlocoAgenda(cor){
-  // Amarelo precisa de texto escuro para legibilidade
-  if(cor==='#d97706') return '#1a1a1a';
+  // Amarelo precisa de texto escuro
+  if(cor==='#facc15') return '#111111';
   return '#ffffff';
 }
 
