@@ -1326,13 +1326,20 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
   <div id="caixa-aberto-view" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-      <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:10px 16px">
-        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e"></div>
-        <span style="font-size:13px;font-weight:600">Caixa Aberto</span>
-        <span style="font-size:12px;color:#9ca3af">desde <b id="caixa-hora-abertura">--:--</b></span>
-        <span id="caixa-data-abertura" style="font-size:12px;color:#9ca3af"></span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="caixa-status-badge" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:10px 14px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#22c55e"></div>
+          <span style="font-size:13px;font-weight:600">Caixa Aberto</span>
+          <span style="font-size:12px;color:#9ca3af">desde <b id="caixa-hora-abertura">--:--</b></span>
+          <span id="caixa-data-abertura" style="font-size:12px;color:#9ca3af"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:10px;padding:8px 12px">
+          <button onclick="caixaNavData(-1)" style="background:none;border:none;cursor:pointer;font-size:16px;color:#555;padding:0 4px">&#9664;</button>
+          <span id="caixa-nav-data-label" style="font-size:12px;font-weight:700;color:#111;min-width:80px;text-align:center">Hoje</span>
+          <button onclick="caixaNavData(1)" id="caixa-nav-btn-proximo" style="background:none;border:none;cursor:pointer;font-size:16px;color:#555;padding:0 4px;opacity:0.3">&#9654;</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px">
+      <div id="caixa-botoes-acao" style="display:flex;gap:8px">
         <button class="btn" onclick="abrirModalMovimento('entrada')" style="background:#22c55e;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">+ Entrada</button>
         <button class="btn" onclick="abrirModalMovimento('saida')" style="background:#ef4444;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">- Saida</button>
         <button class="btn" onclick="fecharCaixaConfirmar()" style="background:#f59e0b;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">Fechar Caixa</button>
@@ -7329,6 +7336,7 @@ var catEntradas=['Servico de cabelo','Manicure/Pedicure','Estetica','Produto ven
 var catSaidas=['Compra de material','Aluguel/Conta','Comissao','Alimentacao','Transporte','Outros'];
 function fmtCaixa(v){return 'R$ '+Number(v).toFixed(2).replace('.',',');}
 function abrirCaixa(){
+  caixaNavIdx = 0;
   var troco=parseFloat(document.getElementById('caixa-troco-input').value)||0;
   caixaState.aberto=true;caixaState.troco=troco;caixaState.horaAbertura=new Date();caixaState.movimentos=[];
   var agora=caixaState.horaAbertura;
@@ -7421,6 +7429,78 @@ function fecharCaixaConfirmar(){
 }
 function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.display='block';document.getElementById('caixa-fechamento-view').style.display='none';}
 var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
+var caixaNavIdx = -1; // -1 = hoje (caixa atual)
+
+function caixaNavData(dir){
+  var max = historicoCaixas.length - 1;
+  var novoIdx = caixaNavIdx + dir;
+  if(novoIdx > 0) return; // não pode ir além de hoje
+  if(novoIdx < -max) return; // não pode ir além do histórico
+  caixaNavIdx = novoIdx;
+  renderCaixaNavData();
+}
+
+function renderCaixaNavData(){
+  var label = document.getElementById('caixa-nav-data-label');
+  var btnProx = document.getElementById('caixa-nav-btn-proximo');
+  var botoesAcao = document.getElementById('caixa-botoes-acao');
+  var statusBadge = document.getElementById('caixa-status-badge');
+
+  if(caixaNavIdx === 0 || historicoCaixas.length === 0){
+    // Hoje - caixa atual
+    caixaNavIdx = 0;
+    if(label) label.textContent = 'Hoje';
+    if(btnProx) btnProx.style.opacity = '0.3';
+    if(botoesAcao) botoesAcao.style.display = 'flex';
+    if(statusBadge) statusBadge.style.display = 'flex';
+    atualizarTotaisCaixa();
+  } else {
+    // Dia histórico
+    var reg = historicoCaixas[Math.abs(caixaNavIdx) - 1];
+    if(!reg) return;
+    if(label) label.textContent = reg.data.replace(/^\w+\.,\s*/,'');
+    if(btnProx) btnProx.style.opacity = caixaNavIdx < 0 ? '1' : '0.3';
+    if(botoesAcao) botoesAcao.style.display = 'none'; // esconder botões no histórico
+    if(statusBadge) statusBadge.style.display = 'none';
+    // Renderizar dados do dia histórico
+    renderCaixaDiaHistorico(reg);
+  }
+}
+
+function renderCaixaDiaHistorico(reg){
+  // Atualizar cards com dados do dia histórico
+  var elEnt = document.getElementById('caixa-total-entradas');
+  var elSai = document.getElementById('caixa-total-saidas');
+  var elSal = document.getElementById('caixa-saldo-atual');
+  var elTro = document.getElementById('caixa-troco-display');
+  var elCnt = document.getElementById('caixa-mov-count');
+  var elLst = document.getElementById('caixa-movimentos-lista');
+
+  if(elEnt) elEnt.textContent = fmtCaixa(reg.entradas);
+  if(elSai) elSai.textContent = fmtCaixa(reg.saidas);
+  if(elSal){ elSal.textContent = fmtCaixa(reg.saldo); elSal.style.color = reg.saldo >= 0 ? '' : '#ef4444'; }
+  if(elTro) elTro.textContent = fmtCaixa(reg.troco);
+  if(elCnt) elCnt.textContent = (reg.movimentos||[]).length + ' registros';
+
+  if(elLst){
+    if(!reg.movimentos || !reg.movimentos.length){
+      elLst.innerHTML = '<div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px">Nenhuma movimentação neste dia.</div>';
+    } else {
+      var html = '<div style="padding:10px 20px;background:#f9fafb;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--gray-400)">Sinal inicial</span><span style="font-size:13px;font-weight:700;color:#f59e0b">'+fmtCaixa(reg.troco)+'</span></div>';
+      reg.movimentos.slice().reverse().forEach(function(m){
+        var cor=m.tipo==='entrada'?'#22c55e':'#ef4444';
+        var sinal=m.tipo==='entrada'?'+':'-';
+        var icone={dinheiro:'💵',pix:'📱',cartao:'💳',link:'🔗'}[m.forma]||'💰';
+        html+='<div style="padding:12px 20px;border-bottom:1px solid #f8f8f8;display:flex;align-items:center;gap:12px">';
+        html+='<div style="width:32px;height:32px;border-radius:8px;background:'+(m.tipo==='entrada'?'#dcfce7':'#fee2e2')+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+icone+'</div>';
+        html+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+m.descricao+'</div><div style="font-size:11px;color:var(--gray-400)">'+m.categoria+' · '+m.hora+'</div></div>';
+        html+='<div style="font-size:15px;font-weight:800;color:'+cor+'">'+sinal+' '+fmtCaixa(m.valor)+'</div></div>';
+      });
+      elLst.innerHTML = html;
+    }
+  }
+}
+
 
 function salvarHistoricoCaixa(movimentos, troco){
   var entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
