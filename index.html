@@ -2478,7 +2478,7 @@ btnFinalizarPagamento.addEventListener('click', function() {
           <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Comanda e sinal/entrada</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Relatórios básicos</div>
         </div>
-        <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Inicial</button>
+        <button onclick="abrirPagamento('inicial')" style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Inicial</button>
       </div>
 
       <!-- PLANO PROFISSIONAL -->
@@ -2504,7 +2504,7 @@ btnFinalizarPagamento.addEventListener('click', function() {
           <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Histórico de caixas por dia</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Relatórios por forma de pagamento</div>
         </div>
-        <button style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Profissional</button>
+        <button onclick="abrirPagamento('profissional')" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Profissional</button>
       </div>
 
       <!-- PLANO COMPLETO -->
@@ -2564,7 +2564,7 @@ btnFinalizarPagamento.addEventListener('click', function() {
             </div>
           </div>
         </div>
-        <button style="width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 20px rgba(245,158,11,.3)">🌸 Assinar Flora Total</button>
+        <button onclick="abrirPagamento('total')" style="width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 20px rgba(245,158,11,.3)">🌸 Assinar Flora Total</button>
         <div style="text-align:center;margin-top:10px;font-size:11px;color:#666">7 dias grátis para testar</div>
       </div>
 
@@ -5927,6 +5927,37 @@ function buscarAgendamentos(termo){
     return div.outerHTML;
   }).join('');
 }
+
+// ===== PAGAMENTO ASAAS =====
+var FLORA_LINKS_ASAAS = {
+  inicial:      'https://www.asaas.com/c/fajbuzh4yw2oc1kx',  // R$ 29,90
+  profissional: 'https://www.asaas.com/c/eb9459mfmxfq3smr',  // R$ 49,00
+  total:        'https://www.asaas.com/c/zi98kys7r7b4zt4w'   // R$ 97,00
+};
+
+function abrirPagamento(plano) {
+  var link = FLORA_LINKS_ASAAS[plano];
+  if (!link || link.indexOf('COLE_AQUI') !== -1) {
+    // Modal de aviso enquanto os links não estão configurados
+    var nomes = { inicial: 'Inicial — R$ 29,90/mês', profissional: 'Profissional — R$ 49,00/mês', total: 'Flora Total — R$ 97,00/mês' };
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center">'
+      + '<div style="font-size:36px;margin-bottom:12px">🔧</div>'
+      + '<div style="font-size:17px;font-weight:800;color:#111;margin-bottom:8px">Em breve!</div>'
+      + '<div style="font-size:13px;color:#666;margin-bottom:6px">Plano <b>' + nomes[plano] + '</b></div>'
+      + '<div style="font-size:12px;color:#999;margin-bottom:20px">O link de pagamento ainda está sendo configurado. Em breve você poderá assinar diretamente aqui.</div>'
+      + '<div style="display:flex;gap:10px">'
+      + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:11px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Entendido</button>'
+      + '<a href="https://wa.me/5511999999999?text=Quero+assinar+o+plano+' + nomes[plano].replace(/ /g,'+') + '+do+Flora" target="_blank" style="flex:1;padding:11px;background:#22c55e;color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">📱 WhatsApp</a>'
+      + '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+    return;
+  }
+  window.open(link, '_blank');
+}
+// ===========================
 
 function irParaAgendamento(dataKey, key){
   // Navegar para a data do agendamento
