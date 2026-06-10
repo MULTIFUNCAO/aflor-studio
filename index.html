@@ -1046,12 +1046,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-vendas">
 
       <!-- PAINEL DE METAS -->
-      <div style="margin-bottom:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:15px;font-weight:800;color:#111">🎯 Metas do Mês</div>
-          <button onclick="abrirModalMetas()" style="background:#111;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">+ Definir Metas</button>
+      <div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">🎯</span>
+            <span style="font-size:16px;font-weight:900;color:#111;letter-spacing:-0.3px">Metas do Mês</span>
+          </div>
+          <button onclick="abrirModalMetas()" style="background:linear-gradient(135deg,#111,#333);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+            ✏️ Definir Metas
+          </button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="metas-cards-vendas">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="metas-cards-vendas">
           <!-- Cards gerados por JS -->
         </div>
       </div>
@@ -2657,7 +2662,7 @@ btnFinalizarPagamento.addEventListener('click', function() {
 </div>
 
 <!-- MODAL DEFINIR METAS -->
-<div id="modal-metas-vendas" class="modal-overlay" style="display:none">
+<div id="modal-metas-vendas" class="modal-overlay">
   <div class="modal" style="width:480px;max-height:85vh">
     <div class="modal-header">
       <div class="modal-title">🎯 Definir Metas do Mês</div>
@@ -4863,48 +4868,43 @@ function renderMetasCards(){
   var qtdServicos = caixaState.movimentos
     .filter(function(m){return m.tipo==='entrada' && m.categoria==='Servico de cabelo';}).length;
 
-  function pctBar(val, meta){
+  function pctBar(val, meta, cor){
     var pct = meta>0 ? Math.min(100, Math.round(val/meta*100)) : 0;
-    var cor = pct>=100?'#22c55e':pct>=70?'#f59e0b':'#ef4444';
-    return '<div style="background:#f0f0f0;border-radius:20px;height:8px;margin-top:8px">'
-      +'<div style="background:'+cor+';height:8px;border-radius:20px;width:'+pct+'%;transition:width .3s"></div>'
-      +'</div><div style="font-size:10px;color:#888;margin-top:4px">'+pct+'% atingido</div>';
+    var barCor = pct>=100?'#22c55e':pct>=70?cor:'#e5e5e5';
+    var textCor = pct>=100?'#22c55e':pct>=50?cor:'#aaa';
+    return '<div style="margin-top:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+      +'<span style="font-size:10px;font-weight:700;color:'+textCor+'">'+pct+'% atingido</span>'
+      +(pct>=100?'<span style="font-size:10px;font-weight:800;color:#22c55e">✅ Meta batida!</span>':'')
+      +'</div>'
+      +'<div style="background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden">'
+      +'<div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  function metaCard(icon, label, cor, bgCor, realizado, meta, unidade, extra){
+    var falta = Math.max(0, meta - realizado);
+    return '<div style="background:'+bgCor+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden">'
+      +'<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.08">'+icon+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">'
+      +'<span style="font-size:16px">'+icon+'</span>'
+      +'<span style="font-size:11px;font-weight:800;color:'+cor+';text-transform:uppercase;letter-spacing:.5px">'+label+'</span>'
+      +'</div>'
+      +(extra?'<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px">'+extra+'</div>':'')
+      +'<div style="font-size:26px;font-weight:900;color:#111;line-height:1">'+realizado+'</div>'
+      +'<div style="font-size:12px;color:#888;margin-top:3px">de <b style="color:#555">'+meta+'</b> '+unidade+'</div>'
+      +'<div style="font-size:11px;color:#777;margin-top:5px;background:rgba(0,0,0,.05);display:inline-block;padding:2px 8px;border-radius:20px">Falta '+falta+' '+unidade+'</div>'
+      +pctBar(typeof realizado==='string'?parseFloat(realizado.replace('R$','').replace('.','').replace(',','.'))||0:realizado,
+              typeof meta==='string'?parseFloat(meta.replace('R$','').replace('.','').replace(',','.'))||0:meta, cor)
+      +'</div>';
   }
 
   var cards = [
-    // Meta Geral
-    '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;border-top:3px solid #8b5cf6">'
-      +'<div style="font-size:11px;font-weight:700;color:#8b5cf6;margin-bottom:8px">🏢 META GERAL</div>'
-      +'<div style="font-size:20px;font-weight:900;color:#111">'+fmtCaixa(totalRealizado)+'</div>'
-      +'<div style="font-size:12px;color:#888;margin-top:2px">de '+fmtCaixa(mv.geral||0)+' no mês</div>'
-      +'<div style="font-size:12px;color:#555;margin-top:4px">Falta: '+fmtCaixa(Math.max(0,(mv.geral||0)-totalRealizado))+'</div>'
-      +pctBar(totalRealizado, mv.geral||0)
-      +'</div>',
-    // Meta Individual
-    '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;border-top:3px solid #ec4899">'
-      +'<div style="font-size:11px;font-weight:700;color:#ec4899;margin-bottom:8px">👤 META INDIVIDUAL</div>'
-      +'<div style="font-size:14px;font-weight:700;color:#333;margin-bottom:4px">'+(mv.colab||'Não definido')+'</div>'
-      +'<div style="font-size:20px;font-weight:900;color:#111">'+fmtCaixa(totalRealizado)+'</div>'
-      +'<div style="font-size:12px;color:#888;margin-top:2px">de '+fmtCaixa(mv.individual||0)+'</div>'
-      +'<div style="font-size:12px;color:#555;margin-top:4px">Falta: '+fmtCaixa(Math.max(0,(mv.individual||0)-totalRealizado))+'</div>'
-      +pctBar(totalRealizado, mv.individual||0)
-      +'</div>',
-    // Meta Serviços
-    '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;border-top:3px solid #22c55e">'
-      +'<div style="font-size:11px;font-weight:700;color:#22c55e;margin-bottom:8px">✂️ SERVIÇOS</div>'
-      +'<div style="font-size:20px;font-weight:900;color:#111">'+qtdServicos+' atend.</div>'
-      +'<div style="font-size:12px;color:#888;margin-top:2px">meta: '+(mv.servicos||0)+' atendimentos</div>'
-      +'<div style="font-size:12px;color:#555;margin-top:4px">Falta: '+Math.max(0,(mv.servicos||0)-qtdServicos)+' atendimentos</div>'
-      +pctBar(qtdServicos, mv.servicos||0)
-      +'</div>',
-    // Meta Produtos
-    '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;border-top:3px solid #f59e0b">'
-      +'<div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:8px">📦 PRODUTOS</div>'
-      +'<div style="font-size:20px;font-weight:900;color:#111">0 unid.</div>'
-      +'<div style="font-size:12px;color:#888;margin-top:2px">meta: '+(mv.produtos||0)+' unidades</div>'
-      +'<div style="font-size:12px;color:#555;margin-top:4px">Falta: '+(mv.produtos||0)+' unidades</div>'
-      +pctBar(0, mv.produtos||0)
-      +'</div>'
+    metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff', fmtCaixa(totalRealizado), fmtCaixa(mv.geral||0), 'no mês', null),
+    metaCard('👤','Meta Individual','#db2777','#fdf2f8', fmtCaixa(totalRealizado), fmtCaixa(mv.individual||0), 'no mês', mv.colab||'Colaborador não definido'),
+    metaCard('✂️','Serviços','#16a34a','#f0fdf4', qtdServicos+' atend.', (mv.servicos||0)+' atend.', 'atend.', null),
+    metaCard('📦','Produtos','#d97706','#fffbeb', '0 unid.', (mv.produtos||0)+' unid.', 'unid.', null)
   ];
   el.innerHTML = cards.join('');
 }
