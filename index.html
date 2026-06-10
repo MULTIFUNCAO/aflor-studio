@@ -4421,11 +4421,11 @@ function salvarServico(){
   // Adicionar nova categoria ao select para uso futuro
   if(catSel === '__nova__' && catNova && !catServicoExtras.includes(catNova)){
     catServicoExtras.push(catNova);
-    var sel = document.getElementById('srv-cat');
+    var selEl = document.getElementById('srv-cat');
     var opt = document.createElement('option');
     opt.value = catNova; opt.text = catNova;
-    sel.insertBefore(opt, sel.querySelector('option[value="__nova__"]'));
-    sel.value = catNova;
+    selEl.insertBefore(opt, selEl.querySelector('option[value="__nova__"]'));
+    selEl.value = catNova;
   }
 
   var preco = parseFloat((document.getElementById('srv-preco')||{}).value||0);
@@ -4442,11 +4442,13 @@ function salvarServico(){
     }
   });
 
-  // Salvar no sistema de serviços
-  if(typeof servicosList !== 'undefined'){
-    servicosList.push({ nome:nome, cat:cat, dur:dur, preco:preco.toFixed(2), profs:profs, cor:'#6366f1' });
-    renderServicos();
-  }
+  // Cor por categoria
+  var cores = {'Cabelo':'#8b5cf6','Manicure':'#ec4899','Pedicure':'#ec4899','Unhas':'#ec4899','Bronzeamento':'#f59e0b','Estética':'#06b6d4','Sobrancelha':'#10b981'};
+  var cor = cores[cat] || '#6366f1';
+
+  // Salvar na variável global servicos
+  servicos.push({ nome:nome, cat:cat, dur:dur, preco:Number(preco).toFixed(2).replace('.',','), profs:profs, cor:cor });
+  renderServicos();
 
   closeModal('modal-servico');
   document.getElementById('srv-nome').value='';
@@ -4454,15 +4456,13 @@ function salvarServico(){
   document.getElementById('srv-cat-nova').style.display='none';
   document.getElementById('srv-cat-nova').value='';
   document.getElementById('srv-cat').value='Cabelo';
+
   // Resetar profissionais para 1 linha
   var wrap = document.getElementById('srv-profs-wrap');
   if(wrap){
     wrap.querySelectorAll('.srv-prof-row').forEach(function(r,i){ if(i>0) r.remove(); });
     var first = wrap.querySelector('select'); if(first) first.value='';
   }
-
-  if(typeof showToast === 'function') showToast('Serviço cadastrado com sucesso!');
-  else alert('Serviço cadastrado com sucesso!');
 }
 // ===== FIM SERVIÇO =====
 </script>
@@ -4689,7 +4689,7 @@ var remuneracoes=[
   {nome:'Stephanie',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'pink'},
 ];
 
-const servicos=[
+let servicos=[
   {cat:'Unhas',nome:'Manicure',dur:'1h',preco:'40,00',cor:'#ec4899'},
   {cat:'Unhas',nome:'Alongamento Fibra',dur:'4h',preco:'200,00',cor:'#ec4899'},
   {cat:'Unhas',nome:'Alongamento Gel',dur:'2h30',preco:'150,00',cor:'#ec4899'},
