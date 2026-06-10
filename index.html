@@ -2450,33 +2450,149 @@ btnFinalizarPagamento.addEventListener('click', function() {
 
     <!-- PLANO -->
     <div class="page" id="page-plano">
-      <div class="plano-card canceled">
-        <span class="plano-badge badge-canceled">Plano cancelado</span>
-        <h3 style="font-size:17px;font-weight:700;margin-bottom:4px">Plano Empresa</h3>
-        <p style="font-size:13px;color:var(--gray-400);margin-bottom:8px">Ideal para negócios que possuem colaboradors ou parceiros.</p>
-        <p style="font-size:20px;font-weight:800;color:var(--navy)">R$ 65,90<span style="font-size:13px;font-weight:500;color:var(--gray-400)">/mês</span></p>
+
+      <!-- HEADER -->
+      <div style="text-align:center;padding:8px 0 24px">
+        <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#db2777);padding:6px 16px;border-radius:20px;font-size:11px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:12px">ESCOLHA SEU PLANO</div>
+        <h2 style="font-size:22px;font-weight:900;color:#111;margin-bottom:6px;line-height:1.2">Simples, transparente<br>e sem surpresas</h2>
+        <p style="font-size:13px;color:#888">Cancele quando quiser. Sem fidelidade.</p>
       </div>
-      <div class="form-card" style="margin-bottom:14px">
-        <h4 style="font-size:14px;font-weight:700;margin-bottom:12px">Tipo de cobrança</h4>
-        <p style="font-size:13px;color:var(--gray-400)">Renovação manual</p>
-        <div style="margin-top:16px">
-          <h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Método de pagamento</h4>
-          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
-            <span style="font-size:20px">🏦</span>
-            <span style="font-size:13px;font-weight:600">Mercado Pago</span>
+
+      <!-- PLANO INICIAL -->
+      <div style="background:#fff;border:2px solid #e5e5e5;border-radius:20px;padding:24px;margin-bottom:14px;position:relative">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🌱 Inicial</div>
+            <div style="font-size:13px;color:#888">Para quem trabalha sozinho</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:900;color:#111;line-height:1">R$ 29<span style="font-size:16px">,90</span></div>
+            <div style="font-size:11px;color:#aaa">/mês</div>
           </div>
         </div>
-      </div>
-      <div class="form-card">
-        <h4 style="font-size:14px;font-weight:700;margin-bottom:12px">Dados de faturamento</h4>
-        <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
-          <div><span style="color:var(--gray-400)">Nome:</span> <span style="font-weight:600">Thiago dos Santos</span></div>
-          <div><span style="color:var(--gray-400)">CPF/CNPJ:</span> <span style="font-weight:600">339.017.688-82</span></div>
-          <div><span style="color:var(--gray-400)">E-mail:</span> <span style="font-weight:600">aflorschool@gmail.com</span></div>
-          <div><span style="color:var(--gray-400)">Endereço:</span> <span style="font-weight:600">Rua Siqueira Campos, 283 - Jardim São Paulo - Guarulhos/SP</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> <b>1 usuário</b></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Agenda de atendimentos</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Controle de caixa</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Cadastro de clientes</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Comanda e sinal/entrada</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#22c55e;font-weight:700;font-size:15px">✓</span> Relatórios básicos</div>
         </div>
-        <button class="btn btn-primary" style="margin-top:16px">Reativar Plano</button>
+        <button style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Inicial</button>
       </div>
+
+      <!-- PLANO PROFISSIONAL -->
+      <div style="background:#fff;border:2px solid #7c3aed;border-radius:20px;padding:24px;margin-bottom:14px;position:relative">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;font-size:11px;font-weight:800;padding:4px 16px;border-radius:20px;white-space:nowrap;letter-spacing:.5px">⭐ MAIS POPULAR</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;margin-top:8px">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🌿 Profissional</div>
+            <div style="font-size:13px;color:#888">Para equipes e salões</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:900;color:#111;line-height:1">R$ 49<span style="font-size:16px">,00</span></div>
+            <div style="font-size:11px;color:#aaa">/mês</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> <b>Até 10 usuários e colaboradores</b></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Tudo do plano Inicial</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Múltiplos profissionais na agenda</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Controle de comissões</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Metas individuais e gerais</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Fluxo de caixa completo</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Histórico de caixas por dia</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:#7c3aed;font-weight:700;font-size:15px">✓</span> Relatórios por forma de pagamento</div>
+        </div>
+        <button style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#9333ea);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px">Assinar Profissional</button>
+      </div>
+
+      <!-- PLANO COMPLETO -->
+      <div style="background:linear-gradient(145deg,#0f0f0f,#1a1a2e);border-radius:20px;padding:24px;margin-bottom:24px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(251,191,36,.15),transparent);pointer-events:none"></div>
+        <div style="position:absolute;bottom:0;left:0;width:80px;height:80px;background:radial-gradient(circle,rgba(139,92,246,.2),transparent);pointer-events:none"></div>
+        <div style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#ef4444);padding:4px 14px;border-radius:20px;font-size:10px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:12px">🔥 ACESSO COMPLETO</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🌸 Flora Total</div>
+            <div style="font-size:12px;color:#888">Tudo + o que nenhum app tem</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:900;color:#fff;line-height:1">R$ 97<span style="font-size:16px">,00</span></div>
+            <div style="font-size:11px;color:#666">/mês</div>
+          </div>
+        </div>
+
+        <!-- Benefícios padrão -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd"><span style="color:#22c55e;font-weight:700">✓</span> Tudo do plano Profissional</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd"><span style="color:#22c55e;font-weight:700">✓</span> Usuários ilimitados</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ddd"><span style="color:#22c55e;font-weight:700">✓</span> Suporte prioritário</div>
+        </div>
+
+        <!-- Divisor exclusivo -->
+        <div style="border-top:1px solid rgba(251,191,36,.3);padding-top:16px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;color:#fbbf24;letter-spacing:1px;margin-bottom:12px">✨ EXCLUSIVO FLORA — NÃO EXISTE EM NENHUM APP</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span style="font-size:16px">🧠</span>
+                <span style="font-size:13px;font-weight:800;color:#fbbf24">IA Estratégica</span>
+              </div>
+              <div style="font-size:12px;color:#aaa">Análise de desempenho e sugestões personalizadas para o seu salão</div>
+            </div>
+            <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:12px 14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span style="font-size:16px">📣</span>
+                <span style="font-size:13px;font-weight:800;color:#a78bfa">Marketing & Campanhas</span>
+              </div>
+              <div style="font-size:12px;color:#aaa">Crie campanhas para reativar clientes e aumentar o faturamento</div>
+            </div>
+            <div style="background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.3);border-radius:12px;padding:12px 14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span style="font-size:16px">🎓</span>
+                <span style="font-size:13px;font-weight:800;color:#f472b6">Treinamentos</span>
+              </div>
+              <div style="font-size:12px;color:#aaa">Conteúdos exclusivos para você e sua equipe crescerem</div>
+            </div>
+            <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:12px 14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span style="font-size:16px">💫</span>
+                <span style="font-size:13px;font-weight:800;color:#4ade80">Influenciadoras</span>
+              </div>
+              <div style="font-size:12px;color:#aaa">Rede de influenciadoras parceiras para divulgar o seu salão</div>
+            </div>
+          </div>
+        </div>
+        <button style="width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 20px rgba(245,158,11,.3)">🌸 Assinar Flora Total</button>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:#666">7 dias grátis para testar</div>
+      </div>
+
+      <!-- COMPARATIVO RÁPIDO -->
+      <div style="background:#f8f8f8;border-radius:16px;padding:16px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:800;color:#555;margin-bottom:12px;text-align:center">COMPARATIVO RÁPIDO</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:#888;padding:6px 0;border-bottom:2px solid #e5e5e5"></div>
+          <div style="font-size:10px;font-weight:700;color:#555;padding:6px 0;border-bottom:2px solid #7c3aed">PROF.</div>
+          <div style="font-size:10px;font-weight:700;color:#f59e0b;padding:6px 0;border-bottom:2px solid #f59e0b">TOTAL</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:left">Usuários</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0">1</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0">até 10</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:left">Agenda</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#22c55e">✓</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#22c55e">✓</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:left">IA Estratégica</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#ef4444">✗</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#22c55e">✓</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:left">Marketing</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#ef4444">✗</div>
+          <div style="padding:8px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;color:#22c55e">✓</div>
+          <div style="font-size:11px;color:#555;padding:8px 4px;text-align:left">Treinamentos</div>
+          <div style="padding:8px 4px;font-size:13px;color:#ef4444">✗</div>
+          <div style="padding:8px 4px;font-size:13px;color:#22c55e">✓</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- CONFIGURAÇÕES -->
