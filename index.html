@@ -5089,14 +5089,15 @@ function abrirAgendaPopup(key,dados,event){
   event.stopPropagation();
   var popup=document.createElement('div');
   popup.id='agenda-popup';
-  popup.style.cssText="position:fixed;z-index:800;background:#fff;border-radius:14px;padding:20px;width:340px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid #e5e5e5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif";
+  popup.style.cssText="position:fixed;z-index:800;background:#fff;border-radius:14px;padding:20px;width:340px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid #e5e5e5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif";
   // Posicionar sempre visível — centro da tela ou próximo ao clique
+  var popupH=Math.min(window.innerHeight*0.8, 700);
   var x=event.clientX+10;
   var y=event.clientY-100;
   if(x+350>window.innerWidth)x=event.clientX-360;
   if(x<10)x=10;
   if(y<10)y=10;
-  if(y+600>window.innerHeight)y=Math.max(10,window.innerHeight-620);
+  if(y+popupH>window.innerHeight)y=Math.max(10,window.innerHeight-popupH-10);
   popup.style.left=x+'px';
   popup.style.top=y+'px';
   var sinalInfoPg=lerSinalAgendamento(dados);
