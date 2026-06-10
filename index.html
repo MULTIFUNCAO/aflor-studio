@@ -5296,7 +5296,7 @@ function abrirConfirmarPagamento(key){
 }
 
 function lancarEntradaCaixaAuto(desc,valor,forma){
-  var mapaForma={'Pix':'pix','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro'};
+  var mapaForma={'Pix':'pix','pix':'pix','PIX':'pix','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
   var formaKey=mapaForma[forma]||'pix';
   if(!caixaState.aberto){
     caixaState.aberto=true;
@@ -5315,7 +5315,8 @@ function lancarEntradaCaixaAuto(desc,valor,forma){
     document.getElementById('caixa-fechamento-view').style.display='none';
   }
   var agora=new Date();
-  caixaState.movimentos.push({id:movIdCounter++,tipo:'entrada',categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaKey,hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0')});
+  var iconeForma={pix:'📱',dinheiro:'💵',cartao:'💳',link:'🔗'}[formaKey]||'💰';
+  caixaState.movimentos.push({id:movIdCounter++,tipo:'entrada',categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaKey,icone:iconeForma,hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0')});
   atualizarTotaisCaixa();
 }
 
