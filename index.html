@@ -4201,6 +4201,33 @@ document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
 
+// ===== WHATSAPP =====
+function enviarWhatsApp(nome, tel, tipo) {
+  // Limpar telefone — só números
+  var num = tel.replace(/\D/g,'');
+  // Adicionar 55 (Brasil) se não tiver
+  if(num.length === 10 || num.length === 11) num = '55' + num;
+
+  var msg = '';
+  var primeiroNome = nome.split(' ')[0];
+
+  if(tipo === 'ola') {
+    msg = 'Olá ' + primeiroNome + '! 🌸 Tudo bem? Aqui é do salão. Gostaríamos de saber como você está e se posso te ajudar com algum serviço. Qualquer dúvida, estamos à disposição! 😊';
+  } else if(tipo === 'reativacao') {
+    msg = 'Olá ' + primeiroNome + '! 🌸 Sentimos sua falta! Faz um tempinho que não nos vemos. Que tal agendar um horário? Temos novidades esperando por você! 💅✨ Responda essa mensagem para agendar!';
+  } else if(tipo === 'aniversario') {
+    msg = '🎂 Feliz Aniversário, ' + primeiroNome + '! 🌸 O salão deseja a você um dia maravilhoso! Como presente especial, você tem um desconto exclusivo esperando por você. Venha nos visitar! 💕';
+  } else if(tipo === 'lembrete') {
+    msg = 'Olá ' + primeiroNome + '! 🌸 Passando para lembrar do seu agendamento conosco. Qualquer dúvida, é só chamar aqui! Até breve! 😊';
+  } else {
+    msg = 'Olá ' + primeiroNome + '! 🌸';
+  }
+
+  var url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+}
+// ===== FIM WHATSAPP =====
+
 // ===== FLORESCIMENTO ETAPAS =====
 var _etapaDetalhes = {
   'Semente': {
@@ -4373,8 +4400,18 @@ function abrirRelatorio(tipo){
     var sumidos = clientes.filter(function(c){ return c.retornoStatus === 'vencido'; });
     html = sumidos.length === 0
       ? '<div style="text-align:center;padding:40px;color:#aaa">Nenhum cliente sumido no momento! 🎉</div>'
-      : '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Telefone</th><th style="padding:10px;text-align:left;font-size:12px">Último atend.</th></tr></thead><tbody>'
-        + sumidos.map(function(c){ return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:9px;font-size:13px;font-weight:600">'+c.nome+'</td><td style="padding:9px;font-size:12px;color:#666">'+c.tel+'</td><td style="padding:9px;font-size:12px;color:#ef4444;font-weight:600">'+c.ultima+'</td></tr>'; }).join('')
+      : '<div style="font-size:12px;color:#888;margin-bottom:12px">Clique em 📱 para enviar mensagem de reativação via WhatsApp</div>'
+        +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Telefone</th><th style="padding:10px;text-align:left;font-size:12px">Último atend.</th><th style="padding:10px;text-align:center;font-size:12px">Ação</th></tr></thead><tbody>'
+        + sumidos.map(function(c){
+          return '<tr style="border-bottom:1px solid #f0f0f0">'
+            +'<td style="padding:9px;font-size:13px;font-weight:600">'+c.nome+'</td>'
+            +'<td style="padding:9px;font-size:12px;color:#666">'+c.tel+'</td>'
+            +'<td style="padding:9px;font-size:12px;color:#ef4444;font-weight:600">'+c.ultima+'</td>'
+            +'<td style="padding:9px;text-align:center">'
+            +(c.tel?'<button onclick="enviarWhatsApp(\''+c.nome+'\',\''+c.tel+'\',\'reativacao\')" style="background:#22c55e;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📱 Reativar</button>':'<span style="color:#aaa;font-size:12px">Sem telefone</span>')
+            +'</td>'
+            +'</tr>';
+        }).join('')
         +'</tbody></table>';
 
   } else if(tipo === 'ativos'){
@@ -5102,9 +5139,10 @@ function renderClientes(search=''){
       <td>${c.retornoData?`<span style="font-size:12px;font-weight:600">${c.retornoData}</span>`:'<span style="color:var(--gray-300);font-size:12px">Não definido</span>'}</td>
       <td>${retBadge}</td>
       <td style="font-weight:700;color:var(--green)">${c.total}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="abrirRetornoRapido(${i})" title="Lembrete de retorno" style="margin-right:4px">🔔</button>
-        ${rs&&rs!=='retornou'?`<button class="btn btn-outline btn-sm" onclick="marcarRetornou(${i})" title="Marcar como retornou" style="color:var(--green);border-color:var(--green)">✓ Retornou</button>`:''}
+      <td style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+        ${c.tel?`<button class="btn btn-sm" onclick="enviarWhatsApp('${c.nome}','${c.tel}','ola')" title="Enviar WhatsApp" style="background:#22c55e;color:#fff;border:none;padding:5px 8px;font-size:12px">📱</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="abrirRetornoRapido(${i})" title="Lembrete de retorno">🔔</button>
+        ${rs&&rs!=='retornou'?`<button class="btn btn-outline btn-sm" onclick="marcarRetornou(${i})" title="Marcar como retornou" style="color:var(--green);border-color:var(--green)">✓</button>`:''}
       </td>
     </tr>`;
   }).join('');
