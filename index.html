@@ -5303,8 +5303,14 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].sinal_status='pago';
       agendamentosPorData[dataKey][key].valor=valorTotalFmt;
     }
+    // Lançar sinal separado se foi pago e tem valor
+    var formaSinalCtx = (ctx.dados && ctx.dados.formaSinal) || '';
+    if(ctx.sinalAbate>0 && formaSinalCtx){
+      lancarEntradaCaixaAuto('Sinal — '+ctx.dados.servico+' — '+ctx.dados.cliente, ctx.sinalAbate, formaSinalCtx);
+    }
+    // Lançar saldo restante
     if(ctx.restante>0){
-      lancarEntradaCaixaAuto(ctx.dados.servico+' — '+ctx.dados.cliente,ctx.restante,forma);
+      lancarEntradaCaixaAuto(ctx.dados.servico+' — '+ctx.dados.cliente, ctx.restante, forma);
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
