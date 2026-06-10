@@ -4173,9 +4173,12 @@ document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
 
+var _colabFiltro = 'Ativos';
 function filterColabs(status,el){
-  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  _colabFiltro = status;
+  document.querySelectorAll('#page-colaboradores .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  renderColabs();
 }
 
 function setTheme(color,el){
@@ -5067,7 +5070,22 @@ function mkAvatar(c,size){
 function renderColabs(){
   const tb=document.getElementById('colabs-table');
   if(!tb)return;
-  tb.innerHTML=colaboradores.map((c,idx)=>`<tr>
+  const filtro = _colabFiltro || 'Ativos';
+  const lista = colaboradores.filter(c => {
+    if(filtro === 'Ativos') return c.status !== 'Inativo';
+    return c.status === 'Inativo';
+  });
+  if(lista.length === 0){
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#aaa">Nenhum colaborador '+filtro.toLowerCase()+' encontrado.</td></tr>';
+    return;
+  }
+  tb.innerHTML=lista.map((c,idx)=>{
+    const idxReal = colaboradores.indexOf(c);
+    const ativo = c.status !== 'Inativo';
+    const badgeCls = ativo ? 'badge-green' : 'badge-gray';
+    const dotCls = ativo ? 'dot-green' : '';
+    const dotStyle = ativo ? '' : 'background:#aaa';
+    return `<tr>
     <td><div style="display:flex;align-items:center;gap:10px">
       ${mkAvatar(c,38)}
       <div>
@@ -5077,11 +5095,12 @@ function renderColabs(){
     </div></td>
     <td>${c.cargo}</td>
     <td style="font-weight:700">${c.comissao}</td>
-    <td><span class="badge badge-green"><span class="status-dot dot-green"></span>${c.status}</span></td>
+    <td><span class="badge ${badgeCls}"><span class="status-dot ${dotCls}" style="${dotStyle}"></span>${c.status||'Ativo'}</span></td>
     <td>
-      <button class="btn btn-outline btn-sm" style="font-size:11px" onclick="editarColab(${idx})">✏️ Editar</button>
+      <button class="btn btn-outline btn-sm" style="font-size:11px" onclick="editarColab(${idxReal})">✏️ Editar</button>
     </td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 // Agenda Grid
@@ -5733,8 +5752,11 @@ function irParaAgendamento(dataKey, key){
 }
 
 function renderAgenda(){
-  const todosProfs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
   const profCores={'Ana Flor':'#111','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
+  // Usa apenas colaboradores ativos
+  const todosProfs = colaboradores
+    .filter(function(c){ return c.status !== 'Inativo'; })
+    .map(function(c){ return c.nome.split(' ')[0]==='Ana'?'Ana Flor':c.nome.split(' ')[0]; });
   // Filtro de profissional
   var filtro=document.getElementById('agenda-prof-filtro')?.value||'';
   const profNames=filtro?[filtro]:todosProfs;
