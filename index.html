@@ -819,10 +819,16 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <span class="header-title" id="page-title">Página Principal</span>
     </div>
     <div class="header-actions">
-      <button class="btn btn-outline btn-sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Buscar
-      </button>
+      <div style="position:relative">
+        <button class="btn btn-outline btn-sm" onclick="toggleBuscaAgenda()" id="btn-busca-agenda">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Buscar
+        </button>
+        <div id="busca-agenda-dropdown" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500">
+          <input id="busca-agenda-input" placeholder="🔍 Cliente, telefone, serviço ou profissional..." oninput="buscarAgendamentos(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box"/>
+          <div id="busca-agenda-resultados" style="margin-top:8px;max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
       <button class="btn btn-primary btn-sm" onclick="abrirModalAgendar()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agendar
@@ -5592,6 +5598,101 @@ function corTextoBlocoAgenda(cor){
   // Amarelo precisa de texto escuro
   if(cor==='#facc15') return '#111111';
   return '#ffffff';
+}
+
+function toggleBuscaAgenda(){
+  var dd=document.getElementById('busca-agenda-dropdown');
+  if(!dd)return;
+  var aberto=dd.style.display==='block';
+  dd.style.display=aberto?'none':'block';
+  if(!aberto)setTimeout(function(){var inp=document.getElementById('busca-agenda-input');if(inp)inp.focus();},50);
+}
+
+// Fechar busca ao clicar fora
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('busca-agenda-dropdown');
+  var btn=document.getElementById('btn-busca-agenda');
+  if(dd&&btn&&!dd.contains(e.target)&&!btn.contains(e.target)){
+    dd.style.display='none';
+  }
+});
+
+function buscarAgendamentos(termo){
+  var res=document.getElementById('busca-agenda-resultados');
+  if(!res)return;
+  if(!termo||termo.length<2){
+    res.innerHTML='<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Digite pelo menos 2 caracteres</div>';
+    return;
+  }
+  var t=termo.toLowerCase();
+  var encontrados=[];
+  // Buscar em todos os dias do agendamentosPorData
+  Object.keys(agendamentosPorData).forEach(function(dataKey){
+    var appts=agendamentosPorData[dataKey];
+    Object.keys(appts).forEach(function(k){
+      var a=appts[k];
+      if(!a)return;
+      var match=(a.cliente||'').toLowerCase().includes(t)
+        ||(a.tel||'').toLowerCase().includes(t)
+        ||(a.servico||'').toLowerCase().includes(t)
+        ||(a.prof||'').toLowerCase().includes(t);
+      if(match)encontrados.push({dataKey:dataKey,key:k,dados:a});
+    });
+  });
+  // Também buscar nos agendamentos da data atual
+  Object.keys(agendaDiaAtual).forEach(function(k){
+    var a=agendaDiaAtual[k];
+    if(!a)return;
+    var d=agendaDataAtual;
+    var dk=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+    // evitar duplicata
+    if(encontrados.find(function(e){return e.key===k&&e.dataKey===dk;}))return;
+    var match=(a.cliente||'').toLowerCase().includes(t)
+      ||(a.tel||'').toLowerCase().includes(t)
+      ||(a.servico||'').toLowerCase().includes(t)
+      ||(a.prof||'').toLowerCase().includes(t);
+    if(match)encontrados.push({dataKey:dk,key:k,dados:a});
+  });
+
+  if(!encontrados.length){
+    res.innerHTML='<div style="font-size:12px;color:#aaa;text-align:center;padding:12px">Nenhum agendamento encontrado</div>';
+    return;
+  }
+
+  res.innerHTML=encontrados.slice(0,10).map(function(e){
+    var a=e.dados;
+    var corBloco=corBlocoAgenda(a);
+    var st=a.status||'Pendente';
+    return '<div onclick="irParaAgendamento(''+e.dataKey+'',''+e.key+'')" style="padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;background:#f8f8f8;border-left:4px solid '+corBloco+'" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#f8f8f8'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">'
+      +'<span style="font-size:13px;font-weight:700;color:#111">'+a.cliente+'</span>'
+      +'<span style="font-size:10px;font-weight:700;background:'+corBloco+';color:#fff;padding:2px 7px;border-radius:20px">'+st+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#666">'+a.servico+' · '+a.prof+' · '+e.dataKey+' '+a.hora+'</div>'
+      +(a.tel?'<div style="font-size:10px;color:#aaa;margin-top:2px">'+a.tel+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+function irParaAgendamento(dataKey, key){
+  // Navegar para a data do agendamento
+  var partes=dataKey.split('/');
+  if(partes.length===3){
+    agendaDataAtual=new Date(parseInt(partes[2]),parseInt(partes[1])-1,parseInt(partes[0]));
+  }
+  document.getElementById('busca-agenda-dropdown').style.display='none';
+  document.getElementById('busca-agenda-input').value='';
+  showPage('agenda');
+  setTimeout(function(){
+    renderAgenda();
+    // Tentar abrir o popup do agendamento
+    setTimeout(function(){
+      var el=document.querySelector('[data-key="'+key+'"]');
+      if(!el){
+        showAlert('Navegando para '+dataKey);
+      }
+    },300);
+  },100);
 }
 
 function renderAgenda(){
