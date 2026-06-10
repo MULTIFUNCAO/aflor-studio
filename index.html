@@ -4222,6 +4222,7 @@ function openModal(id){
     document.getElementById('modal-socio-titulo').textContent='👤 Adicionar Sócio';
     setSocioTipo('fixo');
   }
+  if(id === 'modal-servico'){
     var n=document.getElementById('srv-nome'); if(n) n.value='';
     var p=document.getElementById('srv-preco'); if(p) p.value='';
     var c=document.getElementById('srv-cat'); if(c) c.value='Cabelo';
