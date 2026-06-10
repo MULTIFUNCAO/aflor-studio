@@ -2593,6 +2593,34 @@ btnFinalizarPagamento.addEventListener('click', function() {
   </div>
 </div>
 
+<!-- MODAL CONFIRMAÇÃO PAGAMENTO SUCESSO -->
+<div id="modal-pagamento-sucesso" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;margin:16px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="width:72px;height:72px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px">✅</div>
+    <div style="font-size:22px;font-weight:900;color:#111;margin-bottom:6px">Pagamento Confirmado!</div>
+    <div id="modal-sucesso-cliente" style="font-size:15px;font-weight:700;color:#333;margin-bottom:4px"></div>
+    <div id="modal-sucesso-servico" style="font-size:13px;color:#888;margin-bottom:20px"></div>
+    <div style="background:#f8f8f8;border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">
+      <div id="modal-sucesso-sinal-linha" style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e5e5">
+        <span style="font-size:13px;color:#666">Sinal recebido</span>
+        <span id="modal-sucesso-sinal" style="font-size:13px;font-weight:700;color:#333"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e5e5">
+        <span style="font-size:13px;color:#666">Saldo recebido</span>
+        <span id="modal-sucesso-saldo" style="font-size:13px;font-weight:700;color:#333"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:14px;font-weight:800">Total recebido</span>
+        <span id="modal-sucesso-total" style="font-size:16px;font-weight:900;color:#22c55e"></span>
+      </div>
+    </div>
+    <div style="background:#dcfce7;border-radius:10px;padding:10px 14px;margin-bottom:20px">
+      <div style="font-size:12px;color:#15803d;font-weight:600">💰 Registrado no Controle de Caixa</div>
+    </div>
+    <button onclick="fecharModalSucesso()" style="width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">Fechar</button>
+  </div>
+</div>
+
 <!-- MODAL LEMBRETE RETORNO -->
 <div class="modal-overlay" id="modal-retorno">
   <div class="modal" style="width:520px">
@@ -5314,7 +5342,22 @@ function confirmarFechamentoPagamento(){
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
-    showAlert('✅ Atendimento finalizado! Pagamento registrado no caixa.');
+    // Abrir modal de confirmação
+    var mSucesso=document.getElementById('modal-pagamento-sucesso');
+    var formaSinalFinal=(ctx.dados&&ctx.dados.formaSinal)||'';
+    document.getElementById('modal-sucesso-cliente').textContent=ctx.dados.cliente;
+    document.getElementById('modal-sucesso-servico').textContent=ctx.dados.servico+' · '+ctx.dados.prof;
+    var linhaSinal=document.getElementById('modal-sucesso-sinal-linha');
+    var elSinal=document.getElementById('modal-sucesso-sinal');
+    if(ctx.sinalAbate>0){
+      if(linhaSinal)linhaSinal.style.display='flex';
+      if(elSinal)elSinal.textContent=fmtCaixa(ctx.sinalAbate)+(formaSinalFinal?' ('+formaSinalFinal+')':'');
+    } else {
+      if(linhaSinal)linhaSinal.style.display='none';
+    }
+    document.getElementById('modal-sucesso-saldo').textContent=fmtCaixa(ctx.restante>0?ctx.restante:0)+(forma?' ('+forma+')':'');
+    document.getElementById('modal-sucesso-total').textContent=fmtCaixa(ctx.total);
+    if(mSucesso)mSucesso.style.display='flex';
     pagamentoCtx=null;
   }
 
@@ -5332,6 +5375,11 @@ function confirmarFechamentoPagamento(){
   } else {
     finalizarLocal();
   }
+}
+
+function fecharModalSucesso(){
+  var m=document.getElementById('modal-pagamento-sucesso');
+  if(m)m.style.display='none';
 }
 
 function abrirComandaAtendimento(cliente, servico, valor){
