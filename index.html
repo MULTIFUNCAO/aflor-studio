@@ -3474,19 +3474,46 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-agendar">
-  <div class="modal" style="width:520px">
+  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
       <span class="modal-title">📅 Novo Agendamento</span>
       <button class="modal-close" onclick="closeModal('modal-agendar')">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group full"><label>Cliente</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
-      <div class="form-group"><label>Data</label><input type="date" id="ag-data" value="2026-05-26"/></div>
-      <div class="form-group"><label>Horário</label><input type="time" id="ag-hora" value="09:00"/></div>
-      <div class="form-group"><label>Profissional</label>
-        <select id="ag-prof"><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
+      <!-- Cliente -->
+      <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
+      <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
+      <div class="form-group full"><label>Profissional *</label>
+        <select id="ag-prof" onchange="agFiltrarServicos()">
+          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
+        </select>
       </div>
-      <div class="form-group"><label>Serviço</label>
+
+      <!-- TIPO DE AGENDAMENTO -->
+      <div class="form-group full">
+        <label>Tipo de Agendamento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label onclick="agSetTipo('servico')" id="ag-tipo-srv" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #111;border-radius:10px;cursor:pointer;background:#f5f5f5">
+            <span>✂️</span><div><div style="font-size:12px;font-weight:700">Serviço</div><div style="font-size:10px;color:#888">Cobrado normalmente</div></div>
+          </label>
+          <label onclick="agSetTipo('pacote')" id="ag-tipo-pac" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
+            <span>🎁</span><div><div style="font-size:12px;font-weight:700">Pacote</div><div style="font-size:10px;color:#888">Já pago, desconta do pacote</div></div>
+          </label>
+        </div>
+        <input type="hidden" id="ag-tipo-val" value="servico"/>
+      </div>
+
+      <!-- SERVIÇO NORMAL -->
+      <div id="ag-area-servico" class="form-group full">
+        <label>Categoria</label>
+        <select id="ag-cat" onchange="agFiltrarServicos()" style="margin-bottom:8px">
+          <option value="">Todas as categorias</option>
+          <option>Cabelo</option><option>Manicure</option><option>Pedicure</option>
+          <option>Unhas</option><option>Bronzeamento</option><option>Estética</option>
+          <option>Sobrancelha</option>
+        </select>
+        <label>Serviço *</label>
         <select id="ag-servico" onchange="agCalcSinal()">
           <option value="40">Manicure — R$ 40,00</option>
           <option value="45">Pedicure — R$ 45,00</option>
@@ -3497,11 +3524,35 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <option value="100">Manutenção — R$ 100,00</option>
           <option value="12">Design de Sobrancelhas — R$ 12,00</option>
         </select>
+
+        <!-- Produtos usados no serviço -->
+        <div style="margin-top:12px">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>Produtos usados (opcional)</span>
+            <button type="button" onclick="agAddProduto()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar</button>
+          </label>
+          <div id="ag-produtos-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
+          <div style="font-size:10px;color:#aaa;margin-top:4px">Produtos são cobrados à parte na comanda como "Produto utilizado"</div>
+        </div>
       </div>
-      <div class="form-group full"><label>Observações</label><textarea placeholder="Alguma observação?"></textarea></div>
+
+      <!-- PACOTE -->
+      <div id="ag-area-pacote" class="form-group full" style="display:none">
+        <label>Selecionar Pacote do Cliente</label>
+        <select id="ag-pacote-sel" onchange="agVerPacote()">
+          <option value="">— Selecione o pacote —</option>
+        </select>
+        <div id="ag-pacote-info" style="margin-top:8px;display:none;background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #bbf7d0">
+          <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">📦 Detalhes do Pacote</div>
+          <div id="ag-pacote-detalhe" style="font-size:12px;color:#166534"></div>
+        </div>
+        <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda</div>
+      </div>
+
+      <div class="form-group full"><label>Observações</label><textarea id="ag-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
 
       <!-- SINAL / ENTRADA -->
-      <div class="form-group full">
+      <div class="form-group full" id="ag-sinal-bloco">
         <div style="background:#f8f8f8;border-radius:12px;padding:14px;border:1px solid #e5e5e5">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div>
@@ -3514,7 +3565,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
             </label>
           </div>
           <div id="ag-sinal-area" style="display:none">
-            <!-- Atalhos % -->
             <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
               <span style="font-size:11px;color:#888;align-self:center">Atalhos:</span>
               <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(25)">25%</button>
@@ -3532,7 +3582,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <input type="number" id="ag-sinal-val" oninput="agCalcSinalVal()" style="font-weight:700"/>
               </div>
             </div>
-            <!-- Resumo -->
             <div style="background:#fff;border-radius:9px;padding:12px;border:1px solid #e5e5e5">
               <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
                 <span style="color:#666">Valor total do serviço</span>
@@ -3547,7 +3596,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
                 <span id="ag-sinal-resto" style="font-weight:700;color:#888">R$ 20,00</span>
               </div>
             </div>
-            <!-- Status do sinal -->
             <div style="margin-top:10px">
               <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Status do sinal</label>
               <div style="display:flex;gap:6px">
@@ -4276,6 +4324,85 @@ document.addEventListener('click',function(e){
 document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
+
+// ===== AGENDAMENTO MELHORADO =====
+function agSetTipo(tipo){
+  document.getElementById('ag-tipo-val').value = tipo;
+  var srv = document.getElementById('ag-tipo-srv');
+  var pac = document.getElementById('ag-tipo-pac');
+  var areaSrv = document.getElementById('ag-area-servico');
+  var areaPac = document.getElementById('ag-area-pacote');
+  var sinalBloco = document.getElementById('ag-sinal-bloco');
+  if(tipo==='servico'){
+    srv.style.border='2px solid #111'; srv.style.background='#f5f5f5';
+    pac.style.border='2px solid #ddd'; pac.style.background='#fff';
+    areaSrv.style.display=''; areaPac.style.display='none';
+    sinalBloco.style.display='';
+  } else {
+    pac.style.border='2px solid #111'; pac.style.background='#f5f5f5';
+    srv.style.border='2px solid #ddd'; srv.style.background='#fff';
+    areaSrv.style.display='none'; areaPac.style.display='';
+    sinalBloco.style.display='none'; // Pacote não tem sinal
+    agCarregarPacotes();
+  }
+}
+
+function agFiltrarServicos(){
+  var cat = (document.getElementById('ag-cat')||{}).value||'';
+  var sel = document.getElementById('ag-servico');
+  if(!sel) return;
+  // Filtra serviços globais pela categoria
+  var filtrados = cat ? servicos.filter(function(s){ return s.cat===cat; }) : servicos;
+  sel.innerHTML = filtrados.map(function(s){
+    return '<option value="'+s.preco.replace(',','.')+'">'+s.nome+' — R$ '+s.preco+'</option>';
+  }).join('');
+  if(!sel.innerHTML) sel.innerHTML = '<option value="0">Nenhum serviço nessa categoria</option>';
+  agCalcSinal();
+}
+
+function agAddProduto(){
+  var list = document.getElementById('ag-produtos-list');
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  // Montar opções de produtos
+  var opts = '<option value="">— Selecione o produto —</option>'
+    + (typeof produtosList !== 'undefined' ? produtosList : []).filter(function(p){ return p.status!=='Inativo'; }).map(function(p){
+        return '<option value="'+p.precoVenda+'">'+p.nome+' (R$ '+p.precoVenda+')</option>';
+      }).join('');
+  row.innerHTML = '<select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<input type="number" placeholder="R$ valor aplic." min="0" step="0.01" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"/>'
+    +'<button onclick="this.closest(\'div\').remove()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+  list.appendChild(row);
+}
+
+function agCarregarPacotes(){
+  var sel = document.getElementById('ag-pacote-sel');
+  if(!sel) return;
+  var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  var cliente = (document.getElementById('ag-cliente')||{}).value||'';
+  var pacCliente = pacotes.filter(function(p){ return !cliente || p.cliente.toLowerCase().includes(cliente.toLowerCase()); });
+  sel.innerHTML = '<option value="">— Selecione o pacote —</option>'
+    + pacCliente.map(function(p,i){
+        return '<option value="'+i+'">'+p.nome+' — '+p.cliente+' ('+p.usado+'/'+p.total+' usados)</option>';
+      }).join('');
+  if(!pacCliente.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
+}
+
+function agVerPacote(){
+  var sel = document.getElementById('ag-pacote-sel');
+  var info = document.getElementById('ag-pacote-info');
+  var det = document.getElementById('ag-pacote-detalhe');
+  if(!sel || !info || !det) return;
+  var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  var idx = parseInt(sel.value);
+  if(isNaN(idx) || !pacotes[idx]){ info.style.display='none'; return; }
+  var p = pacotes[idx];
+  var restante = p.total - p.usado;
+  info.style.display = 'block';
+  det.innerHTML = '<b>'+p.nome+'</b> para <b>'+p.cliente+'</b><br>'
+    +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>';
+}
+// ===== FIM AGENDAMENTO MELHORADO =====
 
 // ===== PRÓ-LABORE =====
 var prolaboreSocios = JSON.parse(localStorage.getItem('flora_socios')||'[]');
@@ -7686,21 +7813,55 @@ function salvarAgendamento(){
   var data=document.getElementById('ag-data')?.value||'';
   var hora=normalizarHoraAgenda(document.getElementById('ag-hora')?.value||'');
   var prof=document.getElementById('ag-prof')?.value||'';
+  var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
   if(!cliente||!data||!hora||!prof){
     showAlert('Preencha cliente, data, horário e profissional.');
     return;
   }
-  var selServ=document.getElementById('ag-servico');
-  var servico=(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0];
-  var valor=(selServ?.options[selServ?.selectedIndex]?.text||'').split('R$ ')[1]||'0';
-  var valorFmt='R$ '+parseFloat(valor||0).toFixed(2).replace('.',',');
-  var sinalAtivo=document.getElementById('ag-sinal-ativo')?.checked;
+
+  var servico, valorFmt, ehPacote=false, pacoteIdx=-1;
+
+  if(tipo==='pacote'){
+    ehPacote=true;
+    var selPac=document.getElementById('ag-pacote-sel');
+    pacoteIdx=parseInt(selPac?.value);
+    if(isNaN(pacoteIdx)||pacoteIdx<0){showAlert('Selecione um pacote.');return;}
+    var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+    var pac=pacotes[pacoteIdx];
+    if(!pac){showAlert('Pacote não encontrado.');return;}
+    if(pac.total-pac.usado<=0){showAlert('Este pacote não tem sessões restantes!');return;}
+    servico=pac.nome+' (Pacote)';
+    valorFmt='R$ 0,00';
+    // Desconta sessão do pacote
+    pac.usado=(pac.usado||0)+1;
+    pacotes[pacoteIdx]=pac;
+    localStorage.setItem('flora_pacotes',JSON.stringify(pacotes));
+  } else {
+    var selServ=document.getElementById('ag-servico');
+    servico=(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0];
+    var valor=(selServ?.options[selServ?.selectedIndex]?.text||'').split('R$ ')[1]||'0';
+    valorFmt='R$ '+parseFloat(valor||0).toFixed(2).replace('.',',');
+  }
+
+  // Coletar produtos usados
+  var produtosUsados=[];
+  document.querySelectorAll('#ag-produtos-list > div').forEach(function(row){
+    var selProd=row.querySelector('select');
+    var inpVal=row.querySelector('input[type="number"]');
+    if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
+      var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
+      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
+    }
+  });
+
+  var obs=(document.getElementById('ag-obs')?.value||'').trim();
+  var sinalAtivo=!ehPacote&&(document.getElementById('ag-sinal-ativo')?.checked);
   var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
   var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
   var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
   var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
-  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum};
+  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs};
   fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){
     if(!r.ok)return r.json().then(function(err){throw err;});
     return r.json();
@@ -7712,25 +7873,33 @@ function salvarAgendamento(){
     var partes=data.split('-');
     var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
-    agendamentosPorData[dataKey][profAgenda+':'+hora]={id:supaId,cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora,duracao:'60 min',valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:''};
+    agendamentosPorData[dataKey][profAgenda+':'+hora]={
+      id:supaId,cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora,
+      duracao:'60 min',valor:valorFmt,status:'Pendente',
+      sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,
+      sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:'',
+      ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs
+    };
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
-    // Se sinal já foi pago, lançar no caixa imediatamente
-    if(sinalAtivo && sinalStatus==='pago' && sinalValNum>0){
-      lancarEntradaCaixaAuto('Sinal — '+servico+' — '+cliente, sinalValNum, agFormaSinal||'pix');
+    if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
+      lancarEntradaCaixaAuto('Sinal — '+servico+' — '+cliente,sinalValNum,agFormaSinal||'pix');
     }
-    // Resetar forma do sinal
-    agFormaSinal = '';
+    agFormaSinal='';
     document.querySelectorAll('.ag-forma-btn').forEach(function(b){
       b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
     });
+    // Resetar tipo para serviço
+    agSetTipo('servico');
     closeModal('modal-agendar');
     renderAgenda();
     var msg='✅ Agendamento confirmado para '+cliente+'!';
-    if(sinalAtivo&&sinalStatus==='pago')msg+=' 💰 Sinal de '+sinalAgora+' registrado no caixa!';
+    if(ehPacote)msg+=' 🎁 Sessão de pacote descontada!';
+    else if(sinalAtivo&&sinalStatus==='pago')msg+=' 💰 Sinal de '+sinalAgora+' registrado!';
     else if(sinalAtivo)msg+=' Sinal: '+sinalAgora+' ⏳ pendente';
+    if(produtosUsados.length)msg+=' 📦 '+produtosUsados.length+' produto(s) adicionado(s) à comanda.';
     showAlert(msg);
   }).catch(function(){
-    showAlert('Erro ao salvar agendamento. Verifique os dados e tente novamente.');
+    showAlert('Erro ao salvar agendamento. Verifique os dados.');
   });
 }
 // ===== FIM AGENDAMENTO =====
