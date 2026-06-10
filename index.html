@@ -5658,18 +5658,22 @@ function buscarAgendamentos(termo){
     return;
   }
 
-  res.innerHTML=encontrados.slice(0,10).map(function(e){
-    var a=e.dados;
+  res.innerHTML=encontrados.slice(0,10).map(function(item){
+    var a=item.dados;
     var corBloco=corBlocoAgenda(a);
     var st=a.status||'Pendente';
-    return '<div onclick="irParaAgendamento(''+e.dataKey+'',''+e.key+'')" style="padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;background:#f8f8f8;border-left:4px solid '+corBloco+'" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='#f8f8f8'">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">'
+    var div=document.createElement('div');
+    div.style.cssText='padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;background:#f8f8f8;border-left:4px solid '+corBloco;
+    div.onmouseover=function(){this.style.background='#f0f0f0';};
+    div.onmouseout=function(){this.style.background='#f8f8f8';};
+    div.onclick=function(){irParaAgendamento(item.dataKey,item.key);};
+    div.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">'
       +'<span style="font-size:13px;font-weight:700;color:#111">'+a.cliente+'</span>'
       +'<span style="font-size:10px;font-weight:700;background:'+corBloco+';color:#fff;padding:2px 7px;border-radius:20px">'+st+'</span>'
       +'</div>'
-      +'<div style="font-size:11px;color:#666">'+a.servico+' · '+a.prof+' · '+e.dataKey+' '+a.hora+'</div>'
-      +(a.tel?'<div style="font-size:10px;color:#aaa;margin-top:2px">'+a.tel+'</div>':'')
-      +'</div>';
+      +'<div style="font-size:11px;color:#666">'+a.servico+' · '+a.prof+' · '+item.dataKey+' '+a.hora+'</div>'
+      +(a.tel?'<div style="font-size:10px;color:#aaa;margin-top:2px">'+a.tel+'</div>':'');
+    return div.outerHTML;
   }).join('');
 }
 
