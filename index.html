@@ -1086,7 +1086,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #ef4444;cursor:pointer" onclick="switchFluxoTab('lancamentos',document.getElementById('fluxo-tab-lancamentos'));var s=document.getElementById('fluxo-filtro-tipo');if(s){s.value='Despesa';renderFluxo();}">
           <div style="font-size:10px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📤 Despesas do Mês</div>
-          <div style="font-size:26px;font-weight:900;color:#ef4444">R$ 1.240</div>
+          <div style="font-size:26px;font-weight:900;color:#ef4444">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <span style="background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
@@ -1094,14 +1094,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #8b5cf6;cursor:pointer" onclick="switchFluxoTab('dre',document.getElementById('fluxo-tab-dre'))">
           <div style="font-size:10px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">💜 Lucro Líquido</div>
-          <div style="font-size:26px;font-weight:900;color:#111">R$ 3.580</div>
+          <div style="font-size:26px;font-weight:900;color:#111">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">Margem 74%</span>
           </div>
         </div>
         <div style="background:#111;border-radius:14px;padding:18px;cursor:pointer" onclick="showPage('caixa')">
           <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏦 Saldo em Caixa</div>
-          <div style="font-size:26px;font-weight:900;color:#fff">R$ 2.150</div>
+          <div style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
           <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
         </div>
       </div>
@@ -1110,15 +1110,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:14px 18px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span style="font-size:12px;font-weight:700;color:#333">Receitas vs Despesas — Maio 2026</span>
-          <span style="font-size:11px;color:#888">Sobra <strong style="color:#22c55e">R$ 3.580</strong> no final do mês</span>
+          <span style="font-size:11px;color:#888">Sobra <strong style="color:#22c55e">R$ 0,00</strong> no final do mês</span>
         </div>
         <div style="display:flex;gap:3px;height:14px;border-radius:7px;overflow:hidden">
           <div style="width:74%;background:#22c55e;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">74% Receitas</span></div>
           <div style="width:26%;background:#ef4444;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">26% Desp.</span></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
-          <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#22c55e">R$ 4.820</div><div style="font-size:9px;color:#aaa">Receitas</div></div>
-          <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#ef4444">R$ 1.240</div><div style="font-size:9px;color:#aaa">Despesas</div></div>
+          <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#22c55e">R$ 0,00</div><div style="font-size:9px;color:#aaa">Receitas</div></div>
+          <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#ef4444">R$ 0,00</div><div style="font-size:9px;color:#aaa">Despesas</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800">R$ 0,00</div><div style="font-size:9px;color:#aaa">Ticket médio</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800">57</div><div style="font-size:9px;color:#aaa">Atendimentos</div></div>
         </div>
@@ -1172,7 +1172,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </table>
           <div id="fluxo-total-row" style="padding:12px 16px;border-top:2px solid #111;display:flex;justify-content:space-between;background:#f8f8f8">
             <span style="font-size:13px;font-weight:800">Resultado do período</span>
-            <span style="font-size:13px;font-weight:900;color:#22c55e" id="fluxo-total-val">+ R$ 3.580,00</span>
+            <span style="font-size:13px;font-weight:900;color:#22c55e" id="fluxo-total-val">R$ 0,00</span>
           </div>
         </div>
       </div>
@@ -6816,28 +6816,7 @@ function removerColab(idx){
 }
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(2026,4,1);
-var fluxoLancamentos=[
-  {data:'01/05',desc:'Manicure — Mãe Ana',cat:'Serviços',forma:'Pix',tipo:'receita',val:80,status:'confirmado'},
-  {data:'01/05',desc:'Coloração — Julia',cat:'Serviços',forma:'Cartão',tipo:'receita',val:150,status:'confirmado'},
-  {data:'02/05',desc:'Compra de produtos',cat:'Material',forma:'Pix',tipo:'despesa',val:180,status:'confirmado'},
-  {data:'03/05',desc:'Manicure + Pedicure — Denilda',cat:'Serviços',forma:'Dinheiro',tipo:'receita',val:85,status:'confirmado'},
-  {data:'05/05',desc:'Aluguel do salão',cat:'Aluguel',forma:'Transferência',tipo:'despesa',val:1200,status:'confirmado'},
-  {data:'07/05',desc:'Escova progressiva — Adriana',cat:'Serviços',forma:'Cartão',tipo:'receita',val:200,status:'confirmado'},
-  {data:'08/05',desc:'Manicure — Laura',cat:'Serviços',forma:'Pix',tipo:'receita',val:40,status:'confirmado'},
-  {data:'10/05',desc:'Energia elétrica',cat:'Contas',forma:'Boleto',tipo:'despesa',val:180,status:'confirmado'},
-  {data:'12/05',desc:'Hidratação — Alessandra',cat:'Serviços',forma:'Pix',tipo:'receita',val:80,status:'confirmado'},
-  {data:'14/05',desc:'Design sobrancelhas',cat:'Serviços',forma:'Dinheiro',tipo:'receita',val:35,status:'confirmado'},
-  {data:'15/05',desc:'Material consumível',cat:'Material',forma:'Dinheiro',tipo:'despesa',val:95,status:'confirmado'},
-  {data:'16/05',desc:'Coloração — Marta',cat:'Serviços',forma:'Cartão',tipo:'receita',val:180,status:'confirmado'},
-  {data:'18/05',desc:'Comissão Ana Flor',cat:'Comissões',forma:'Pix',tipo:'despesa',val:320,status:'confirmado'},
-  {data:'20/05',desc:'Manicure + Pedicure — 3 clientes',cat:'Serviços',forma:'Pix',tipo:'receita',val:240,status:'confirmado'},
-  {data:'21/05',desc:'Internet + telefone',cat:'Contas',forma:'Débito auto',tipo:'despesa',val:120,status:'confirmado'},
-  {data:'22/05',desc:'Pacote noiva — Fernanda',cat:'Serviços',forma:'Pix',tipo:'receita',val:450,status:'pendente'},
-  {data:'23/05',desc:'Produtos para revenda',cat:'Produtos',forma:'Boleto',tipo:'despesa',val:280,status:'confirmado'},
-  {data:'24/05',desc:'Manicure — Julia Barrozo',cat:'Serviços',forma:'Dinheiro',tipo:'receita',val:40,status:'confirmado'},
-  {data:'25/05',desc:'Marketing Instagram',cat:'Marketing',forma:'Cartão',tipo:'despesa',val:100,status:'confirmado'},
-  {data:'26/05',desc:'Atendimentos do dia',cat:'Serviços',forma:'Pix',tipo:'receita',val:320,status:'confirmado'},
-];
+var fluxoLancamentos=[];
 function fluxoNavMes(dir){
   fluxoMes=new Date(fluxoMes.getFullYear(),fluxoMes.getMonth()+dir,1);
   var m=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
