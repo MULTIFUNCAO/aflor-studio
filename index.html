@@ -1959,6 +1959,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
 
     <!-- MODAL RELATÓRIO -->
+<!-- MODAL ETAPA FLORESCIMENTO -->
+<div class="modal-overlay" id="modal-etapa-flor">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title" id="etapa-flor-titulo">Etapa</span>
+      <button class="modal-close" onclick="closeModal('modal-etapa-flor')">✕</button>
+    </div>
+    <div id="etapa-flor-conteudo" style="padding:8px 0 16px"></div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" onclick="closeModal('modal-etapa-flor')">Fechar</button>
+    </div>
+  </div>
+</div>
     <div class="modal-overlay" id="modal-relatorio" style="z-index:1100">
       <div class="modal" style="width:600px;max-height:85vh;overflow-y:auto">
         <div class="modal-header">
@@ -4187,6 +4200,67 @@ document.addEventListener('click',function(e){
 document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
+
+// ===== FLORESCIMENTO ETAPAS =====
+var _etapaDetalhes = {
+  'Semente': {
+    emoji: '🌱', cor: '#888',
+    atingido: true,
+    desc: 'Você deu o primeiro passo! Seu negócio está se estabelecendo.',
+    beneficios: ['Acesso ao sistema completo', 'Agenda de atendimentos', 'Cadastro de clientes', 'Controle de caixa básico'],
+    dicas: ['Complete o perfil do negócio', 'Cadastre seus primeiros serviços', 'Adicione seus colaboradores', 'Registre seus primeiros atendimentos']
+  },
+  'Raiz': {
+    emoji: '🪴', cor: '#a16207',
+    desc: 'Suas bases estão firmes. Clientes recorrentes e processos organizados.',
+    beneficios: ['Relatórios básicos liberados', 'Controle de metas', 'Histórico de caixa por dia'],
+    dicas: ['Mantenha a agenda sempre atualizada', 'Use o controle de sinal/entrada', 'Acompanhe as metas da equipe']
+  },
+  'Crescimento': {
+    emoji: '🌿', cor: '#15803d',
+    desc: 'Seu negócio está evoluindo! Equipe engajada e metas atingidas.',
+    beneficios: ['Relatórios avançados', 'Painel de metas individual e geral', 'Fluxo de caixa completo'],
+    dicas: ['Defina metas mensais para cada profissional', 'Acompanhe o fluxo de caixa diariamente', 'Use os relatórios para tomar decisões']
+  },
+  'Jardim': {
+    emoji: '🌸', cor: '#ec4899',
+    desc: 'Florescendo em todas as áreas! Marketing ativo e financeiro organizado.',
+    beneficios: ['Campanhas de reativação de clientes', 'Relatório de clientes sumidos', 'Integração com marketing'],
+    dicas: ['Lance campanhas para clientes sumidos', 'Use o módulo de marketing', 'Analise os clientes mais rentáveis']
+  },
+  'Florescimento Pleno': {
+    emoji: '🌷', cor: '#111',
+    desc: 'Você atingiu o pico! Negócio organizado, lucrativo e escalável.',
+    beneficios: ['IA Estratégica (Plano Flora Total)', 'Rede de influenciadoras parceiras', 'Treinamentos exclusivos', 'Suporte prioritário'],
+    dicas: ['Assine o plano Flora Total para desbloquear todos os recursos', 'Use a IA para análise de desempenho', 'Conecte-se com influenciadoras parceiras']
+  }
+};
+
+function mostrarEtapaFlor(nome){
+  var score = 62;
+  var det = _etapaDetalhes[nome];
+  if(!det) return;
+  var etapa = etapasFlor.find(function(e){ return e.nome === nome; });
+  var atingido = etapa && score >= etapa.min;
+  document.getElementById('etapa-flor-titulo').textContent = det.emoji + ' ' + nome;
+  document.getElementById('etapa-flor-conteudo').innerHTML =
+    '<div style="text-align:center;padding:16px 0 20px">'
+    + '<div style="font-size:56px;margin-bottom:8px">'+det.emoji+'</div>'
+    + '<div style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;background:'+(atingido?'#dcfce7':'#f5f5f5')+';color:'+(atingido?'#15803d':'#888')+';">'+(atingido?'✅ Atingido':'🔒 Não atingido ainda')+'</div>'
+    + (etapa?'<div style="font-size:12px;color:#aaa;margin-top:6px">A partir de '+etapa.min+'% — até '+etapa.max+'%</div>':'')
+    + '</div>'
+    + '<div style="font-size:13px;color:#555;text-align:center;margin-bottom:20px;padding:0 8px">'+det.desc+'</div>'
+    + '<div style="background:#f8f8f8;border-radius:10px;padding:14px;margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:800;color:#888;text-transform:uppercase;margin-bottom:10px">🎁 Benefícios desta fase</div>'
+    + det.beneficios.map(function(b){ return '<div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px"><span style="color:'+det.cor+';font-size:15px;font-weight:700">✓</span>'+b+'</div>'; }).join('')
+    + '</div>'
+    + '<div style="border-radius:10px;padding:14px;border:1px solid #e5e5e5">'
+    + '<div style="font-size:11px;font-weight:800;color:#888;text-transform:uppercase;margin-bottom:10px">💡 Como atingir</div>'
+    + det.dicas.map(function(d){ return '<div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px"><span style="font-size:14px">'+(atingido?'✅':'⭕')+'</span>'+d+'</div>'; }).join('')
+    + '</div>';
+  openModal('modal-etapa-flor');
+}
+// ===== FIM FLORESCIMENTO ETAPAS =====
 
 // ===== RELATÓRIOS =====
 function abrirRelatorio(tipo){
@@ -6618,7 +6692,7 @@ function renderFlorescimento(){
       <div style="font-size:11px;color:#888">${pctProxima}% para próxima fase ${score<100?'→ '+etapasFlor[etapasFlor.indexOf(etapa)+1]?.emoji+' '+etapasFlor[etapasFlor.indexOf(etapa)+1]?.nome:''}</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">
-      ${etapasFlor.map(e=>`<div style="text-align:center;padding:12px 8px;border-radius:10px;border:2px solid ${score>=e.min?e.cor:'#e5e5e5'};background:${score>=e.min?e.cor+'15':'#fff'}">
+      ${etapasFlor.map(e=>`<div onclick="mostrarEtapaFlor('${e.nome}')" style="text-align:center;padding:12px 8px;border-radius:10px;border:2px solid ${score>=e.min?e.cor:'#e5e5e5'};background:${score>=e.min?e.cor+'15':'#fff'};cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div style="font-size:24px">${e.emoji}</div>
         <div style="font-size:10px;font-weight:700;margin-top:4px;color:${score>=e.min?e.cor:'#bbb'}">${e.nome}</div>
         ${score>=e.min?'<div style="font-size:10px;color:#22c55e">✓ Atingido</div>':'<div style="font-size:9px;color:#bbb">A partir de '+e.min+'%</div>'}
