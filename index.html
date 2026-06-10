@@ -5147,6 +5147,14 @@ function abrirAgendaPopup(key,dados,event){
         <label style="font-size:12px;color:#555;font-weight:600">Valor do sinal (R$)</label>
         <input type="number" id="popup-sinal-valor" min="0" step="0.01" value="${sinalInfoPg.valor.toFixed(2)}" oninput="popupRecalcularComanda('${key}')" style="width:110px;padding:7px 9px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:700;color:#111;text-align:right;outline:none"/>
       </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;color:#555;font-weight:600;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <button onclick="popupSetFormaSinal(this,'Pix')" class="popup-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
+          <button onclick="popupSetFormaSinal(this,'Dinheiro')" class="popup-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
+          <button onclick="popupSetFormaSinal(this,'Link')" class="popup-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
+        </div>
+      </div>
       <button id="popup-sinal-btn" onclick="toggleSinalPopup('${key}')" style="width:100%;font-size:11px;font-weight:700;background:#111;color:#fff;border:none;border-radius:7px;padding:8px 10px;cursor:pointer">${dados.sinalPago?'Reabrir':'✅ Confirmar sinal'}</button>
     </div>
     <!-- COMANDA -->
@@ -5379,6 +5387,15 @@ function atualizarPopupComandaUI(key){
   }
   var elTotal=document.getElementById('popup-total-pagar');
   if(elTotal)elTotal.textContent=formatMoedaBR(calc.totalPagar);
+}
+
+var popupFormaSinal = '';
+function popupSetFormaSinal(btn, forma){
+  popupFormaSinal = forma;
+  document.querySelectorAll('.popup-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+  btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
 }
 
 function popupRecalcularComanda(key){
