@@ -4198,17 +4198,70 @@ function abrirRelatorio(tipo){
   if(tipo === 'financeiro'){
     titulo = '💰 Relatório Financeiro — ' + mesNome + '/' + hoje.getFullYear();
     var totalEntradas = 0, totalSaidas = 0;
+    var movEntradas = [], movSaidas = [];
     try {
       var mov = JSON.parse(localStorage.getItem('caixaMovimentos')||'[]');
-      mov.forEach(function(m){ if(m.tipo==='entrada') totalEntradas+=parseFloat(m.valor)||0; else totalSaidas+=parseFloat(m.valor)||0; });
+      mov.forEach(function(m){
+        if(m.tipo==='entrada'){ totalEntradas+=parseFloat(m.valor)||0; movEntradas.push(m); }
+        else { totalSaidas+=parseFloat(m.valor)||0; movSaidas.push(m); }
+      });
+    } catch(e){}
+    // Tentar também caixaState
+    try {
+      var cs = JSON.parse(localStorage.getItem('caixaState')||'null');
+      if(cs && cs.movimentos){
+        totalEntradas=0; totalSaidas=0; movEntradas=[]; movSaidas=[];
+        cs.movimentos.forEach(function(m){
+          if(m.tipo==='entrada'){ totalEntradas+=parseFloat(m.valor)||0; movEntradas.push(m); }
+          else { totalSaidas+=parseFloat(m.valor)||0; movSaidas.push(m); }
+        });
+      }
     } catch(e){}
     var saldo = totalEntradas - totalSaidas;
+
+    function linhasMovimentos(lista){
+      if(!lista||lista.length===0) return '<tr><td colspan="4" style="text-align:center;padding:20px;color:#aaa;font-size:12px">Nenhum lançamento registrado</td></tr>';
+      return lista.map(function(m){
+        return '<tr style="border-bottom:1px solid #f5f5f5">'
+          +'<td style="padding:8px;font-size:12px">'+(m.data||'—')+'</td>'
+          +'<td style="padding:8px;font-size:12px">'+(m.descricao||m.desc||'—')+'</td>'
+          +'<td style="padding:8px;font-size:12px">'+(m.forma||'—')+'</td>'
+          +'<td style="padding:8px;font-size:13px;font-weight:700;text-align:right;color:'+(m.tipo==='entrada'?'#15803d':'#dc2626')+'">R$ '+parseFloat(m.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td>'
+          +'</tr>';
+      }).join('');
+    }
+
     html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">'
-      +'<div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">ENTRADAS</div><div style="font-size:22px;font-weight:800;color:#15803d">R$ '+totalEntradas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
-      +'<div style="background:#fee2e2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:4px">SAÍDAS</div><div style="font-size:22px;font-weight:800;color:#dc2626">R$ '+totalSaidas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
-      +'<div style="background:#111;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:4px">SALDO</div><div style="font-size:22px;font-weight:800;color:#fff">R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
+      +'<div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:.2s" onclick="toggleDetalhes(\'det-entradas\')" onmouseover="this.style.opacity=\'.85\'" onmouseout="this.style.opacity=\'1\'">'
+        +'<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">▼ ENTRADAS</div>'
+        +'<div style="font-size:22px;font-weight:800;color:#15803d">R$ '+totalEntradas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+        +'<div style="font-size:10px;color:#166534;margin-top:4px">'+movEntradas.length+' lançamento(s)</div>'
       +'</div>'
-      +'<div style="font-size:13px;color:#888;text-align:center;padding:20px">Os dados são baseados nos lançamentos registrados no Controle de Caixa.</div>';
+      +'<div style="background:#fee2e2;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:.2s" onclick="toggleDetalhes(\'det-saidas\')" onmouseover="this.style.opacity=\'.85\'" onmouseout="this.style.opacity=\'1\'">'
+        +'<div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:4px">▼ SAÍDAS</div>'
+        +'<div style="font-size:22px;font-weight:800;color:#dc2626">R$ '+totalSaidas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+        +'<div style="font-size:10px;color:#dc2626;margin-top:4px">'+movSaidas.length+' lançamento(s)</div>'
+      +'</div>'
+      +'<div style="background:#111;border-radius:10px;padding:14px;text-align:center">'
+        +'<div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:4px">SALDO</div>'
+        +'<div style="font-size:22px;font-weight:800;color:'+(saldo>=0?'#4ade80':'#f87171')+'">R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+      +'</div>'
+      +'</div>'
+      // Detalhes entradas
+      +'<div id="det-entradas" style="display:none;margin-bottom:14px">'
+        +'<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:8px;padding:8px;background:#f0fdf4;border-radius:8px">📥 Detalhamento de Entradas</div>'
+        +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8">'
+        +'<th style="padding:8px;text-align:left;font-size:11px">Data</th><th style="padding:8px;text-align:left;font-size:11px">Descrição</th><th style="padding:8px;text-align:left;font-size:11px">Forma</th><th style="padding:8px;text-align:right;font-size:11px">Valor</th>'
+        +'</tr></thead><tbody>'+linhasMovimentos(movEntradas)+'</tbody></table>'
+      +'</div>'
+      // Detalhes saídas
+      +'<div id="det-saidas" style="display:none;margin-bottom:14px">'
+        +'<div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px;padding:8px;background:#fef2f2;border-radius:8px">📤 Detalhamento de Saídas</div>'
+        +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8">'
+        +'<th style="padding:8px;text-align:left;font-size:11px">Data</th><th style="padding:8px;text-align:left;font-size:11px">Descrição</th><th style="padding:8px;text-align:left;font-size:11px">Forma</th><th style="padding:8px;text-align:right;font-size:11px">Valor</th>'
+        +'</tr></thead><tbody>'+linhasMovimentos(movSaidas)+'</tbody></table>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#aaa;text-align:center">Clique nos cards para ver o detalhamento</div>';
 
   } else if(tipo === 'colaboradores'){
     titulo = '👥 Relatório de Colaboradores';
@@ -4277,6 +4330,12 @@ function abrirRelatorio(tipo){
   document.getElementById('relatorio-titulo').textContent = titulo;
   document.getElementById('relatorio-conteudo').innerHTML = html;
   openModal('modal-relatorio');
+}
+
+function toggleDetalhes(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function imprimirRelatorio(){
@@ -4812,8 +4871,8 @@ var colaboradores=[
   {nome:'Vitoria',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'teal'},
   {nome:'Aluno',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
   {nome:'Stephanie',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
-  {nome:'Angélica da Silva Moreira',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
-  {nome:'Lara',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
+  {nome:'Angélica da Silva Moreira',email:'',cargo:'Colaborador',comissao:'50%',status:'Inativo',cor:''},
+  {nome:'Lara',email:'',cargo:'Colaborador',comissao:'50%',status:'Inativo',cor:''},
   {nome:'Flora',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
 ];
 
