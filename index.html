@@ -5187,7 +5187,9 @@ var pagamentoCtx=null;
 function lerSinalAgendamento(dados){
   var sinalVal=0;
   if(typeof dados.sinal_valor==='number'&&!isNaN(dados.sinal_valor))sinalVal=dados.sinal_valor;
-  else if(dados.sinalValor)sinalVal=parseMoedaBR(dados.sinalValor);
+  else if(typeof dados.sinal_valor==='string'&&dados.sinal_valor)sinalVal=parseFloat(dados.sinal_valor)||0;
+  else if(typeof dados.sinalValor==='number'&&!isNaN(dados.sinalValor))sinalVal=dados.sinalValor;
+  else if(typeof dados.sinalValor==='string'&&dados.sinalValor)sinalVal=parseMoedaBR(dados.sinalValor);
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
   var temSinal=!!dados.sinal||sinalVal>0||sinalPago;
   var sinalAbate=sinalPago?sinalVal:0;
