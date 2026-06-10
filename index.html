@@ -1313,6 +1313,16 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="abrirCaixa()">Abrir Caixa</button>
     </div>
+    <!-- HISTÓRICO DE CAIXAS -->
+    <div id="caixa-historico-section" style="margin-top:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:800;color:#111">📋 Histórico de Caixas</div>
+        <button onclick="limparHistoricoCaixa()" style="background:none;border:1px solid #ddd;border-radius:7px;padding:5px 10px;font-size:11px;color:#888;cursor:pointer">Limpar tudo</button>
+      </div>
+      <div id="caixa-historico-lista">
+        <div style="text-align:center;padding:24px;color:#aaa;font-size:13px">Nenhum fechamento registrado ainda.</div>
+      </div>
+    </div>
   </div>
   <div id="caixa-aberto-view" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
@@ -4170,6 +4180,7 @@ function showPage(id){
     if(id==='servicos')renderServicos();
     if(id==='produtos')renderProdutos();
     if(id==='pacotes')renderPacotes();
+    if(id==='caixa')renderHistoricoCaixa();
     if(id==='agenda')renderAgenda();
     if(id==='vendas')renderVendas();
     if(id==='comandas')renderComandas();
@@ -7409,14 +7420,81 @@ function fecharCaixaConfirmar(){
   document.getElementById('caixa-fechamento-view').style.display='block';
 }
 function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.display='block';document.getElementById('caixa-fechamento-view').style.display='none';}
+var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
+
+function salvarHistoricoCaixa(movimentos, troco){
+  var entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+  var saidas=movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
+  var saldo=troco+entradas-saidas;
+  var agora=new Date();
+  var registro={
+    data:agora.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}),
+    hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0'),
+    entradas:entradas,
+    saidas:saidas,
+    troco:troco,
+    saldo:saldo,
+    movimentos:movimentos.slice()
+  };
+  historicoCaixas.unshift(registro);
+  if(historicoCaixas.length>30)historicoCaixas=historicoCaixas.slice(0,30);
+  localStorage.setItem('aflor_historico_caixas', JSON.stringify(historicoCaixas));
+}
+
+function renderHistoricoCaixa(){
+  var lista=document.getElementById('caixa-historico-lista');
+  if(!lista)return;
+  if(!historicoCaixas.length){
+    lista.innerHTML='<div style="text-align:center;padding:24px;color:#aaa;font-size:13px">Nenhum fechamento registrado ainda.</div>';
+    return;
+  }
+  lista.innerHTML=historicoCaixas.map(function(r,i){
+    return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="toggleHistoricoDetalhe('+i+')">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div style="font-size:13px;font-weight:700;color:#111">'+r.data+'</div>'
+      +'<div style="font-size:14px;font-weight:800;color:'+(r.saldo>=0?'#22c55e':'#ef4444')+'">'+fmtCaixa(r.saldo)+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:16px">'
+      +'<span style="font-size:11px;color:#22c55e">▲ '+fmtCaixa(r.entradas)+'</span>'
+      +'<span style="font-size:11px;color:#ef4444">▼ '+fmtCaixa(r.saidas)+'</span>'
+      +'<span style="font-size:11px;color:#f59e0b">Sinal: '+fmtCaixa(r.troco)+'</span>'
+      +'</div>'
+      +'<div id="historico-detalhe-'+i+'" style="display:none;margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">'
+      +(r.movimentos.length?r.movimentos.map(function(m){
+        return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid #f8f8f8">'
+          +'<span style="color:#555">'+m.descricao+'</span>'
+          +'<span style="font-weight:700;color:'+(m.tipo==='entrada'?'#22c55e':'#ef4444')+'">'+(m.tipo==='entrada'?'+':'-')+' '+fmtCaixa(m.valor)+'</span>'
+          +'</div>';
+      }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Sem movimentações</div>')
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function toggleHistoricoDetalhe(i){
+  var el=document.getElementById('historico-detalhe-'+i);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function limparHistoricoCaixa(){
+  if(confirm('Limpar todo o histórico de caixas?')){
+    historicoCaixas=[];
+    localStorage.removeItem('aflor_historico_caixas');
+    renderHistoricoCaixa();
+  }
+}
+
 function confirmarFechamentoCaixa(){
+  salvarHistoricoCaixa(caixaState.movimentos, caixaState.troco);
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;
   document.getElementById('caixa-troco-input').value='0';
   document.getElementById('caixa-fechamento-view').style.display='none';
   document.getElementById('caixa-aberto-view').style.display='none';
   document.getElementById('caixa-fechado-view').style.display='block';
+  renderHistoricoCaixa();
   showAlert('Caixa fechado!');
 }
+
 
 function toggleCardDetalhe(tipo){
   var paineis=['entradas','saidas','saldo','sinal'];
