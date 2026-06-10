@@ -1905,55 +1905,70 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="page" id="page-relatorios">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="table-card" style="cursor:pointer" onclick="showAlert('Relatório Financeiro gerado!')">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('financeiro')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="badge badge-green">Novo</span></div>
-            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">Relatório Financeiro</h3>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="badge badge-green">Novo</span></div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">💰 Relatório Financeiro</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira valores recebidos, despesas e dados sobre o seu negócio</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer" onclick="showAlert('Relatório de Atendimentos gerado!')">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('atendimentos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="badge badge-green">Novo</span></div>
-            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">Relatório de Atendimentos</h3>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="badge badge-green">Novo</span></div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">📋 Relatório de Atendimentos</h3>
             <p style="font-size:13px;color:var(--gray-400)">Detalhes dos atendimentos, produtos e serviços por período</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer" onclick="showAlert('Relatório de Colaboradores gerado!')">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('colaboradores')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">👥 Colaboradores</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira os colaboradores mais rentáveis para seu negócio</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer" onclick="showAlert('Relatório de Clientes gerado!')">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">👤 Clientes</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira os dados de seus clientes, como gasto médio e mais</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('sumidos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">🙁 Clientes Sumidos</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira os clientes sumidos e o tempo de ausência</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('ativos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">😊 Clientes Ativos</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira os clientes que realizaram compras recentemente</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer">
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('servicos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="padding:20px">
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">✂️ Serviços</h3>
+            <p style="font-size:13px;color:var(--gray-400)">Veja os serviços mais realizados e sua receita</p>
+          </div>
+        </div>
+        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('pacotes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">🛒 Pacotes</h3>
             <p style="font-size:13px;color:var(--gray-400)">Acompanhe os pacotes vendidos e utilizados</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer">
-          <div style="padding:20px">
-            <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">✂️ Serviços</h3>
-            <p style="font-size:13px;color:var(--gray-400)">Veja os serviços mais realizados e sua receita</p>
-          </div>
+      </div>
+    </div>
+
+    <!-- MODAL RELATÓRIO -->
+    <div class="modal-overlay" id="modal-relatorio" style="z-index:1100">
+      <div class="modal" style="width:600px;max-height:85vh;overflow-y:auto">
+        <div class="modal-header">
+          <span class="modal-title" id="relatorio-titulo">Relatório</span>
+          <button class="modal-close" onclick="closeModal('modal-relatorio')">✕</button>
+        </div>
+        <div id="relatorio-conteudo" style="padding-top:8px"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+          <button class="btn btn-outline" onclick="closeModal('modal-relatorio')">Fechar</button>
+          <button class="btn btn-primary" onclick="imprimirRelatorio()">🖨️ Imprimir</button>
         </div>
       </div>
     </div>
@@ -4172,6 +4187,109 @@ document.addEventListener('click',function(e){
 document.querySelectorAll('.nav-item').forEach(function(item){
   item.addEventListener('click',function(){setTimeout(closeSidebar,100);});
 });
+
+// ===== RELATÓRIOS =====
+function abrirRelatorio(tipo){
+  var titulo = '';
+  var html = '';
+  var hoje = new Date();
+  var mesNome = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][hoje.getMonth()];
+
+  if(tipo === 'financeiro'){
+    titulo = '💰 Relatório Financeiro — ' + mesNome + '/' + hoje.getFullYear();
+    var totalEntradas = 0, totalSaidas = 0;
+    try {
+      var mov = JSON.parse(localStorage.getItem('caixaMovimentos')||'[]');
+      mov.forEach(function(m){ if(m.tipo==='entrada') totalEntradas+=parseFloat(m.valor)||0; else totalSaidas+=parseFloat(m.valor)||0; });
+    } catch(e){}
+    var saldo = totalEntradas - totalSaidas;
+    html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">'
+      +'<div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:4px">ENTRADAS</div><div style="font-size:22px;font-weight:800;color:#15803d">R$ '+totalEntradas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
+      +'<div style="background:#fee2e2;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:4px">SAÍDAS</div><div style="font-size:22px;font-weight:800;color:#dc2626">R$ '+totalSaidas.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
+      +'<div style="background:#111;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:4px">SALDO</div><div style="font-size:22px;font-weight:800;color:#fff">R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div></div>'
+      +'</div>'
+      +'<div style="font-size:13px;color:#888;text-align:center;padding:20px">Os dados são baseados nos lançamentos registrados no Controle de Caixa.</div>';
+
+  } else if(tipo === 'colaboradores'){
+    titulo = '👥 Relatório de Colaboradores';
+    html = '<table style="width:100%;border-collapse:collapse">'
+      +'<thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Cargo</th><th style="padding:10px;text-align:center;font-size:12px">Comissão</th><th style="padding:10px;text-align:center;font-size:12px">Status</th></tr></thead><tbody>'
+      + colaboradores.map(function(c){
+        var ativo = c.status !== 'Inativo';
+        return '<tr style="border-bottom:1px solid #f0f0f0">'
+          +'<td style="padding:10px;font-size:13px;font-weight:600">'+c.nome+'</td>'
+          +'<td style="padding:10px;font-size:13px;color:#666">'+c.cargo+'</td>'
+          +'<td style="padding:10px;font-size:13px;font-weight:700;text-align:center">'+c.comissao+'</td>'
+          +'<td style="padding:10px;text-align:center"><span style="background:'+(ativo?'#dcfce7':'#f5f5f5')+';color:'+(ativo?'#15803d':'#888')+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">'+(c.status||'Ativo')+'</span></td>'
+          +'</tr>';
+      }).join('')
+      +'</tbody></table>';
+
+  } else if(tipo === 'clientes'){
+    titulo = '👤 Relatório de Clientes';
+    html = '<div style="font-size:13px;margin-bottom:12px;color:#555">Total de clientes cadastrados: <b>'+clientes.length+'</b></div>'
+      +'<table style="width:100%;border-collapse:collapse">'
+      +'<thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Telefone</th><th style="padding:10px;text-align:left;font-size:12px">Último atend.</th><th style="padding:10px;text-align:right;font-size:12px">Total gasto</th></tr></thead><tbody>'
+      + clientes.slice(0,20).map(function(c){
+        return '<tr style="border-bottom:1px solid #f0f0f0">'
+          +'<td style="padding:9px;font-size:13px;font-weight:600">'+c.nome+'</td>'
+          +'<td style="padding:9px;font-size:12px;color:#666">'+c.tel+'</td>'
+          +'<td style="padding:9px;font-size:12px;color:#666">'+c.ultima+'</td>'
+          +'<td style="padding:9px;font-size:13px;font-weight:700;color:#22c55e;text-align:right">'+c.total+'</td>'
+          +'</tr>';
+      }).join('')
+      +'</tbody></table>'
+      +(clientes.length>20?'<div style="text-align:center;padding:10px;font-size:12px;color:#aaa">Mostrando 20 de '+clientes.length+' clientes</div>':'');
+
+  } else if(tipo === 'sumidos'){
+    titulo = '🙁 Clientes Sumidos';
+    var sumidos = clientes.filter(function(c){ return c.retornoStatus === 'vencido'; });
+    html = sumidos.length === 0
+      ? '<div style="text-align:center;padding:40px;color:#aaa">Nenhum cliente sumido no momento! 🎉</div>'
+      : '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Telefone</th><th style="padding:10px;text-align:left;font-size:12px">Último atend.</th></tr></thead><tbody>'
+        + sumidos.map(function(c){ return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:9px;font-size:13px;font-weight:600">'+c.nome+'</td><td style="padding:9px;font-size:12px;color:#666">'+c.tel+'</td><td style="padding:9px;font-size:12px;color:#ef4444;font-weight:600">'+c.ultima+'</td></tr>'; }).join('')
+        +'</tbody></table>';
+
+  } else if(tipo === 'ativos'){
+    titulo = '😊 Clientes Ativos';
+    var ativos = clientes.filter(function(c){ return c.retornoStatus === 'retornou' || !c.retornoStatus; });
+    html = '<div style="font-size:13px;margin-bottom:12px;color:#555">Clientes ativos recentemente: <b>'+ativos.length+'</b></div>'
+      +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Nome</th><th style="padding:10px;text-align:left;font-size:12px">Último atend.</th><th style="padding:10px;text-align:right;font-size:12px">Total gasto</th></tr></thead><tbody>'
+      + ativos.slice(0,20).map(function(c){ return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:9px;font-size:13px;font-weight:600">'+c.nome+'</td><td style="padding:9px;font-size:12px;color:#666">'+c.ultima+'</td><td style="padding:9px;font-size:13px;font-weight:700;color:#22c55e;text-align:right">'+c.total+'</td></tr>'; }).join('')
+      +'</tbody></table>';
+
+  } else if(tipo === 'servicos'){
+    titulo = '✂️ Relatório de Serviços';
+    html = '<div style="font-size:13px;margin-bottom:12px;color:#555">Total de serviços cadastrados: <b>'+servicos.length+'</b></div>'
+      +'<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8f8f8"><th style="padding:10px;text-align:left;font-size:12px">Serviço</th><th style="padding:10px;text-align:left;font-size:12px">Categoria</th><th style="padding:10px;text-align:center;font-size:12px">Duração</th><th style="padding:10px;text-align:right;font-size:12px">Preço</th></tr></thead><tbody>'
+      + servicos.map(function(s){ return '<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:9px;font-size:13px;font-weight:600">'+s.nome+'</td><td style="padding:9px;font-size:12px;color:#666">'+s.cat+'</td><td style="padding:9px;font-size:12px;text-align:center">'+s.dur+'</td><td style="padding:9px;font-size:13px;font-weight:700;text-align:right">R$ '+s.preco+'</td></tr>'; }).join('')
+      +'</tbody></table>';
+
+  } else if(tipo === 'atendimentos'){
+    titulo = '📋 Relatório de Atendimentos';
+    html = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:32px;margin-bottom:12px">📋</div><div style="font-size:14px;font-weight:600;color:#555;margin-bottom:6px">Relatório em desenvolvimento</div><div style="font-size:13px">Os atendimentos são sincronizados com o Supabase. Em breve este relatório trará dados detalhados por período.</div></div>';
+
+  } else if(tipo === 'pacotes'){
+    titulo = '🛒 Relatório de Pacotes';
+    html = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:32px;margin-bottom:12px">🛒</div><div style="font-size:14px;font-weight:600;color:#555;margin-bottom:6px">Módulo de Pacotes</div><div style="font-size:13px">Em breve você poderá criar e acompanhar pacotes de serviços aqui.</div></div>';
+  }
+
+  document.getElementById('relatorio-titulo').textContent = titulo;
+  document.getElementById('relatorio-conteudo').innerHTML = html;
+  openModal('modal-relatorio');
+}
+
+function imprimirRelatorio(){
+  var conteudo = document.getElementById('relatorio-titulo').textContent + '\n\n' + document.getElementById('relatorio-conteudo').innerText;
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Relatório Flora</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}h1{font-size:18px}</style></head><body>');
+  win.document.write('<h1>'+document.getElementById('relatorio-titulo').textContent+'</h1>');
+  win.document.write(document.getElementById('relatorio-conteudo').innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+// ===== FIM RELATÓRIOS =====
 
 var _colabFiltro = 'Ativos';
 function filterColabs(status,el){
