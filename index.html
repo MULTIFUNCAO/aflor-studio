@@ -4089,6 +4089,26 @@ function removeSrvProfRow(btn){
   }
 }
 
+function menuServico(e,idx){
+  e.stopPropagation();
+  var old=document.getElementById('srv-menu-popup');if(old)old.remove();
+  var div=document.createElement('div');
+  div.id='srv-menu-popup';
+  div.style.cssText='position:fixed;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;min-width:160px;padding:4px 0';
+  div.innerHTML='<div onclick="editarServico('+idx+');document.getElementById(\'srv-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px">✏️ Editar</div>'+
+    '<div onclick="deletarServico('+idx+');document.getElementById(\'srv-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#ef4444">🗑️ Excluir</div>';
+  div.style.top=(e.clientY+4)+'px';
+  div.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){document.addEventListener('click',function rem(){div.remove();document.removeEventListener('click',rem);});},10);
+}
+function deletarServico(idx){
+  if(!confirm('Excluir este serviço?'))return;
+  var s=servicos[idx];
+  if(s&&s.id)deletarServicoSupa(s.id);
+  servicos.splice(idx,1);
+  renderServicos();
+}
 function editarServico(idx){
   var s=servicos[idx];
   if(!s)return;
@@ -4154,10 +4174,15 @@ function salvarServico(){
   // Salvar na variável global servicos
   var novoServico={ nome:nome, cat:cat, dur:dur, preco:Number(preco).toFixed(2).replace('.',','), profs:profs, cor:cor };
   if(window._editSrvIdx!==undefined){
-    servicos[window._editSrvIdx]=novoServico;
+    var idxEdit=window._editSrvIdx;
+    var idSupa=servicos[idxEdit]&&servicos[idxEdit].id;
+    if(idSupa)novoServico.id=idSupa;
+    servicos[idxEdit]=novoServico;
+    if(idSupa)atualizarServicoSupa(idSupa,novoServico);
     window._editSrvIdx=undefined;
   } else {
     servicos.push(novoServico);
+    salvarServicoSupa(novoServico);
   }
   renderServicos();
 
@@ -4266,6 +4291,19 @@ try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total}]);}catch(e){}}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([a]);}catch(e){}}
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([c]);}catch(e){}}
+async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}]);}catch(e){console.log('err supa servico',e);}}
+async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id);}catch(e){}}
+async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id);}catch(e){}}
+async function carregarServicosSupa(){
+  try{
+    if(!supa)return;
+    var r=await supa.from('servicos_cadastro').select('*').order('cat').order('nome');
+    if(r.data&&r.data.length>0){
+      servicos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
+      renderServicos();
+    }
+  }catch(e){console.log('err carregar servicos',e);}
+}
 
 const pages = {
   'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Vendas',
@@ -4301,7 +4339,7 @@ function showPage(id){
     if(id==='clientes')renderClientes();
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
-    if(id==='servicos')renderServicos();
+    if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='produtos')renderProdutos();
     if(id==='pacotes')renderPacotes();
     if(id==='caixa')renderHistoricoCaixa();
@@ -5564,7 +5602,7 @@ function renderServicos(){
     <div class="service-info"><div class="service-name">${s.nome}</div><div class="service-cat">${s.cat}</div></div>
     <div class="service-duration">${s.dur}</div>
     <div class="service-price">R$ ${s.preco}</div>
-    <button class="btn btn-outline btn-sm" onclick="editarServico(${i})">⋮</button>
+    <button class="btn btn-outline btn-sm" onclick="menuServico(event,${i})">⋮</button>
   </div>`).join('');
 }
 
