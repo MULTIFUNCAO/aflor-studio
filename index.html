@@ -7920,6 +7920,8 @@ function normalizarHoraAgenda(hora){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
 function abrirModalAgendar(prof,hora){
+  var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
+  agFiltrarServicos();
   var d=agendaDataAtual;
   var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   var elData=document.getElementById('ag-data');
