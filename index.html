@@ -4390,8 +4390,8 @@ function agAddProduto(){
   row.style.cssText = 'display:flex;gap:6px;align-items:center';
   // Montar opções de produtos
   var opts = '<option value="">— Selecione o produto —</option>'
-    + (typeof produtosList !== 'undefined' ? produtosList : []).filter(function(p){ return p.status!=='Inativo'; }).map(function(p){
-        return '<option value="'+p.precoVenda+'">'+p.nome+' (R$ '+p.precoVenda+')</option>';
+    + (typeof produtos !== 'undefined' ? produtos : []).filter(function(p){ return p.status!=='Inativo'; }).map(function(p){
+        return '<option>'+p.nome+'</option>';
       }).join('');
   row.innerHTML = '<select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
     
