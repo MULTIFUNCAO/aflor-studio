@@ -822,7 +822,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Buscar
       </button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-agendar')">
+      <button class="btn btn-primary btn-sm" onclick="abrirModalAgendar()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agendar
       </button>
@@ -1019,7 +1019,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Lara</option>
             <option>Angélica</option>
           </select>
-          <button class="btn btn-primary" onclick="openModal('modal-agendar')">
+          <button class="btn btn-primary" onclick="abrirModalAgendar()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agendar
           </button>
@@ -4635,7 +4635,7 @@ function renderAgenda(){
       ${profs.map(p=>{
         const key=`${p}:${h}`;
         const a=apptsDia[key];
-        if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        if(!a) return `<div class="slot" onclick="abrirModalAgendar()" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
           <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer">
