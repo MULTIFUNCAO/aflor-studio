@@ -1519,7 +1519,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Nome do Pacote</th><th>Serviços incluídos</th><th>Validade</th><th style="text-align:right">Preço</th><th></th></tr></thead>
+          <thead><tr><th>Pacote</th><th>Serviços</th><th>Progresso</th><th>Status</th><th>Valor</th><th></th></tr></thead>
           <tbody id="pacotes-table"></tbody>
         </table>
       </div>
@@ -2529,30 +2529,52 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
 <!-- MODAL PACOTE -->
 <div class="modal-overlay" id="modal-pacote">
-  <div class="modal" style="width:560px">
+  <div class="modal" style="width:580px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
-      <span class="modal-title">Novo Pacote</span>
+      <span class="modal-title">🎁 Novo Pacote</span>
       <button class="modal-close" onclick="closeModal('modal-pacote')">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group full"><label>Nome do Pacote</label><input id="novo-pacote-nome" placeholder="Ex: Pacote Noiva Completo"/></div>
+      <div class="form-group full"><label>Nome do Pacote *</label><input id="novo-pacote-nome" placeholder="Ex: Pacote Noiva Completo"/></div>
       <div class="form-group full">
-        <label>Serviços incluídos</label>
+        <label>Serviços incluídos *</label>
         <div style="display:flex;flex-direction:column;gap:6px" id="pacote-servicos-list">
           <div style="display:flex;gap:8px;align-items:center">
-            <select style="flex:1"><option>Manicure — R$ 40,00</option><option>Pedicure — R$ 45,00</option><option>Escova — R$ 60,00</option><option>Corte — R$ 80,00</option><option>Coloração — R$ 150,00</option><option>Hidratação — R$ 80,00</option></select>
-            <input type="number" placeholder="Qtd" value="1" style="width:60px;text-align:center"/>
+            <select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px" id="pacote-srv-0">
+              <option>Manicure</option><option>Pedicure</option><option>Escova</option>
+              <option>Corte</option><option>Coloração</option><option>Hidratação</option>
+            </select>
+            <input type="number" placeholder="Qtd sessões" value="1" min="1" style="width:90px;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;text-align:center"/>
+            <button onclick="this.closest('div').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer">✕</button>
           </div>
         </div>
-        <button class="btn btn-outline btn-sm" style="margin-top:8px;align-self:flex-start" onclick="addPacoteServico()">+ Adicionar serviço</button>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addPacoteServico()">+ Adicionar serviço</button>
       </div>
-      <div class="form-group"><label>Preço do Pacote (R$)</label><input type="number" id="novo-pacote-preco" placeholder="0,00"/></div>
-      <div class="form-group"><label>Validade (dias)</label><input type="number" id="novo-pacote-validade" placeholder="30" value="30"/></div>
-      <div class="form-group full"><label>Descrição</label><textarea placeholder="Descreva o que está incluído no pacote..."></textarea></div>
+      <div class="form-group"><label>Preço do Pacote (R$) *</label><input type="number" id="novo-pacote-preco" placeholder="0,00" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Validade (dias)</label><input type="number" id="novo-pacote-validade" placeholder="30" value="30" min="0"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="novo-pacote-desc" placeholder="Descreva o que está incluído no pacote..." rows="2"></textarea></div>
+
+      <!-- VENDER PARA CLIENTE -->
+      <div class="form-group full">
+        <div style="background:#f0fdf4;border-radius:10px;padding:14px;border:1px solid #bbf7d0">
+          <div style="font-size:13px;font-weight:800;color:#15803d;margin-bottom:10px">💳 Vender para um cliente agora?</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group" style="margin:0"><label>Nome do Cliente</label><input id="pacote-cliente-nome" placeholder="Nome da cliente"/></div>
+            <div class="form-group" style="margin:0"><label>Telefone</label><input id="pacote-cliente-tel" placeholder="(11) 99999-9999"/></div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px"><label>Forma de Pagamento</label>
+            <select id="pacote-forma-pag">
+              <option>Pix</option><option>Dinheiro</option><option>Cartão de Crédito</option>
+              <option>Cartão de Débito</option><option>Link de Pagamento</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:#166534">✅ Ao vender, o pacote entra no caixa como receita e fica disponível para uso nos agendamentos</div>
+        </div>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-pacote')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addPacote()">Salvar Pacote</button>
+      <button class="btn btn-primary" onclick="addPacote()">✅ Salvar e Vender</button>
     </div>
   </div>
 </div>
@@ -6608,35 +6630,103 @@ function addProduto(){
 
 function renderPacotes(){
   const tb=document.getElementById('pacotes-table');
-  if(!pacotes.length){
-    tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum pacote cadastrado</td></tr>`;
+  if(!tb) return;
+  // Pacotes base (templates)
+  const pacotesClientes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  const todos = [...pacotes.map(function(p){ return Object.assign({},p,{tipo:'template'}); }),
+                 ...pacotesClientes.map(function(p){ return Object.assign({},p,{tipo:'cliente'}); })];
+  if(!todos.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum pacote cadastrado</td></tr>';
     return;
   }
-  tb.innerHTML=pacotes.map((p,i)=>`<tr>
-    <td style="font-weight:600;font-size:14px">${p.nome}</td>
-    <td style="font-size:12px;color:var(--gray-500);max-width:280px">${p.servicos}</td>
-    <td><span class="badge badge-gray">${p.validade}</span></td>
-    <td style="text-align:right;font-weight:700;font-size:14px">${p.preco}</td>
-    <td>
-      <button onclick="deletePacote(${i})" style="background:none;border:none;cursor:pointer;color:var(--gray-400);padding:4px" title="Excluir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
-    </td>
-  </tr>`).join('');
+  tb.innerHTML=todos.map(function(p,i){
+    var usado = p.usado||0;
+    var total = p.total||0;
+    var restante = total - usado;
+    if(p.tipo==='cliente'){
+      return '<tr>'
+        +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+p.cliente+'</span></td>'
+        +'<td style="font-size:12px;color:#666">'+p.servico+'</td>'
+        +'<td><div style="display:flex;align-items:center;gap:6px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(restante>0?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+usado+'/'+total+'</span></div></td>'
+        +'<td><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' restante(s)</span></td>'
+        +'<td style="font-weight:700">R$ '+parseFloat(p.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td>'
+        +'<td><button onclick="deletePacoteCliente('+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px">🗑</button></td>'
+        +'</tr>';
+    }
+    return '<tr>'
+      +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#aaa">Template</span></td>'
+      +'<td style="font-size:12px;color:#666">'+p.servicos+'</td>'
+      +'<td><span class="badge badge-gray">'+p.validade+'</span></td>'
+      +'<td>—</td>'
+      +'<td style="font-weight:700">'+p.preco+'</td>'
+      +'<td><button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px">🗑</button></td>'
+      +'</tr>';
+  }).join('');
 }
 
 function deletePacote(i){
   if(confirm('Remover este pacote?')){pacotes.splice(i,1);renderPacotes();showAlert('Pacote removido!');}
 }
 
+function deletePacoteCliente(i){
+  var lista = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  // i inclui os templates, precisamos pular os templates
+  var realIdx = i - pacotes.length;
+  if(realIdx<0||!lista[realIdx]) return;
+  if(confirm('Remover pacote de '+lista[realIdx].cliente+'?')){
+    lista.splice(realIdx,1);
+    localStorage.setItem('flora_pacotes',JSON.stringify(lista));
+    renderPacotes();
+    showAlert('Pacote removido!');
+  }
+}
+
 function addPacote(){
-  const nome=document.getElementById('novo-pacote-nome').value||'Novo Pacote';
-  const preco='R$ '+(document.getElementById('novo-pacote-preco').value||'0')+',00';
-  const validade=(document.getElementById('novo-pacote-validade').value||'30')+' dias';
-  pacotes.unshift({nome,servicos:'Serviços incluídos',validade,preco});
+  var nome=(document.getElementById('novo-pacote-nome').value||'').trim();
+  if(!nome){ alert('Informe o nome do pacote.'); return; }
+  var precoNum=parseFloat(document.getElementById('novo-pacote-preco').value||0);
+  var validade=(document.getElementById('novo-pacote-validade').value||'30')+' dias';
+  var desc=(document.getElementById('novo-pacote-desc')?.value||'').trim();
+
+  // Coletar serviços
+  var srvRows = document.querySelectorAll('#pacote-servicos-list > div');
+  var servicosList2 = [];
+  var totalSessoes = 0;
+  srvRows.forEach(function(row){
+    var sel = row.querySelector('select');
+    var qtd = parseInt(row.querySelector('input[type="number"]')?.value||1);
+    if(sel && sel.value){ servicosList2.push({servico:sel.value, qtd:qtd}); totalSessoes+=qtd; }
+  });
+  var servicosStr = servicosList2.map(function(s){ return s.servico+(s.qtd>1?' (x'+s.qtd+')':''); }).join(' + ');
+
+  // Adicionar como template
+  pacotes.unshift({nome, servicos:servicosStr||'Serviços incluídos', validade, preco:'R$ '+precoNum.toFixed(2).replace('.',',')});
+
+  // Vender para cliente
+  var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
+  var clienteTel=(document.getElementById('pacote-cliente-tel').value||'').trim();
+  var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
+
+  if(clienteNome && precoNum>0){
+    // Salvar pacote do cliente no localStorage
+    var listaPacs = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+    listaPacs.push({
+      nome:nome, cliente:clienteNome, tel:clienteTel,
+      servico:servicosStr, total:totalSessoes, usado:0,
+      valor:precoNum, forma:formaPag,
+      dataCompra:new Date().toLocaleDateString('pt-BR'),
+      validade:validade
+    });
+    localStorage.setItem('flora_pacotes',JSON.stringify(listaPacs));
+    // Lançar no caixa
+    lancarEntradaCaixaAuto('Pacote — '+nome+' — '+clienteNome, precoNum, formaPag.toLowerCase());
+  }
+
   closeModal('modal-pacote');
   renderPacotes();
-  showAlert('Pacote salvo com sucesso!');
+  var msg='🎁 Pacote "'+nome+'" salvo!';
+  if(clienteNome) msg+=' Vendido para '+clienteNome+' e lançado no caixa!';
+  showAlert(msg);
 }
 
 function addPacoteServico(){
