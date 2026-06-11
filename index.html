@@ -822,7 +822,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Buscar
       </button>
-      <button class="btn btn-primary btn-sm" onclick="abrirModalAgendar()">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-agendar')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agendar
       </button>
@@ -1019,7 +1019,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Lara</option>
             <option>Angélica</option>
           </select>
-          <button class="btn btn-primary" onclick="abrirModalAgendar()">
+          <button class="btn btn-primary" onclick="openModal('modal-agendar')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agendar
           </button>
@@ -2042,56 +2042,1035 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <button class="modal-close" onclick="closeModal('modal-retorno')">✕</button>
     </div>
     <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Configure quando o cliente deve retornar para refazer o procedimento.</p>
-          <div class="form-grid">
-      <div class="form-group full"><label>Cliente</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
-      <div class="form-group"><label>Data</label><input type="date" id="ag-data"/></div>
-      <div class="form-group"><label>Horário</label><input type="time" id="ag-hora" value="09:00"/></div>
-      <div class="form-group"><label>Profissional</label>
-        <select id="ag-prof"><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
-      </div>
-
-      <!-- Tipo: Serviço ou Pacote -->
+    <div class="form-grid">
       <div class="form-group full">
-        <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Tipo de agendamento</label>
-        <div style="display:flex;gap:8px">
-          <button type="button" id="ag-tipo-servico" onclick="agSetTipo('servico')" style="flex:1;padding:9px;border:2px solid #111;background:#111;color:#fff;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">🎯 Serviço</button>
-          <button type="button" id="ag-tipo-pacote" onclick="agSetTipo('pacote')" style="flex:1;padding:9px;border:2px solid #ddd;background:#fff;color:#333;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">🎁 Usar Pacote</button>
-        </div>
-      </div>
-
-      <!-- Bloco Serviço -->
-      <div id="ag-bloco-servico" class="form-group full" style="padding:0;margin:0">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="form-group">
-            <label>Categoria</label>
-            <select id="ag-cat" onchange="agFiltrarServicos()">
-              <option value="">— Todas —</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Serviço</label>
-            <select id="ag-servico" onchange="agCalcSinal()">
-              <option value="0">Selecione...</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:8px">
-          <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">📦 Produtos utilizados <span style="font-weight:400;color:#aaa">(sem cobrança extra)</span></label>
-          <div id="ag-produtos-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
-          <button type="button" onclick="agAddProduto()" style="padding:6px 14px;border:1.5px dashed #bbb;background:#fafafa;border-radius:8px;font-size:12px;color:#666;cursor:pointer">+ Produto utilizado</button>
-        </div>
-      </div>
-
-      <!-- Bloco Pacote -->
-      <div id="ag-bloco-pacote" style="display:none" class="form-group full">
-        <label>Pacote do cliente</label>
-        <select id="ag-pacote-sel" style="width:100%">
-          <option value="">— Digite o nome do cliente primeiro —</option>
+        <label>Cliente</label>
+        <select id="ret-cliente">
+          <option>Mãe Ana</option><option>Denilda</option><option>Adriana - Casa Devi</option>
+          <option>Laura Dentista</option><option>Alessandra Say</option><option>Janaine Brito</option><option>Julia Barrozo</option>
         </select>
-        <div id="ag-pacote-info" style="margin-top:8px;display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px;font-size:12px;color:#166534"></div>
+      </div>
+      <div class="form-group full">
+        <label>Procedimento realizado</label>
+        <select id="ret-proc" onchange="sugerirRetorno()">
+          <option value="">Selecione...</option>
+          <option value="Coloração" data-dias="30">Coloração (retorno em 30 dias)</option>
+          <option value="Progressiva" data-dias="90">Progressiva (retorno em 90 dias)</option>
+          <option value="Botox" data-dias="60">Botox (retorno em 60 dias)</option>
+          <option value="Manicure" data-dias="21">Manicure (retorno em 21 dias)</option>
+          <option value="Pedicure" data-dias="21">Pedicure (retorno em 21 dias)</option>
+          <option value="Escova" data-dias="14">Escova (retorno em 14 dias)</option>
+          <option value="Corte" data-dias="45">Corte (retorno em 45 dias)</option>
+          <option value="Hidratação" data-dias="30">Hidratação (retorno em 30 dias)</option>
+          <option value="Limpeza de Pele" data-dias="30">Limpeza de Pele (retorno em 30 dias)</option>
+          <option value="Outro" data-dias="30">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Data do procedimento</label>
+        <input type="date" id="ret-data-proc" value="2026-05-26" onchange="sugerirRetorno()"/>
+      </div>
+      <div class="form-group">
+        <label>Data de retorno sugerida</label>
+        <input type="date" id="ret-data-retorno" value="2026-06-25"/>
+      </div>
+      <div class="form-group full">
+        <label>Profissional responsável</label>
+        <select id="ret-prof">
+          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Observação</label>
+        <input id="ret-obs" placeholder="Ex: Cliente pediu para manter a mesma tonalidade"/>
+      </div>
+      <div class="form-group full">
+        <label>Notificação automática</label>
+        <select>
+          <option>Enviar WhatsApp 3 dias antes</option>
+          <option>Enviar WhatsApp 7 dias antes</option>
+          <option>Enviar WhatsApp 1 dia antes</option>
+          <option>Não enviar notificação</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-retorno')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addRetorno()">Salvar Lembrete</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="modal-overlay" id="modal-produto">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Cadastrar Produto</span>
+      <button class="modal-close" onclick="closeModal('modal-produto')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Foto do produto</label>
+        <div style="width:80px;height:80px;border-radius:12px;background:var(--gray-100);border:2px dashed var(--gray-300);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:4px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span style="font-size:10px;color:var(--gray-400)">Foto</span>
+        </div>
+      </div>
+      <div class="form-group full"><label>Nome do Produto</label><input placeholder="Ex: Tinta Aneethun 0.66"/></div>
+      <div class="form-group"><label>Categoria</label>
+        <select><option>Tonalizante</option><option>Cremes</option><option>Shampoo</option><option>Condicionador</option><option>Máscara</option><option>Óleo</option><option>Outros</option></select>
+      </div>
+      <div class="form-group"><label>Marca</label><input placeholder="Ex: Aneethun"/></div>
+      <div class="form-group"><label>Preço de Custo (R$)</label><input type="number" placeholder="0,00"/></div>
+      <div class="form-group"><label>Preço de Venda (R$)</label><input type="number" placeholder="0,00"/></div>
+      <div class="form-group"><label>Estoque atual (unid.)</label><input type="number" placeholder="0" value="0"/></div>
+      <div class="form-group"><label>Estoque mínimo</label><input type="number" placeholder="0" value="1"/></div>
+      <div class="form-group full"><label>Código de barras / SKU</label><input placeholder="Ex: 7891234567890"/></div>
+      <div class="form-group full"><label>Uso</label>
+        <select><option>Venda e Uso interno</option><option>Apenas venda</option><option>Apenas uso interno</option></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-produto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addProduto()">Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PACOTE -->
+<div class="modal-overlay" id="modal-pacote">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Novo Pacote</span>
+      <button class="modal-close" onclick="closeModal('modal-pacote')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome do Pacote</label><input id="novo-pacote-nome" placeholder="Ex: Pacote Noiva Completo"/></div>
+      <div class="form-group full">
+        <label>Serviços incluídos</label>
+        <div style="display:flex;flex-direction:column;gap:6px" id="pacote-servicos-list">
+          <div style="display:flex;gap:8px;align-items:center">
+            <select style="flex:1"><option>Manicure — R$ 40,00</option><option>Pedicure — R$ 45,00</option><option>Escova — R$ 60,00</option><option>Corte — R$ 80,00</option><option>Coloração — R$ 150,00</option><option>Hidratação — R$ 80,00</option></select>
+            <input type="number" placeholder="Qtd" value="1" style="width:60px;text-align:center"/>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;align-self:flex-start" onclick="addPacoteServico()">+ Adicionar serviço</button>
+      </div>
+      <div class="form-group"><label>Preço do Pacote (R$)</label><input type="number" id="novo-pacote-preco" placeholder="0,00"/></div>
+      <div class="form-group"><label>Validade (dias)</label><input type="number" id="novo-pacote-validade" placeholder="30" value="30"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea placeholder="Descreva o que está incluído no pacote..."></textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-pacote')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addPacote()">Salvar Pacote</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA INFLUENCIADORA -->
+<div class="modal-overlay" id="modal-nova-influenciadora">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <span class="modal-title">✨ Nova Parceria / Permuta</span>
+      <button class="modal-close" onclick="closeModal('modal-nova-influenciadora')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>@ Instagram *</label><input placeholder="@nome_da_influenciadora"/></div>
+      <div class="form-group"><label>Seguidores</label><input placeholder="Ex: 12.4K"/></div>
+      <div class="form-group"><label>Tipo</label>
+        <select><option>Nano (até 10K)</option><option>Micro (10K-100K)</option><option>Médio (100K-500K)</option><option>Macro (500K+)</option></select>
+      </div>
+      <div class="form-group full"><label>Serviço oferecido (permuta)</label>
+        <select><option>Manicure + Pedicure</option><option>Coloração Completa</option><option>Escova + Corte</option><option>Pacote Noiva</option><option>Progressiva</option><option>Manicure</option></select>
+      </div>
+      <div class="form-group"><label>Data do atendimento</label><input type="date" value="2026-06-01"/></div>
+      <div class="form-group"><label>Status inicial</label>
+        <select><option value="pendente">⏳ Pendente</option><option value="ativa">✅ Ativa</option></select>
+      </div>
+      <div class="form-group full"><label>O que ela irá entregar (contrapartida)</label>
+        <textarea style="padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;width:100%;outline:none;min-height:70px;resize:vertical" placeholder="Ex: 3 stories + 1 post no feed marcando o salão"></textarea>
+      </div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" style="accent-color:#111"/> <span style="font-size:12px">Gerar contrato de parceria automaticamente</span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-nova-influenciadora')">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-nova-influenciadora');showAlert('✨ Parceria cadastrada com sucesso!')">Cadastrar Parceria</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER TREINAMENTO -->
+<div class="modal-overlay" id="modal-ver-treino">
+  <div class="modal" style="width:540px">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-treino-titulo">Treinamento</span>
+      <button class="modal-close" onclick="closeModal('modal-ver-treino')">✕</button>
+    </div>
+    <div style="text-align:center;padding:24px 0">
+      <div style="font-size:48px;margin-bottom:12px">🎬</div>
+      <div style="font-size:14px;font-weight:700;color:#111;margin-bottom:8px">Conteúdo do Treinamento</div>
+      <div style="font-size:12px;color:#888;margin-bottom:20px;line-height:1.6">Este treinamento está disponível na plataforma.<br>Em breve você poderá assistir vídeos, baixar PDFs e e-books diretamente aqui.</div>
+      <div style="background:#f8f8f8;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #e5e5e5">
+        <div style="font-size:12px;color:#555;margin-bottom:8px">📋 O que você vai aprender:</div>
+        <div style="font-size:12px;color:#333;line-height:1.8;text-align:left">✓ Técnicas avançadas e fundamentos<br>✓ Passo a passo prático<br>✓ Dicas de profissionais experientes<br>✓ Material de apoio incluso</div>
+      </div>
+      <button class="btn btn-primary" onclick="closeModal('modal-ver-treino');showAlert('✅ Treinamento iniciado!')">▶ Iniciar Treinamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO TREINAMENTO -->
+<div class="modal-overlay" id="modal-novo-treino">
+  <div class="modal" style="width:540px">
+    <div class="modal-header">
+      <span class="modal-title">📚 Novo Treinamento</span>
+      <button class="modal-close" onclick="closeModal('modal-novo-treino')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título do Treinamento *</label><input id="treino-titulo" placeholder="Ex: Técnica de Botox Capilar"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea style="padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;width:100%;outline:none;min-height:70px;resize:vertical" placeholder="Descreva o conteúdo do treinamento..."></textarea></div>
+      <div class="form-group"><label>Categoria</label>
+        <select><option value="tecnica">✂️ Técnica</option><option value="gestao">📊 Gestão</option><option value="atendimento">💬 Atendimento</option></select>
+      </div>
+      <div class="form-group"><label>Tipo de material</label>
+        <select><option value="video">🎬 Vídeo</option><option value="pdf">📄 PDF</option><option value="ebook">📖 E-book</option><option value="sop">📋 SOP/Protocolo</option></select>
+      </div>
+      <div class="form-group"><label>Duração estimada</label><input placeholder="Ex: 1h30"/></div>
+      <div class="form-group"><label>Nível</label>
+        <select><option>Iniciante</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select>
+      </div>
+      <div class="form-group full"><label>Atribuir para</label>
+        <select multiple style="height:90px;padding:4px">
+          <option selected>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option>
+        </select>
+        <div style="font-size:10px;color:#888;margin-top:3px">Segure Ctrl para selecionar vários</div>
+      </div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" style="accent-color:#111"/> <span>Obrigatório para todos os colaboradores</span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-novo-treino')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTreino()">Criar Treinamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO LANÇAMENTO CAIXA -->
+<div class="modal-overlay" id="modal-lancamento-caixa">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">💰 Novo Lançamento</span>
+      <button class="modal-close" onclick="closeModal('modal-lancamento-caixa')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tipo *</label>
+        <div style="display:flex;gap:8px">
+          <label id="lbl-receita" onclick="setTipoLanc('receita')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #22c55e;border-radius:10px;cursor:pointer;background:#dcfce7">
+            <span style="font-size:18px">📥</span><div><div style="font-size:12px;font-weight:700;color:#15803d">Receita</div><div style="font-size:10px;color:#166534">Entrada de dinheiro</div></div>
+          </label>
+          <label id="lbl-despesa" onclick="setTipoLanc('despesa')" style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
+            <span style="font-size:18px">📤</span><div><div style="font-size:12px;font-weight:700;color:#333">Despesa</div><div style="font-size:10px;color:#888">Saída de dinheiro</div></div>
+          </label>
+        </div>
+      </div>
+      <div class="form-group full"><label>Descrição *</label><input id="lanc-desc" placeholder="Ex: Atendimento manicure — Cliente Ana"/></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="lanc-data" value="2026-05-30"/></div>
+      <div class="form-group"><label>Valor (R$) *</label><input type="number" id="lanc-val" placeholder="0,00" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Categoria</label>
+        <select id="lanc-cat">
+          <option>Serviços</option><option>Produtos</option><option>Aluguel</option>
+          <option>Contas</option><option>Material</option><option>Comissões</option>
+          <option>Marketing</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Forma de pagamento</label>
+        <select id="lanc-forma">
+          <option>Pix</option><option>Dinheiro</option><option>Cartão de Crédito</option>
+          <option>Cartão de Débito</option><option>Transferência</option><option>Boleto</option><option>Débito auto</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Status</label>
+        <div style="display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
+            <input type="radio" name="lanc-status" value="confirmado" checked style="accent-color:#111"/>
+            <span style="font-size:12px;font-weight:600">✅ Confirmado</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
+            <input type="radio" name="lanc-status" value="pendente" style="accent-color:#111"/>
+            <span style="font-size:12px;font-weight:600">⏳ Pendente</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group full"><label>Observações</label><textarea style="width:100%;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;min-height:55px;resize:vertical;outline:none" placeholder="Observação opcional..."></textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-lancamento-caixa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLancamento()">✅ Salvar Lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA CAMPANHA -->
+<div class="modal-overlay" id="modal-nova-campanha">
+  <div class="modal" style="width:540px">
+    <div class="modal-header">
+      <span class="modal-title">📣 Nova Campanha</span>
+      <button class="modal-close" onclick="closeModal('modal-nova-campanha')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nome da Campanha *</label>
+        <input id="camp-nome" placeholder="Ex: Dia dos Namorados — Combo Casal"/>
+      </div>
+      <div class="form-group full">
+        <label>Objetivo</label>
+        <select id="camp-obj">
+          <option>Atrair novos clientes</option>
+          <option>Reativar clientes sumidos</option>
+          <option>Aumentar ticket médio</option>
+          <option>Fidelizar clientes</option>
+          <option>Preencher horários ociosos</option>
+          <option>Data comemorativa</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Canal de divulgação</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1.5px solid #ddd;border-radius:8px"><input type="checkbox" checked style="accent-color:#111"/> <span style="font-size:12px">📱 WhatsApp</span></label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1.5px solid #ddd;border-radius:8px"><input type="checkbox" style="accent-color:#111"/> <span style="font-size:12px">📸 Instagram Stories</span></label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:6px 12px;border:1.5px solid #ddd;border-radius:8px"><input type="checkbox" style="accent-color:#111"/> <span style="font-size:12px">📧 E-mail</span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data de início</label>
+        <input type="date" id="camp-inicio" value="2026-06-01"/>
+      </div>
+      <div class="form-group">
+        <label>Data de fim</label>
+        <input type="date" id="camp-fim" value="2026-06-12"/>
+      </div>
+      <div class="form-group full">
+        <label>Oferta / Desconto</label>
+        <input id="camp-oferta" placeholder="Ex: 15% de desconto no combo Manicure + Pedicure"/>
+      </div>
+      <div class="form-group full">
+        <label>Segmento de clientes</label>
+        <select>
+          <option>Todos os clientes</option>
+          <option>Clientes que não voltam há 30+ dias</option>
+          <option>Clientes frequentes (5+ visitas)</option>
+          <option>Clientes de manicure</option>
+          <option>Clientes de cabelo</option>
+          <option>Aniversariantes do mês</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Mensagem da campanha</label>
+        <textarea id="camp-msg" style="padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;width:100%;outline:none;min-height:80px;resize:vertical" placeholder="Olá! 💕 Que tal aproveitar nosso combo especial de Dia dos Namorados? Manicure + Pedicure com 15% de desconto. Agende já! 📅"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-nova-campanha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCampanha()">🚀 Lançar Campanha</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA META / TAREFA -->
+<div class="modal-overlay" id="modal-nova-meta">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🎯 Nova Meta / Tarefa</span>
+      <button class="modal-close" onclick="closeModal('modal-nova-meta')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tipo</label>
+        <div style="display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:9px 16px;border:1.5px solid #ddd;border-radius:9px;flex:1" id="tipo-meta-lbl">
+            <input type="radio" name="meta-tipo" value="meta" checked onchange="metaTipoChange()" style="accent-color:#111"/>
+            <span style="font-size:13px;font-weight:600">🎯 Meta</span>
+            <span style="font-size:10px;color:#888;margin-left:2px">com % de progresso</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:9px 16px;border:1.5px solid #ddd;border-radius:9px;flex:1" id="tipo-tarefa-lbl">
+            <input type="radio" name="meta-tipo" value="tarefa" onchange="metaTipoChange()" style="accent-color:#111"/>
+            <span style="font-size:13px;font-weight:600">✅ Tarefa</span>
+            <span style="font-size:10px;color:#888;margin-left:2px">sim ou não</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Título *</label>
+        <input id="meta-titulo" placeholder="Ex: Atingir 30 atendimentos no mês / Fazer curso de coloração"/>
+      </div>
+      <div class="form-group full">
+        <label>Descrição</label>
+        <textarea id="meta-desc" placeholder="Detalhe o que precisa ser feito..." style="min-height:70px;padding:9px 11px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;width:100%;outline:none;resize:vertical"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Atribuir para</label>
+        <select id="meta-colab" multiple style="height:90px;padding:4px">
+          <option value="Ana Flor" selected>Ana Flor</option>
+          <option value="Edu">Edu</option>
+          <option value="Jeny">Jeny</option>
+          <option value="Vi">Vi</option>
+          <option value="Lara">Lara</option>
+          <option value="Angélica">Angélica</option>
+        </select>
+        <div style="font-size:10px;color:#888;margin-top:3px">Segure Ctrl para selecionar vários</div>
+      </div>
+      <!-- CAMPOS DE META -->
+      <div id="campos-meta" style="display:contents">
+        <div class="form-group">
+          <label>Meta (quantidade/valor)</label>
+          <input type="number" id="meta-valor-alvo" placeholder="Ex: 30 (atendimentos) ou 2000 (R$)"/>
+        </div>
+        <div class="form-group">
+          <label>Unidade</label>
+          <select id="meta-unidade">
+            <option>atendimentos</option>
+            <option>R$ faturamento</option>
+            <option>clientes novos</option>
+            <option>avaliações 5★</option>
+            <option>produtos vendidos</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data de início *</label>
+        <input type="date" id="meta-inicio" value="2026-05-26"/>
+      </div>
+      <div class="form-group">
+        <label>Prazo limite *</label>
+        <input type="date" id="meta-prazo" value="2026-06-30"/>
+      </div>
+      <div class="form-group full">
+        <label>Prioridade</label>
+        <div style="display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #ddd;border-radius:8px;flex:1">
+            <input type="radio" name="meta-prio" value="baixa" style="accent-color:#22c55e"/> <span style="font-size:12px;font-weight:600">🟢 Baixa</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #ddd;border-radius:8px;flex:1">
+            <input type="radio" name="meta-prio" value="media" checked style="accent-color:#f59e0b"/> <span style="font-size:12px;font-weight:600">🟡 Média</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #ddd;border-radius:8px;flex:1">
+            <input type="radio" name="meta-prio" value="alta" style="accent-color:#ef4444"/> <span style="font-size:12px;font-weight:600">🔴 Alta</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Recompensa (opcional)</label>
+        <input id="meta-recompensa" placeholder="Ex: Bônus de R$ 50,00 / Folga extra / Vale presente"/>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-nova-meta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMeta()">Criar Meta / Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERFIL DO NEGÓCIO -->
+<div class="modal-overlay" id="modal-cfg-perfil">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Perfil do Negócio</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-perfil')">✕</button>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:20px">
+      <div style="position:relative">
+        <div style="width:80px;height:80px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:var(--blue)">AF</div>
+        <button class="btn btn-outline btn-sm" style="position:absolute;bottom:-8px;right:-8px;border-radius:20px;padding:4px 8px;font-size:11px">📷 Foto</button>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome do Negócio</label><input value="AFLOR / STUDIO"/></div>
+      <div class="form-group"><label>Telefone</label><input value="(11) 93943-7657"/></div>
+      <div class="form-group"><label>WhatsApp</label><input value="(11) 93943-7657"/></div>
+      <div class="form-group full"><label>E-mail</label><input type="email" value="aflorschool@gmail.com"/></div>
+      <div class="form-group full"><label>Endereço</label><input value="Rua Siqueira Campos, 283 - Jardim São Paulo - Guarulhos/SP"/></div>
+      <div class="form-group"><label>Horário de Abertura</label><input type="time" value="09:00"/></div>
+      <div class="form-group"><label>Horário de Fechamento</label><input type="time" value="19:00"/></div>
+      <div class="form-group full"><label>Descrição do Negócio</label><textarea>Studio de beleza especializado em cabelos, manicure e bronzeamento artificial.</textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-perfil')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-perfil','Perfil do negócio atualizado!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TEMA -->
+<div class="modal-overlay" id="modal-cfg-tema">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Tema do Sistema</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-tema')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Escolha a cor principal do sistema para todos os colaboradors.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">
+      <div onclick="setTheme('#1a3557',this)" class="theme-dot" style="background:#1a3557;width:100%;height:44px;border-radius:10px;cursor:pointer;border:3px solid #1a3557"></div>
+      <div onclick="setTheme('#007BFF',this)" class="theme-dot" style="background:#007BFF;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#FF5722',this)" class="theme-dot" style="background:#FF5722;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#22c55e',this)" class="theme-dot" style="background:#22c55e;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#8b5cf6',this)" class="theme-dot" style="background:#8b5cf6;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#ec4899',this)" class="theme-dot" style="background:#ec4899;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#14b8a6',this)" class="theme-dot" style="background:#14b8a6;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#f59e0b',this)" class="theme-dot" style="background:#f59e0b;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#ef4444',this)" class="theme-dot" style="background:#ef4444;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+      <div onclick="setTheme('#334155',this)" class="theme-dot" style="background:#334155;width:100%;height:44px;border-radius:10px;cursor:pointer"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-tema')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-tema','Tema aplicado com sucesso!')">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMISSÕES -->
+<div class="modal-overlay" id="modal-cfg-comissoes">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Comissões e Gorjetas</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-comissoes')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-card" style="padding:16px">
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--gray-600)">REGRAS DE COMISSÃO</h4>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:13px;font-weight:600">Ana Flor</div><div style="font-size:12px;color:var(--gray-400)">Cabeleireira</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="number" value="50" style="width:64px;text-align:center"/><span style="font-size:13px;color:var(--gray-500)">%</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:13px;font-weight:600">Edu</div><div style="font-size:12px;color:var(--gray-400)">Cabeleireiro</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="number" value="50" style="width:64px;text-align:center"/><span style="font-size:13px;color:var(--gray-500)">%</span></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:13px;font-weight:600">Jeny</div><div style="font-size:12px;color:var(--gray-400)">Manicure</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><input type="number" value="50" style="width:64px;text-align:center"/><span style="font-size:13px;color:var(--gray-500)">%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-card" style="padding:16px">
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--gray-600)">GORJETAS</h4>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:13px;font-weight:600">Habilitar gorjeta</div><div style="font-size:12px;color:var(--gray-400)">Permite registrar gorjetas nos atendimentos</div></div>
+          <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-comissoes')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-comissoes','Comissões atualizadas!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HORÁRIOS -->
+<div class="modal-overlay" id="modal-cfg-horarios">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Indisponibilidades de Horários</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-horarios')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Configure dias e horários que não estarão disponíveis para agendamento.</p>
+    <div class="form-grid">
+      <div class="form-group"><label>Profissional</label>
+        <select><option>Todos</option><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option></select>
+      </div>
+      <div class="form-group"><label>Tipo</label>
+        <select><option>Folga</option><option>Férias</option><option>Feriado</option><option>Afastamento</option></select>
+      </div>
+      <div class="form-group"><label>Data inicial</label><input type="date" value="2026-06-01"/></div>
+      <div class="form-group"><label>Data final</label><input type="date" value="2026-06-07"/></div>
+      <div class="form-group full"><label>Observação</label><input placeholder="Ex: Recesso de Corpus Christi"/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-horarios')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-horarios','Indisponibilidade registrada!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORMAS DE PAGAMENTO -->
+<div class="modal-overlay" id="modal-cfg-pgto">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Formas de Pagamento</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-pgto')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Ative ou desative as formas de pagamento aceitas.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">💵</span><span style="font-size:13px;font-weight:600">Dinheiro</span></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📱</span><span style="font-size:13px;font-weight:600">PIX</span></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">💳</span><span style="font-size:13px;font-weight:600">Cartão de Crédito</span></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">💳</span><span style="font-size:13px;font-weight:600">Cartão de Débito</span></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📒</span><span style="font-size:13px;font-weight:600">Cheque</span></div>
+        <label class="toggle-switch"><input type="checkbox"/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">🏦</span><span style="font-size:13px;font-weight:600">Transferência Bancária</span></div>
+        <label class="toggle-switch"><input type="checkbox"/><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-pgto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-pgto','Formas de pagamento atualizadas!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MAQUININHA -->
+<div class="modal-overlay" id="modal-cfg-maquininha">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Maquininha Integrada</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-maquininha')">✕</button>
+    </div>
+    <div style="text-align:center;padding:32px 0">
+      <div style="font-size:48px;margin-bottom:12px">📳</div>
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:8px">Nenhuma maquininha integrada</h3>
+      <p style="font-size:13px;color:var(--gray-400);margin-bottom:20px">Integre sua maquininha para receber pagamentos diretamente pelo sistema</p>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-maquininha','Solicitação enviada! Nossa equipe entrará em contato.')">Solicitar Integração</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FICHAS -->
+<div class="modal-overlay" id="modal-cfg-fichas">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Fichas de Clientes</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-fichas')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Crie fichas personalizadas como ANAMNESE para coletar informações dos clientes.</p>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome da Ficha</label><input placeholder="Ex: Ficha ANAMNESE Coloração"/></div>
+      <div class="form-group full">
+        <label>Campos da ficha</label>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px"><input value="Possui alergia a algum produto?" style="flex:1"/><select style="width:110px"><option>Texto</option><option>Sim/Não</option></select></div>
+          <div style="display:flex;gap:8px"><input value="Já realizou coloração antes?" style="flex:1"/><select style="width:110px"><option>Sim/Não</option><option>Texto</option></select></div>
+          <div style="display:flex;gap:8px"><input value="Observações gerais" style="flex:1"/><select style="width:110px"><option>Texto</option><option>Sim/Não</option></select></div>
+          <button class="btn btn-outline btn-sm" style="align-self:flex-start">+ Adicionar campo</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-fichas')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-fichas','Ficha criada com sucesso!')">Salvar Ficha</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESCONTOS -->
+<div class="modal-overlay" id="modal-cfg-descontos">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Descontos Pré-definidos</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-descontos')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Configure descontos que podem ser aplicados rapidamente nas vendas.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <input value="Desconto Fidelidade" style="flex:1;background:transparent;border:none;outline:none;font-weight:600"/>
+        <input type="number" value="10" style="width:60px;text-align:center"/>
+        <span style="color:var(--gray-500)">%</span>
+        <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <input value="Aniversariante" style="flex:1;background:transparent;border:none;outline:none;font-weight:600"/>
+        <input type="number" value="15" style="width:60px;text-align:center"/>
+        <span style="color:var(--gray-500)">%</span>
+        <button style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">✕</button>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm">+ Novo Desconto</button>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-descontos')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-descontos','Descontos salvos!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTIFICAÇÕES -->
+<div class="modal-overlay" id="modal-cfg-notif">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Notificações e Lembretes</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-notif')">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div><div style="font-size:13px;font-weight:600">Lembrete 24h antes</div><div style="font-size:12px;color:var(--gray-400)">Envia WhatsApp ao cliente 1 dia antes do agendamento</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div><div style="font-size:13px;font-weight:600">Lembrete 2h antes</div><div style="font-size:12px;color:var(--gray-400)">Envia WhatsApp ao cliente 2 horas antes</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div><div style="font-size:13px;font-weight:600">Confirmação de agendamento</div><div style="font-size:12px;color:var(--gray-400)">Envia confirmação imediatamente após o agendamento</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <div><div style="font-size:13px;font-weight:600">Mensagem de aniversário</div><div style="font-size:12px;color:var(--gray-400)">Envia parabéns automático no dia do aniversário do cliente</div></div>
+        <label class="toggle-switch"><input type="checkbox"/><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-notif')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-notif','Notificações configuradas!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGENDA ONLINE -->
+<div class="modal-overlay" id="modal-cfg-agendaonline">
+  <div class="modal" style="width:540px">
+    <div class="modal-header">
+      <span class="modal-title">Agenda Online</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-agendaonline')">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);margin-bottom:16px">
+      <div><div style="font-size:13px;font-weight:600">Ativar agenda online</div><div style="font-size:12px;color:var(--gray-400)">Permite que clientes agendem pelo link público</div></div>
+      <label class="toggle-switch"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Link da sua agenda</label>
+      <div style="display:flex;gap:8px">
+        <input value="agendamento.salaopro.com.br/aflor-studio" readonly style="flex:1;background:var(--gray-50)"/>
+        <button class="btn btn-outline btn-sm" onclick="showAlert('Link copiado!')">📋 Copiar</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Intervalo mínimo de agendamento</label>
+      <select><option>30 minutos</option><option>1 hora</option><option>2 horas</option></select>
+    </div>
+    <div class="form-group">
+      <label>Antecedência máxima para agendar</label>
+      <select><option>30 dias</option><option>60 dias</option><option>90 dias</option></select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cfg-agendaonline')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveModal('modal-cfg-agendaonline','Agenda online configurada!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+    <!-- TERMOS E PRIVACIDADE -->
+    <div class="page" id="page-termos">
+      <div class="form-card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px">
+          <div style="width:48px;height:48px;background:var(--blue-light);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <h2 style="font-size:16px;font-weight:800;margin-bottom:4px">SalãoPro</h2>
+            <p style="font-size:13px;color:var(--gray-500)">Plataforma de gestão para salões de beleza</p>
+          </div>
+        </div>
+        <div style="padding:16px;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-200)">
+          <p style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:6px">SALÃO PRO TECNOLOGIA LTDA.</p>
+          <p style="font-size:13px;color:var(--gray-500);line-height:1.6">CNPJ: 00.000.000/0001-00</p>
+          <p style="font-size:13px;color:var(--gray-500);line-height:1.6">Rua das Flores, 100, Guarulhos, SP</p>
+          <p style="font-size:13px;color:var(--gray-500);line-height:1.6">contato@salaopro.com.br</p>
+        </div>
       </div>
 
-      <div class="form-group full"><label>Observações</label><textarea id="ag-obs" placeholder="Alguma observação?"></textarea></div>
+      <div class="form-card" style="padding:0;overflow:hidden">
+        <div class="termos-link-item" onclick="openModal('modal-termos-uso')">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:40px;height:40px;background:var(--blue-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700">Termos de Uso</div>
+              <div style="font-size:12px;color:var(--gray-400)">Regras de uso da plataforma</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--gray-400)">Atualizado em 19/08/2024</span>
+            <span style="font-size:20px;color:var(--gray-300)">›</span>
+          </div>
+        </div>
+
+        <div class="termos-link-item" onclick="openModal('modal-termos-licenca')">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:40px;height:40px;background:var(--green-light);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700">Termos de Licenciamento</div>
+              <div style="font-size:12px;color:var(--gray-400)">Contrato de licença da plataforma</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--gray-400)">Atualizado em 22/10/2024</span>
+            <span style="font-size:20px;color:var(--gray-300)">›</span>
+          </div>
+        </div>
+
+        <div class="termos-link-item" onclick="openModal('modal-termos-privacidade')">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:40px;height:40px;background:#f3e8ff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700">Política de Privacidade</div>
+              <div style="font-size:12px;color:var(--gray-400)">Como tratamos seus dados pessoais</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--gray-400)">Atualizado em 19/08/2024</span>
+            <span style="font-size:20px;color:var(--gray-300)">›</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;text-align:center">
+        <p style="font-size:12px;color:var(--gray-400)">Versão do aplicativo: 1.0.0</p>
+        <p style="font-size:12px;color:var(--gray-400)">© 2026 SalãoPro Tecnologia Ltda. Todos os direitos reservados.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL TERMOS DE USO -->
+<div class="modal-overlay" id="modal-termos-uso">
+  <div class="modal" style="width:640px;max-height:85vh">
+    <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1;padding-bottom:12px;border-bottom:1px solid var(--gray-100)">
+      <span class="modal-title">Termos de Uso</span>
+      <button class="modal-close" onclick="closeModal('modal-termos-uso')">✕</button>
+    </div>
+    <div style="font-size:13px;line-height:1.8;color:var(--gray-600);margin-top:16px">
+      <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px">Última atualização: 19 de agosto de 2024</p>
+      <p style="margin-bottom:14px">Nestes Termos de Uso, estão as principais regras que você deverá aceitar e cumprir ao acessar e usar a Plataforma SalãoPro.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">Aceitação dos Termos de Uso</h4>
+      <p style="margin-bottom:14px">O acesso e o uso das funcionalidades da nossa Plataforma dependem da criação de cadastro e da aceitação de todas as regras previstas nestes Termos de Uso. Se você não concordar com alguma condição, orientamos que não use a Plataforma.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">1. Informações gerais sobre a Plataforma</h4>
+      <p style="margin-bottom:14px">A Plataforma é administrada pela SalãoPro Tecnologia Ltda. As finalidades desta Plataforma são: permitir gestão de agendamentos, vendas, comissões, relatórios e administração de negócios de beleza cadastrados.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">2. Licença</h4>
+      <p style="margin-bottom:14px">Concedemos a você licença limitada, não exclusiva, não passível de sublicença, revogável e não transferível para acesso e uso da Plataforma. A licença é exclusivamente para uso pessoal e profissional, conforme descrito nestes Termos.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">3. Seus deveres</h4>
+      <p style="margin-bottom:8px">Ao acessar a Plataforma, você declara e garante o seu compromisso em:</p>
+      <ul style="padding-left:20px;margin-bottom:14px;display:flex;flex-direction:column;gap:6px">
+        <li>Não acessar a Plataforma por meios fraudulentos;</li>
+        <li>Fornecer seus dados com compromisso de veracidade e autenticidade;</li>
+        <li>Manter o sigilo e segurança dos seus dados de login e senha;</li>
+        <li>Utilizar os recursos da Plataforma para a finalidade que foi constituída;</li>
+        <li>Não publicar conteúdos abusivos, difamatórios ou ofensivos.</li>
+      </ul>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">4. Vedações</h4>
+      <p style="margin-bottom:14px">É expressamente proibido acessar áreas de programação da Plataforma, realizar engenharia reversa, utilizar aplicativos de mineração de dados, ou praticar atos que possam causar prejuízo à plataforma.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">5. Responsabilidades</h4>
+      <p style="margin-bottom:14px">A SalãoPro realiza apenas a intermediação tecnológica. Os estabelecimentos/profissionais cadastrados são os únicos responsáveis pela prestação e qualidade dos serviços. A SalãoPro se esforça para oferecer disponibilidade contínua da Plataforma, mas não garante disponibilidade ininterrupta.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">6. Cadastro</h4>
+      <p style="margin-bottom:14px">As funcionalidades estão disponíveis apenas para pessoas cadastradas. O cadastro é gratuito e poderá ser realizado apenas por pessoa física maior de 18 anos, com informações verdadeiras e atualizadas.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">7. Agendamento</h4>
+      <p style="margin-bottom:14px">Os serviços, horários e preços são inseridos pelos próprios estabelecimentos/profissionais e podem ser alterados a qualquer momento. A SalãoPro não intermedia pagamentos — você deverá pagar diretamente ao profissional.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">8. Privacidade e proteção de dados</h4>
+      <p style="margin-bottom:14px">Seus dados pessoais serão tratados conforme nossa Política de Privacidade, em conformidade com a LGPD (Lei nº 13.709/2018). Em caso de dúvidas, acesse nosso Portal de Privacidade.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">9. Propriedade intelectual</h4>
+      <p style="margin-bottom:14px">Todo o conteúdo é de nossa exclusiva propriedade ou licença. O uso da Plataforma não gera transferência ou licença da propriedade sobre seu conteúdo.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">13. Disposições gerais</h4>
+      <p style="margin-bottom:14px">Estes Termos de Uso são regidos pela legislação da República Federativa do Brasil, com foro eleito na Comarca de Guarulhos, SP.</p>
+
+      <div style="margin-top:20px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <p style="font-size:12px;color:var(--gray-400);text-align:center">Data da última atualização: 19 de agosto de 2024</p>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-primary" onclick="closeModal('modal-termos-uso')">Li e entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TERMOS DE LICENCIAMENTO -->
+<div class="modal-overlay" id="modal-termos-licenca">
+  <div class="modal" style="width:640px;max-height:85vh">
+    <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1;padding-bottom:12px;border-bottom:1px solid var(--gray-100)">
+      <span class="modal-title">Termos de Licenciamento</span>
+      <button class="modal-close" onclick="closeModal('modal-termos-licenca')">✕</button>
+    </div>
+    <div style="font-size:13px;line-height:1.8;color:var(--gray-600);margin-top:16px">
+      <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px">Última atualização: 22 de outubro de 2024</p>
+
+      <div style="padding:14px;background:var(--blue-light);border-radius:8px;margin-bottom:16px">
+        <p style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px">PARTES DO CONTRATO</p>
+        <p style="font-size:12px;color:var(--gray-700)"><strong>SALÃO PRO:</strong> SalãoPro Tecnologia Ltda. — Guarulhos, SP</p>
+        <p style="font-size:12px;color:var(--gray-700)"><strong>CLIENTE:</strong> Você, empresa ou profissional autônomo aderente a este Contrato.</p>
+      </div>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">1. Objeto do Contrato</h4>
+      <p style="margin-bottom:14px">Licenciamento do acesso e uso ao sistema de gestão para negócios de beleza denominado Plataforma SalãoPro, na modalidade Software as a Service (SaaS), limitada, não exclusiva, revogável e não transferível.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">2. Planos disponíveis</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="padding:12px;border:1px solid var(--gray-200);border-radius:8px">
+          <p style="font-size:13px;font-weight:700;margin-bottom:4px">Plano Individual</p>
+          <p style="font-size:12px;color:var(--gray-400)">Ideal para quem trabalha sozinho. Um usuário, sem cadastro de colaboradores.</p>
+        </div>
+        <div style="padding:12px;border:2px solid var(--blue);border-radius:8px">
+          <p style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--blue)">Plano Empresa</p>
+          <p style="font-size:12px;color:var(--gray-400)">Ideal para negócios com colaboradors. Cadastro ilimitado de usuários.</p>
+        </div>
+      </div>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">3. Teste Gratuito</h4>
+      <p style="margin-bottom:14px">A SalãoPro oferece teste gratuito dos Planos pelo período de 7 (sete) dias no ato do primeiro cadastro, com todas as funcionalidades liberadas.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">4. Formas de pagamento</h4>
+      <p style="margin-bottom:14px">Cartão de crédito, débito, PIX e boleto. Os planos podem ser contratados por periodicidade mensal, trimestral, semestral ou anual.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">5. Cancelamento</h4>
+      <p style="margin-bottom:14px">A contratação poderá ser cancelada no prazo máximo de 7 (sete) dias após a data de cadastro. Após esse período, a contratação não é cancelável, mas você pode solicitar o cancelamento da renovação automática.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">6. Suporte</h4>
+      <p style="margin-bottom:14px">Atendimento remoto em português, de segunda a sexta das 08h às 19h e aos sábados das 10h às 19h, via e-mail e chat.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">7. Propriedade Intelectual</h4>
+      <p style="margin-bottom:14px">A SalãoPro é a única e exclusiva detentora de todos os direitos de propriedade intelectual do Software. O CLIENTE não poderá copiar, sublicenciar, vender, reproduzir ou realizar engenharia reversa da plataforma.</p>
+
+      <div style="margin-top:20px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <p style="font-size:12px;color:var(--gray-400);text-align:center">Foro eleito: Comarca de Guarulhos/SP — Curitiba, 22 de outubro de 2024</p>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-primary" onclick="closeModal('modal-termos-licenca')">Li e entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POLÍTICA DE PRIVACIDADE -->
+<div class="modal-overlay" id="modal-termos-privacidade">
+  <div class="modal" style="width:640px;max-height:85vh">
+    <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1;padding-bottom:12px;border-bottom:1px solid var(--gray-100)">
+      <span class="modal-title">Política de Privacidade</span>
+      <button class="modal-close" onclick="closeModal('modal-termos-privacidade')">✕</button>
+    </div>
+    <div style="font-size:13px;line-height:1.8;color:var(--gray-600);margin-top:16px">
+      <p style="font-size:12px;color:var(--gray-400);margin-bottom:16px">Última atualização: 19 de agosto de 2024</p>
+
+      <div style="padding:14px;background:#f3e8ff;border-radius:8px;margin-bottom:16px;border:1px solid #ddd6fe">
+        <p style="font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:4px">🔒 Seus dados estão protegidos</p>
+        <p style="font-size:12px;color:var(--gray-600)">Tratamos seus dados pessoais com segurança e em conformidade com a LGPD (Lei nº 13.709/2018).</p>
+      </div>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">1. Dados que coletamos</h4>
+      <p style="margin-bottom:8px">Coletamos as seguintes categorias de dados pessoais:</p>
+      <ul style="padding-left:20px;margin-bottom:14px;display:flex;flex-direction:column;gap:6px">
+        <li><strong>Dados de identificação:</strong> nome, CPF/CNPJ, e-mail, telefone;</li>
+        <li><strong>Dados de acesso:</strong> login, senha (criptografada), histórico de sessões;</li>
+        <li><strong>Dados do negócio:</strong> informações de clientes, agendamentos, vendas;</li>
+        <li><strong>Dados de uso:</strong> páginas visitadas, funcionalidades utilizadas, logs.</li>
+      </ul>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">2. Como usamos seus dados</h4>
+      <ul style="padding-left:20px;margin-bottom:14px;display:flex;flex-direction:column;gap:6px">
+        <li>Prestação dos serviços contratados na Plataforma;</li>
+        <li>Comunicação sobre agendamentos e uso da plataforma;</li>
+        <li>Melhoria dos produtos e desenvolvimento de novos recursos;</li>
+        <li>Cumprimento de obrigações legais e regulatórias;</li>
+        <li>Prevenção a fraudes e garantia de segurança.</li>
+      </ul>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">3. Compartilhamento de dados</h4>
+      <p style="margin-bottom:14px">Seus dados não são vendidos a terceiros. Podemos compartilhá-los com parceiros tecnológicos para operação da plataforma (ex: serviços de pagamento, hospedagem em nuvem), sempre com cláusulas de proteção de dados.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">4. Seus direitos (LGPD)</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><p style="font-size:12px;font-weight:700;margin-bottom:2px">✅ Acesso</p><p style="font-size:12px;color:var(--gray-400)">Solicitar cópia dos seus dados</p></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><p style="font-size:12px;font-weight:700;margin-bottom:2px">✏️ Correção</p><p style="font-size:12px;color:var(--gray-400)">Corrigir dados incompletos</p></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><p style="font-size:12px;font-weight:700;margin-bottom:2px">🗑️ Exclusão</p><p style="font-size:12px;color:var(--gray-400)">Solicitar exclusão dos dados</p></div>
+        <div style="padding:10px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)"><p style="font-size:12px;font-weight:700;margin-bottom:2px">📦 Portabilidade</p><p style="font-size:12px;color:var(--gray-400)">Exportar seus dados</p></div>
+      </div>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">5. Segurança</h4>
+      <p style="margin-bottom:14px">Adotamos medidas técnicas e organizacionais de segurança da informação para proteger os dados pessoais tratados, incluindo criptografia, controles de acesso e monitoramento contínuo.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">6. Retenção de dados</h4>
+      <p style="margin-bottom:14px">Os dados são mantidos pelo período necessário à prestação dos serviços e cumprimento de obrigações legais. Após o cancelamento, os dados podem ser mantidos por até 5 anos conforme legislação vigente.</p>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray-800);margin:16px 0 8px">7. Contato</h4>
+      <p style="margin-bottom:14px">Para exercer seus direitos ou tirar dúvidas sobre privacidade, entre em contato com nosso Encarregado de Dados (DPO):</p>
+      <div style="padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <p style="font-size:13px;font-weight:600">📧 privacidade@salaopro.com.br</p>
+        <p style="font-size:12px;color:var(--gray-400);margin-top:4px">Respondemos em até 15 dias úteis</p>
+      </div>
+
+      <div style="margin-top:20px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200)">
+        <p style="font-size:12px;color:var(--gray-400);text-align:center">Data da última atualização: 19 de agosto de 2024</p>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-primary" onclick="closeModal('modal-termos-privacidade')">Li e entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-agendar">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <span class="modal-title">📅 Novo Agendamento</span>
+      <button class="modal-close" onclick="closeModal('modal-agendar')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Cliente</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
+      <div class="form-group"><label>Data</label><input type="date" value="2026-05-26"/></div>
+      <div class="form-group"><label>Horário</label><input type="time" value="09:00"/></div>
+      <div class="form-group"><label>Profissional</label>
+        <select><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
+      </div>
+      <div class="form-group"><label>Serviço</label>
+        <select id="ag-servico" onchange="agCalcSinal()">
+          <option value="40">Manicure — R$ 40,00</option>
+          <option value="45">Pedicure — R$ 45,00</option>
+          <option value="80">Corte de Cabelo — R$ 80,00</option>
+          <option value="60">Escova — R$ 60,00</option>
+          <option value="150">Coloração — R$ 150,00</option>
+          <option value="80">Hidratação — R$ 80,00</option>
+          <option value="100">Manutenção — R$ 100,00</option>
+          <option value="12">Design de Sobrancelhas — R$ 12,00</option>
+        </select>
+      </div>
+      <div class="form-group full"><label>Observações</label><textarea placeholder="Alguma observação?"></textarea></div>
 
       <!-- SINAL / ENTRADA -->
       <div class="form-group full">
@@ -3640,7 +4619,7 @@ function renderAgenda(){
       ${profs.map(p=>{
         const key=`${p}:${h}`;
         const a=apptsDia[key];
-        if(!a) return `<div class="slot" onclick="abrirModalAgendar()" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
           <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer">
@@ -3651,7 +4630,7 @@ function renderAgenda(){
         </div>`;
       }).join('')}
     </div>
-  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
+  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openModal(\'modal-agendar\')">+ Novo agendamento</button></div>');
   agendaAtualizarLabel();
 }
 
@@ -4870,102 +5849,6 @@ function renderFluxo(){
 // Init fluxo ao navegar
 // ===== FIM FLUXO =====
 
-
-function agSetTipo(tipo){
-  var bS=document.getElementById('ag-tipo-servico');
-  var bP=document.getElementById('ag-tipo-pacote');
-  var bkS=document.getElementById('ag-bloco-servico');
-  var bkP=document.getElementById('ag-bloco-pacote');
-  var sinalArea=document.getElementById('ag-sinal-area');
-  var sinalBox=document.querySelector('#modal-agendar .form-group.full div[style*="background:#f8f8f8"]');
-  if(tipo==='servico'){
-    if(bS){bS.style.background='#111';bS.style.color='#fff';bS.style.borderColor='#111';}
-    if(bP){bP.style.background='#fff';bP.style.color='#333';bP.style.borderColor='#ddd';}
-    if(bkS)bkS.style.display='';
-    if(bkP)bkP.style.display='none';
-    if(sinalBox)sinalBox.style.display='';
-  } else {
-    if(bS){bS.style.background='#fff';bS.style.color='#333';bS.style.borderColor='#ddd';}
-    if(bP){bP.style.background='#111';bP.style.color='#fff';bP.style.borderColor='#111';}
-    if(bkS)bkS.style.display='none';
-    if(bkP)bkP.style.display='';
-    if(sinalBox)sinalBox.style.display='none';
-    agCarregarPacotesCliente();
-  }
-  window._agTipo=tipo;
-}
-
-function agCarregarPacotesCliente(){
-  var cli=(document.getElementById('ag-cliente')?.value||'').trim().toLowerCase();
-  var sel=document.getElementById('ag-pacote-sel');
-  if(!sel)return;
-  // Filtra pacotes do cliente nos dados salvos (localStorage)
-  var saved=[];
-  try{ saved=JSON.parse(localStorage.getItem('aflor_pacotes_clientes')||'[]'); }catch(e){}
-  var filtrados=cli?saved.filter(function(p){ return p.cliente&&p.cliente.toLowerCase().includes(cli)&&p.usado<p.total; }):[];
-  if(!filtrados.length){
-    sel.innerHTML='<option value="">'+(cli?'Nenhum pacote ativo para este cliente':'— Digite o nome do cliente primeiro —')+'</option>';
-    document.getElementById('ag-pacote-info').style.display='none';
-    return;
-  }
-  sel.innerHTML=filtrados.map(function(p,i){
-    return '<option value="'+i+'">'+p.nome+' ('+p.cliente+') — '+p.usado+'/'+p.total+' usadas</option>';
-  }).join('');
-  agMostrarInfoPacote(filtrados,0);
-  sel.onchange=function(){ agMostrarInfoPacote(filtrados,parseInt(sel.value)||0); };
-}
-
-function agMostrarInfoPacote(lista,idx){
-  var p=lista[idx];
-  var info=document.getElementById('ag-pacote-info');
-  if(!p||!info){if(info)info.style.display='none';return;}
-  var restante=p.total-p.usado;
-  info.style.display='block';
-  info.innerHTML='🎁 <strong>'+p.nome+'</strong> — '+restante+' sessão(es) restante(s)<br><span style="color:#6b7280">Serviço: '+p.servico+'</span>';
-}
-
-function agFiltrarServicos(){
-  var catSel=document.getElementById('ag-cat');
-  // Popula categorias na primeira chamada
-  if(catSel&&catSel.options.length<=1){
-    var cats=[...new Set(servicos.map(function(s){return s.cat;}))].sort();
-    cats.forEach(function(c){
-      var o=document.createElement('option');
-      o.value=c; o.textContent=c;
-      catSel.appendChild(o);
-    });
-  }
-  var cat=(catSel||{}).value||'';
-  var sel=document.getElementById('ag-servico');
-  if(!sel)return;
-  var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
-  sel.innerHTML=filtrados.map(function(s){
-    return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
-  }).join('');
-  if(!sel.innerHTML)sel.innerHTML='<option value="0">Nenhum serviço nessa categoria</option>';
-  agCalcSinal();
-}
-
-function agAddProduto(){
-  var lista=document.getElementById('ag-produtos-list');
-  if(!lista)return;
-  var idx=lista.children.length;
-  var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
-  var select=document.createElement('select');
-  select.style.cssText='flex:1;padding:7px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px';
-  select.innerHTML='<option value="">— Selecionar produto —</option>'+
-    produtos.map(function(p){return'<option>'+p.nome+'</option>';}).join('');
-  var btn=document.createElement('button');
-  btn.type='button';
-  btn.textContent='❌';
-  btn.style.cssText='padding:4px 8px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#888';
-  btn.onclick=function(){lista.removeChild(div);};
-  div.appendChild(select);
-  div.appendChild(btn);
-  lista.appendChild(div);
-}
-
 function agToggleSinal(){
   var ativo=document.getElementById('ag-sinal-ativo')?.checked;
   var area=document.getElementById('ag-sinal-area');
@@ -4973,7 +5856,7 @@ function agToggleSinal(){
   if(ativo)agCalcSinal();
 }
 function agCalcSinal(){
-  var total=parseFloat(document.getElementById('ag-servico')?.value)||0;
+  var total=parseFloat(document.getElementById('ag-servico')?.value)||40;
   var pct=parseFloat(document.getElementById('ag-sinal-pct')?.value)||50;
   var sinal=total*(pct/100);
   var elV=document.getElementById('ag-sinal-val');
@@ -4986,7 +5869,7 @@ function agCalcSinal(){
   if(elR)elR.textContent='R$ '+(total-sinal).toFixed(2).replace('.',',');
 }
 function agCalcSinalVal(){
-  var total=parseFloat(document.getElementById('ag-servico')?.value)||0;
+  var total=parseFloat(document.getElementById('ag-servico')?.value)||40;
   var val=parseFloat(document.getElementById('ag-sinal-val')?.value)||0;
   var pct=total>0?(val/total)*100:0;
   var elP=document.getElementById('ag-sinal-pct');
@@ -5001,98 +5884,15 @@ function agSetPct(pct){
   if(el){el.value=pct;agCalcSinal();}
 }
 function salvarAgendamento(){
-  var cliente=(document.getElementById('ag-cliente')?.value||'').trim()||'Cliente';
-  var data=document.getElementById('ag-data')?.value||new Date().toISOString().split('T')[0];
-  var hora=document.getElementById('ag-hora')?.value||'09:00';
-  var prof=document.getElementById('ag-prof')?.value||'Ana Flor';
-  var tipo=window._agTipo||'servico';
+  var cliente=document.getElementById('ag-cliente')?.value||'Cliente';
   var sinalAtivo=document.getElementById('ag-sinal-ativo')?.checked;
   var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
   var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
-  var obs=(document.getElementById('ag-obs')?.value||'').trim();
-
-  // Coletar produtos (apenas nomes, sem valor)
-  var prods=[];
-  document.querySelectorAll('#ag-produtos-list select').forEach(function(s){
-    if(s.value&&s.value!=='')prods.push(s.value);
-  });
-
-  var novoAg={
-    cliente:cliente,
-    data:data,
-    hora:hora,
-    profissional:prof,
-    obs:obs,
-    status:'agendado',
-    produtos:prods,
-    ehPacote:tipo==='pacote'
-  };
-
-  if(tipo==='servico'){
-    var svcSel=document.getElementById('ag-servico');
-    novoAg.servico=svcSel?.options[svcSel.selectedIndex]?.text||'Serviço';
-    novoAg.valor=parseFloat(svcSel?.value)||0;
-    if(sinalAtivo){
-      novoAg.sinal=true;
-      novoAg.sinal_valor=parseFloat((sinalAgora||'0').replace('R$ ','').replace(',','.'))||0;
-      novoAg.sinal_status=sinalStatus;
-    }
-  } else {
-    // Pacote — descontar sessão
-    var pacSel=document.getElementById('ag-pacote-sel');
-    novoAg.servico='Sessão de Pacote';
-    novoAg.valor=0;
-    novoAg.pacoteNome=pacSel?.options[pacSel.selectedIndex]?.text||'Pacote';
-  }
-
-  // Salvar no localStorage (ou Supabase se disponível)
-  try{
-    var ags=JSON.parse(localStorage.getItem('aflor_agendamentos')||'[]');
-    ags.push(novoAg);
-    localStorage.setItem('aflor_agendamentos',JSON.stringify(ags));
-  }catch(e){}
-
   closeModal('modal-agendar');
-  var msg='✅ Agendamento confirmado para '+cliente+' — '+hora+'!';
-  if(tipo==='servico'&&sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
-  if(tipo==='pacote')msg+=' 🎁 (pacote descontado)';
+  var msg='✅ Agendamento confirmado para '+cliente+'!';
+  if(sinalAtivo)msg+=' Sinal: '+sinalAgora+(sinalStatus==='pago'?' ✅ pago':' ⏳ pendente');
   showAlert(msg);
-  renderAgenda();
 }
-
-
-function abrirModalAgendar(data,hora,prof){
-  // Resetar campos
-  var cli=document.getElementById('ag-cliente');if(cli)cli.value='';
-  var obs=document.getElementById('ag-obs');if(obs)obs.value='';
-  var sinalCk=document.getElementById('ag-sinal-ativo');if(sinalCk){sinalCk.checked=false;agToggleSinal();}
-  var prodList=document.getElementById('ag-produtos-list');if(prodList)prodList.innerHTML='';
-
-  // Data e hora
-  var hoje=new Date();
-  var dd=String(hoje.getDate()).padStart(2,'0');
-  var mm=String(hoje.getMonth()+1).padStart(2,'0');
-  var yyyy=hoje.getFullYear();
-  var elData=document.getElementById('ag-data');
-  if(elData)elData.value=data||(yyyy+'-'+mm+'-'+dd);
-  var elHora=document.getElementById('ag-hora');
-  if(elHora)elHora.value=hora||'09:00';
-
-  // Profissional
-  var elProf=document.getElementById('ag-prof');
-  if(elProf&&prof)elProf.value=prof;
-
-  // Tipo padrão: serviço
-  agSetTipo('servico');
-
-  // Limpar e repopular categoria
-  var catSel=document.getElementById('ag-cat');
-  if(catSel)catSel.innerHTML='<option value="">— Todas —</option>';
-  agFiltrarServicos();
-
-  openModal('modal-agendar');
-}
-
 // ===== FIM AGENDAMENTO =====
 
 function getCmdTotal(){
