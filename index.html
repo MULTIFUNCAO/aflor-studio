@@ -3529,7 +3529,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- SERVIÇO NORMAL -->
       <div id="ag-area-servico" class="form-group full">
         <label>Categoria</label>
-        <select id="ag-cat" onchange="agFiltrarServicos()" style="margin-bottom:8px"><option value="">Todas as categorias</option></select>
+        <select id="ag-cat" onchange="agFiltrarServicos()" style="margin-bottom:8px">
+          <option value="">Todas as categorias</option>
+          <option>Cabelo</option><option>Manicure</option><option>Pedicure</option>
+          <option>Unhas</option><option>Bronzeamento</option><option>Estética</option>
+          <option>Sobrancelha</option>
+        </select>
         <label>Serviço *</label>
         <select id="ag-servico" onchange="agCalcSinal()">
           <option value="40">Manicure — R$ 40,00</option>
@@ -4084,6 +4089,30 @@ function removeSrvProfRow(btn){
   }
 }
 
+function editarServico(idx){
+  var s=servicos[idx];
+  if(!s)return;
+  // Preencher modal com dados do serviço
+  var elNome=document.getElementById('srv-nome');if(elNome)elNome.value=s.nome;
+  var elPreco=document.getElementById('srv-preco');if(elPreco)elPreco.value=parseFloat(s.preco.replace(',','.'));
+  var elDur=document.getElementById('srv-dur');if(elDur)elDur.value=s.dur;
+  var elCat=document.getElementById('srv-cat');
+  if(elCat){
+    // Verificar se categoria existe no select
+    var optExists=[...elCat.options].some(function(o){return o.value===s.cat;});
+    if(!optExists){
+      var newOpt=document.createElement('option');
+      newOpt.value=s.cat;newOpt.text=s.cat;
+      elCat.insertBefore(newOpt,elCat.querySelector('option[value="__nova__"]'));
+    }
+    elCat.value=s.cat;
+  }
+  // Guardar índice para salvar na posição certa
+  window._editSrvIdx=idx;
+  document.querySelector('#modal-servico .modal-title').textContent='✏️ Editar Serviço';
+  openModal('modal-servico');
+}
+
 function salvarServico(){
   var nome = (document.getElementById('srv-nome')||{}).value||'';
   nome = nome.trim();
@@ -4123,7 +4152,13 @@ function salvarServico(){
   var cor = cores[cat] || '#6366f1';
 
   // Salvar na variável global servicos
-  servicos.push({ nome:nome, cat:cat, dur:dur, preco:Number(preco).toFixed(2).replace('.',','), profs:profs, cor:cor });
+  var novoServico={ nome:nome, cat:cat, dur:dur, preco:Number(preco).toFixed(2).replace('.',','), profs:profs, cor:cor };
+  if(window._editSrvIdx!==undefined){
+    servicos[window._editSrvIdx]=novoServico;
+    window._editSrvIdx=undefined;
+  } else {
+    servicos.push(novoServico);
+  }
   renderServicos();
 
   closeModal('modal-servico');
@@ -5524,12 +5559,12 @@ function renderRemuneracoes(){
 
 function renderServicos(){
   const el=document.getElementById('servicos-list');
-  el.innerHTML=servicos.map(s=>`<div class="service-row">
+  el.innerHTML=servicos.map((s,i)=>`<div class="service-row">
     <div class="service-cat-dot" style="background:${s.cor}"></div>
     <div class="service-info"><div class="service-name">${s.nome}</div><div class="service-cat">${s.cat}</div></div>
     <div class="service-duration">${s.dur}</div>
     <div class="service-price">R$ ${s.preco}</div>
-    <button class="btn btn-outline btn-sm">⋮</button>
+    <button class="btn btn-outline btn-sm" onclick="editarServico(${i})">⋮</button>
   </div>`).join('');
 }
 
