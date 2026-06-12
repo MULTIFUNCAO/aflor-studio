@@ -5927,7 +5927,7 @@ function agFiltrarServicos(){
   if(!sel)return;
   var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
   if(filtrados.length===0)filtrados=servicos;
-  sel.innerHTML=filtrados.map(function(s){return'<option value="'+parseFloat((s.preco||'0').replace(',','.'))+'">'+ s.nome+' — R$ '+s.preco+'</option>';}).join('');
+  sel.innerHTML=filtrados.map(function(s){var p=parseFloat(String(s.preco||'0').replace(',','.'));return'<option value="'+p+'">'+ s.nome+' — R$ '+s.preco+'</option>';}).join('');
   agCalcSinal();
 }
 function agAddProduto(){
