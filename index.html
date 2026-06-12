@@ -5917,6 +5917,7 @@ function agSetTipo(tipo){
   window._agTipo=tipo;
 }
 function agFiltrarServicos(){
+  var sel0=document.getElementById('ag-servico');if(!sel0)return;
   var catSel=document.getElementById('ag-cat');
   if(catSel&&catSel.options.length<=1){
     var cats=[...new Set(servicos.map(function(s){return s.cat;}).filter(Boolean))].sort();
@@ -5969,7 +5970,7 @@ function abrirModalAgendar(data,hora,prof){
   agSetTipo('servico');
   var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
   agFiltrarServicos();
-  abrirModalAgendar();
+  openModal('modal-agendar');
 }
 function agToggleSinal(){
   var ativo=document.getElementById('ag-sinal-ativo')?.checked;
