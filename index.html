@@ -4590,6 +4590,15 @@ function agFiltrarServicos(){
   agCalcSinal();
 }
 
+function agAtualizarProfExtra(selServEl){
+  var row=selServEl.closest('div');
+  var selProf=row.querySelectorAll('select')[1];
+  if(!selProf)return;
+  var nome=(selServEl.options[selServEl.selectedIndex]?.text||'').split(' — ')[0];
+  var atual=selProf.value;
+  selProf.innerHTML=agOpcoesProfPorServico(nome);
+  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+}
 function agAddServicoExtra(){
   var list = document.getElementById('ag-servicos-extra-list');
   var row = document.createElement('div');
@@ -4597,9 +4606,9 @@ function agAddServicoExtra(){
   var opts = (typeof servicos !== 'undefined' ? servicos : []).map(function(s){
     return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
   }).join('');
-  var profOpts = '<option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>';
-  row.innerHTML = '<select onchange="agCalcSinal()" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
-    +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+profOpts+'</select>'
+  var primeiroNome=(typeof servicos!=='undefined'&&servicos[0])?servicos[0].nome:'';
+  row.innerHTML = '<select onchange="agCalcSinal();agAtualizarProfExtra(this)" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(primeiroNome)+'</select>'
     +'<button onclick="this.closest(\'div\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   list.appendChild(row);
   agCalcSinal();
@@ -4626,6 +4635,26 @@ function agAddProduto(){
   list.appendChild(row);
 }
 
+var AG_PROF_LISTA=['Ana Flor','Edu','Jeny','Vi'];
+var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Jeny':'Jenifer','Vi':'Vitoria'};
+function agCategoriaDoServico(nomeServico){
+  var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
+  return srv?srv.cat:null;
+}
+function agProfissionaisQueFazem(nomeServico){
+  var cat=agCategoriaDoServico(nomeServico);
+  if(!cat)return AG_PROF_LISTA;
+  return AG_PROF_LISTA.filter(function(profNome){
+    var colabNome=AG_PROF_MAPA_COLAB[profNome];
+    var colab=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===colabNome;});
+    if(!colab||!colab.servicos||!colab.servicos.length)return true; // sem restrição = faz tudo
+    return colab.servicos.indexOf(cat)>=0;
+  });
+}
+function agOpcoesProfPorServico(nomeServico){
+  return agProfissionaisQueFazem(nomeServico).map(function(p){return '<option>'+p+'</option>';}).join('');
+}
+
 function agOpcoesPacotesCliente(){
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var cliente = (document.getElementById('ag-cliente')||{}).value||'';
@@ -4647,16 +4676,27 @@ function agCarregarPacotes(){
   sel.innerHTML = '<option value="">— Selecione o pacote —</option>' + opts.join('');
   if(!opts.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
 }
+function agAtualizarProfPacoteExtra(selPacEl){
+  var row=selPacEl.closest('div');
+  var selProf=row.querySelectorAll('select')[1];
+  if(!selProf)return;
+  var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  var idx=parseInt(selPacEl.value);
+  var p=pacotes[idx];
+  var nomeServico=p?(p.servico||p.nome):null;
+  var atual=selProf.value;
+  selProf.innerHTML=agOpcoesProfPorServico(nomeServico);
+  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+}
 function agAddPacoteExtra(){
   var list = document.getElementById('ag-pacote-extra-list');
   var opts=agOpcoesPacotesCliente();
   if(!opts.length){showAlert('Nenhum outro pacote disponível para este cliente.');return;}
   var row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:6px;align-items:flex-start;background:#f9f9f9;border-radius:8px;padding:8px';
-  var profOpts = '<option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>';
   row.innerHTML = '<div style="flex:2;display:flex;flex-direction:column;gap:4px">'
-    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o pacote —</option>'+opts.join('')+'</select>'
-    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+profOpts+'</select>'
+    +'<select onchange="agAtualizarProfPacoteExtra(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o pacote —</option>'+opts.join('')+'</select>'
+    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(null)+'</select>'
     +'</div>'
     +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   row.querySelector('button').onclick=function(){row.remove();};
@@ -4667,6 +4707,7 @@ function agVerPacote(){
   var sel = document.getElementById('ag-pacote-sel');
   var info = document.getElementById('ag-pacote-info');
   var det = document.getElementById('ag-pacote-detalhe');
+  var selProf = document.getElementById('ag-pacote-prof');
   if(!sel || !info || !det) return;
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var idx = parseInt(sel.value);
@@ -4676,6 +4717,11 @@ function agVerPacote(){
   info.style.display = 'block';
   det.innerHTML = '<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
     +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>';
+  if(selProf){
+    var atual=selProf.value;
+    selProf.innerHTML=agOpcoesProfPorServico(p.servico||p.nome);
+    if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+  }
 }
 // ===== FIM AGENDAMENTO MELHORADO =====
 
@@ -5651,7 +5697,7 @@ const clientes=[
 var colaboradores=[
   {nome:'Thiago dos Santos',email:'aflorschool@gmail.com',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'blue'},
   {nome:'Ana',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'pink'},
-  {nome:'Eduardo',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'orange'},
+  {nome:'Eduardo',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'orange',servicos:['Cabelo']},
   {nome:'Jenifer',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'purple'},
   {nome:'Vitoria',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'teal'},
   {nome:'Aluno',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
@@ -8374,7 +8420,17 @@ function agToggleSinal(){
   if(area)area.style.display=ativo?'block':'none';
   if(ativo)agCalcSinal();
 }
+function agAtualizarProfServico(){
+  var selServ=document.getElementById('ag-servico');
+  var selProf=document.getElementById('ag-servico-prof');
+  if(!selServ||!selProf)return;
+  var nome=(selServ.options[selServ.selectedIndex]?.text||'').split(' — ')[0];
+  var atual=selProf.value;
+  selProf.innerHTML=agOpcoesProfPorServico(nome);
+  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+}
 function agCalcSinal(){
+  agAtualizarProfServico();
   var total=agSomaServicos()||40;
   var pct=parseFloat(document.getElementById('ag-sinal-pct')?.value)||50;
   var sinal=total*(pct/100);
