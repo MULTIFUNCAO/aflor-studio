@@ -4558,6 +4558,7 @@ function agSetTipo(tipo){
     areaSrv.style.display='none'; areaPac.style.display='';
     sinalBloco.style.display='none'; // Pacote não tem sinal
     agCarregarPacotes();
+    agVerPacote();
   }
 }
 
@@ -4617,14 +4618,17 @@ function agCarregarPacotes(){
   if(!sel) return;
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var cliente = (document.getElementById('ag-cliente')||{}).value||'';
-  var pacCliente = pacotes.filter(function(p){ return !cliente || p.cliente.toLowerCase().includes(cliente.toLowerCase()); });
-  pacCliente = pacCliente.filter(function(p){ return (p.total||1)-(p.usado||0) > 0; });
-  sel.innerHTML = '<option value="">— Selecione o pacote —</option>'
-    + pacCliente.map(function(p,i){
-        var srvLbl=p.servico?(' — '+p.servico):'';
-        return '<option value="'+i+'">'+p.nome+srvLbl+' ('+p.usado+'/'+p.total+' usados)</option>';
-      }).join('');
-  if(!pacCliente.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
+  var opts=[];
+  pacotes.forEach(function(p,i){
+    var match=!cliente||p.cliente.toLowerCase().includes(cliente.toLowerCase());
+    var temRestante=(p.total||1)-(p.usado||0)>0;
+    if(match&&temRestante){
+      var srvLbl=p.servico?(' — '+p.servico):'';
+      opts.push('<option value="'+i+'">'+p.nome+srvLbl+' ('+p.usado+'/'+p.total+' usados)</option>');
+    }
+  });
+  sel.innerHTML = '<option value="">— Selecione o pacote —</option>' + opts.join('');
+  if(!opts.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
 }
 
 function agVerPacote(){
