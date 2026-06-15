@@ -4655,12 +4655,17 @@ function agOpcoesProfPorServico(nomeServico){
   return agProfissionaisQueFazem(nomeServico).map(function(p){return '<option>'+p+'</option>';}).join('');
 }
 
+function agNormalizarNome(s){
+  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
 function agOpcoesPacotesCliente(){
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var cliente = (document.getElementById('ag-cliente')||{}).value||'';
+  var clienteNorm = agNormalizarNome(cliente);
   var opts=[];
   pacotes.forEach(function(p,i){
-    var match=!cliente||p.cliente.toLowerCase().includes(cliente.toLowerCase());
+    var pClienteNorm = agNormalizarNome(p.cliente);
+    var match=!clienteNorm||pClienteNorm===clienteNorm;
     var temRestante=(p.total||1)-(p.usado||0)>0;
     if(match&&temRestante){
       var srvLbl=p.servico?(' — '+p.servico):'';
