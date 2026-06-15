@@ -2399,18 +2399,22 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="display:grid;gap:14px">
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Geral da Empresa (R$)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Faturamento total do salão no mês (soma de todas as entradas do Caixa)</div>
           <input type="number" id="meta-geral-valor" placeholder="Ex: 10000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços (quantidade)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Quantidade de atendimentos de serviço realizados no mês</div>
           <input type="number" id="meta-servicos-qtd" placeholder="Ex: 150" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Produtos (quantidade)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Quantidade de produtos vendidos no mês</div>
           <input type="number" id="meta-produtos-qtd" placeholder="Ex: 30" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Colaborador</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Receita gerada por este colaborador (via comissões de pacotes registradas)</div>
           <select id="meta-colab-select-modal" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
             <option value="">Selecione...</option>
           </select>
@@ -5861,7 +5865,7 @@ function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]).join('').
 
 var metasVendas = JSON.parse(localStorage.getItem('aflor_metas_vendas')||'{}');
 
-function abrirModalMetas(){
+function abrirModalMetas(campo){
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
   document.getElementById('meta-servicos-qtd').value = metasVendas.servicos||'';
   document.getElementById('meta-produtos-qtd').value = metasVendas.produtos||'';
@@ -5874,6 +5878,20 @@ function abrirModalMetas(){
   }
   document.getElementById('meta-individual-valor').value = metasVendas.individual||'';
   openModal('modal-metas-vendas');
+  if(campo){
+    setTimeout(function(){
+      var map={geral:'meta-geral-valor',servicos:'meta-servicos-qtd',produtos:'meta-produtos-qtd',individual:'meta-colab-select-modal'};
+      var id=map[campo];
+      var inp=document.getElementById(id);
+      if(inp){
+        inp.scrollIntoView({behavior:'smooth',block:'center'});
+        inp.focus();
+        inp.style.outline='2px solid #8b5cf6';
+        inp.style.boxShadow='0 0 0 3px rgba(139,92,246,.2)';
+        setTimeout(function(){inp.style.outline='';inp.style.boxShadow='';},2500);
+      }
+    },150);
+  }
 }
 
 function salvarMetasVendas(){
@@ -5932,12 +5950,13 @@ function renderMetasCards(){
       +'</div>';
   }
 
-  function metaCard(icon, label, cor, bgCor, realizado, meta, unidade, extra){
+  function metaCard(icon, label, cor, bgCor, realizado, meta, unidade, extra, campo){
     var realizadoNum = typeof realizado==='string'?parseFloat(realizado.replace('R$','').replace(/\./g,'').replace(',','.'))||0:realizado;
     var metaNum = typeof meta==='string'?parseFloat(meta.replace('R$','').replace(/\./g,'').replace(',','.'))||0:meta;
     var falta = Math.max(0, metaNum - realizadoNum);
     var faltaFmt = (typeof meta==='string'&&meta.indexOf('R$')>=0)?fmtCaixa(falta):falta;
-    return '<div style="background:'+bgCor+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden">'
+    return '<div onclick="abrirModalMetas(\''+campo+'\')" style="background:'+bgCor+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.08)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'\';this.style.transform=\'\'">'
+      +'<button type="button" onclick="event.stopPropagation();abrirModalMetas(\''+campo+'\')" style="position:absolute;top:12px;right:12px;z-index:2;background:rgba(255,255,255,.9);border:1px solid rgba(0,0,0,.08);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0" title="Editar meta">✏️</button>'
       +'<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.08">'+icon+'</div>'
       +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">'
       +'<span style="font-size:16px">'+icon+'</span>'
@@ -5952,10 +5971,10 @@ function renderMetasCards(){
   }
 
   var cards = [
-    metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff', fmtCaixa(totalRealizado), fmtCaixa(mv.geral||0), 'no mês', null),
-    metaCard('👤','Meta Individual','#db2777','#fdf2f8', fmtCaixa(totalIndividual), fmtCaixa(mv.individual||0), 'no mês', mv.colab?('Colaborador: '+mv.colab):'Selecione um colaborador em "Definir Metas"'),
-    metaCard('✂️','Serviços','#16a34a','#f0fdf4', qtdServicos+' atend.', (mv.servicos||0)+' atend.', 'atend.', null),
-    metaCard('📦','Produtos','#d97706','#fffbeb', '0 unid.', (mv.produtos||0)+' unid.', 'unid.', null)
+    metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff', fmtCaixa(totalRealizado), fmtCaixa(mv.geral||0), 'no mês', null, 'geral'),
+    metaCard('👤','Meta Individual','#db2777','#fdf2f8', fmtCaixa(totalIndividual), fmtCaixa(mv.individual||0), 'no mês', mv.colab?('Colaborador: '+mv.colab):'Selecione um colaborador em "Definir Metas"', 'individual'),
+    metaCard('✂️','Serviços','#16a34a','#f0fdf4', qtdServicos+' atend.', (mv.servicos||0)+' atend.', 'atend.', null, 'servicos'),
+    metaCard('📦','Produtos','#d97706','#fffbeb', '0 unid.', (mv.produtos||0)+' unid.', 'unid.', null, 'produtos')
   ];
   el.innerHTML = cards.join('');
 }
