@@ -4362,9 +4362,17 @@ async function atualizarUsoPacoteClienteSupa(id,quantidadeUsada){
     await supa.from('pacotes_clientes').update({quantidade_usada:quantidadeUsada}).eq('id',id);
   }catch(e){console.log('err atualizar uso pacote cliente',e);}
 }
-function descontarUsoPacoteCliente(pacoteClienteId){
-  if(pacoteClienteId==null)return;
-  var pc=pacotesClientes.find(function(p){return p.id===pacoteClienteId;});
+function descontarUsoPacoteCliente(pacoteClienteId,pacLegacy){
+  var pc;
+  if(pacoteClienteId!=null){
+    pc=pacotesClientes.find(function(p){return p.id===pacoteClienteId;});
+  }
+  if(!pc&&pacLegacy){
+    pc=pacotesClientes.find(function(p){
+      return p.cliente_nome===pacLegacy.cliente&&p.pacote_nome===pacLegacy.nome&&p.nome_servico===pacLegacy.servico
+        &&(p.quantidade_total-(p.quantidade_usada||0))>0;
+    });
+  }
   if(!pc)return;
   pc.quantidade_usada=(pc.quantidade_usada||0)+1;
   salvarPacotesClientesLocal();
@@ -8575,11 +8583,11 @@ function salvarAgendamento(){
       var pac=pacotes[item.idx];
       pac.usado=(pac.usado||0)+1;
       pacotes[item.idx]=pac;
-      descontarUsoPacoteCliente(pac.pacoteClienteId);
+      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
       lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
       nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
     });
-    localStorage.setItem('flora_pacotes',JSON.stringify(pacotes));
+    syncPacotesLegacyStorage();
     var pacPrincipal=pacotes[idxPrincipal];
     servico=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
     valorFmt='R$ 0,00';
