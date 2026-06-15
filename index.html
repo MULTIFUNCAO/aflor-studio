@@ -2411,9 +2411,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Colaborador</label>
-          <select id="meta-colab-select" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
+          <select id="meta-colab-select-modal" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
             <option value="">Selecione...</option>
-            <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option>
           </select>
         </div>
         <div>
@@ -5253,21 +5252,9 @@ function setTheme(color,el){
 
 // DATA
 var vendas=[
-  {data:'23/Mai/26',hora:'15:10',cliente:'Mãe Ana',desc:'Manicure Pedicure',valor:'R$ 80,00',status:'Pendente'},
-  {data:'23/Mai/26',hora:'11:00',cliente:'Denilda',desc:'Corte de Cabelo',valor:'R$ 100,00',status:'Pendente'},
-  {data:'23/Mai/26',hora:'12:35',cliente:'Adriana - Casa Devi',desc:'Hidratação - Lavatório',valor:'R$ 40,00',status:'Pago'},
-  {data:'23/Mai/26',hora:'12:00',cliente:'Adriana - Casa Devi',desc:'Escova P',valor:'R$ 60,00',status:'Pago'},
-  {data:'23/Mai/26',hora:'14:30',cliente:'Laura Dentista',desc:'Pedicure',valor:'R$ 50,00',status:'Pendente'},
-  {data:'23/Mai/26',hora:'12:30',cliente:'Alessandra Say',desc:'Manutenção',valor:'R$ 100,00',status:'Pendente'},
-  {data:'23/Mai/26',hora:'11:30',cliente:'Alessandra Say',desc:'Manicure',valor:'R$ 40,00',status:'Pago'},
-  {data:'23/Mai/26',hora:'09:00',cliente:'Janaine Brito',desc:'Design de Sobrancelhas Com Henna',valor:'R$ 12,00',status:'Pago'},
 ];
 
 var comandas=[
-  {n:'#10356',cliente:'Julia Barrozo',data:'13/Mai/2026',total:'R$ 160,00',pgto:'Cartão de Crédito',status:'Fechada',sinal:'R$ 80,00',sinalStatus:'pago'},
-  {n:'#10355',cliente:'Mãe Ana',data:'23/Mai/2026',total:'R$ 80,00',pgto:'PIX',status:'Fechada',sinal:'R$ 40,00',sinalStatus:'pago'},
-  {n:'#10354',cliente:'Denilda',data:'23/Mai/2026',total:'R$ 100,00',pgto:'Dinheiro',status:'Aberta',sinal:'R$ 30,00',sinalStatus:'pendente'},
-  {n:'#10353',cliente:'Alessandra Say',data:'23/Mai/2026',total:'R$ 140,00',pgto:'PIX',status:'Fechada',sinal:null,sinalStatus:null},
 ];
 
 var remuneracoes=[
@@ -5878,7 +5865,13 @@ function abrirModalMetas(){
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
   document.getElementById('meta-servicos-qtd').value = metasVendas.servicos||'';
   document.getElementById('meta-produtos-qtd').value = metasVendas.produtos||'';
-  document.getElementById('meta-colab-select').value = metasVendas.colab||'';
+  var selModal=document.getElementById('meta-colab-select-modal');
+  if(selModal){
+    selModal.innerHTML='<option value="">Selecione...</option>'
+      +colaboradores.filter(function(c){return c.status!=='Inativo';})
+        .map(function(c){return '<option>'+c.nome+'</option>';}).join('');
+    selModal.value = metasVendas.colab||'';
+  }
   document.getElementById('meta-individual-valor').value = metasVendas.individual||'';
   openModal('modal-metas-vendas');
 }
@@ -5888,7 +5881,7 @@ function salvarMetasVendas(){
     geral: parseFloat(document.getElementById('meta-geral-valor').value)||0,
     servicos: parseInt(document.getElementById('meta-servicos-qtd').value)||0,
     produtos: parseInt(document.getElementById('meta-produtos-qtd').value)||0,
-    colab: document.getElementById('meta-colab-select').value,
+    colab: document.getElementById('meta-colab-select-modal').value,
     individual: parseFloat(document.getElementById('meta-individual-valor').value)||0
   };
   localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
@@ -5907,6 +5900,22 @@ function renderMetasCards(){
     .reduce(function(s,m){return s+m.valor;},0);
   var qtdServicos = caixaState.movimentos
     .filter(function(m){return m.tipo==='entrada' && m.categoria==='Servico de cabelo';}).length;
+
+  // Realizado individual: soma das comissões de pacote do colaborador selecionado, no mês atual
+  var totalIndividual = 0;
+  if(mv.colab){
+    try{
+      var lancComissoes = JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');
+      var hoje = new Date();
+      totalIndividual = lancComissoes
+        .filter(function(l){
+          if(l.profissional!==mv.colab)return false;
+          var d=new Date(l.data);
+          return d.getFullYear()===hoje.getFullYear() && d.getMonth()===hoje.getMonth();
+        })
+        .reduce(function(s,l){return s+(l.valor||0);},0);
+    }catch(e){}
+  }
 
   function pctBar(val, meta, cor){
     var pct = meta>0 ? Math.min(100, Math.round(val/meta*100)) : 0;
@@ -5944,7 +5953,7 @@ function renderMetasCards(){
 
   var cards = [
     metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff', fmtCaixa(totalRealizado), fmtCaixa(mv.geral||0), 'no mês', null),
-    metaCard('👤','Meta Individual','#db2777','#fdf2f8', fmtCaixa(totalRealizado), fmtCaixa(mv.individual||0), 'no mês', mv.colab||'Colaborador não definido'),
+    metaCard('👤','Meta Individual','#db2777','#fdf2f8', fmtCaixa(totalIndividual), fmtCaixa(mv.individual||0), 'no mês', mv.colab?('Colaborador: '+mv.colab):'Selecione um colaborador em "Definir Metas"'),
     metaCard('✂️','Serviços','#16a34a','#f0fdf4', qtdServicos+' atend.', (mv.servicos||0)+' atend.', 'atend.', null),
     metaCard('📦','Produtos','#d97706','#fffbeb', '0 unid.', (mv.produtos||0)+' unid.', 'unid.', null)
   ];
@@ -5953,6 +5962,10 @@ function renderMetasCards(){
 
 function renderVendas(){
   const tb=document.getElementById('vendas-table');
+  if(!vendas.length){
+    tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:#aaa">Nenhuma venda registrada ainda.</td></tr>';
+    return;
+  }
   tb.innerHTML=vendas.map(v=>`<tr>
     <td><div style="font-size:13px;font-weight:600">${v.data}</div><div style="font-size:11px;color:var(--gray-400)">${v.hora}</div></td>
     <td>${v.cliente}</td>
@@ -5964,6 +5977,10 @@ function renderVendas(){
 
 function renderComandas(){
   const tb=document.getElementById('comandas-table');
+  if(!comandas.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:#aaa">Nenhuma comanda registrada ainda.</td></tr>';
+    return;
+  }
   tb.innerHTML=comandas.map(c=>`<tr>
     <td style="font-weight:700;color:#111">${c.n}</td>
     <td>${c.cliente}</td>
