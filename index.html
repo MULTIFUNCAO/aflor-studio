@@ -865,8 +865,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
           <div>
             <div style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="dashboard-data-hoje"></div>
-            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px" data-saudacao>Bom dia, Ana Flor! 🌷</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.6)">FLORA / STUDIO · Guarulhos/SP</div>
+            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px" data-saudacao>Bom dia! 🌷</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.6)"><span data-nome-salao>FLORA / STUDIO</span></div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
             <span style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
@@ -975,12 +975,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <!-- Colaboradores online -->
           <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Equipe Hoje</div>
-            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
-              <div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">AF</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Ana Flor</div><div style="font-size:10px;color:#aaa">0 atend.</div></div><span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span></div>
-              <div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:#555;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">ED</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Edu</div><div style="font-size:10px;color:#aaa">0 atend.</div></div><span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span></div>
-              <div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">JE</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Jeny</div><div style="font-size:10px;color:#aaa">0 atend.</div></div><span style="width:8px;height:8px;background:#f59e0b;border-radius:50%;flex-shrink:0"></span></div>
-              <div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:#ec4899;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">VI</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Vi</div><div style="font-size:10px;color:#aaa">0 atend.</div></div><span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span></div>
-            </div>
+            <div id="dash-equipe-hoje" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px"></div>
           </div>
           <!-- Próximos agendamentos -->
           <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
@@ -6249,8 +6244,25 @@ function mkAvatar(c,size){
   }
   return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+(size<=28?9:11)+'px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.3)">'+ini+'</div>';
 }
+function renderEquipeHoje(){
+  var el=document.getElementById('dash-equipe-hoje');
+  if(!el)return;
+  var ativos=colaboradores.filter(function(c){return c.status!=='Inativo';});
+  if(!ativos.length){
+    el.innerHTML='<div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0">Nenhum colaborador ativo</div>';
+    return;
+  }
+  el.innerHTML=ativos.map(function(c){
+    return '<div style="display:flex;align-items:center;gap:9px">'
+      +mkAvatar(c,32)
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:#aaa">0 atend.</div></div>'
+      +'<span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span>'
+      +'</div>';
+  }).join('');
+}
 function renderColabs(){
   const tb=document.getElementById('colabs-table');
+  renderEquipeHoje();
   if(!tb)return;
   const filtro = _colabFiltro || 'Ativos';
   const lista = colaboradores.filter(c => {
@@ -8999,6 +9011,7 @@ function recuperarSenhaSalao(){
 
 window.SALAO_ID=null;
 window.SALAO_NOME=null;
+window.SALAO_RESPONSAVEL=null;
 async function carregarSalaoAtual(){
   try{
     if(!supa)return;
@@ -9009,12 +9022,27 @@ async function carregarSalaoAtual(){
     if(r.data){
       window.SALAO_ID=r.data.id;
       window.SALAO_NOME=r.data.nome_salao;
+      window.SALAO_RESPONSAVEL=r.data.responsavel||null;
     }else{
       // Salão ainda não cadastrado (ex: criado fora do fluxo normal) — cria registro básico
       var ins=await supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).select('*').maybeSingle();
-      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;}
+      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;window.SALAO_RESPONSAVEL=ins.data.responsavel||null;}
     }
+    aplicarDadosSalaoNaUI();
   }catch(e){console.log('err carregar salao',e);}
+}
+function aplicarDadosSalaoNaUI(){
+  try{
+    var primeiroNome=(window.SALAO_RESPONSAVEL||'').split(' ')[0]||'';
+    document.querySelectorAll('[data-saudacao]').forEach(function(el){
+      var hora=new Date().getHours();
+      var saud=hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
+      el.textContent=saud+(primeiroNome?(', '+primeiroNome):'')+' 🌷';
+    });
+    document.querySelectorAll('[data-nome-salao]').forEach(function(el){
+      el.textContent=window.SALAO_NOME||'';
+    });
+  }catch(e){}
 }
 
 function criarContaSalao(){
@@ -9603,7 +9631,7 @@ function renderCardDetalhe(tipo){
   var hora=hoje.getHours();
   var saud=hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
   var elS=document.querySelector("[data-saudacao]");
-  if(elS)elS.textContent=saud+", Ana Flor! 🌷";
+  if(elS)elS.textContent=saud+"! 🌷";
 })();
 </script>
 
