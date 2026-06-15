@@ -851,36 +851,41 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <style>
-      #page-dashboard .dash-hero{background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 45%,#2d1f3d 100%);border-radius:20px;padding:28px 32px;margin-bottom:22px;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18)}
-      #page-dashboard .dash-hero::before{content:'';position:absolute;top:-40%;right:-10%;width:320px;height:320px;background:radial-gradient(circle,rgba(236,72,153,.15) 0%,transparent 70%);pointer-events:none}
-      #page-dashboard .dash-hero::after{content:'';position:absolute;bottom:-30%;left:10%;width:200px;height:200px;background:radial-gradient(circle,rgba(139,92,246,.12) 0%,transparent 70%);pointer-events:none}
-      #page-dashboard .dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+      #page-dashboard .dash-hero{background:#111;border-radius:16px;padding:26px 30px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:none}
+      #page-dashboard .dash-hero::before,#page-dashboard .dash-hero::after{display:none}
+      #page-dashboard .dash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
       @media(max-width:1100px){#page-dashboard .dash-kpi-grid{grid-template-columns:repeat(2,1fr)}}
-      #page-dashboard .dash-kpi-card{background:#fff;border-radius:16px;padding:22px 20px;border:1px solid #eee;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)}
-      #page-dashboard .dash-kpi-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.1)}
-      #page-dashboard .dash-kpi-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
-      #page-dashboard .dash-kpi-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-      #page-dashboard .dash-kpi-value{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1.1;font-variant-numeric:tabular-nums}
+      #page-dashboard .dash-kpi-card{background:#fff;border-radius:14px;padding:20px 18px;border:1px solid #e5e5e5;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+      #page-dashboard .dash-kpi-card:hover{border-color:#ccc;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+      #page-dashboard .dash-kpi-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;background:#f5f5f5!important;filter:grayscale(1);opacity:.85}
+      #page-dashboard .dash-kpi-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+      #page-dashboard .dash-kpi-value{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1.1;font-variant-numeric:tabular-nums;color:#111!important}
       #page-dashboard .dash-kpi-meta{display:flex;align-items:center;gap:6px;margin-top:10px}
-      #page-dashboard .dash-kpi-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+      #page-dashboard .dash-kpi-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:#f5f5f5!important;color:#666!important}
       #page-dashboard .dash-kpi-sub{font-size:10px;color:#aaa}
-      #page-dashboard .dash-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+      #page-dashboard .dash-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
       @media(max-width:900px){#page-dashboard .dash-quick-grid{grid-template-columns:1fr}}
-      #page-dashboard .dash-quick-card{border-radius:16px;padding:20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform .2s,box-shadow .2s}
-      #page-dashboard .dash-quick-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
-      #page-dashboard .dash-bottom-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+      #page-dashboard .dash-quick-card{background:#fafafa!important;border:1px solid #e5e5e5!important;border-radius:12px;padding:12px 14px!important;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;box-shadow:none!important}
+      #page-dashboard .dash-quick-card:hover{border-color:#ccc!important;box-shadow:none!important;transform:none!important}
+      #page-dashboard .dash-quick-card>div:first-child{width:36px!important;height:36px!important;min-width:36px;background:#f0f0f0!important;border-radius:10px!important;font-size:18px!important;box-shadow:none!important;display:flex;align-items:center;justify-content:center}
+      #page-dashboard .dash-quick-card>div:nth-child(2)>div:first-child{font-size:11px!important;font-weight:700!important;color:#111!important;margin-bottom:4px!important;letter-spacing:0!important}
+      #page-dashboard .dash-quick-card>div:nth-child(2)>div:last-child{font-size:10px!important;color:#888!important}
+      #page-dashboard .dash-quick-card>div:nth-child(2) div[style*="height:6px"]{height:4px!important;background:#e5e5e5!important;margin-bottom:4px!important}
+      #page-dashboard .dash-quick-card>div:nth-child(2) div[style*="height:6px"]>div{background:#111!important;border-radius:2px!important}
+      #page-dashboard .dash-quick-card>div:nth-child(3){font-size:13px!important;color:#ccc!important;font-weight:400!important}
+      #page-dashboard .dash-bottom-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
       @media(max-width:1000px){#page-dashboard .dash-bottom-grid{grid-template-columns:1fr}}
-      #page-dashboard .dash-panel{background:#fff;border-radius:16px;border:1px solid #eee;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+      #page-dashboard .dash-panel{background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
       #page-dashboard .dash-panel-head{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
       #page-dashboard .dash-panel-title{font-size:15px;font-weight:800;color:#111}
       #page-dashboard .dash-panel-sub{font-size:11px;color:#aaa;margin-top:2px}
-      #page-dashboard .dash-side-card{background:#fff;border-radius:16px;border:1px solid #eee;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+      #page-dashboard .dash-panel thead tr{background:#fafafa!important}
+      #page-dashboard .dash-side-card{background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)}
       #page-dashboard .dash-side-head{padding:14px 18px;border-bottom:1px solid #f0f0f0;font-size:14px;font-weight:800;color:#111;display:flex;align-items:center;gap:8px}
-      #page-dashboard .dash-quick-btn{background:#f8f8f8;border:1px solid #e8e8e8;border-radius:12px;padding:12px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:all .15s}
+      #page-dashboard .dash-quick-btn{background:#fafafa;border:1px solid #e5e5e5;border-radius:10px;padding:12px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:all .15s}
       #page-dashboard .dash-quick-btn:hover{background:#111;color:#fff;border-color:#111}
-      #page-dashboard .dash-caixa-badge{background:rgba(34,197,94,.15);border:1px solid rgba(74,222,128,.35);color:#4ade80;font-size:11px;font-weight:700;padding:6px 14px;border-radius:24px;display:inline-flex;align-items:center;gap:6px;backdrop-filter:blur(8px)}
-      #page-dashboard .dash-caixa-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;animation:dash-pulse 2s infinite}
-      @keyframes dash-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+      #page-dashboard .dash-caixa-badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:6px}
+      #page-dashboard .dash-caixa-dot{width:6px;height:6px;background:#fff;border-radius:50%}
       </style>
       <div id="alert-global" class="alert alert-success"></div>
 
