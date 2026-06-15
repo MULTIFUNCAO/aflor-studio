@@ -2540,7 +2540,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <label>Serviços incluídos *</label>
         <div style="display:flex;flex-direction:column;gap:6px" id="pacote-servicos-list">
           <div style="display:flex;gap:8px;align-items:center">
-            <select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px" id="pacote-srv-0">
+            <select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px" id="pacote-srv-0" onfocus="agPopularSelectServicosPacote(this)">
               <option>Manicure</option><option>Pedicure</option><option>Escova</option>
               <option>Corte</option><option>Coloração</option><option>Hidratação</option>
             </select>
@@ -7177,11 +7177,24 @@ function addPacote(){
   showAlert(msg);
 }
 
+function agPopularSelectServicosPacote(sel){
+  if(sel.dataset.populado)return;
+  sel.dataset.populado='1';
+  var atual=sel.value;
+  var opts=(typeof servicos!=='undefined'?servicos:[]).map(function(s){
+    return '<option value="'+s.nome+'">'+s.nome+'</option>';
+  }).join('');
+  sel.innerHTML=opts;
+  if([...sel.options].some(function(o){return o.value===atual;}))sel.value=atual;
+}
 function addPacoteServico(){
   const list=document.getElementById('pacote-servicos-list');
   const div=document.createElement('div');
   div.style.cssText='display:flex;gap:8px;align-items:center';
-  div.innerHTML=`<select style="flex:1"><option>Manicure — R$ 40,00</option><option>Pedicure — R$ 45,00</option><option>Escova — R$ 60,00</option><option>Corte — R$ 80,00</option><option>Coloração — R$ 150,00</option></select><input type="number" placeholder="Qtd" value="1" style="width:60px;text-align:center"/><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:18px">×</button>`;
+  var opts=(typeof servicos!=='undefined'?servicos:[]).map(function(s){
+    return '<option value="'+s.nome+'">'+s.nome+' — R$ '+s.preco+'</option>';
+  }).join('');
+  div.innerHTML='<select style="flex:1">'+opts+'</select><input type="number" placeholder="Qtd" value="1" style="width:60px;text-align:center"/><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:18px">×</button>';
   list.appendChild(div);
 }
 
