@@ -6137,8 +6137,25 @@ function abrirConfirmarPagamento(key){
   openModal('modal-confirmar-pagamento');
 }
 
+function lancarSinalCaixaSeNecessario(reg,valor,forma){
+  if(!reg||!valor||valor<=0||reg.sinalLancadoCaixa)return false;
+  forma=forma||reg.formaSinal||popupFormaSinal||'Pix';
+  reg.formaSinal=forma;
+  var svc=nomeServicoAgendamento(reg)||reg.servico||'Serviço';
+  lancarEntradaCaixaAuto('Sinal — '+svc+' — '+reg.cliente,valor,forma);
+  reg.sinalLancadoCaixa=true;
+  return true;
+}
+function sincronizarFormaSinalAgenda(key,forma){
+  if(agendaDiaAtual[key])agendaDiaAtual[key].formaSinal=forma;
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+    agendamentosPorData[dataKey][key].formaSinal=forma;
+  }
+}
 function lancarEntradaCaixaAuto(desc,valor,forma){
-  var mapaForma={'Pix':'pix','pix':'pix','PIX':'pix','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
+  var mapaForma={'Pix':'pix','pix':'pix','PIX':'pix','Cartão':'cartao','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
   var formaKey=mapaForma[forma]||'pix';
   if(!caixaState.aberto){
     caixaState.aberto=true;
@@ -6182,14 +6199,19 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].sinal_status='pago';
       agendamentosPorData[dataKey][key].valor=valorTotalFmt;
     }
-    // Lançar sinal separado se foi pago e tem valor
-    var formaSinalCtx = (ctx.dados && ctx.dados.formaSinal) || '';
-    if(ctx.sinalAbate>0 && formaSinalCtx){
-      lancarEntradaCaixaAuto('Sinal — '+ctx.dados.servico+' — '+ctx.dados.cliente, ctx.sinalAbate, formaSinalCtx);
+    // Sinal: só lança se ainda não foi registrado ao confirmar o sinal
+    if(ctx.sinalAbate>0&&!ctx.dados.sinalLancadoCaixa){
+      var formaSinalCtx=(ctx.dados&&ctx.dados.formaSinal)||popupFormaSinal||'Pix';
+      lancarSinalCaixaSeNecessario(ctx.dados,ctx.sinalAbate,formaSinalCtx);
+      if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+        agendamentosPorData[dataKey][key].sinalLancadoCaixa=true;
+        agendamentosPorData[dataKey][key].formaSinal=ctx.dados.formaSinal;
+      }
     }
-    // Lançar saldo restante
+    // Lançar saldo restante da comanda
     if(ctx.restante>0){
-      lancarEntradaCaixaAuto(ctx.dados.servico+' — '+ctx.dados.cliente, ctx.restante, forma);
+      var svcNome=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
+      lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,ctx.restante,forma);
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
@@ -6318,10 +6340,7 @@ function agSetFormaSinal(btn, forma){
 var popupFormaSinal = '';
 function popupSetFormaSinal(btn, forma){
   popupFormaSinal = forma;
-  // Salvar no agendamento atual para persistir após fechar popup
-  if(agendaPopupAtivo && agendaDiaAtual[agendaPopupAtivo]){
-    agendaDiaAtual[agendaPopupAtivo].formaSinal = forma;
-  }
+  if(agendaPopupAtivo)sincronizarFormaSinalAgenda(agendaPopupAtivo,forma);
   document.querySelectorAll('.popup-forma-btn').forEach(function(b){
     b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
   });
@@ -6357,12 +6376,37 @@ function toggleSinalPopup(key){
     c.sinal_valor=sinalVal;
     c.sinalValor=a.sinalValor;
     c.sinal=a.sinal;
+    if(a.formaSinal)c.formaSinal=a.formaSinal;
     if(!novoPago)c.status='Pendente';
+  }
+  if(novoPago&&sinalVal>0){
+    var formaSinal=a.formaSinal||popupFormaSinal||'';
+    if(!formaSinal){
+      showAlert('Selecione a forma de pagamento do sinal (Pix, Dinheiro ou Link).');
+      a.sinalPago=eraPago;
+      a.sinal_status=eraPago?'pago':'pendente';
+      if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+        agendamentosPorData[dataKey][key].sinalPago=eraPago;
+        agendamentosPorData[dataKey][key].sinal_status=eraPago?'pago':'pendente';
+      }
+      return;
+    }
+    sincronizarFormaSinalAgenda(key,formaSinal);
+    lancarSinalCaixaSeNecessario(a,sinalVal,formaSinal);
+    if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+      agendamentosPorData[dataKey][key].sinalLancadoCaixa=true;
+      agendamentosPorData[dataKey][key].formaSinal=formaSinal;
+    }
+  } else if(!novoPago){
+    a.sinalLancadoCaixa=false;
+    if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+      agendamentosPorData[dataKey][key].sinalLancadoCaixa=false;
+    }
   }
   function finalizarSinal(){
     atualizarPopupComandaUI(key);
     renderAgenda();
-    showAlert(novoPago?'✅ Sinal confirmado!':'⏳ Sinal reaberto — atendimento pendente.');
+    showAlert(novoPago?'✅ Sinal confirmado e registrado no caixa!':'⏳ Sinal reaberto — atendimento pendente.');
   }
   var patch={sinal_valor:sinalVal,sinal:sinalVal>0};
   if(novoPago){
@@ -8086,7 +8130,8 @@ function salvarAgendamento(){
       duracao:'60 min',valor:valorFmt,status:'Pendente',
       sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,
       sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:'',
-      ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs
+      ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs,
+      sinalLancadoCaixa:!!(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0)
     };
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
     if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
