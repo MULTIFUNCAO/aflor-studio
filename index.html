@@ -3611,7 +3611,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">📦 Detalhes do Pacote</div>
           <div id="ag-pacote-detalhe" style="font-size:12px;color:#166534"></div>
         </div>
-        <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda</div>
+        <label style="margin-top:8px;display:block">Profissional que vai executar</label>
+        <select id="ag-pacote-prof">
+          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
+        </select>
+        <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
       </div>
 
       <div class="form-group full"><label>Observações</label><textarea id="ag-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
@@ -4362,6 +4366,29 @@ function descontarUsoPacoteCliente(pacoteClienteId){
   salvarPacotesClientesLocal();
   atualizarUsoPacoteClienteSupa(pc.id,pc.quantidade_usada);
 }
+function lancarComissaoPacote(profissional,nomeServico,clienteNome){
+  // Busca o valor do serviço no catálogo
+  var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
+  var valor=srv?parseMoedaBR(srv.preco):0;
+  if(valor<=0)return;
+  // Mapeia nome usado na agenda para nome usado em Remunerações
+  var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var nomeRem=mapaNomesInv[profissional]||profissional;
+  var r=remuneracoes.find(function(x){return x.nome===nomeRem||x.nome===profissional;});
+  if(!r){
+    r={nome:nomeRem,total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''};
+    remuneracoes.push(r);
+  }
+  r.total=fmtCaixa(parseMoedaBR(r.total)+valor).replace('R$ ','');
+  r.pendente=fmtCaixa(parseMoedaBR(r.pendente)+valor).replace('R$ ','');
+  // Registra o lançamento detalhado para histórico/auditoria
+  try{
+    var lanc=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');
+    lanc.unshift({data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor:valor,cliente:clienteNome,origem:'pacote'});
+    localStorage.setItem('flora_comissoes_pacote',JSON.stringify(lanc));
+  }catch(e){}
+  if(typeof renderRemuneracoes==='function')renderRemuneracoes();
+}
 async function carregarPacotesClientesSupa(){
   try{
     if(!supa)return;
@@ -4591,9 +4618,11 @@ function agCarregarPacotes(){
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var cliente = (document.getElementById('ag-cliente')||{}).value||'';
   var pacCliente = pacotes.filter(function(p){ return !cliente || p.cliente.toLowerCase().includes(cliente.toLowerCase()); });
+  pacCliente = pacCliente.filter(function(p){ return (p.total||1)-(p.usado||0) > 0; });
   sel.innerHTML = '<option value="">— Selecione o pacote —</option>'
     + pacCliente.map(function(p,i){
-        return '<option value="'+i+'">'+p.nome+' — '+p.cliente+' ('+p.usado+'/'+p.total+' usados)</option>';
+        var srvLbl=p.servico?(' — '+p.servico):'';
+        return '<option value="'+i+'">'+p.nome+srvLbl+' ('+p.usado+'/'+p.total+' usados)</option>';
       }).join('');
   if(!pacCliente.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
 }
@@ -4609,7 +4638,7 @@ function agVerPacote(){
   var p = pacotes[idx];
   var restante = p.total - p.usado;
   info.style.display = 'block';
-  det.innerHTML = '<b>'+p.nome+'</b> para <b>'+p.cliente+'</b><br>'
+  det.innerHTML = '<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
     +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>';
 }
 // ===== FIM AGENDAMENTO MELHORADO =====
@@ -8383,13 +8412,16 @@ function salvarAgendamento(){
     var pac=pacotes[pacoteIdx];
     if(!pac){showAlert('Pacote não encontrado.');return;}
     if(pac.total-pac.usado<=0){showAlert('Este pacote não tem sessões restantes!');return;}
-    servico=pac.nome+' (Pacote)';
+    var pacoteProf=document.getElementById('ag-pacote-prof')?.value||prof;
+    servico=pac.nome+(pac.servico?' — '+pac.servico:'')+' (Pacote)';
     valorFmt='R$ 0,00';
     // Desconta sessão do pacote
     pac.usado=(pac.usado||0)+1;
     pacotes[pacoteIdx]=pac;
     localStorage.setItem('flora_pacotes',JSON.stringify(pacotes));
     descontarUsoPacoteCliente(pac.pacoteClienteId);
+    // Lança o valor do serviço na comissão do profissional (cliente não paga, profissional recebe)
+    lancarComissaoPacote(pacoteProf,pac.servico||pac.nome,cliente);
   } else {
     var selServ=document.getElementById('ag-servico');
     var selServProf=document.getElementById('ag-servico-prof');
