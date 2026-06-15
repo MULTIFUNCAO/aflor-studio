@@ -3603,7 +3603,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- PACOTE -->
       <div id="ag-area-pacote" class="form-group full" style="display:none">
-        <label>Selecionar Pacote do Cliente</label>
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Selecionar Pacote do Cliente</span>
+          <button type="button" onclick="agAddPacoteExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço do pacote</button>
+        </label>
         <select id="ag-pacote-sel" onchange="agVerPacote()">
           <option value="">— Selecione o pacote —</option>
         </select>
@@ -3615,6 +3618,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <select id="ag-pacote-prof">
           <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
         </select>
+        <div id="ag-pacote-extra-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
         <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
       </div>
 
@@ -4622,9 +4626,7 @@ function agAddProduto(){
   list.appendChild(row);
 }
 
-function agCarregarPacotes(){
-  var sel = document.getElementById('ag-pacote-sel');
-  if(!sel) return;
+function agOpcoesPacotesCliente(){
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var cliente = (document.getElementById('ag-cliente')||{}).value||'';
   var opts=[];
@@ -4636,8 +4638,29 @@ function agCarregarPacotes(){
       opts.push('<option value="'+i+'">'+p.nome+srvLbl+' ('+p.usado+'/'+p.total+' usados)</option>');
     }
   });
+  return opts;
+}
+function agCarregarPacotes(){
+  var sel = document.getElementById('ag-pacote-sel');
+  if(!sel) return;
+  var opts=agOpcoesPacotesCliente();
   sel.innerHTML = '<option value="">— Selecione o pacote —</option>' + opts.join('');
   if(!opts.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
+}
+function agAddPacoteExtra(){
+  var list = document.getElementById('ag-pacote-extra-list');
+  var opts=agOpcoesPacotesCliente();
+  if(!opts.length){showAlert('Nenhum outro pacote disponível para este cliente.');return;}
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:flex-start;background:#f9f9f9;border-radius:8px;padding:8px';
+  var profOpts = '<option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>';
+  row.innerHTML = '<div style="flex:2;display:flex;flex-direction:column;gap:4px">'
+    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o pacote —</option>'+opts.join('')+'</select>'
+    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+profOpts+'</select>'
+    +'</div>'
+    +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+  row.querySelector('button').onclick=function(){row.remove();};
+  list.appendChild(row);
 }
 
 function agVerPacote(){
@@ -8418,23 +8441,39 @@ function salvarAgendamento(){
 
   if(tipo==='pacote'){
     ehPacote=true;
-    var selPac=document.getElementById('ag-pacote-sel');
-    pacoteIdx=parseInt(selPac?.value);
-    if(isNaN(pacoteIdx)||pacoteIdx<0){showAlert('Selecione um pacote.');return;}
     var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-    var pac=pacotes[pacoteIdx];
-    if(!pac){showAlert('Pacote não encontrado.');return;}
-    if(pac.total-pac.usado<=0){showAlert('Este pacote não tem sessões restantes!');return;}
-    var pacoteProf=document.getElementById('ag-pacote-prof')?.value||prof;
-    servico=pac.nome+(pac.servico?' — '+pac.servico:'')+' (Pacote)';
-    valorFmt='R$ 0,00';
-    // Desconta sessão do pacote
-    pac.usado=(pac.usado||0)+1;
-    pacotes[pacoteIdx]=pac;
+    var itensPacote=[];
+    var selPac=document.getElementById('ag-pacote-sel');
+    var idxPrincipal=parseInt(selPac?.value);
+    if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
+    itensPacote.push({idx:idxPrincipal,prof:document.getElementById('ag-pacote-prof')?.value||prof});
+    document.querySelectorAll('#ag-pacote-extra-list > div').forEach(function(row){
+      var sels=row.querySelectorAll('select');
+      var idx=parseInt(sels[0]?.value);
+      if(!isNaN(idx)&&idx>=0){
+        itensPacote.push({idx:idx,prof:sels[1]?.value||prof});
+      }
+    });
+    // Valida disponibilidade de todos os itens antes de aplicar qualquer um
+    for(var vi=0;vi<itensPacote.length;vi++){
+      var vp=pacotes[itensPacote[vi].idx];
+      if(!vp){showAlert('Pacote não encontrado.');return;}
+      var jaUsadosNesteAgendamento=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
+      if(vp.total-vp.usado<jaUsadosNesteAgendamento){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
+    }
+    var nomesServ=[];
+    itensPacote.forEach(function(item){
+      var pac=pacotes[item.idx];
+      pac.usado=(pac.usado||0)+1;
+      pacotes[item.idx]=pac;
+      descontarUsoPacoteCliente(pac.pacoteClienteId);
+      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
+      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
+    });
     localStorage.setItem('flora_pacotes',JSON.stringify(pacotes));
-    descontarUsoPacoteCliente(pac.pacoteClienteId);
-    // Lança o valor do serviço na comissão do profissional (cliente não paga, profissional recebe)
-    lancarComissaoPacote(pacoteProf,pac.servico||pac.nome,cliente);
+    var pacPrincipal=pacotes[idxPrincipal];
+    servico=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
+    valorFmt='R$ 0,00';
   } else {
     var selServ=document.getElementById('ag-servico');
     var selServProf=document.getElementById('ag-servico-prof');
