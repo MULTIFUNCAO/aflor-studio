@@ -160,7 +160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 
 /* PAGE */
 .page{display:none}
-.page.active{display:block;min-height:1px}
+.page.active{display:block;width:100%;min-height:1px;box-sizing:border-box}
 
 /* CARDS GRID */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
@@ -274,8 +274,11 @@ textarea{resize:vertical;min-height:80px}
 .empty-icon{font-size:48px;margin-bottom:12px}
 .empty h3{font-size:15px;font-weight:700;color:var(--gray-500);margin-bottom:6px}
 
-/* SERVICES */
-#servicos-list.table-card{display:block;overflow:visible;min-height:1px}
+/* SERVICES — mesmo layout de tabela que Colaboradores */
+#page-servicos{display:none;width:100%}
+#page-servicos.active{display:block;width:100%}
+#page-servicos .table-card{width:100%;display:block}
+#servicos-list tr:last-child td{border-bottom:none}
 .service-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--gray-100);gap:12px;min-height:44px}
 .service-row:last-child{border-bottom:none}
 .service-cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -1267,11 +1270,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#22c55e">📥 Receitas por Categoria</div>
-            ${[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das receitas</div></div>';}).join('')}
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Serviços de cabelo</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 2.100,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:44%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">44% das receitas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Manicure &amp; Pedicure</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 1.380,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:29%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">29% das receitas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Estética &amp; Cílios</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 840,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:17%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">17% das receitas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Produtos vendidos</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 380,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:8%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">8% das receitas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Outros</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 120,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:2%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">2% das receitas</div></div>
           </div>
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#ef4444">📤 Despesas por Categoria</div>
-            ${[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das despesas</div></div>';}).join('')}
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Aluguel &amp; Contas</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 520,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:42%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">42% das despesas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Produtos &amp; Materiais</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 310,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:25%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">25% das despesas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Comissões pagas</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 248,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:20%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">20% das despesas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Marketing</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 100,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:8%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">8% das despesas</div></div>
+            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Outros</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 62,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:5%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">5% das despesas</div></div>
           </div>
         </div>
       </div>
@@ -1355,10 +1366,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-servicos">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <select class="btn btn-outline btn-sm" id="serv-filtro-cat" onchange="renderServicos()"><option value="">Todas as categorias</option></select>
-        <input placeholder="🔍 Procurar por serviço..." style="flex:1" id="serv-busca" oninput="renderServicos()"/>
+        <input placeholder="🔍 Procurar por serviço..." style="flex:1;min-width:0" id="serv-busca" oninput="renderServicos()"/>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-servico')">+ Novo Serviço</button>
       </div>
-      <div class="table-card" id="servicos-list"></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Serviço</th><th>Categoria</th><th>Duração</th><th>Preço</th><th></th></tr></thead>
+          <tbody id="servicos-list"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- PRODUTOS -->
@@ -3533,10 +3549,22 @@ const pages = {
 };
 
 function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
+  document.querySelectorAll('.page').forEach(p=>{
+    p.classList.remove('active');
+    if(p.id!=='page-colaborador-view'){
+      p.style.display='none';
+      p.style.width='';
+      p.style.height='';
+    }
+  });
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   var pg=document.getElementById('page-'+id);
-  if(pg){pg.classList.add('active');pg.style.display='block';}
+  if(pg){
+    pg.classList.add('active');
+    pg.style.display='block';
+    pg.style.width='';
+    pg.style.height='';
+  }
   document.getElementById('page-title').textContent=pages[id]||id;
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")){n.classList.add('active')}
@@ -4179,8 +4207,8 @@ function renderServicos(){
   });
   const el=document.getElementById('servicos-list');
   if(!el)return;
-  if(lista.length===0){el.innerHTML='<div style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum serviço encontrado</div>';return;}
-  el.innerHTML=lista.map(function(s){var i=servicos.indexOf(s);return'<div class="service-row"><div class="service-cat-dot" style="background:'+s.cor+'"></div><div class="service-info"><div class="service-name">'+s.nome+'</div><div class="service-cat">'+s.cat+'</div></div><div class="service-duration">'+s.dur+'</div><div class="service-price">R$ '+s.preco+'</div><button class="btn btn-outline btn-sm" onclick="menuServico(event,'+i+')">⋮</button></div>';}).join('');
+  if(lista.length===0){el.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:#aaa;font-size:13px">Nenhum serviço encontrado</td></tr>';return;}
+  el.innerHTML=lista.map(function(s){var i=servicos.indexOf(s);return'<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="service-cat-dot" style="background:'+s.cor+'"></div><span style="font-weight:600">'+s.nome+'</span></div></td><td style="color:var(--gray-500);font-size:12px">'+s.cat+'</td><td style="color:var(--gray-400);font-size:12px">'+s.dur+'</td><td style="font-weight:700">R$ '+s.preco+'</td><td><button class="btn btn-outline btn-sm" onclick="menuServico(event,'+i+')">⋮</button></td></tr>';}).join('');
 }
 function renderClientes(search=''){
   const tb=document.getElementById('clientes-table');
