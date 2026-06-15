@@ -2397,27 +2397,47 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="modal-body">
       <div style="display:grid;gap:14px">
+        <div style="background:#f8f8f8;border-radius:10px;padding:12px 14px;margin-bottom:2px;font-size:12px;color:#555">
+          📅 Definindo metas para: <b id="meta-mes-ano-label"></b>
+        </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Geral da Empresa (R$)</label>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">🏢 Meta Geral da Empresa (R$)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Faturamento total do salão no mês (soma de todas as entradas do Caixa)</div>
           <input type="number" id="meta-geral-valor" placeholder="Ex: 10000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços (quantidade)</label>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">✂️ Meta de Serviços (quantidade)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Número de atendimentos realizados no mês</div>
           <input type="number" id="meta-servicos-qtd" placeholder="Ex: 150" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Produtos (quantidade)</label>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">📦 Meta de Produtos (quantidade)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Número de produtos vendidos no mês</div>
           <input type="number" id="meta-produtos-qtd" placeholder="Ex: 30" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Colaborador</label>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">👤 Colaborador</label>
           <select id="meta-colab-select-modal" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
             <option value="">Selecione...</option>
           </select>
         </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Individual do Colaborador (R$)</label>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">🎯 Meta Individual do Colaborador (R$)</label>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">Receita gerada por este colaborador via comissões de pacotes no mês</div>
           <input type="number" id="meta-individual-valor" placeholder="Ex: 2000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">🗓️ Prazo de Revisão</label>
+          <select id="meta-prazo-vendas" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none">
+            <option value="">Selecione...</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Quinzenal">Quinzenal</option>
+            <option value="No final do mês">No final do mês</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">💬 Observação / Incentivo</label>
+          <textarea id="meta-obs" maxlength="150" placeholder="Ex: Quem bater a meta ganha bônus de R$ 100" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;min-height:72px;resize:vertical;font-family:inherit"></textarea>
         </div>
       </div>
     </div>
@@ -5862,6 +5882,10 @@ function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]).join('').
 var metasVendas = JSON.parse(localStorage.getItem('aflor_metas_vendas')||'{}');
 
 function abrirModalMetas(){
+  var meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  var hoje=new Date();
+  var elMes=document.getElementById('meta-mes-ano-label');
+  if(elMes)elMes.textContent=meses[hoje.getMonth()]+' de '+hoje.getFullYear();
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
   document.getElementById('meta-servicos-qtd').value = metasVendas.servicos||'';
   document.getElementById('meta-produtos-qtd').value = metasVendas.produtos||'';
@@ -5873,6 +5897,8 @@ function abrirModalMetas(){
     selModal.value = metasVendas.colab||'';
   }
   document.getElementById('meta-individual-valor').value = metasVendas.individual||'';
+  document.getElementById('meta-prazo-vendas').value = metasVendas.prazo||'';
+  document.getElementById('meta-obs').value = metasVendas.obs||'';
   openModal('modal-metas-vendas');
 }
 
@@ -5882,7 +5908,9 @@ function salvarMetasVendas(){
     servicos: parseInt(document.getElementById('meta-servicos-qtd').value)||0,
     produtos: parseInt(document.getElementById('meta-produtos-qtd').value)||0,
     colab: document.getElementById('meta-colab-select-modal').value,
-    individual: parseFloat(document.getElementById('meta-individual-valor').value)||0
+    individual: parseFloat(document.getElementById('meta-individual-valor').value)||0,
+    prazo: document.getElementById('meta-prazo-vendas').value,
+    obs: document.getElementById('meta-obs').value
   };
   localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
   closeModal('modal-metas-vendas');
