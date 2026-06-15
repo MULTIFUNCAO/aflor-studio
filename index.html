@@ -4343,6 +4343,66 @@ let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID}]);}catch(e){}}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
+async function carregarAgendamentosSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var hoje=new Date();
+    var dInicio=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
+    var dFim=new Date(hoje.getFullYear(),hoje.getMonth()+2,0);
+    function fmtISO(dt){
+      return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    }
+    var dataInicio=fmtISO(dInicio);
+    var dataFim=fmtISO(dFim);
+    var r=await supa.from('agendamentos').select('*')
+      .eq('salao_id',window.SALAO_ID)
+      .gte('data',dataInicio)
+      .lte('data',dataFim);
+    if(r.error)throw r.error;
+    var rows=r.data||[];
+    var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+    rows.forEach(function(row){
+      if(!row.data)return;
+      var partes=row.data.split('-');
+      var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
+      var profNome=mapaNomes[row.profissional]||row.profissional||'?';
+      var horaSlot=typeof normalizarHoraAgenda==='function'?normalizarHoraAgenda((row.hora||'00:00').substring(0,5)):(row.hora||'00:00').substring(0,5);
+      var k=profNome+':'+horaSlot;
+      var sinalNum=typeof row.sinal_valor==='number'?row.sinal_valor:parseFloat(row.sinal_valor)||0;
+      var sinalFmt=sinalNum>0?'R$ '+sinalNum.toFixed(2).replace('.',','):'';
+      var valNum=typeof parseMoedaBR==='function'?parseMoedaBR(row.valor):parseFloat(row.valor)||0;
+      if(valNum<=0){
+        var mSvc=(row.servico||'').match(/R\$\s*([\d.,]+)/i);
+        if(mSvc&&typeof parseMoedaBR==='function')valNum=parseMoedaBR('R$ '+mSvc[1]);
+      }
+      var valFmt=valNum>0?('R$ '+valNum.toFixed(2).replace('.',',')):(row.valor||'R$ 0,00');
+      var colab=typeof colaboradores!=='undefined'?colaboradores.find(function(c){return c.nome===profNome;}):null;
+      var cls=colab&&colab.cor?colab.cor:'#111';
+      if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
+      agendamentosPorData[dataKey][k]={
+        id:row.id||null,
+        cliente:row.cliente||'',
+        tel:row.tel||'',
+        servico:row.servico||'',
+        prof:profNome,
+        hora:horaSlot,
+        duracao:row.duracao||'60 min',
+        valor:valFmt,
+        valor_num:valNum,
+        cls:cls,
+        sinal:!!row.sinal,
+        sinalPago:(row.sinal_status||'')==='pago',
+        sinal_status:row.sinal_status||'pendente',
+        sinal_valor:sinalNum,
+        sinalValor:sinalFmt,
+        status:row.status||'Pendente',
+        obs:row.obs||'',
+        servicos_detalhe:row.servicos_detalhe||undefined
+      };
+    });
+    if(typeof renderAgenda==='function')renderAgenda();
+  }catch(e){console.log('err carregar agendamentos',e);}
+}
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([Object.assign({},c,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function salvarPacoteClienteSupa(p){
   try{
@@ -9314,6 +9374,7 @@ function carregarDadosDoSalao(){
   carregarPacotesClientesSupa();
   carregarServicosSupa();
   carregarColaboradoresSupa();
+  carregarAgendamentosSupa();
 }
 
 // Ao carregar: verifica se já está logado
