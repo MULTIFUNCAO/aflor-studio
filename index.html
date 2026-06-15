@@ -4338,6 +4338,20 @@ async function salvarPacoteClienteSupa(p){
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote cliente',e);return null;}
 }
+async function atualizarUsoPacoteClienteSupa(id,quantidadeUsada){
+  try{
+    if(!supa||!id||String(id).indexOf('loc_')===0)return;
+    await supa.from('pacotes_clientes').update({quantidade_usada:quantidadeUsada}).eq('id',id);
+  }catch(e){console.log('err atualizar uso pacote cliente',e);}
+}
+function descontarUsoPacoteCliente(pacoteClienteId){
+  if(pacoteClienteId==null)return;
+  var pc=pacotesClientes.find(function(p){return p.id===pacoteClienteId;});
+  if(!pc)return;
+  pc.quantidade_usada=(pc.quantidade_usada||0)+1;
+  salvarPacotesClientesLocal();
+  atualizarUsoPacoteClienteSupa(pc.id,pc.quantidade_usada);
+}
 async function carregarPacotesClientesSupa(){
   try{
     if(!supa)return;
@@ -8290,6 +8304,7 @@ function salvarAgendamento(){
     pac.usado=(pac.usado||0)+1;
     pacotes[pacoteIdx]=pac;
     localStorage.setItem('flora_pacotes',JSON.stringify(pacotes));
+    descontarUsoPacoteCliente(pac.pacoteClienteId);
   } else {
     var selServ=document.getElementById('ag-servico');
     servico=(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0];
