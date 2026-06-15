@@ -4568,12 +4568,15 @@ var agendaAppts={
 };
 
 function renderAgenda(){
-  const profNames=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
+  const allProfNames=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
   const profCores={'Ana Flor':'#111','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
+  var filtro=(document.getElementById('agenda-prof-filtro')?.value||'').trim();
+  const profNames=filtro?allProfNames.filter(function(n){return n===filtro||n.split(' ')[0]===filtro;}):allProfNames.slice();
+  const profs=profNames.length?profNames:(filtro?[filtro]:allProfNames.slice());
   var headers=document.getElementById('agenda-prof-headers');
   if(headers){
     headers.innerHTML='<div style="min-width:70px;border-right:1px solid #f0f0f0"></div>'+
-    profNames.map(function(nome){
+    profs.map(function(nome){
       var colab=colaboradores.find(function(c){return c.nome.startsWith(nome.split(' ')[0]);});
       var cor=colab&&colab.cor&&colab.cor!==''?colab.cor:profCores[nome]||'#111';
       var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
@@ -4585,7 +4588,6 @@ function renderAgenda(){
   }
   const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
-  const profs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
 
   // Data atual formatada para chave
   var d=agendaDataAtual;
@@ -4614,7 +4616,7 @@ function renderAgenda(){
   var temAgendamentos=Object.keys(apptsDia).length>0;
 
   grid.innerHTML=hours.map(h=>`
-    <div style="display:grid;grid-template-columns:70px repeat(6,1fr)">
+    <div style="display:grid;grid-template-columns:70px repeat(${profs.length},1fr)">
       <div class="time-label" style="${h==='12:00'?'border-top:1px dashed #e5e5e5':''}">${h}</div>
       ${profs.map(p=>{
         const key=`${p}:${h}`;
