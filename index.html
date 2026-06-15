@@ -3537,7 +3537,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="form-grid">
       <!-- Cliente -->
-      <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
+      <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" list="ag-cliente-lista" placeholder="Nome do cliente" autocomplete="off"/><datalist id="ag-cliente-lista"></datalist></div>
       <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
       <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
       <div class="form-group full"><label>Profissional *</label>
@@ -4432,6 +4432,12 @@ function showPage(id){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
+  if(id === 'modal-agendar'){
+    var dl=document.getElementById('ag-cliente-lista');
+    if(dl&&typeof clientes!=='undefined'){
+      dl.innerHTML=clientes.map(function(c){return '<option value="'+c.nome+'"></option>';}).join('');
+    }
+  }
   if(id === 'modal-prolabore-socio'){
     document.getElementById('socio-edit-idx').value='-1';
     document.getElementById('socio-nome').value='';
