@@ -3569,7 +3569,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <option>Unhas</option><option>Bronzeamento</option><option>Estética</option>
           <option>Sobrancelha</option>
         </select>
-        <label>Serviço *</label>
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Serviço *</span>
+          <button type="button" onclick="agAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
+        </label>
         <select id="ag-servico" onchange="agCalcSinal()">
           <option value="40">Manicure — R$ 40,00</option>
           <option value="45">Pedicure — R$ 45,00</option>
@@ -3580,6 +3583,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <option value="100">Manutenção — R$ 100,00</option>
           <option value="12">Design de Sobrancelhas — R$ 12,00</option>
         </select>
+        <div id="ag-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
 
         <!-- Produtos usados no serviço -->
         <div style="margin-top:12px">
@@ -4539,6 +4543,25 @@ function agFiltrarServicos(){
   agCalcSinal();
 }
 
+function agAddServicoExtra(){
+  var list = document.getElementById('ag-servicos-extra-list');
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  var opts = (typeof servicos !== 'undefined' ? servicos : []).map(function(s){
+    return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
+  }).join('');
+  row.innerHTML = '<select onchange="agCalcSinal()" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<button onclick="this.closest(\'div\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+  list.appendChild(row);
+  agCalcSinal();
+}
+function agSomaServicos(){
+  var total=parseFloat(document.getElementById('ag-servico')?.value)||0;
+  document.querySelectorAll('#ag-servicos-extra-list > div > select').forEach(function(sel){
+    total += parseFloat(sel.value)||0;
+  });
+  return total;
+}
 function agAddProduto(){
   var list = document.getElementById('ag-produtos-list');
   var row = document.createElement('div');
@@ -8231,7 +8254,7 @@ function agToggleSinal(){
   if(ativo)agCalcSinal();
 }
 function agCalcSinal(){
-  var total=parseFloat(document.getElementById('ag-servico')?.value)||40;
+  var total=agSomaServicos()||40;
   var pct=parseFloat(document.getElementById('ag-sinal-pct')?.value)||50;
   var sinal=total*(pct/100);
   var elV=document.getElementById('ag-sinal-val');
@@ -8244,7 +8267,7 @@ function agCalcSinal(){
   if(elR)elR.textContent='R$ '+(total-sinal).toFixed(2).replace('.',',');
 }
 function agCalcSinalVal(){
-  var total=parseFloat(document.getElementById('ag-servico')?.value)||40;
+  var total=agSomaServicos()||40;
   var val=parseFloat(document.getElementById('ag-sinal-val')?.value)||0;
   var pct=total>0?(val/total)*100:0;
   var elP=document.getElementById('ag-sinal-pct');
@@ -8313,9 +8336,14 @@ function salvarAgendamento(){
     descontarUsoPacoteCliente(pac.pacoteClienteId);
   } else {
     var selServ=document.getElementById('ag-servico');
-    servico=(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0];
-    var valor=(selServ?.options[selServ?.selectedIndex]?.text||'').split('R$ ')[1]||'0';
-    valorFmt='R$ '+parseFloat(valor||0).toFixed(2).replace('.',',');
+    var nomes=[(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0]];
+    document.querySelectorAll('#ag-servicos-extra-list > div > select').forEach(function(sel){
+      var n=(sel.options[sel.selectedIndex]?.text||'').split(' — ')[0];
+      if(n)nomes.push(n);
+    });
+    servico=nomes.join(' + ');
+    var valorTotal=agSomaServicos();
+    valorFmt='R$ '+valorTotal.toFixed(2).replace('.',',');
   }
 
   // Coletar produtos usados
