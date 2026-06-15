@@ -421,12 +421,16 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Vi</option><option>Lara</option><option>Angélica</option>
           </select>
         </div>
+        <div class="ob-iw" id="colab-senha-wrap" style="display:none;margin-bottom:11px">
+          <span class="ob-ico">🔐</span>
+          <input id="login-colab-senha" class="ob-inp" type="password" placeholder="Sua senha de acesso"/>
+        </div>
         <!-- Email (só para Administrador) -->
         <div id="login-email-wrap" class="ob-iw">
           <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
           <input id="login-email" class="ob-inp" placeholder="seu@email.com" type="email"/>
         </div>
-        <div class="ob-iw">
+        <div class="ob-iw" id="login-senha-wrap">
           <span class="ob-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
           <input id="login-senha" class="ob-inp" placeholder="Sua senha" type="password"/>
         </div>
@@ -4023,6 +4027,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>Salário fixo (R$)</label><input type="number" id="colab-salario" placeholder="0,00" value="0"/></div>
       <!-- Acesso ao sistema -->
       <div class="form-group full">
+        <label>🔐 Senha de acesso</label>
+        <div style="font-size:11px;color:#888;margin-bottom:6px">Senha que o colaborador usará para entrar no sistema</div>
+        <input type="password" id="colab-senha" placeholder="Mínimo 4 caracteres"/>
+      </div>
+      <div class="form-group full">
         <label>Permissões de acesso</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Agenda</label>
@@ -5829,7 +5838,8 @@ async function salvarColaboradorSupa(c){
     var r=await supa.from('colaboradores').insert([{
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null,salao_id:window.SALAO_ID
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||'',
+      salao_id:window.SALAO_ID
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa colaborador insert',e);return null;}
@@ -5845,7 +5855,7 @@ async function atualizarColaboradorSupa(c){
     await supa.from('colaboradores').update({
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||''
     }).eq('id',c.id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa colaborador update',e);}
 }
@@ -5860,7 +5870,7 @@ async function carregarColaboradoresSupa(){
       colaboradores=r.data.map(function(row){
         return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
           comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
-          foto:row.foto||'',servicos:row.servicos||undefined};
+          foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||''};
       });
       if(typeof renderColabs==='function')renderColabs();
     }else if(r.data&&r.data.length===0){
@@ -8482,18 +8492,20 @@ function salvarColaborador(){
   var cargo=document.getElementById('colab-cargo')?.value||'Colaborador(a)';
   var comissao=document.getElementById('colab-comissao')?.value||'50';
   var email=document.getElementById('colab-email')?.value||'';
+  var senha=document.getElementById('colab-senha')?.value||'';
+  if(senha&&senha.length<4){showAlert('Senha deve ter no mínimo 4 caracteres!');return;}
   var iniciais=nome.split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var novoColab={
     nome:nome, email:email, cargo:cargo,
     comissao:comissao+'%', cor:colabCorAtual,
-    foto:colabFotoAtual, status:'Ativo'
+    foto:colabFotoAtual, status:'Ativo', senha:senha
   };
   colaboradores.push(novoColab);
   salvarColaboradorSupa(novoColab).then(function(newId){if(newId!=null)novoColab.id=newId;});
   renderColabs();
   closeModal('modal-colab');
   // Limpar
-  ['colab-nome','colab-email','colab-wpp','colab-cpf'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['colab-nome','colab-email','colab-wpp','colab-cpf','colab-senha'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var txt=document.getElementById('colab-avatar-txt');
   var img=document.getElementById('colab-avatar-img');
   var av=document.getElementById('colab-avatar');
@@ -8586,6 +8598,11 @@ function editarColab(idx){
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Metas</label>
         </div>
       </div>
+      <!-- Senha de acesso -->
+      <div class="form-group full">
+        <label>🔐 Alterar senha de acesso</label>
+        <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar"/>
+      </div>
       <!-- Observações -->
       <div class="form-group full">
         <label>Observações</label>
@@ -8633,6 +8650,11 @@ function salvarEdicaoColab(idx){
   c.cargo=document.getElementById('edit-cargo')?.value||c.cargo;
   c.comissao=(document.getElementById('edit-comissao')?.value||'50')+'%';
   c.status=document.getElementById('edit-status')?.value||'Ativo';
+  var novaSenha=document.getElementById('edit-senha')?.value||'';
+  if(novaSenha){
+    if(novaSenha.length<4){showAlert('Senha deve ter no mínimo 4 caracteres!');return;}
+    c.senha=novaSenha;
+  }
   atualizarColaboradorSupa(c);
   renderColabs();
   // Atualizar agenda se estiver visível
@@ -9006,17 +9028,23 @@ function setPerfilLogin(perfil){
   var lAdm=document.getElementById('lbl-adm');
   var lCol=document.getElementById('lbl-col');
   var selC=document.getElementById('select-colaborador');
+  var senhaWrap=document.getElementById('colab-senha-wrap');
   var emailW=document.getElementById('login-email-wrap');
+  var senhaW=document.getElementById('login-senha-wrap');
   if(perfil==='admin'){
     if(lAdm){lAdm.style.background='#111';lAdm.style.color='#fff';lAdm.style.borderColor='#111';}
     if(lCol){lCol.style.background='#fff';lCol.style.color='#333';lCol.style.borderColor='#ddd';}
     if(selC)selC.style.display='none';
+    if(senhaWrap)senhaWrap.style.display='none';
     if(emailW)emailW.style.display='block';
+    if(senhaW)senhaW.style.display='block';
   } else {
     if(lCol){lCol.style.background='#111';lCol.style.color='#fff';lCol.style.borderColor='#111';}
     if(lAdm){lAdm.style.background='#fff';lAdm.style.color='#333';lAdm.style.borderColor='#ddd';}
     if(selC)selC.style.display='block';
+    if(senhaWrap)senhaWrap.style.display='block';
     if(emailW)emailW.style.display='none';
+    if(senhaW)senhaW.style.display='none';
   }
 }
 
@@ -9024,6 +9052,11 @@ function fazerLogin(){
   if(perfilLogin==='colaborador'){
     var sel=document.getElementById('login-colab-sel')?.value;
     if(!sel){showAlertOb('Selecione seu nome!');return;}
+    var senhaDigitada=document.getElementById('login-colab-senha')?.value||'';
+    var colabObj=colaboradores.find(function(c){return c.nome===sel;});
+    if(colabObj&&colabObj.senha&&colabObj.senha!==senhaDigitada){
+      showAlertOb('Senha incorreta!');return;
+    }
     colaboradorLogado=sel;
     try{localStorage.setItem('aflor_logado','colab_'+sel);}catch(e){}
     obFinish();
