@@ -4402,12 +4402,15 @@ function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   }
   r.total=fmtCaixa(parseMoedaBR(r.total)+valor).replace('R$ ','');
   r.pendente=fmtCaixa(parseMoedaBR(r.pendente)+valor).replace('R$ ','');
+  atualizarRemuneracaoSupa(r);
   // Registra o lançamento detalhado para histórico/auditoria
+  var lancObj={data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor_servico:valorServico,comissao_pct:pct,valor:valor,cliente:clienteNome,origem:'pacote'};
   try{
     var lanc=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');
-    lanc.unshift({data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor_servico:valorServico,comissao_pct:pct,valor:valor,cliente:clienteNome,origem:'pacote'});
+    lanc.unshift(lancObj);
     localStorage.setItem('flora_comissoes_pacote',JSON.stringify(lanc));
   }catch(e){}
+  salvarComissaoPacoteSupa(lancObj);
   if(typeof renderRemuneracoes==='function')renderRemuneracoes();
 }
 async function carregarPacotesClientesSupa(){
@@ -4480,7 +4483,7 @@ function showPage(id){
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='produtos')renderProdutos();
-    if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();renderPacotes();}
+    if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa')renderHistoricoCaixa();
     if(id==='agenda')renderAgenda();
     if(id==='vendas'){renderVendas();renderMetasCards();}
@@ -5272,6 +5275,57 @@ var remuneracoes=[
   {nome:'Lara',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Stephanie',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'pink'},
 ];
+async function salvarRemuneracaoSupa(r){
+  try{
+    if(!supa)return null;
+    var ins=await supa.from('remuneracoes').insert([{
+      nome:r.nome,total:r.total,pago:r.pago,pendente:r.pendente,vales:r.vales,cor:r.cor||''
+    }]).select('id');
+    return ins.data&&ins.data[0]?ins.data[0].id:null;
+  }catch(e){console.log('err supa remuneracao insert',e);return null;}
+}
+async function atualizarRemuneracaoSupa(r){
+  try{
+    if(!supa)return;
+    if(r.id==null){
+      var newId=await salvarRemuneracaoSupa(r);
+      if(newId!=null)r.id=newId;
+      return;
+    }
+    await supa.from('remuneracoes').update({
+      total:r.total,pago:r.pago,pendente:r.pendente,vales:r.vales,cor:r.cor||''
+    }).eq('id',r.id);
+  }catch(e){console.log('err supa remuneracao update',e);}
+}
+async function carregarRemuneracoesSupa(){
+  try{
+    if(!supa)return;
+    var r=await supa.from('remuneracoes').select('*').order('id');
+    if(r.data&&r.data.length>0){
+      remuneracoes=r.data.map(function(row){
+        return{id:row.id,nome:row.nome,total:row.total||'0,00',pago:row.pago||'0,00',
+          pendente:row.pendente||'0,00',vales:row.vales||'0,00',cor:row.cor||''};
+      });
+      if(typeof renderRemuneracoes==='function')renderRemuneracoes();
+    }else if(r.data&&r.data.length===0){
+      // Primeira vez: semeia os colaboradores padrão no Supabase
+      for(var i=0;i<remuneracoes.length;i++){
+        var newId=await salvarRemuneracaoSupa(remuneracoes[i]);
+        if(newId!=null)remuneracoes[i].id=newId;
+      }
+    }
+  }catch(e){console.log('err carregar remuneracoes',e);}
+}
+async function salvarComissaoPacoteSupa(lanc){
+  try{
+    if(!supa)return;
+    await supa.from('comissoes_pacote').insert([{
+      data:lanc.data,profissional:lanc.profissional,servico:lanc.servico,
+      valor_servico:lanc.valor_servico,comissao_pct:lanc.comissao_pct,
+      valor:lanc.valor,cliente:lanc.cliente,origem:lanc.origem||'pacote'
+    }]);
+  }catch(e){console.log('err supa comissao pacote',e);}
+}
 
 let servicos=[
   {cat:'Unhas',nome:'Manicure',dur:'1h',preco:'40,00',cor:'#ec4899'},
@@ -7030,6 +7084,41 @@ function carregarPacotesCatalogoLocal(){
     }
   }catch(e){}
 }
+async function salvarPacoteCatalogoSupa(p){
+  try{
+    if(!supa)return null;
+    var r=await supa.from('pacotes_catalogo').insert([{
+      nome:p.nome,servicos:p.servicos,servicos_itens:p.servicosItens||[],
+      validade:p.validade,preco:p.preco
+    }]).select('id');
+    return r.data&&r.data[0]?r.data[0].id:null;
+  }catch(e){console.log('err supa pacote catalogo',e);return null;}
+}
+async function deletarPacoteCatalogoSupa(id){
+  try{if(!supa||id==null||String(id).indexOf('loc_')===0)return;await supa.from('pacotes_catalogo').delete().eq('id',id);}catch(e){}
+}
+async function carregarPacotesCatalogoSupa(){
+  try{
+    if(!supa)return;
+    var r=await supa.from('pacotes_catalogo').select('*').order('id');
+    if(r.data&&r.data.length>0){
+      pacotes=r.data.map(function(row){
+        return{id:row.id,nome:row.nome,servicos:row.servicos||'',
+          servicosItens:row.servicos_itens||[],validade:row.validade||'Sem validade',
+          preco:row.preco||'R$ 0,00'};
+      });
+      salvarPacotesCatalogoLocal();
+      renderPacotes();
+    }else if(r.data&&r.data.length===0){
+      // Primeira vez: semeia o catálogo padrão no Supabase
+      for(var i=0;i<pacotes.length;i++){
+        var newId=await salvarPacoteCatalogoSupa(pacotes[i]);
+        if(newId!=null)pacotes[i].id=newId;
+      }
+      salvarPacotesCatalogoLocal();
+    }
+  }catch(e){console.log('err carregar pacotes catalogo',e);}
+}
 carregarPacotesCatalogoLocal();
 var pacotesClientes=[];
 var vendaPacoteCtx={pacoteIdx:null,forma:''};
@@ -7283,7 +7372,14 @@ function renderPacotes(){
 }
 
 function deletePacote(i){
-  if(confirm('Remover este pacote?')){pacotes.splice(i,1);salvarPacotesCatalogoLocal();renderPacotes();showAlert('Pacote removido!');}
+  if(confirm('Remover este pacote?')){
+    var removido=pacotes[i];
+    pacotes.splice(i,1);
+    salvarPacotesCatalogoLocal();
+    if(removido)deletarPacoteCatalogoSupa(removido.id);
+    renderPacotes();
+    showAlert('Pacote removido!');
+  }
 }
 
 function deletePacoteClienteGrupo(ids){
@@ -7326,12 +7422,16 @@ function addPacote(){
   var servicosStr = servicosList2.map(function(s){ return s.servico+(s.qtd>1?' (x'+s.qtd+')':''); }).join(' + ');
 
   // Adicionar como template
-  pacotes.unshift({
+  var novoItem={
     id:_pacoteIdSeq++,nome,servicos:servicosStr||'Serviços incluídos',
     servicosItens:servicosList2,validade,
     preco:'R$ '+precoNum.toFixed(2).replace('.',',')
-  });
+  };
+  pacotes.unshift(novoItem);
   salvarPacotesCatalogoLocal();
+  salvarPacoteCatalogoSupa(novoItem).then(function(newId){
+    if(newId!=null){novoItem.id=newId;salvarPacotesCatalogoLocal();}
+  });
 
   // Vender para cliente (opcional, no mesmo modal de cadastro)
   var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
@@ -9015,6 +9115,8 @@ renderAgenda();
 renderProdutos();
 carregarPacotesClientesLocal();
 renderPacotes();
+carregarRemuneracoesSupa();
+carregarPacotesCatalogoSupa();
 syncRetornosToClientes();
 renderClientes();
 renderRetornos();
