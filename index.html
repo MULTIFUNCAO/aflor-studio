@@ -3573,16 +3573,21 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <span>Serviço *</span>
           <button type="button" onclick="agAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
         </label>
-        <select id="ag-servico" onchange="agCalcSinal()">
-          <option value="40">Manicure — R$ 40,00</option>
-          <option value="45">Pedicure — R$ 45,00</option>
-          <option value="80">Corte de Cabelo — R$ 80,00</option>
-          <option value="60">Escova — R$ 60,00</option>
-          <option value="150">Coloração — R$ 150,00</option>
-          <option value="80">Hidratação — R$ 80,00</option>
-          <option value="100">Manutenção — R$ 100,00</option>
-          <option value="12">Design de Sobrancelhas — R$ 12,00</option>
-        </select>
+        <div style="display:flex;gap:6px">
+          <select id="ag-servico" onchange="agCalcSinal()" style="flex:2">
+            <option value="40">Manicure — R$ 40,00</option>
+            <option value="45">Pedicure — R$ 45,00</option>
+            <option value="80">Corte de Cabelo — R$ 80,00</option>
+            <option value="60">Escova — R$ 60,00</option>
+            <option value="150">Coloração — R$ 150,00</option>
+            <option value="80">Hidratação — R$ 80,00</option>
+            <option value="100">Manutenção — R$ 100,00</option>
+            <option value="12">Design de Sobrancelhas — R$ 12,00</option>
+          </select>
+          <select id="ag-servico-prof" style="flex:1">
+            <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
+          </select>
+        </div>
         <div id="ag-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
 
         <!-- Produtos usados no serviço -->
@@ -4550,14 +4555,16 @@ function agAddServicoExtra(){
   var opts = (typeof servicos !== 'undefined' ? servicos : []).map(function(s){
     return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
   }).join('');
-  row.innerHTML = '<select onchange="agCalcSinal()" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+  var profOpts = '<option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>';
+  row.innerHTML = '<select onchange="agCalcSinal()" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+profOpts+'</select>'
     +'<button onclick="this.closest(\'div\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   list.appendChild(row);
   agCalcSinal();
 }
 function agSomaServicos(){
   var total=parseFloat(document.getElementById('ag-servico')?.value)||0;
-  document.querySelectorAll('#ag-servicos-extra-list > div > select').forEach(function(sel){
+  document.querySelectorAll('#ag-servicos-extra-list > div > select:first-child').forEach(function(sel){
     total += parseFloat(sel.value)||0;
   });
   return total;
@@ -8336,10 +8343,21 @@ function salvarAgendamento(){
     descontarUsoPacoteCliente(pac.pacoteClienteId);
   } else {
     var selServ=document.getElementById('ag-servico');
+    var selServProf=document.getElementById('ag-servico-prof');
     var nomes=[(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0]];
-    document.querySelectorAll('#ag-servicos-extra-list > div > select').forEach(function(sel){
-      var n=(sel.options[sel.selectedIndex]?.text||'').split(' — ')[0];
-      if(n)nomes.push(n);
+    var servicosDetalhe=[{
+      nome:nomes[0],
+      valor:parseFloat(selServ?.value)||0,
+      profissional:selServProf?.value||prof
+    }];
+    document.querySelectorAll('#ag-servicos-extra-list > div').forEach(function(row){
+      var selExtra=row.querySelector('select:first-child');
+      var profExtra=row.querySelectorAll('select')[1];
+      var n=(selExtra?.options[selExtra?.selectedIndex]?.text||'').split(' — ')[0];
+      if(n){
+        nomes.push(n);
+        servicosDetalhe.push({nome:n,valor:parseFloat(selExtra.value)||0,profissional:profExtra?.value||prof});
+      }
     });
     servico=nomes.join(' + ');
     var valorTotal=agSomaServicos();
@@ -8365,6 +8383,7 @@ function salvarAgendamento(){
   var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
   var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs};
+  if(!ehPacote&&typeof servicosDetalhe!=='undefined')obj.servicos_detalhe=servicosDetalhe;
   fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){
     if(!r.ok)return r.json().then(function(err){throw err;});
     return r.json();
