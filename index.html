@@ -4348,9 +4348,9 @@ const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
-async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total}]);}catch(e){}}
-async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([a]);}catch(e){}}
-async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([c]);}catch(e){}}
+async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID}]);}catch(e){}}
+async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
+async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([Object.assign({},c,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function salvarPacoteClienteSupa(p){
   try{
     if(!supa)return null;
@@ -4360,7 +4360,7 @@ async function salvarPacoteClienteSupa(p){
       nome_servico:p.nome_servico,quantidade_total:p.quantidade_total,
       quantidade_usada:p.quantidade_usada||0,data_compra:p.data_compra,
       validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento,
-      grupo_id:p.grupo_id||null
+      grupo_id:p.grupo_id||null,salao_id:window.SALAO_ID
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote cliente',e);return null;}
@@ -4368,7 +4368,7 @@ async function salvarPacoteClienteSupa(p){
 async function atualizarUsoPacoteClienteSupa(id,quantidadeUsada){
   try{
     if(!supa||!id||String(id).indexOf('loc_')===0)return;
-    await supa.from('pacotes_clientes').update({quantidade_usada:quantidadeUsada}).eq('id',id);
+    await supa.from('pacotes_clientes').update({quantidade_usada:quantidadeUsada}).eq('id',id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err atualizar uso pacote cliente',e);}
 }
 function descontarUsoPacoteCliente(pacoteClienteId,pacLegacy){
@@ -4424,8 +4424,8 @@ function lancarComissaoPacote(profissional,nomeServico,clienteNome){
 }
 async function carregarPacotesClientesSupa(){
   try{
-    if(!supa)return;
-    var r=await supa.from('pacotes_clientes').select('*').order('data_compra',{ascending:false});
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('pacotes_clientes').select('*').eq('salao_id',window.SALAO_ID).order('data_compra',{ascending:false});
     if(r.data&&r.data.length>0){
       pacotesClientes=r.data.map(function(row){
         return{
@@ -4442,13 +4442,13 @@ async function carregarPacotesClientesSupa(){
     }
   }catch(e){console.log('err carregar pacotes clientes',e);}
 }
-async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}]);}catch(e){console.log('err supa servico',e);}}
-async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id);}catch(e){}}
-async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id);}catch(e){}}
+async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID}]);}catch(e){console.log('err supa servico',e);}}
+async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
+async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function carregarServicosSupa(){
   try{
-    if(!supa)return;
-    var r=await supa.from('servicos_cadastro').select('*').order('cat').order('nome');
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('servicos_cadastro').select('*').eq('salao_id',window.SALAO_ID).order('cat').order('nome');
     if(r.data&&r.data.length>0){
       servicos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
       renderServicos();
@@ -5288,7 +5288,7 @@ async function salvarRemuneracaoSupa(r){
   try{
     if(!supa)return null;
     var ins=await supa.from('remuneracoes').insert([{
-      nome:r.nome,total:r.total,pago:r.pago,pendente:r.pendente,vales:r.vales,cor:r.cor||''
+      nome:r.nome,total:r.total,pago:r.pago,pendente:r.pendente,vales:r.vales,cor:r.cor||'',salao_id:window.SALAO_ID
     }]).select('id');
     return ins.data&&ins.data[0]?ins.data[0].id:null;
   }catch(e){console.log('err supa remuneracao insert',e);return null;}
@@ -5303,13 +5303,13 @@ async function atualizarRemuneracaoSupa(r){
     }
     await supa.from('remuneracoes').update({
       total:r.total,pago:r.pago,pendente:r.pendente,vales:r.vales,cor:r.cor||''
-    }).eq('id',r.id);
+    }).eq('id',r.id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa remuneracao update',e);}
 }
 async function carregarRemuneracoesSupa(){
   try{
-    if(!supa)return;
-    var r=await supa.from('remuneracoes').select('*').order('id');
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('remuneracoes').select('*').eq('salao_id',window.SALAO_ID).order('id');
     if(r.data&&r.data.length>0){
       remuneracoes=r.data.map(function(row){
         return{id:row.id,nome:row.nome,total:row.total||'0,00',pago:row.pago||'0,00',
@@ -5331,7 +5331,8 @@ async function salvarComissaoPacoteSupa(lanc){
     await supa.from('comissoes_pacote').insert([{
       data:lanc.data,profissional:lanc.profissional,servico:lanc.servico,
       valor_servico:lanc.valor_servico,comissao_pct:lanc.comissao_pct,
-      valor:lanc.valor,cliente:lanc.cliente,origem:lanc.origem||'pacote'
+      valor:lanc.valor,cliente:lanc.cliente,origem:lanc.origem||'pacote',
+      salao_id:window.SALAO_ID
     }]);
   }catch(e){console.log('err supa comissao pacote',e);}
 }
@@ -7098,18 +7099,18 @@ async function salvarPacoteCatalogoSupa(p){
     if(!supa)return null;
     var r=await supa.from('pacotes_catalogo').insert([{
       nome:p.nome,servicos:p.servicos,servicos_itens:p.servicosItens||[],
-      validade:p.validade,preco:p.preco
+      validade:p.validade,preco:p.preco,salao_id:window.SALAO_ID
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote catalogo',e);return null;}
 }
 async function deletarPacoteCatalogoSupa(id){
-  try{if(!supa||id==null||String(id).indexOf('loc_')===0)return;await supa.from('pacotes_catalogo').delete().eq('id',id);}catch(e){}
+  try{if(!supa||id==null||String(id).indexOf('loc_')===0)return;await supa.from('pacotes_catalogo').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}
 }
 async function carregarPacotesCatalogoSupa(){
   try{
-    if(!supa)return;
-    var r=await supa.from('pacotes_catalogo').select('*').order('id');
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('pacotes_catalogo').select('*').eq('salao_id',window.SALAO_ID).order('id');
     if(r.data&&r.data.length>0){
       pacotes=r.data.map(function(row){
         return{id:row.id,nome:row.nome,servicos:row.servicos||'',
@@ -8921,6 +8922,7 @@ function fazerLogin(){
       carregarSalaoAtual().then(function(){
         obFinish();
         aplicarPermissoesAdmin();
+        carregarDadosDoSalao();
       });
     }).catch(function(){showAlertOb('Erro ao entrar. Tente novamente.');});
   }
@@ -9177,6 +9179,14 @@ function obFinish(){
   try{localStorage.setItem('aflor_logado','1');}catch(e){}
 }
 
+function carregarDadosDoSalao(){
+  if(!window.SALAO_ID)return;
+  carregarRemuneracoesSupa();
+  carregarPacotesCatalogoSupa();
+  carregarPacotesClientesSupa();
+  carregarServicosSupa();
+}
+
 // Ao carregar: verifica se já está logado
 (function(){
   try{
@@ -9189,7 +9199,7 @@ function obFinish(){
           var user=sess.data&&sess.data.session?sess.data.session.user:null;
           if(user){
             if(overlay)overlay.classList.add('hidden');
-            carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();});
+            carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
           }else{
             try{localStorage.removeItem('aflor_logado');}catch(e){}
           }
@@ -9219,8 +9229,6 @@ renderAgenda();
 renderProdutos();
 carregarPacotesClientesLocal();
 renderPacotes();
-carregarRemuneracoesSupa();
-carregarPacotesCatalogoSupa();
 syncRetornosToClientes();
 renderClientes();
 renderRetornos();
