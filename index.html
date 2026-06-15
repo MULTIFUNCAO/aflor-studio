@@ -160,7 +160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 
 /* PAGE */
 .page{display:none}
-.page.active{display:block;width:100%;min-height:1px;box-sizing:border-box}
+.page.active{display:block}
 
 /* CARDS GRID */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
@@ -274,12 +274,8 @@ textarea{resize:vertical;min-height:80px}
 .empty-icon{font-size:48px;margin-bottom:12px}
 .empty h3{font-size:15px;font-weight:700;color:var(--gray-500);margin-bottom:6px}
 
-/* SERVICES — mesmo layout de tabela que Colaboradores */
-#page-servicos{display:none;width:100%}
-#page-servicos.active{display:block;width:100%}
-#page-servicos .table-card{width:100%;display:block}
-#servicos-list tr:last-child td{border-bottom:none}
-.service-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--gray-100);gap:12px;min-height:44px}
+/* SERVICES */
+.service-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--gray-100);gap:12px}
 .service-row:last-child{border-bottom:none}
 .service-cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .service-info{flex:1}
@@ -826,7 +822,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Buscar
       </button>
-      <button class="btn btn-primary btn-sm" onclick="abrirModalAgendar()">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-agendar')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agendar
       </button>
@@ -1023,7 +1019,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Lara</option>
             <option>Angélica</option>
           </select>
-          <button class="btn btn-primary" onclick="abrirModalAgendar()">
+          <button class="btn btn-primary" onclick="openModal('modal-agendar')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agendar
           </button>
@@ -1270,19 +1266,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#22c55e">📥 Receitas por Categoria</div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Serviços de cabelo</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 2.100,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:44%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">44% das receitas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Manicure &amp; Pedicure</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 1.380,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:29%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">29% das receitas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Estética &amp; Cílios</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 840,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:17%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">17% das receitas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Produtos vendidos</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 380,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:8%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">8% das receitas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Outros</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ 120,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:2%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">2% das receitas</div></div>
+            ${[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das receitas</div></div>';}).join('')}
           </div>
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#ef4444">📤 Despesas por Categoria</div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Aluguel &amp; Contas</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 520,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:42%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">42% das despesas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Produtos &amp; Materiais</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 310,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:25%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">25% das despesas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Comissões pagas</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 248,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:20%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">20% das despesas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Marketing</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 100,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:8%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">8% das despesas</div></div>
-            <div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Outros</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ 62,00</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:5%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">5% das despesas</div></div>
+            ${[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das despesas</div></div>';}).join('')}
           </div>
         </div>
       </div>
@@ -1313,9 +1301,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </table>
         </div>
       </div>
-    </div><!-- fim page-fluxo -->
-
-    <!-- CAIXA -->
     <div class="page" id="page-caixa">
       <div class="table-card">
         <div class="cash-closed">
@@ -1365,16 +1350,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- SERVIÇOS -->
     <div class="page" id="page-servicos">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <select class="btn btn-outline btn-sm" id="serv-filtro-cat" onchange="renderServicos()"><option value="">Todas as categorias</option></select>
-        <input placeholder="🔍 Procurar por serviço..." style="flex:1;min-width:0" id="serv-busca" oninput="renderServicos()"/>
+        <select class="btn btn-outline btn-sm"><option>Todas as categorias</option><option>Cabelo</option><option>Bronzeamento</option><option>Manicure</option></select>
+        <input placeholder="🔍 Procurar por serviço..." style="flex:1"/>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-servico')">+ Novo Serviço</button>
       </div>
-      <div class="table-card">
-        <table>
-          <thead><tr><th>Serviço</th><th>Categoria</th><th>Duração</th><th>Preço</th><th></th></tr></thead>
-          <tbody id="servicos-list"></tbody>
-        </table>
-      </div>
+      <div class="table-card" id="servicos-list"></div>
     </div>
 
     <!-- PRODUTOS -->
@@ -3066,63 +3046,31 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-agendar">
-  <div class="modal" style="width:540px;max-height:90vh;overflow-y:auto">
+  <div class="modal" style="width:520px">
     <div class="modal-header">
       <span class="modal-title">📅 Novo Agendamento</span>
       <button class="modal-close" onclick="closeModal('modal-agendar')">✕</button>
     </div>
     <div class="form-grid">
-      <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
-      <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
-      <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
-      <div class="form-group full"><label>Profissional *</label>
-        <select id="ag-prof">
-          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option>
+      <div class="form-group full"><label>Cliente</label><input id="ag-cliente" placeholder="Nome do cliente"/></div>
+      <div class="form-group"><label>Data</label><input type="date" value="2026-05-26"/></div>
+      <div class="form-group"><label>Horário</label><input type="time" value="09:00"/></div>
+      <div class="form-group"><label>Profissional</label>
+        <select><option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option><option>Lara</option><option>Angélica</option></select>
+      </div>
+      <div class="form-group"><label>Serviço</label>
+        <select id="ag-servico" onchange="agCalcSinal()">
+          <option value="40">Manicure — R$ 40,00</option>
+          <option value="45">Pedicure — R$ 45,00</option>
+          <option value="80">Corte de Cabelo — R$ 80,00</option>
+          <option value="60">Escova — R$ 60,00</option>
+          <option value="150">Coloração — R$ 150,00</option>
+          <option value="80">Hidratação — R$ 80,00</option>
+          <option value="100">Manutenção — R$ 100,00</option>
+          <option value="12">Design de Sobrancelhas — R$ 12,00</option>
         </select>
       </div>
-
-      <!-- TIPO -->
-      <div class="form-group full">
-        <label style="display:block;margin-bottom:8px">Tipo de Agendamento</label>
-        <div style="display:flex;gap:8px">
-          <button type="button" id="ag-tipo-srv" onclick="agSetTipo('servico')" style="flex:1;padding:10px;border:2px solid #111;background:#111;color:#fff;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">✂️ Serviço</button>
-          <button type="button" id="ag-tipo-pac" onclick="agSetTipo('pacote')" style="flex:1;padding:10px;border:2px solid #ddd;background:#fff;color:#333;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">🎁 Usar Pacote</button>
-        </div>
-      </div>
-
-      <!-- BLOCO SERVIÇO -->
-      <div id="ag-area-servico" class="form-group full">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-          <div>
-            <label>Categoria</label>
-            <select id="ag-cat" onchange="agFiltrarServicos()" style="width:100%">
-              <option value="">Todas as categorias</option>
-            </select>
-          </div>
-          <div>
-            <label>Serviço *</label>
-            <select id="ag-servico" onchange="agCalcSinal()" style="width:100%">
-              <option value="40">Manicure — R$ 40,00</option>
-            </select>
-          </div>
-        </div>
-        <!-- Produtos -->
-        <div>
-          <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:11px;font-weight:700;color:#333">📦 Produtos usados <span style="font-weight:400;color:#aaa">(sem cobrança extra)</span></span>
-            <button type="button" onclick="agAddProduto()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar</button>
-          </label>
-          <div id="ag-produtos-list" style="display:flex;flex-direction:column;gap:6px"></div>
-        </div>
-      </div>
-
-      <!-- BLOCO PACOTE -->
-      <div id="ag-area-pacote" style="display:none" class="form-group full">
-        <label>Pacote do cliente</label>
-        <select id="ag-pacote-sel" style="width:100%"><option value="">— Digite o nome do cliente primeiro —</option></select>
-      </div>
-
-      <div class="form-group full"><label>Observações</label><textarea id="ag-obs" placeholder="Alguma observação?"></textarea></div>
+      <div class="form-group full"><label>Observações</label><textarea placeholder="Alguma observação?"></textarea></div>
 
       <!-- SINAL / ENTRADA -->
       <div class="form-group full">
@@ -3183,15 +3131,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
                   <input type="radio" name="ag-sinal-status" value="pago" style="accent-color:#111"/>
                   <span style="font-size:12px;font-weight:600">✅ Já foi pago</span>
                 </label>
-              </div>
-            </div>
-            <!-- Forma de pagamento do sinal -->
-            <div style="margin-top:10px">
-              <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-                <button type="button" class="ag-forma-btn" onclick="agSetFormaSinal(this,'Pix')" style="padding:8px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
-                <button type="button" class="ag-forma-btn" onclick="agSetFormaSinal(this,'Dinheiro')" style="padding:8px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
-                <button type="button" class="ag-forma-btn" onclick="agSetFormaSinal(this,'Link')" style="padding:8px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
               </div>
             </div>
           </div>
@@ -3549,22 +3488,10 @@ const pages = {
 };
 
 function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>{
-    p.classList.remove('active');
-    if(p.id!=='page-colaborador-view'){
-      p.style.display='none';
-      p.style.width='';
-      p.style.height='';
-    }
-  });
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   var pg=document.getElementById('page-'+id);
-  if(pg){
-    pg.classList.add('active');
-    pg.style.display='block';
-    pg.style.width='';
-    pg.style.height='';
-  }
+  if(pg){pg.classList.add('active');pg.style.display='block';}
   document.getElementById('page-title').textContent=pages[id]||id;
   document.querySelectorAll('.nav-item').forEach(n=>{
     if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")){n.classList.add('active')}
@@ -4193,23 +4120,16 @@ function renderRemuneracoes(){
 }
 
 function renderServicos(){
-  var catSel=document.getElementById('serv-filtro-cat');
-  if(catSel){
-    var cats=[...new Set(servicos.map(function(s){return s.cat;}).filter(Boolean))].sort();
-    var selVal=catSel.value;
-    catSel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(function(c){return'<option value="'+c+'"'+(c===selVal?' selected':'')+'>'+c+'</option>';}).join('');
-  }
-  var filtCat=(catSel&&catSel.value)||'';
-  var buscaEl=document.getElementById('serv-busca');
-  var busca=(buscaEl&&buscaEl.value||'').toLowerCase();
-  var lista=servicos.filter(function(s){
-    return(!filtCat||s.cat===filtCat)&&(!busca||s.nome.toLowerCase().includes(busca)||(s.cat||'').toLowerCase().includes(busca));
-  });
   const el=document.getElementById('servicos-list');
-  if(!el)return;
-  if(lista.length===0){el.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:#aaa;font-size:13px">Nenhum serviço encontrado</td></tr>';return;}
-  el.innerHTML=lista.map(function(s){var i=servicos.indexOf(s);return'<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="service-cat-dot" style="background:'+s.cor+'"></div><span style="font-weight:600">'+s.nome+'</span></div></td><td style="color:var(--gray-500);font-size:12px">'+s.cat+'</td><td style="color:var(--gray-400);font-size:12px">'+s.dur+'</td><td style="font-weight:700">R$ '+s.preco+'</td><td><button class="btn btn-outline btn-sm" onclick="menuServico(event,'+i+')">⋮</button></td></tr>';}).join('');
+  el.innerHTML=servicos.map(s=>`<div class="service-row">
+    <div class="service-cat-dot" style="background:${s.cor}"></div>
+    <div class="service-info"><div class="service-name">${s.nome}</div><div class="service-cat">${s.cat}</div></div>
+    <div class="service-duration">${s.dur}</div>
+    <div class="service-price">R$ ${s.preco}</div>
+    <button class="btn btn-outline btn-sm">⋮</button>
+  </div>`).join('');
 }
+
 function renderClientes(search=''){
   const tb=document.getElementById('clientes-table');
   const statusFilter=window._clienteStatusFilter||'todos';
@@ -4699,7 +4619,7 @@ function renderAgenda(){
       ${profs.map(p=>{
         const key=`${p}:${h}`;
         const a=apptsDia[key];
-        if(!a) return `<div class="slot" onclick="abrirModalAgendar()" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        if(!a) return `<div class="slot" onclick="openModal('modal-agendar')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
           <div style="position:absolute;inset:2px;background:${a.cls};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer">
@@ -4710,7 +4630,7 @@ function renderAgenda(){
         </div>`;
       }).join('')}
     </div>
-  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
+  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openModal(\'modal-agendar\')">+ Novo agendamento</button></div>');
   agendaAtualizarLabel();
 }
 
@@ -5929,81 +5849,6 @@ function renderFluxo(){
 // Init fluxo ao navegar
 // ===== FIM FLUXO =====
 
-
-function agSetTipo(tipo){
-  var bS=document.getElementById('ag-tipo-srv');
-  var bP=document.getElementById('ag-tipo-pac');
-  var bkS=document.getElementById('ag-area-servico');
-  var bkP=document.getElementById('ag-area-pacote');
-  if(tipo==='servico'){
-    if(bS){bS.style.background='#111';bS.style.color='#fff';bS.style.borderColor='#111';}
-    if(bP){bP.style.background='#fff';bP.style.color='#333';bP.style.borderColor='#ddd';}
-    if(bkS)bkS.style.display='';
-    if(bkP)bkP.style.display='none';
-  } else {
-    if(bS){bS.style.background='#fff';bS.style.color='#333';bS.style.borderColor='#ddd';}
-    if(bP){bP.style.background='#111';bP.style.color='#fff';bP.style.borderColor='#111';}
-    if(bkS)bkS.style.display='none';
-    if(bkP)bkP.style.display='';
-  }
-  window._agTipo=tipo;
-}
-function agFiltrarServicos(){
-  var sel0=document.getElementById('ag-servico');if(!sel0)return;
-  var catSel=document.getElementById('ag-cat');
-  if(catSel&&catSel.options.length<=1){
-    var cats=[...new Set(servicos.map(function(s){return s.cat;}).filter(Boolean))].sort();
-    cats.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
-  }
-  var cat=(catSel&&catSel.value)||'';
-  var sel=document.getElementById('ag-servico');
-  if(!sel)return;
-  var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
-  if(filtrados.length===0)filtrados=servicos;
-  sel.innerHTML=filtrados.map(function(s){var p=parseFloat(String(s.preco||'0').replace(',','.'));return'<option value="'+p+'">'+ s.nome+' — R$ '+s.preco+'</option>';}).join('');
-  agCalcSinal();
-}
-function agAddProduto(){
-  var lista=document.getElementById('ag-produtos-list');
-  if(!lista)return;
-  var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
-  var sel=document.createElement('select');
-  sel.style.cssText='flex:1;padding:7px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px';
-  sel.innerHTML='<option value="">— Selecionar produto —</option>'+(typeof produtos!=='undefined'?produtos.map(function(p){return'<option>'+p.nome+'</option>';}).join(''):'');
-  var btn=document.createElement('button');
-  btn.type='button';btn.textContent='✕';
-  btn.style.cssText='padding:4px 8px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#888';
-  btn.onclick=function(){lista.removeChild(div);};
-  div.appendChild(sel);div.appendChild(btn);lista.appendChild(div);
-}
-function agSetFormaSinal(btn,forma){
-  document.querySelectorAll('.ag-forma-btn').forEach(function(b){
-    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
-  });
-  if(btn){btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';}
-  window._agFormaSinal=forma;
-}
-function abrirModalAgendar(data,hora,prof){
-  var hoje=new Date();
-  var dd=String(hoje.getDate()).padStart(2,'0');
-  var mm=String(hoje.getMonth()+1).padStart(2,'0');
-  var yyyy=hoje.getFullYear();
-  var elData=document.getElementById('ag-data');
-  if(elData)elData.value=data||(yyyy+'-'+mm+'-'+dd);
-  var elHora=document.getElementById('ag-hora');
-  if(elHora)elHora.value=hora||'09:00';
-  var elProf=document.getElementById('ag-prof');
-  if(elProf&&prof)elProf.value=prof;
-  var elCli=document.getElementById('ag-cliente');if(elCli)elCli.value='';
-  var elObs=document.getElementById('ag-obs');if(elObs)elObs.value='';
-  var elProd=document.getElementById('ag-produtos-list');if(elProd)elProd.innerHTML='';
-  var elSinal=document.getElementById('ag-sinal-ativo');if(elSinal){elSinal.checked=false;agToggleSinal();}
-  agSetTipo('servico');
-  var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
-  agFiltrarServicos();
-  openModal('modal-agendar');
-}
 function agToggleSinal(){
   var ativo=document.getElementById('ag-sinal-ativo')?.checked;
   var area=document.getElementById('ag-sinal-area');
