@@ -3615,7 +3615,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="ag-pacote-detalhe" style="font-size:12px;color:#166534"></div>
         </div>
         <label style="margin-top:8px;display:block">Profissional que vai executar</label>
-        <select id="ag-pacote-prof">
+        <select id="ag-pacote-prof" onchange="agVerPacote()"
           <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
         </select>
         <div id="ag-pacote-extra-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
@@ -4677,34 +4677,62 @@ function agCarregarPacotes(){
   if(!opts.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
 }
 function agAtualizarProfPacoteExtra(selPacEl){
-  var row=selPacEl.closest('div');
+  var row=selPacEl.closest('div[data-pacote-extra-row]')||selPacEl.closest('div');
   var selProf=row.querySelectorAll('select')[1];
-  if(!selProf)return;
+  var det=row.querySelector('.ag-pacote-extra-detalhe');
   var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var idx=parseInt(selPacEl.value);
   var p=pacotes[idx];
   if(!p){
-    selProf.innerHTML='<option value="">— Selecione o serviço acima —</option>';
+    if(selProf)selProf.innerHTML='<option value="">— Selecione o serviço acima —</option>';
+    if(det)det.style.display='none';
     return;
   }
   var nomeServico=p.servico||p.nome;
-  var atual=selProf.value;
-  selProf.innerHTML=agOpcoesProfPorServico(nomeServico);
-  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+  if(selProf){
+    var atual=selProf.value;
+    selProf.innerHTML=agOpcoesProfPorServico(nomeServico);
+    if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+  }
+  if(det){
+    var restante=p.total-p.usado;
+    det.style.display='block';
+    det.innerHTML='<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
+      +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>'
+      +(selProf?(' — Profissional: <b>'+(selProf.value||'—')+'</b>'):'');
+  }
 }
 function agAddPacoteExtra(){
   var list = document.getElementById('ag-pacote-extra-list');
   var opts=agOpcoesPacotesCliente();
   if(!opts.length){showAlert('Nenhum outro pacote disponível para este cliente.');return;}
   var row = document.createElement('div');
+  row.setAttribute('data-pacote-extra-row','1');
   row.style.cssText = 'display:flex;gap:6px;align-items:flex-start;background:#f9f9f9;border-radius:8px;padding:8px';
   row.innerHTML = '<div style="flex:2;display:flex;flex-direction:column;gap:4px">'
     +'<select onchange="agAtualizarProfPacoteExtra(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="" selected>— Selecione o pacote —</option>'+opts.join('')+'</select>'
-    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o serviço acima —</option></select>'
+    +'<select onchange="agAtualizarProfPacoteExtraDetalhe(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o serviço acima —</option></select>'
+    +'<div class="ag-pacote-extra-detalhe" style="display:none;background:#fffbea;border:1px solid #fde68a;border-radius:8px;padding:8px;font-size:12px;color:#374151"></div>'
     +'</div>'
     +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   row.querySelector('button').onclick=function(){row.remove();};
   list.appendChild(row);
+}
+function agAtualizarProfPacoteExtraDetalhe(selProfEl){
+  var row=selProfEl.closest('div[data-pacote-extra-row]');
+  if(!row)return;
+  var selPac=row.querySelectorAll('select')[0];
+  var det=row.querySelector('.ag-pacote-extra-detalhe');
+  if(!det||!selPac)return;
+  var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  var idx=parseInt(selPac.value);
+  var p=pacotes[idx];
+  if(!p){det.style.display='none';return;}
+  var restante=p.total-p.usado;
+  det.style.display='block';
+  det.innerHTML='<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
+    +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>'
+    +' — Profissional: <b>'+(selProfEl.value||'—')+'</b>';
 }
 
 function agVerPacote(){
@@ -4719,13 +4747,14 @@ function agVerPacote(){
   var p = pacotes[idx];
   var restante = p.total - p.usado;
   info.style.display = 'block';
-  det.innerHTML = '<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
-    +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>';
   if(selProf){
     var atual=selProf.value;
     selProf.innerHTML=agOpcoesProfPorServico(p.servico||p.nome);
     if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
   }
+  det.innerHTML = '<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
+    +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>'
+    +(selProf?(' — Profissional: <b>'+(selProf.value||'—')+'</b>'):'');
 }
 // ===== FIM AGENDAMENTO MELHORADO =====
 
