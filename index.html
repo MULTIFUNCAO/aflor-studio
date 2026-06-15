@@ -3615,7 +3615,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="ag-pacote-detalhe" style="font-size:12px;color:#166534"></div>
         </div>
         <label style="margin-top:8px;display:block">Profissional que vai executar</label>
-        <select id="ag-pacote-prof" onchange="agVerPacote()"
+        <select id="ag-pacote-prof" onchange="agVerPacote()">
           <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
         </select>
         <div id="ag-pacote-extra-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
@@ -4717,6 +4717,7 @@ function agAddPacoteExtra(){
     +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   row.querySelector('button').onclick=function(){row.remove();};
   list.appendChild(row);
+  agAtualizarProfPacoteExtra(row.querySelectorAll('select')[0]);
 }
 function agAtualizarProfPacoteExtraDetalhe(selProfEl){
   var row=selProfEl.closest('div[data-pacote-extra-row]');
