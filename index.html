@@ -4369,8 +4369,17 @@ function descontarUsoPacoteCliente(pacoteClienteId){
 function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   // Busca o valor do serviço no catálogo
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
-  var valor=srv?parseMoedaBR(srv.preco):0;
-  if(valor<=0)return;
+  var valorServico=srv?parseMoedaBR(srv.preco):0;
+  if(valorServico<=0)return;
+  // Busca o percentual de comissão do colaborador (ex: "50%")
+  var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
+  var nomeNorm=norm(profissional);
+  var colab=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){
+    var cNorm=norm(c.nome);
+    return cNorm===nomeNorm||cNorm.indexOf(nomeNorm)>=0||nomeNorm.indexOf(cNorm)>=0;
+  });
+  var pct=colab&&colab.comissao?parseFloat(String(colab.comissao).replace('%',''))||100:100;
+  var valor=valorServico*(pct/100);
   // Mapeia nome usado na agenda para nome usado em Remunerações
   var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var nomeRem=mapaNomesInv[profissional]||profissional;
@@ -4384,7 +4393,7 @@ function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   // Registra o lançamento detalhado para histórico/auditoria
   try{
     var lanc=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');
-    lanc.unshift({data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor:valor,cliente:clienteNome,origem:'pacote'});
+    lanc.unshift({data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor_servico:valorServico,comissao_pct:pct,valor:valor,cliente:clienteNome,origem:'pacote'});
     localStorage.setItem('flora_comissoes_pacote',JSON.stringify(lanc));
   }catch(e){}
   if(typeof renderRemuneracoes==='function')renderRemuneracoes();
