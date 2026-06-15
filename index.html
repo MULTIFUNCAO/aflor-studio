@@ -5817,6 +5817,60 @@ var colaboradores=[
   {nome:'Lara',email:'',cargo:'Colaborador',comissao:'50%',status:'Inativo',cor:''},
   {nome:'Flora',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
 ];
+var COLABORADORES_PADRAO=[
+  {nome:'Ana',email:'',cargo:'Proprietário(a)',comissao:'100%',status:'Ativo',cor:'pink'},
+];
+async function salvarColaboradorSupa(c){
+  try{
+    if(!supa)return null;
+    var r=await supa.from('colaboradores').insert([{
+      nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
+      comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
+      foto:c.foto||'',servicos:c.servicos||null,salao_id:window.SALAO_ID
+    }]).select('id');
+    return r.data&&r.data[0]?r.data[0].id:null;
+  }catch(e){console.log('err supa colaborador insert',e);return null;}
+}
+async function atualizarColaboradorSupa(c){
+  try{
+    if(!supa)return;
+    if(c.id==null){
+      var newId=await salvarColaboradorSupa(c);
+      if(newId!=null)c.id=newId;
+      return;
+    }
+    await supa.from('colaboradores').update({
+      nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
+      comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
+      foto:c.foto||'',servicos:c.servicos||null
+    }).eq('id',c.id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err supa colaborador update',e);}
+}
+async function deletarColaboradorSupa(id){
+  try{if(!supa||id==null)return;await supa.from('colaboradores').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}
+}
+async function carregarColaboradoresSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('colaboradores').select('*').eq('salao_id',window.SALAO_ID).order('id');
+    if(r.data&&r.data.length>0){
+      colaboradores=r.data.map(function(row){
+        return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
+          comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
+          foto:row.foto||'',servicos:row.servicos||undefined};
+      });
+      if(typeof renderColabs==='function')renderColabs();
+    }else if(r.data&&r.data.length===0){
+      // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
+      colaboradores=COLABORADORES_PADRAO.map(function(c){return Object.assign({},c);});
+      for(var i=0;i<colaboradores.length;i++){
+        var newId=await salvarColaboradorSupa(colaboradores[i]);
+        if(newId!=null)colaboradores[i].id=newId;
+      }
+      if(typeof renderColabs==='function')renderColabs();
+    }
+  }catch(e){console.log('err carregar colaboradores',e);}
+}
 
 
 // Render
@@ -8369,11 +8423,13 @@ function salvarColaborador(){
   var comissao=document.getElementById('colab-comissao')?.value||'50';
   var email=document.getElementById('colab-email')?.value||'';
   var iniciais=nome.split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
-  colaboradores.push({
+  var novoColab={
     nome:nome, email:email, cargo:cargo,
     comissao:comissao+'%', cor:colabCorAtual,
     foto:colabFotoAtual, status:'Ativo'
-  });
+  };
+  colaboradores.push(novoColab);
+  salvarColaboradorSupa(novoColab).then(function(newId){if(newId!=null)novoColab.id=newId;});
   renderColabs();
   closeModal('modal-colab');
   // Limpar
@@ -8517,6 +8573,7 @@ function salvarEdicaoColab(idx){
   c.cargo=document.getElementById('edit-cargo')?.value||c.cargo;
   c.comissao=(document.getElementById('edit-comissao')?.value||'50')+'%';
   c.status=document.getElementById('edit-status')?.value||'Ativo';
+  atualizarColaboradorSupa(c);
   renderColabs();
   // Atualizar agenda se estiver visível
   if(document.getElementById('page-agenda')?.classList.contains('active'))renderAgenda();
@@ -8532,8 +8589,10 @@ function salvarEdicaoColab(idx){
 }
 function removerColab(idx){
   var nome=colaboradores[idx].nome;
+  var id=colaboradores[idx].id;
   if(confirm('Remover '+nome+' da equipe?')){
     colaboradores.splice(idx,1);
+    if(id!=null)deletarColaboradorSupa(id);
     renderColabs();
     document.getElementById('modal-editar-colab').classList.remove('open');
     showAlert('🗑 '+nome+' removido(a).');
@@ -9185,6 +9244,7 @@ function carregarDadosDoSalao(){
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
   carregarServicosSupa();
+  carregarColaboradoresSupa();
 }
 
 // Ao carregar: verifica se já está logado
