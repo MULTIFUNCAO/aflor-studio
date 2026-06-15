@@ -420,12 +420,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option>Vi</option><option>Lara</option><option>Angélica</option>
           </select>
         </div>
+        <!-- Email (só para Administrador) -->
+        <div id="login-email-wrap" class="ob-iw">
+          <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
+          <input id="login-email" class="ob-inp" placeholder="seu@email.com" type="email"/>
+        </div>
         <div class="ob-iw">
           <span class="ob-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
-          <input class="ob-inp" placeholder="Sua senha" type="password"/>
+          <input id="login-senha" class="ob-inp" placeholder="Sua senha" type="password"/>
         </div>
         <button class="btn-aflor" onclick="fazerLogin()">Entrar na Conta</button>
-        <div class="forgot-lnk">Esqueceu sua senha?</div>
+        <div class="forgot-lnk" onclick="recuperarSenhaSalao()">Esqueceu sua senha?</div>
       </div>
 
       <!-- FORM CRIAR CONTA -->
@@ -440,30 +445,34 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div class="ob-iw" style="margin-bottom:0">
             <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-            <input class="ob-inp" placeholder="Primeiro nome" type="text"/>
+            <input id="reg-nome" class="ob-inp" placeholder="Primeiro nome" type="text"/>
           </div>
           <div class="ob-iw" style="margin-bottom:0">
             <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-            <input class="ob-inp" placeholder="Sobrenome" type="text"/>
+            <input id="reg-sobrenome" class="ob-inp" placeholder="Sobrenome" type="text"/>
           </div>
         </div>
         <div style="height:9px"></div>
         <div class="ob-iw">
+          <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <input id="reg-salao" class="ob-inp" placeholder="Nome do salão / negócio" type="text"/>
+        </div>
+        <div class="ob-iw">
           <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></span>
-          <input class="ob-inp" placeholder="seu@email.com" type="email"/>
+          <input id="reg-email" class="ob-inp" placeholder="seu@email.com" type="email"/>
         </div>
         <div class="ob-iw">
           <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.63a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg></span>
-          <input class="ob-inp" placeholder="(11) 99999-9999" type="tel"/>
+          <input id="reg-tel" class="ob-inp" placeholder="(11) 99999-9999" type="tel"/>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div class="ob-iw" style="margin-bottom:0">
             <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
-            <input class="ob-inp" placeholder="Crie uma senha" type="password"/>
+            <input id="reg-senha" class="ob-inp" placeholder="Crie uma senha" type="password"/>
           </div>
           <div class="ob-iw" style="margin-bottom:0">
             <span class="ob-ico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
-            <input class="ob-inp" placeholder="Confirme a senha" type="password"/>
+            <input id="reg-senha2" class="ob-inp" placeholder="Confirme a senha" type="password"/>
           </div>
         </div>
         <div style="height:9px"></div>
@@ -471,7 +480,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <input type="checkbox" id="tc" style="width:15px;height:15px;margin-top:1px;cursor:pointer;accent-color:#111;flex-shrink:0"/>
           <label for="tc" style="font-size:11px;color:#666;cursor:pointer;line-height:1.5">Concordo com os <span style="color:#111;font-weight:700;text-decoration:underline">Termos de Uso</span> e a <span style="color:#111;font-weight:700;text-decoration:underline">Política de Privacidade</span></label>
         </div>
-        <button class="btn-aflor" onclick="obGo('ob1')">Criar Minha Conta →</button>
+        <button class="btn-aflor" onclick="criarContaSalao()">Criar Minha Conta →</button>
         <div style="text-align:center;margin-top:10px;font-size:11px;color:#888">Já tem conta? <span style="color:#111;font-weight:700;cursor:pointer;text-decoration:underline" onclick="switchLogin('entrar')">Entrar aqui</span></div>
       </div>
 
@@ -8877,14 +8886,17 @@ function setPerfilLogin(perfil){
   var lAdm=document.getElementById('lbl-adm');
   var lCol=document.getElementById('lbl-col');
   var selC=document.getElementById('select-colaborador');
+  var emailW=document.getElementById('login-email-wrap');
   if(perfil==='admin'){
     if(lAdm){lAdm.style.background='#111';lAdm.style.color='#fff';lAdm.style.borderColor='#111';}
     if(lCol){lCol.style.background='#fff';lCol.style.color='#333';lCol.style.borderColor='#ddd';}
     if(selC)selC.style.display='none';
+    if(emailW)emailW.style.display='block';
   } else {
     if(lCol){lCol.style.background='#111';lCol.style.color='#fff';lCol.style.borderColor='#111';}
     if(lAdm){lAdm.style.background='#fff';lAdm.style.color='#333';lAdm.style.borderColor='#ddd';}
     if(selC)selC.style.display='block';
+    if(emailW)emailW.style.display='none';
   }
 }
 
@@ -8897,11 +8909,88 @@ function fazerLogin(){
     obFinish();
     entrarComoColaborador(sel);
   } else {
-    colaboradorLogado=null;
-    try{localStorage.setItem('aflor_logado','admin');}catch(e){}
-    obFinish();
-    aplicarPermissoesAdmin();
+    var email=(document.getElementById('login-email')?.value||'').trim();
+    var senha=document.getElementById('login-senha')?.value||'';
+    if(!email||!senha){showAlertOb('Informe email e senha!');return;}
+    if(!supa){showAlertOb('Erro de conexão. Tente novamente.');return;}
+    showAlertOb('Entrando...');
+    supa.auth.signInWithPassword({email:email,password:senha}).then(function(res){
+      if(res.error){showAlertOb('Email ou senha incorretos.');return;}
+      colaboradorLogado=null;
+      try{localStorage.setItem('aflor_logado','admin');}catch(e){}
+      carregarSalaoAtual().then(function(){
+        obFinish();
+        aplicarPermissoesAdmin();
+      });
+    }).catch(function(){showAlertOb('Erro ao entrar. Tente novamente.');});
   }
+}
+
+function recuperarSenhaSalao(){
+  var email=(document.getElementById('login-email')?.value||'').trim();
+  if(!email){showAlertOb('Informe seu email no campo acima primeiro.');return;}
+  if(!supa){showAlertOb('Erro de conexão. Tente novamente.');return;}
+  supa.auth.resetPasswordForEmail(email).then(function(res){
+    if(res.error){showAlertOb('Erro ao enviar email de recuperação.');return;}
+    showAlertOb('Enviamos um link de recuperação para '+email);
+  });
+}
+
+window.SALAO_ID=null;
+window.SALAO_NOME=null;
+async function carregarSalaoAtual(){
+  try{
+    if(!supa)return;
+    var sess=await supa.auth.getSession();
+    var user=sess.data&&sess.data.session?sess.data.session.user:null;
+    if(!user)return;
+    var r=await supa.from('saloes').select('*').eq('id',user.id).maybeSingle();
+    if(r.data){
+      window.SALAO_ID=r.data.id;
+      window.SALAO_NOME=r.data.nome_salao;
+    }else{
+      // Salão ainda não cadastrado (ex: criado fora do fluxo normal) — cria registro básico
+      var ins=await supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).select('*').maybeSingle();
+      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;}
+    }
+  }catch(e){console.log('err carregar salao',e);}
+}
+
+function criarContaSalao(){
+  var nome=(document.getElementById('reg-nome')?.value||'').trim();
+  var sobrenome=(document.getElementById('reg-sobrenome')?.value||'').trim();
+  var nomeSalao=(document.getElementById('reg-salao')?.value||'').trim();
+  var email=(document.getElementById('reg-email')?.value||'').trim();
+  var tel=(document.getElementById('reg-tel')?.value||'').trim();
+  var senha=document.getElementById('reg-senha')?.value||'';
+  var senha2=document.getElementById('reg-senha2')?.value||'';
+  var tc=document.getElementById('tc')?.checked;
+  if(!nome||!nomeSalao||!email||!senha){showAlertOb('Preencha nome, nome do salão, email e senha.');return;}
+  if(senha.length<6){showAlertOb('A senha precisa ter pelo menos 6 caracteres.');return;}
+  if(senha!==senha2){showAlertOb('As senhas não coincidem.');return;}
+  if(!tc){showAlertOb('Você precisa concordar com os Termos de Uso.');return;}
+  if(!supa){showAlertOb('Erro de conexão. Tente novamente.');return;}
+  showAlertOb('Criando sua conta...');
+  supa.auth.signUp({email:email,password:senha,options:{data:{nome:nome,sobrenome:sobrenome,telefone:tel,nome_salao:nomeSalao}}}).then(function(res){
+    if(res.error){
+      if(String(res.error.message||'').toLowerCase().indexOf('already')>=0){
+        showAlertOb('Esse email já está cadastrado. Tente entrar.');
+      }else{
+        showAlertOb('Erro ao criar conta: '+(res.error.message||''));
+      }
+      return;
+    }
+    var user=res.data&&res.data.user;
+    if(!user){showAlertOb('Verifique seu email para confirmar a conta.');return;}
+    supa.from('saloes').insert([{
+      id:user.id,nome_salao:nomeSalao,email:email,
+      responsavel:nome+(sobrenome?(' '+sobrenome):''),telefone:tel,plano:'trial'
+    }]).then(function(){
+      window.SALAO_ID=user.id;
+      window.SALAO_NOME=nomeSalao;
+      obGo('ob1');
+    });
+  }).catch(function(){showAlertOb('Erro ao criar conta. Tente novamente.');});
 }
 
 function showAlertOb(msg){
@@ -8999,6 +9088,8 @@ function entrarComoColaborador(nome){
 function sairColaborador(){
   colaboradorLogado=null;
   try{localStorage.removeItem('aflor_logado');}catch(e){}
+  if(supa)supa.auth.signOut();
+  window.SALAO_ID=null;window.SALAO_NOME=null;
   document.getElementById('page-colaborador-view').style.display='none';
   // Mostrar tela de login
   var overlay=document.getElementById('aflor-overlay');
@@ -9092,8 +9183,21 @@ function obFinish(){
     var saved=localStorage.getItem('aflor_logado');
     if(saved==='admin'){
       var overlay=document.getElementById('aflor-overlay');
-      if(overlay)overlay.classList.add('hidden');
-      aplicarPermissoesAdmin();
+      // Verifica sessão real do Supabase Auth antes de liberar acesso
+      if(supa){
+        supa.auth.getSession().then(function(sess){
+          var user=sess.data&&sess.data.session?sess.data.session.user:null;
+          if(user){
+            if(overlay)overlay.classList.add('hidden');
+            carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();});
+          }else{
+            try{localStorage.removeItem('aflor_logado');}catch(e){}
+          }
+        });
+      }else{
+        if(overlay)overlay.classList.add('hidden');
+        aplicarPermissoesAdmin();
+      }
     } else if(saved&&saved.startsWith('colab_')){
       var nome=saved.replace('colab_','');
       colaboradorLogado=nome;
