@@ -4342,7 +4342,8 @@ async function salvarPacoteClienteSupa(p){
       pacote_id:String(p.pacote_id||''),pacote_nome:p.pacote_nome,
       nome_servico:p.nome_servico,quantidade_total:p.quantidade_total,
       quantidade_usada:p.quantidade_usada||0,data_compra:p.data_compra,
-      validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento
+      validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento,
+      grupo_id:p.grupo_id||null
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote cliente',e);return null;}
@@ -6938,28 +6939,33 @@ function carregarPacotesClientesLocal(){
   }catch(e){pacotesClientes=[];}
 }
 function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
-  var meta=extrairMetaPacoteCatalogo(pacoteCatalogo);
-  var valor=parsePrecoPacote(pacoteCatalogo.preco);
   var hoje=new Date().toISOString().split('T')[0];
-  var reg={
-    id:'loc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
-    cliente_id:clienteId||null,cliente_nome:clienteNome,
-    pacote_id:pacoteCatalogo.id,pacote_nome:pacoteCatalogo.nome,
-    nome_servico:meta.nome_servico,quantidade_total:meta.quantidade_total,
-    quantidade_usada:0,data_compra:hoje,
-    validade:calcValidadePacote(pacoteCatalogo.validade,hoje),
-    valor_pago:valor,forma_pagamento:formaPag||'Pix'
-  };
-  pacotesClientes.unshift(reg);
+  var valor=parsePrecoPacote(pacoteCatalogo.preco);
+  var validadeCalc=calcValidadePacote(pacoteCatalogo.validade,hoje);
+  var grupoId='grp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  var itens=(pacoteCatalogo.servicosItens&&pacoteCatalogo.servicosItens.length)
+    ? pacoteCatalogo.servicosItens
+    : [extrairMetaPacoteCatalogo(pacoteCatalogo)].map(function(m){return{servico:m.nome_servico,qtd:m.quantidade_total};});
+  var regs=itens.map(function(item){
+    var reg={
+      id:'loc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+      grupo_id:grupoId,
+      cliente_id:clienteId||null,cliente_nome:clienteNome,
+      pacote_id:pacoteCatalogo.id,pacote_nome:pacoteCatalogo.nome,
+      nome_servico:item.servico,quantidade_total:parseInt(item.qtd,10)||1,
+      quantidade_usada:0,data_compra:hoje,
+      validade:validadeCalc,
+      valor_pago:valor,forma_pagamento:formaPag||'Pix'
+    };
+    pacotesClientes.unshift(reg);
+    salvarPacoteClienteSupa(reg).then(function(supaId){
+      if(supaId){reg.id=supaId;salvarPacotesClientesLocal();}
+    });
+    return reg;
+  });
   salvarPacotesClientesLocal();
   lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
-  salvarPacoteClienteSupa(reg).then(function(supaId){
-    if(supaId){
-      reg.id=supaId;
-      salvarPacotesClientesLocal();
-    }
-  });
-  return reg;
+  return regs[0];
 }
 function vendaPacoteSetForma(btn,forma){
   vendaPacoteCtx.forma=forma;
@@ -6972,9 +6978,11 @@ function abrirVenderPacote(idx){
   var p=pacotes[idx];
   if(!p){showAlert('Pacote não encontrado.');return;}
   vendaPacoteCtx={pacoteIdx:idx,forma:''};
-  var meta=extrairMetaPacoteCatalogo(p);
   document.getElementById('venda-pacote-nome').textContent=p.nome;
-  document.getElementById('venda-pacote-servico').textContent=meta.nome_servico+' · '+meta.quantidade_total+' sessão(ões)';
+  var itensTxt=(p.servicosItens&&p.servicosItens.length)
+    ? p.servicosItens.map(function(it){return it.servico+' ('+it.qtd+'x)';}).join(' + ')
+    : (function(){var meta=extrairMetaPacoteCatalogo(p);return meta.nome_servico+' · '+meta.quantidade_total+' sessão(ões)';})();
+  document.getElementById('venda-pacote-servico').textContent=itensTxt;
   document.getElementById('venda-pacote-valor').textContent=p.preco||fmtCaixa(parsePrecoPacote(p.preco));
   var sel=document.getElementById('venda-pacote-cliente');
   if(sel){
@@ -7065,17 +7073,35 @@ function renderPacotes(){
       +'<button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px" title="Remover">🗑</button>'
       +'</td></tr>');
   });
+  // Agrupar pacotesClientes por grupo_id (ou fallback pacote_id+cliente+data para registros antigos)
+  var grupos=[];
+  var gruposMap={};
   pacotesClientes.forEach(function(p,i){
-    var usado=p.quantidade_usada||0;
-    var total=p.quantidade_total||1;
-    var restante=total-usado;
+    var key=p.grupo_id||('legacy_'+p.pacote_id+'_'+p.cliente_nome+'_'+p.data_compra);
+    if(!gruposMap[key]){
+      gruposMap[key]={pacote_nome:p.pacote_nome,cliente_nome:p.cliente_nome,valor_pago:p.valor_pago,itens:[],idxs:[]};
+      grupos.push(gruposMap[key]);
+    }
+    gruposMap[key].itens.push(p);
+    gruposMap[key].idxs.push(i);
+  });
+  grupos.forEach(function(g){
+    var servicosCol=g.itens.map(function(p){
+      var usado=p.quantidade_usada||0,total=p.quantidade_total||1,restante=total-usado;
+      return '<div style="margin-bottom:2px"><span style="font-weight:600">'+p.nome_servico+':</span> '+usado+'/'+total
+        +' <span style="font-size:10px;padding:2px 6px;border-radius:10px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' rest.</span></div>';
+    }).join('');
+    var progressoCol=g.itens.map(function(p){
+      var usado=p.quantidade_usada||0,total=p.quantidade_total||1;
+      return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(usado<total?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+p.nome_servico+'</span></div>';
+    }).join('');
     linhas.push('<tr>'
-      +'<td style="font-weight:600;font-size:13px">'+p.pacote_nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+p.cliente_nome+'</span></td>'
-      +'<td style="font-size:12px;color:#666">'+p.nome_servico+'</td>'
-      +'<td><div style="display:flex;align-items:center;gap:6px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(restante>0?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+usado+'/'+total+'</span></div></td>'
-      +'<td><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' restante(s)</span></td>'
-      +'<td style="font-weight:700">'+fmtCaixa(p.valor_pago)+'</td>'
-      +'<td><button onclick="deletePacoteCliente('+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px" title="Remover">🗑</button></td>'
+      +'<td style="font-weight:600;font-size:13px">'+g.pacote_nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+g.cliente_nome+'</span></td>'
+      +'<td style="font-size:12px;color:#666">'+servicosCol+'</td>'
+      +'<td>'+progressoCol+'</td>'
+      +'<td>—</td>'
+      +'<td style="font-weight:700">'+fmtCaixa(g.valor_pago)+'</td>'
+      +'<td><button onclick="deletePacoteClienteGrupo([&quot;'+g.itens.map(function(p){return String(p.id);}).join('&quot;,&quot;')+'&quot;])" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px" title="Remover">🗑</button></td>'
       +'</tr>');
   });
   if(!linhas.length){
@@ -7089,6 +7115,16 @@ function deletePacote(i){
   if(confirm('Remover este pacote?')){pacotes.splice(i,1);renderPacotes();showAlert('Pacote removido!');}
 }
 
+function deletePacoteClienteGrupo(ids){
+  var itens=pacotesClientes.filter(function(p){return ids.indexOf(String(p.id))>=0;});
+  if(!itens.length)return;
+  if(confirm('Remover pacote de '+itens[0].cliente_nome+'?')){
+    pacotesClientes=pacotesClientes.filter(function(p){return ids.indexOf(String(p.id))<0;});
+    salvarPacotesClientesLocal();
+    renderPacotes();
+    showAlert('Pacote removido!');
+  }
+}
 function deletePacoteCliente(i){
   if(i<0||!pacotesClientes[i])return;
   var pc=pacotesClientes[i];
