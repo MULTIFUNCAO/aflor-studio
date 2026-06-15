@@ -4683,7 +4683,11 @@ function agAtualizarProfPacoteExtra(selPacEl){
   var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var idx=parseInt(selPacEl.value);
   var p=pacotes[idx];
-  var nomeServico=p?(p.servico||p.nome):null;
+  if(!p){
+    selProf.innerHTML='<option value="">— Selecione o serviço acima —</option>';
+    return;
+  }
+  var nomeServico=p.servico||p.nome;
   var atual=selProf.value;
   selProf.innerHTML=agOpcoesProfPorServico(nomeServico);
   if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
@@ -4695,8 +4699,8 @@ function agAddPacoteExtra(){
   var row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:6px;align-items:flex-start;background:#f9f9f9;border-radius:8px;padding:8px';
   row.innerHTML = '<div style="flex:2;display:flex;flex-direction:column;gap:4px">'
-    +'<select onchange="agAtualizarProfPacoteExtra(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o pacote —</option>'+opts.join('')+'</select>'
-    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(null)+'</select>'
+    +'<select onchange="agAtualizarProfPacoteExtra(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="" selected>— Selecione o pacote —</option>'+opts.join('')+'</select>'
+    +'<select style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o serviço acima —</option></select>'
     +'</div>'
     +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   row.querySelector('button').onclick=function(){row.remove();};
@@ -6971,9 +6975,22 @@ let pacotes=[
   {id:2,nome:'Pacote Noiva',servicos:'Escova + Manicure + Pedicure + Maquiagem',validade:'Sem validade',preco:'R$ 450,00',servicosItens:[{servico:'Escova',qtd:1},{servico:'Manicure',qtd:1},{servico:'Pedicure',qtd:1},{servico:'Maquiagem',qtd:1}]},
   {id:3,nome:'Pacote Manutenção',servicos:'Corte + Hidratação',validade:'60 dias',preco:'R$ 120,00',servicosItens:[{servico:'Corte',qtd:1},{servico:'Hidratação',qtd:1}]},
 ];
+function salvarPacotesCatalogoLocal(){
+  try{localStorage.setItem('aflor_pacotes_catalogo',JSON.stringify(pacotes));}catch(e){}
+}
+function carregarPacotesCatalogoLocal(){
+  try{
+    var saved=localStorage.getItem('aflor_pacotes_catalogo');
+    if(saved){
+      var arr=JSON.parse(saved);
+      if(Array.isArray(arr)&&arr.length)pacotes=arr;
+    }
+  }catch(e){}
+}
+carregarPacotesCatalogoLocal();
 var pacotesClientes=[];
 var vendaPacoteCtx={pacoteIdx:null,forma:''};
-var _pacoteIdSeq=4;
+var _pacoteIdSeq=Math.max(4,(pacotes.reduce(function(m,p){return Math.max(m,parseInt(p.id)||0);},0)+1));
 
 function parsePrecoPacote(preco){
   if(typeof preco==='number')return preco;
@@ -7223,7 +7240,7 @@ function renderPacotes(){
 }
 
 function deletePacote(i){
-  if(confirm('Remover este pacote?')){pacotes.splice(i,1);renderPacotes();showAlert('Pacote removido!');}
+  if(confirm('Remover este pacote?')){pacotes.splice(i,1);salvarPacotesCatalogoLocal();renderPacotes();showAlert('Pacote removido!');}
 }
 
 function deletePacoteClienteGrupo(ids){
@@ -7271,6 +7288,7 @@ function addPacote(){
     servicosItens:servicosList2,validade,
     preco:'R$ '+precoNum.toFixed(2).replace('.',',')
   });
+  salvarPacotesCatalogoLocal();
 
   // Vender para cliente (opcional, no mesmo modal de cadastro)
   var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
