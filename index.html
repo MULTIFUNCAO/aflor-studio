@@ -2579,6 +2579,40 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<!-- MODAL VENDER PACOTE PARA CLIENTE -->
+<div class="modal-overlay" id="modal-vender-pacote">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">💳 Vender Pacote para Cliente</span>
+      <button class="modal-close" onclick="closeModal('modal-vender-pacote')">✕</button>
+    </div>
+    <div style="background:#f8f8f8;border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid #e5e5e5">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Pacote do catálogo</div>
+      <div id="venda-pacote-nome" style="font-size:15px;font-weight:800;color:#111;margin-bottom:4px">—</div>
+      <div id="venda-pacote-servico" style="font-size:12px;color:#555;margin-bottom:4px">—</div>
+      <div id="venda-pacote-valor" style="font-size:18px;font-weight:900;color:#111">R$ 0,00</div>
+    </div>
+    <div class="form-group full" style="margin-bottom:14px">
+      <label>Cliente *</label>
+      <select id="venda-pacote-cliente" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
+        <option value="">— Selecione o cliente —</option>
+      </select>
+    </div>
+    <div class="form-group full">
+      <label>Forma de pagamento *</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+        <button type="button" onclick="vendaPacoteSetForma(this,'Pix')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
+        <button type="button" onclick="vendaPacoteSetForma(this,'Dinheiro')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
+        <button type="button" onclick="vendaPacoteSetForma(this,'Link')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-vender-pacote')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarVendaPacote()">✅ Confirmar Venda</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOVA INFLUENCIADORA -->
 <div class="modal-overlay" id="modal-nova-influenciadora">
   <div class="modal" style="width:520px">
@@ -4291,6 +4325,39 @@ try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total}]);}catch(e){}}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([a]);}catch(e){}}
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([c]);}catch(e){}}
+async function salvarPacoteClienteSupa(p){
+  try{
+    if(!supa)return null;
+    var r=await supa.from('pacotes_clientes').insert([{
+      cliente_nome:p.cliente_nome,cliente_id:p.cliente_id||null,
+      pacote_id:String(p.pacote_id||''),pacote_nome:p.pacote_nome,
+      nome_servico:p.nome_servico,quantidade_total:p.quantidade_total,
+      quantidade_usada:p.quantidade_usada||0,data_compra:p.data_compra,
+      validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento
+    }]).select('id');
+    return r.data&&r.data[0]?r.data[0].id:null;
+  }catch(e){console.log('err supa pacote cliente',e);return null;}
+}
+async function carregarPacotesClientesSupa(){
+  try{
+    if(!supa)return;
+    var r=await supa.from('pacotes_clientes').select('*').order('data_compra',{ascending:false});
+    if(r.data&&r.data.length>0){
+      pacotesClientes=r.data.map(function(row){
+        return{
+          id:row.id,cliente_id:row.cliente_id,cliente_nome:row.cliente_nome,
+          pacote_id:row.pacote_id,pacote_nome:row.pacote_nome||'',
+          nome_servico:row.nome_servico,quantidade_total:row.quantidade_total||1,
+          quantidade_usada:row.quantidade_usada||0,data_compra:row.data_compra,
+          validade:row.validade,valor_pago:parseFloat(row.valor_pago)||0,
+          forma_pagamento:row.forma_pagamento||'Pix'
+        };
+      });
+      salvarPacotesClientesLocal();
+      syncPacotesLegacyStorage();
+    }
+  }catch(e){console.log('err carregar pacotes clientes',e);}
+}
 async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}]);}catch(e){console.log('err supa servico',e);}}
 async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id);}catch(e){}}
 async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id);}catch(e){}}
@@ -4341,7 +4408,7 @@ function showPage(id){
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='produtos')renderProdutos();
-    if(id==='pacotes')renderPacotes();
+    if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();renderPacotes();}
     if(id==='caixa')renderHistoricoCaixa();
     if(id==='agenda')renderAgenda();
     if(id==='vendas'){renderVendas();renderMetasCards();}
@@ -6736,12 +6803,155 @@ let produtos=[
   {nome:'Máscara Nutritiva 300g',cat:'Máscara',preco:'65,00',estoque:0,status:'Ativo'},
 ];
 
-// PACOTES DATA
+// PACOTES DATA — catálogo (templates)
 let pacotes=[
-  {nome:'Pacote Clean',servicos:'Manicure + Pedicure',validade:'30 dias',preco:'R$ 279,99'},
-  {nome:'Pacote Noiva',servicos:'Escova + Manicure + Pedicure + Maquiagem',validade:'Sem validade',preco:'R$ 450,00'},
-  {nome:'Pacote Manutenção',servicos:'Corte + Hidratação',validade:'60 dias',preco:'R$ 120,00'},
+  {id:1,nome:'Pacote Clean',servicos:'Manicure + Pedicure',validade:'30 dias',preco:'R$ 279,99',servicosItens:[{servico:'Manicure',qtd:1},{servico:'Pedicure',qtd:1}]},
+  {id:2,nome:'Pacote Noiva',servicos:'Escova + Manicure + Pedicure + Maquiagem',validade:'Sem validade',preco:'R$ 450,00',servicosItens:[{servico:'Escova',qtd:1},{servico:'Manicure',qtd:1},{servico:'Pedicure',qtd:1},{servico:'Maquiagem',qtd:1}]},
+  {id:3,nome:'Pacote Manutenção',servicos:'Corte + Hidratação',validade:'60 dias',preco:'R$ 120,00',servicosItens:[{servico:'Corte',qtd:1},{servico:'Hidratação',qtd:1}]},
 ];
+var pacotesClientes=[];
+var vendaPacoteCtx={pacoteIdx:null,forma:''};
+var _pacoteIdSeq=4;
+
+function parsePrecoPacote(preco){
+  if(typeof preco==='number')return preco;
+  return parseMoedaBR(String(preco||'0').indexOf('R$')>=0?preco:'R$ '+(preco||'0'));
+}
+function calcValidadePacote(validadeStr,dataCompra){
+  if(!validadeStr||String(validadeStr).toLowerCase().indexOf('sem validade')>=0)return null;
+  var m=String(validadeStr).match(/(\d+)/);
+  if(!m)return null;
+  var d=dataCompra?new Date(dataCompra):new Date();
+  if(isNaN(d.getTime()))d=new Date();
+  d.setDate(d.getDate()+parseInt(m[1],10));
+  return d.toISOString().split('T')[0];
+}
+function extrairMetaPacoteCatalogo(p){
+  if(p.servicosItens&&p.servicosItens.length){
+    var it=p.servicosItens[0];
+    var qtd=p.servicosItens.reduce(function(s,x){return s+(parseInt(x.qtd,10)||1);},0);
+    return{nome_servico:it.servico,quantidade_total:qtd};
+  }
+  var srv=String(p.servicos||'').trim();
+  var mx=srv.match(/^(.+?)\s*\(x(\d+)\)/i);
+  if(mx)return{nome_servico:mx[1].trim(),quantidade_total:parseInt(mx[2],10)||1};
+  var partes=srv.split(/\s*\+\s*/).filter(Boolean);
+  return{nome_servico:partes[0]||srv||p.nome,quantidade_total:Math.max(1,partes.length)};
+}
+function salvarPacotesClientesLocal(){
+  localStorage.setItem('aflor_pacotes_clientes',JSON.stringify(pacotesClientes));
+  syncPacotesLegacyStorage();
+}
+function syncPacotesLegacyStorage(){
+  var leg=pacotesClientes.map(function(pc){
+    return{
+      nome:pc.pacote_nome,cliente:pc.cliente_nome,tel:'',
+      servico:pc.nome_servico,total:pc.quantidade_total,usado:pc.quantidade_usada||0,
+      valor:pc.valor_pago,forma:pc.forma_pagamento,
+      dataCompra:pc.data_compra?new Date(pc.data_compra+'T12:00:00').toLocaleDateString('pt-BR'):'',
+      validade:pc.validade||'Sem validade',pacoteClienteId:pc.id
+    };
+  });
+  localStorage.setItem('flora_pacotes',JSON.stringify(leg));
+}
+function sincronizarUsadoDeLegacy(){
+  var leg=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+  pacotesClientes.forEach(function(pc){
+    var match=leg.find(function(l){
+      return l.cliente===pc.cliente_nome&&l.nome===pc.pacote_nome
+        &&(l.pacoteClienteId==null||l.pacoteClienteId===pc.id);
+    });
+    if(match)pc.quantidade_usada=match.usado||0;
+  });
+}
+function carregarPacotesClientesLocal(){
+  try{
+    var saved=localStorage.getItem('aflor_pacotes_clientes');
+    if(saved){
+      pacotesClientes=JSON.parse(saved)||[];
+    }else{
+      var leg=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+      if(leg.length){
+        pacotesClientes=leg.map(function(p,i){
+          return{
+            id:'loc_'+i+'_'+Date.now(),cliente_id:null,cliente_nome:p.cliente,
+            pacote_id:null,pacote_nome:p.nome,nome_servico:p.servico||p.nome,
+            quantidade_total:p.total||1,quantidade_usada:p.usado||0,
+            data_compra:new Date().toISOString().split('T')[0],
+            validade:null,valor_pago:parseFloat(p.valor)||0,forma_pagamento:p.forma||'Pix'
+          };
+        });
+        salvarPacotesClientesLocal();
+      }
+    }
+    sincronizarUsadoDeLegacy();
+  }catch(e){pacotesClientes=[];}
+}
+function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
+  var meta=extrairMetaPacoteCatalogo(pacoteCatalogo);
+  var valor=parsePrecoPacote(pacoteCatalogo.preco);
+  var hoje=new Date().toISOString().split('T')[0];
+  var reg={
+    id:'loc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+    cliente_id:clienteId||null,cliente_nome:clienteNome,
+    pacote_id:pacoteCatalogo.id,pacote_nome:pacoteCatalogo.nome,
+    nome_servico:meta.nome_servico,quantidade_total:meta.quantidade_total,
+    quantidade_usada:0,data_compra:hoje,
+    validade:calcValidadePacote(pacoteCatalogo.validade,hoje),
+    valor_pago:valor,forma_pagamento:formaPag||'Pix'
+  };
+  pacotesClientes.unshift(reg);
+  salvarPacotesClientesLocal();
+  lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
+  salvarPacoteClienteSupa(reg).then(function(supaId){
+    if(supaId){
+      reg.id=supaId;
+      salvarPacotesClientesLocal();
+    }
+  });
+  return reg;
+}
+function vendaPacoteSetForma(btn,forma){
+  vendaPacoteCtx.forma=forma;
+  document.querySelectorAll('.venda-pacote-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+  btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
+}
+function abrirVenderPacote(idx){
+  var p=pacotes[idx];
+  if(!p){showAlert('Pacote não encontrado.');return;}
+  vendaPacoteCtx={pacoteIdx:idx,forma:''};
+  var meta=extrairMetaPacoteCatalogo(p);
+  document.getElementById('venda-pacote-nome').textContent=p.nome;
+  document.getElementById('venda-pacote-servico').textContent=meta.nome_servico+' · '+meta.quantidade_total+' sessão(ões)';
+  document.getElementById('venda-pacote-valor').textContent=p.preco||fmtCaixa(parsePrecoPacote(p.preco));
+  var sel=document.getElementById('venda-pacote-cliente');
+  if(sel){
+    sel.innerHTML='<option value="">— Selecione o cliente —</option>'
+      +clientes.map(function(c,i){
+        return '<option value="'+i+'">'+c.nome+(c.tel?' — '+c.tel:'')+'</option>';
+      }).join('');
+  }
+  document.querySelectorAll('.venda-pacote-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+  openModal('modal-vender-pacote');
+}
+function confirmarVendaPacote(){
+  var idx=vendaPacoteCtx.pacoteIdx;
+  var p=typeof idx==='number'?pacotes[idx]:null;
+  if(!p){showAlert('Pacote não encontrado.');return;}
+  var sel=document.getElementById('venda-pacote-cliente');
+  var ci=parseInt(sel?.value,10);
+  if(isNaN(ci)||!clientes[ci]){showAlert('Selecione um cliente.');return;}
+  if(!vendaPacoteCtx.forma){showAlert('Selecione a forma de pagamento.');return;}
+  var c=clientes[ci];
+  venderPacoteParaCliente(p,c.nome,vendaPacoteCtx.forma,c.id||null);
+  closeModal('modal-vender-pacote');
+  renderPacotes();
+  showAlert('🎁 Pacote "'+p.nome+'" vendido para '+c.nome+'! Entrada registrada no caixa.');
+}
 
 function renderProdutos(search=''){
   const tb=document.getElementById('produtos-table');
@@ -6791,37 +7001,38 @@ function addProduto(){
 function renderPacotes(){
   const tb=document.getElementById('pacotes-table');
   if(!tb) return;
-  // Pacotes base (templates)
-  const pacotesClientes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-  const todos = [...pacotes.map(function(p){ return Object.assign({},p,{tipo:'template'}); }),
-                 ...pacotesClientes.map(function(p){ return Object.assign({},p,{tipo:'cliente'}); })];
-  if(!todos.length){
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum pacote cadastrado</td></tr>';
-    return;
-  }
-  tb.innerHTML=todos.map(function(p,i){
-    var usado = p.usado||0;
-    var total = p.total||0;
-    var restante = total - usado;
-    if(p.tipo==='cliente'){
-      return '<tr>'
-        +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+p.cliente+'</span></td>'
-        +'<td style="font-size:12px;color:#666">'+p.servico+'</td>'
-        +'<td><div style="display:flex;align-items:center;gap:6px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(restante>0?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+usado+'/'+total+'</span></div></td>'
-        +'<td><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' restante(s)</span></td>'
-        +'<td style="font-weight:700">R$ '+parseFloat(p.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td>'
-        +'<td><button onclick="deletePacoteCliente('+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px">🗑</button></td>'
-        +'</tr>';
-    }
-    return '<tr>'
-      +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#aaa">Template</span></td>'
+  sincronizarUsadoDeLegacy();
+  var linhas=[];
+  pacotes.forEach(function(p,i){
+    linhas.push('<tr>'
+      +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#aaa">Catálogo</span></td>'
       +'<td style="font-size:12px;color:#666">'+p.servicos+'</td>'
       +'<td><span class="badge badge-gray">'+p.validade+'</span></td>'
       +'<td>—</td>'
       +'<td style="font-weight:700">'+p.preco+'</td>'
-      +'<td><button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px">🗑</button></td>'
-      +'</tr>';
-  }).join('');
+      +'<td style="white-space:nowrap">'
+      +'<button class="btn btn-primary btn-sm" onclick="abrirVenderPacote('+i+')" style="margin-right:6px;font-size:11px;padding:5px 10px">💳 Vender</button>'
+      +'<button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px" title="Remover">🗑</button>'
+      +'</td></tr>');
+  });
+  pacotesClientes.forEach(function(p,i){
+    var usado=p.quantidade_usada||0;
+    var total=p.quantidade_total||1;
+    var restante=total-usado;
+    linhas.push('<tr>'
+      +'<td style="font-weight:600;font-size:13px">'+p.pacote_nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+p.cliente_nome+'</span></td>'
+      +'<td style="font-size:12px;color:#666">'+p.nome_servico+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:6px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(restante>0?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+usado+'/'+total+'</span></div></td>'
+      +'<td><span style="font-size:11px;padding:3px 8px;border-radius:20px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' restante(s)</span></td>'
+      +'<td style="font-weight:700">'+fmtCaixa(p.valor_pago)+'</td>'
+      +'<td><button onclick="deletePacoteCliente('+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px" title="Remover">🗑</button></td>'
+      +'</tr>');
+  });
+  if(!linhas.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum pacote cadastrado</td></tr>';
+    return;
+  }
+  tb.innerHTML=linhas.join('');
 }
 
 function deletePacote(i){
@@ -6829,13 +7040,11 @@ function deletePacote(i){
 }
 
 function deletePacoteCliente(i){
-  var lista = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-  // i inclui os templates, precisamos pular os templates
-  var realIdx = i - pacotes.length;
-  if(realIdx<0||!lista[realIdx]) return;
-  if(confirm('Remover pacote de '+lista[realIdx].cliente+'?')){
-    lista.splice(realIdx,1);
-    localStorage.setItem('flora_pacotes',JSON.stringify(lista));
+  if(i<0||!pacotesClientes[i])return;
+  var pc=pacotesClientes[i];
+  if(confirm('Remover pacote de '+pc.cliente_nome+'?')){
+    pacotesClientes.splice(i,1);
+    salvarPacotesClientesLocal();
     renderPacotes();
     showAlert('Pacote removido!');
   }
@@ -6860,26 +7069,19 @@ function addPacote(){
   var servicosStr = servicosList2.map(function(s){ return s.servico+(s.qtd>1?' (x'+s.qtd+')':''); }).join(' + ');
 
   // Adicionar como template
-  pacotes.unshift({nome, servicos:servicosStr||'Serviços incluídos', validade, preco:'R$ '+precoNum.toFixed(2).replace('.',',')});
+  pacotes.unshift({
+    id:_pacoteIdSeq++,nome,servicos:servicosStr||'Serviços incluídos',
+    servicosItens:servicosList2,validade,
+    preco:'R$ '+precoNum.toFixed(2).replace('.',',')
+  });
 
-  // Vender para cliente
+  // Vender para cliente (opcional, no mesmo modal de cadastro)
   var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
-  var clienteTel=(document.getElementById('pacote-cliente-tel').value||'').trim();
   var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
 
   if(clienteNome && precoNum>0){
-    // Salvar pacote do cliente no localStorage
-    var listaPacs = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-    listaPacs.push({
-      nome:nome, cliente:clienteNome, tel:clienteTel,
-      servico:servicosStr, total:totalSessoes, usado:0,
-      valor:precoNum, forma:formaPag,
-      dataCompra:new Date().toLocaleDateString('pt-BR'),
-      validade:validade
-    });
-    localStorage.setItem('flora_pacotes',JSON.stringify(listaPacs));
-    // Lançar no caixa
-    lancarEntradaCaixaAuto('Pacote — '+nome+' — '+clienteNome, precoNum, formaPag.toLowerCase());
+    var novoPac=pacotes[0];
+    venderPacoteParaCliente(novoPac,clienteNome,formaPag,null);
   }
 
   closeModal('modal-pacote');
@@ -8493,6 +8695,7 @@ renderServicos();
 renderColabs();
 renderAgenda();
 renderProdutos();
+carregarPacotesClientesLocal();
 renderPacotes();
 syncRetornosToClientes();
 renderClientes();
