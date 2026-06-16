@@ -4002,7 +4002,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full">
         <label>🔐 Senha de acesso</label>
         <div style="font-size:11px;color:#888;margin-bottom:4px">Senha que o colaborador vai usar para entrar no sistema (mínimo 4 caracteres)</div>
-        <input type="password" id="colab-senha" placeholder="Mínimo 4 caracteres"/>
+        <div style="position:relative">
+          <input type="password" id="colab-senha" placeholder="Mínimo 4 caracteres" style="width:100%;box-sizing:border-box;padding-right:38px"/>
+          <span onclick="toggleSenhaVisivel('colab-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+        </div>
       </div>
       <!-- Acesso ao sistema -->
       <div class="form-group full">
@@ -8500,6 +8503,12 @@ function atualizarIniciais(){
   var txt=document.getElementById('colab-avatar-txt');
   if(txt&&!colabFotoAtual)txt.textContent=iniciais||'?';
 }
+function toggleSenhaVisivel(id,icone){
+  var inp=document.getElementById(id);
+  if(!inp)return;
+  if(inp.type==='password'){inp.type='text';icone.textContent='🙈';}
+  else{inp.type='password';icone.textContent='👁';}
+}
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
   if(!nome){showAlert('Preencha o nome do colaborador!');return;}
@@ -8603,7 +8612,10 @@ function editarColab(idx){
       <div class="form-group full">
         <label>🔐 Alterar senha de acesso</label>
         <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual</div>
-        <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar"/>
+        <div style="position:relative">
+          <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar" style="width:100%;box-sizing:border-box;padding-right:38px"/>
+          <span onclick="toggleSenhaVisivel('edit-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+        </div>
       </div>
       <!-- Permissões -->
       <div class="form-group full">
