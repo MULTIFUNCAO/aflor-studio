@@ -1416,6 +1416,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div id="caixa-movimentos-lista"><div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px">Nenhuma movimentacao ainda.</div></div>
     </div>
+  </div>
   <div id="caixa-fechamento-view" style="display:none">
     <div class="table-card" style="max-width:520px;margin:0 auto">
       <div style="padding:24px;border-bottom:1px solid #f5f5f5;text-align:center">
@@ -1430,7 +1431,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
     </div>
   </div>
-</div>
     </div><!-- /page-caixa -->
 
     <!-- REMUNERAÇÕES -->
@@ -9717,6 +9717,35 @@ async function carregarCaixaSupa(){
     atualizarTotaisCaixa();
   }catch(e){console.log('err carregar caixa supa',e);}
 }
+async function sincronizarAberturaCaixaSupa(troco,horaAbertura){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    await supa.from('caixa_estado').upsert({salao_id:window.SALAO_ID,aberto:true,troco:troco,hora_abertura:horaAbertura});
+  }catch(e){console.log('err abrir caixa supa',e);}
+}
+async function sincronizarMovimentoCaixaSupa(mov){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('caixa_movimentos').insert([{
+      salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
+      valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin')
+    }]).select('id');
+    if(r.data&&r.data[0])mov.supaId=r.data[0].id;
+  }catch(e){console.log('err salvar mov caixa supa',e);}
+}
+async function sincronizarRemocaoMovimentoCaixaSupa(supaId){
+  try{
+    if(!supa||!window.SALAO_ID||!supaId)return;
+    await supa.from('caixa_movimentos').delete().eq('id',supaId).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err remover mov caixa supa',e);}
+}
+async function sincronizarFechamentoCaixaSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
+    await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err fechar caixa supa',e);}
+}
 function abrirCaixa(){
   caixaNavIdx = 0;
   var troco=parseFloat(document.getElementById('caixa-troco-input').value)||0;
@@ -9729,12 +9758,7 @@ function abrirCaixa(){
   document.getElementById('caixa-aberto-view').style.display='block';
   document.getElementById('caixa-fechamento-view').style.display='none';
   atualizarTotaisCaixa();showAlert('Caixa aberto!');
-  (async function(){
-    try{
-      if(!supa||!window.SALAO_ID)return;
-      await supa.from('caixa_estado').upsert({salao_id:window.SALAO_ID,aberto:true,troco:troco,hora_abertura:caixaState.horaAbertura.toISOString()});
-    }catch(e){console.log('err abrir caixa supa',e);}
-  })();
+  sincronizarAberturaCaixaSupa(troco,caixaState.horaAbertura.toISOString()).catch(function(e){console.log(e);});
 }
 function atualizarTotaisCaixa(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
@@ -9793,29 +9817,13 @@ function confirmarMovimento(){
   caixaState.movimentos.push(mov);
   fecharModalMovimento();atualizarTotaisCaixa();
   showAlert(caixaState.tipoAtual==='entrada'?'Entrada registrada!':'Saida registrada!');
-  (async function(){
-    try{
-      if(!supa||!window.SALAO_ID)return;
-      var r=await supa.from('caixa_movimentos').insert([{
-        salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
-        valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin')
-      }]).select('id');
-      if(r.data&&r.data[0])mov.supaId=r.data[0].id;
-    }catch(e){console.log('err salvar mov caixa supa',e);}
-  })();
+  sincronizarMovimentoCaixaSupa(mov).catch(function(e){console.log(e);});
 }
 function removerMovimento(id){
   var mov=caixaState.movimentos.find(function(m){return m.id===id;});
   caixaState.movimentos=caixaState.movimentos.filter(function(m){return m.id!==id;});
   atualizarTotaisCaixa();
-  if(mov&&mov.supaId){
-    (async function(){
-      try{
-        if(!supa||!window.SALAO_ID)return;
-        await supa.from('caixa_movimentos').delete().eq('id',mov.supaId).eq('salao_id',window.SALAO_ID);
-      }catch(e){console.log('err remover mov caixa supa',e);}
-    })();
-  }
+  if(mov&&mov.supaId)sincronizarRemocaoMovimentoCaixaSupa(mov.supaId).catch(function(e){console.log(e);});
 }
 function fecharCaixaConfirmar(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
@@ -9977,21 +9985,20 @@ function limparHistoricoCaixa(){
 }
 
 function confirmarFechamentoCaixa(){
-  salvarHistoricoCaixa(caixaState.movimentos, caixaState.troco);
+  try{salvarHistoricoCaixa(caixaState.movimentos,caixaState.troco);}catch(e){console.log('err salvar historico caixa',e);}
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;
-  document.getElementById('caixa-troco-input').value='0';
-  document.getElementById('caixa-fechamento-view').style.display='none';
-  document.getElementById('caixa-aberto-view').style.display='none';
-  document.getElementById('caixa-fechado-view').style.display='block';
+  caixaNavIdx=0;
+  var elTrocoInput=document.getElementById('caixa-troco-input');
+  if(elTrocoInput)elTrocoInput.value='0';
+  var elFechamento=document.getElementById('caixa-fechamento-view');
+  var elAberto=document.getElementById('caixa-aberto-view');
+  var elFechado=document.getElementById('caixa-fechado-view');
+  if(elFechamento)elFechamento.style.display='none';
+  if(elAberto)elAberto.style.display='none';
+  if(elFechado)elFechado.style.display='block';
   renderHistoricoCaixa();
   showAlert('Caixa fechado!');
-  (async function(){
-    try{
-      if(!supa||!window.SALAO_ID)return;
-      await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
-      await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
-    }catch(e){console.log('err fechar caixa supa',e);}
-  })();
+  sincronizarFechamentoCaixaSupa().catch(function(e){console.log(e);});
 }
 
 
