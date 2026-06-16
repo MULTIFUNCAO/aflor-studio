@@ -6716,6 +6716,7 @@ function abrirAgendaPopup(key,dados,event){
   `;
   document.body.appendChild(popup);
   agendaPopupAtivo=key;
+  popupFormaSinal=null;
 }
 var pagamentoCtx=null;
 
@@ -6970,7 +6971,7 @@ function agSetFormaSinal(btn, forma){
   btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
 }
 
-var popupFormaSinal = '';
+var popupFormaSinal = null;
 function popupSetFormaSinal(btn, forma){
   popupFormaSinal = forma;
   if(agendaPopupAtivo)sincronizarFormaSinalAgenda(agendaPopupAtivo,forma);
@@ -6995,9 +6996,8 @@ function toggleSinalPopup(key){
   var sinalVal=parseFloat(document.getElementById('popup-sinal-valor')?.value)||0;
   sincronizarSinalLocal(key,sinalVal);
   var eraPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  if(!eraPago&&sinalVal>0){
-    var formaCheck=a.formaSinal||popupFormaSinal||'';
-    if(!formaCheck){
+  if(!eraPago){
+    if(!popupFormaSinal){
       showAlert('Escolha a forma de pagamento do sinal (Pix, Dinheiro ou Link)');
       return;
     }
@@ -7020,7 +7020,7 @@ function toggleSinalPopup(key){
     if(!novoPago)c.status='Pendente';
   }
   if(novoPago&&sinalVal>0){
-    var formaSinal=a.formaSinal||popupFormaSinal||'';
+    var formaSinal=popupFormaSinal;
     sincronizarFormaSinalAgenda(key,formaSinal);
     var movId=lancarSinalCaixaSeNecessario(a,sinalVal,formaSinal);
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
