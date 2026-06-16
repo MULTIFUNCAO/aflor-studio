@@ -9714,10 +9714,72 @@ var modoEdicaoMovimentoId=null;
 var modoEdicaoMovArrayIdx=null;
 var suprimirChangeCatMov=false;
 var caixaHistMovIdx=-1;
+var caixaCatParaServicoCats={
+  'Servico de cabelo':['Cabelo'],
+  'Manicure/Pedicure':['Unhas'],
+  'Estetica':['Estética','Sobrancelhas','Cílios','Depilação','Maquiagem','Piercign']
+};
+function caixaCatUsaCatalogo(cat){return !!(cat&&caixaCatParaServicoCats[cat]);}
+function caixaCatsServicoPara(cat){return caixaCatParaServicoCats[cat]||[];}
+function lerDescricaoMov(){
+  var sel=document.getElementById('mov-servico-select');
+  var inp=document.getElementById('mov-descricao');
+  if(sel&&sel.style.display!=='none'&&sel.options.length){
+    var txt=sel.options[sel.selectedIndex]?.text||'';
+    return txt.split(' — ')[0].trim();
+  }
+  return inp?inp.value.trim():'';
+}
+function onMovServicoChange(){
+  var sel=document.getElementById('mov-servico-select');
+  if(!sel||sel.style.display==='none')return;
+  var preco=parseFloat(sel.value);
+  if(preco>0){
+    var elValor=document.getElementById('mov-valor');
+    if(elValor)elValor.value=preco;
+  }
+}
+function atualizarCampoServicoMov(selecionado){
+  var cat=document.getElementById('mov-categoria')?.value||'';
+  var sel=document.getElementById('mov-servico-select');
+  var inp=document.getElementById('mov-descricao');
+  if(!sel||!inp)return;
+  var filtrados=[];
+  if(caixaCatUsaCatalogo(cat)){
+    var catsServ=caixaCatsServicoPara(cat);
+    filtrados=(typeof servicos!=='undefined'?servicos:[]).filter(function(s){return catsServ.indexOf(s.cat)>=0;});
+  }
+  if(!filtrados.length){
+    sel.style.display='none';
+    inp.style.display='block';
+    if(selecionado!==undefined)inp.value=selecionado;
+    else if(!emEdicaoMovimento())inp.value='';
+    return;
+  }
+  sel.innerHTML=filtrados.map(function(s){return'<option value="'+parseFloat(String(s.preco).replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';}).join('');
+  if(selecionado){
+    var opt=[...sel.options].find(function(o){return o.text.split(' — ')[0]===selecionado;});
+    if(opt){
+      sel.style.display='block';
+      inp.style.display='none';
+      sel.value=opt.value;
+      return;
+    }
+    sel.style.display='none';
+    inp.style.display='block';
+    inp.value=selecionado;
+    return;
+  }
+  sel.style.display='block';
+  inp.style.display='none';
+  sel.selectedIndex=0;
+  if(!emEdicaoMovimento())onMovServicoChange();
+}
 function emEdicaoMovimento(){return modoEdicaoMovimentoId!=null||modoEdicaoMovArrayIdx!=null;}
 function onCategoriaMovChange(){
-  if(suprimirChangeCatMov||emEdicaoMovimento())return;
-  document.getElementById('mov-descricao').value='';
+  if(suprimirChangeCatMov)return;
+  var descAtual=emEdicaoMovimento()?lerDescricaoMov():undefined;
+  atualizarCampoServicoMov(descAtual);
 }
 function definirCategoriaMov(val){
   var catSel=document.getElementById('mov-categoria');
@@ -9890,11 +9952,12 @@ function abrirModalMovimento(tipo,histIdx){
   var btn=document.getElementById('mov-confirmar-btn');
   btn.textContent=tipo==='entrada'?'Registrar Entrada':'Registrar Saida';
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
-  document.getElementById('mov-valor').value='';document.getElementById('mov-descricao').value='';
+  document.getElementById('mov-valor').value='';
   popularSelectProfMovimento('');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   definirCategoriaMov('');
+  atualizarCampoServicoMov('');
   document.querySelectorAll('.mov-pag-btn').forEach(function(b){b.style.borderColor='#e5e5e5';b.style.background='#fff';b.style.color='var(--dark)';});
   var modal=document.getElementById('modal-movimento-caixa');
   modal.style.display='flex';
@@ -9908,11 +9971,11 @@ function abrirModalMovimentoPreenchido(mov){
   btn.textContent='Salvar Alteração';
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
   document.getElementById('mov-valor').value=mov.valor;
-  document.getElementById('mov-descricao').value=mov.descricao||'';
   popularSelectProfMovimento(mov.profissional||'');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   definirCategoriaMov(mov.categoria||'');
+  atualizarCampoServicoMov(mov.descricao||'');
   document.querySelectorAll('.mov-pag-btn').forEach(function(b){
     if(b.getAttribute('data-forma')===mov.forma)selecionarForma(b);
     else{b.style.borderColor='#e5e5e5';b.style.background='#fff';b.style.color='var(--dark)';}
@@ -9959,12 +10022,12 @@ function selecionarForma(btn){
 }
 function confirmarMovimento(){
   var cat=document.getElementById('mov-categoria').value;
-  var desc=document.getElementById('mov-descricao').value.trim();
+  var desc=lerDescricaoMov();
   var valor=parseFloat(document.getElementById('mov-valor').value);
   var forma=caixaState.formaAtual;
   var profissional=lerProfissionalMov();
   if(!cat){showAlert('Selecione uma categoria!');return;}
-  if(!desc){showAlert('Digite uma descricao!');return;}
+  if(!desc){showAlert('Selecione ou informe o serviço!');return;}
   if(!valor||valor<=0){showAlert('Digite um valor valido!');return;}
   if(!forma){showAlert('Selecione a forma de pagamento!');return;}
   if(modoEdicaoMovimentoId!=null||modoEdicaoMovArrayIdx!=null){
@@ -10324,7 +10387,8 @@ function renderCardDetalhe(tipo){
         </select>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">DESCRIÇÃO</label>
+        <label id="mov-servico-label" style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">SERVIÇO</label>
+        <select id="mov-servico-select" onchange="onMovServicoChange()" style="display:none;width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;background:#fff"></select>
         <input id="mov-descricao" type="text" placeholder="Ex: Pagamento serviço..." style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px">
       </div>
       <div>
