@@ -6995,6 +6995,13 @@ function toggleSinalPopup(key){
   var sinalVal=parseFloat(document.getElementById('popup-sinal-valor')?.value)||0;
   sincronizarSinalLocal(key,sinalVal);
   var eraPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
+  if(!eraPago&&sinalVal>0){
+    var formaCheck=a.formaSinal||popupFormaSinal||'';
+    if(!formaCheck){
+      showAlert('Escolha a forma de pagamento do sinal (Pix, Dinheiro ou Link)');
+      return;
+    }
+  }
   var novoPago=!eraPago;
   a.sinalPago=novoPago;
   a.sinal_status=novoPago?'pago':'pendente';
@@ -7014,16 +7021,6 @@ function toggleSinalPopup(key){
   }
   if(novoPago&&sinalVal>0){
     var formaSinal=a.formaSinal||popupFormaSinal||'';
-    if(!formaSinal){
-      showAlert('Selecione a forma de pagamento do sinal (Pix, Dinheiro ou Link).');
-      a.sinalPago=eraPago;
-      a.sinal_status=eraPago?'pago':'pendente';
-      if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
-        agendamentosPorData[dataKey][key].sinalPago=eraPago;
-        agendamentosPorData[dataKey][key].sinal_status=eraPago?'pago':'pendente';
-      }
-      return;
-    }
     sincronizarFormaSinalAgenda(key,formaSinal);
     var movId=lancarSinalCaixaSeNecessario(a,sinalVal,formaSinal);
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
