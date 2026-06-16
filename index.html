@@ -4019,15 +4019,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- Acesso ao sistema -->
       <div class="form-group full">
         <label>Permissões de acesso</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-agenda" checked style="accent-color:#111"/> Agenda</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-clientes" checked style="accent-color:#111"/> Clientes</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-financeiro" style="accent-color:#111"/> Financeiro</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-comandas" checked style="accent-color:#111"/> Comandas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-relatorios" style="accent-color:#111"/> Relatórios</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-metas" checked style="accent-color:#111"/> Metas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px 8px 22px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:11px;grid-column:1/-1;color:#666"><input type="checkbox" id="chk-perm-caixa-total" style="accent-color:#111"/> ↳ Ver valor total do Caixa</label>
-        </div>
+        <div id="colab-permissoes-wrap" class="permissoes-wrap" style="margin-top:6px;max-height:320px;overflow-y:auto"></div>
       </div>
       <!-- Observações -->
       <div class="form-group full">
@@ -4581,6 +4573,10 @@ function openModal(id){
     var cn=document.getElementById('srv-cat-nova'); if(cn){cn.style.display='none';cn.value='';}
     var wrap=document.getElementById('srv-profs-wrap');
     if(wrap){wrap.querySelectorAll('.srv-prof-row').forEach(function(r,i){if(i>0)r.remove();});var first=wrap.querySelector('select');if(first)first.value='';}
+  }
+  if(id === 'modal-colab'){
+    var wrap=document.getElementById('colab-permissoes-wrap');
+    if(wrap)renderPermissoesUI(wrap,getPermissoesDefault());
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -5905,7 +5901,7 @@ async function carregarColaboradoresSupa(){
         return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
           comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
           foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||'',
-          permissoes:row.permissoes||undefined};
+          permissoes:row.permissoes?normalizarPermissoes(row.permissoes):getPermissoesDefault()};
       });
       // Cache para uso no login (antes de ter SALAO_ID na próxima sessão)
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
@@ -8516,6 +8512,160 @@ function atualizarIniciais(){
   var txt=document.getElementById('colab-avatar-txt');
   if(txt&&!colabFotoAtual)txt.textContent=iniciais||'?';
 }
+var PERMISSOES_ACESSO={
+  agenda:{label:'Agenda',sub_permissoes:[
+    {id:'agenda_visualizar_propria',label:'Visualizar apenas a própria agenda'},
+    {id:'agenda_visualizar_todas',label:'Visualizar agenda de todos os colaboradores'},
+    {id:'agenda_criar_editar',label:'Criar, alterar e mover agendamentos'},
+    {id:'agenda_bloquear_horarios',label:'Bloquear horários e gerenciar folgas'}
+  ]},
+  clientes:{label:'Clientes',sub_permissoes:[
+    {id:'clientes_visualizar',label:'Visualizar lista de clientes'},
+    {id:'clientes_cadastrar_editar',label:'Cadastrar e editar dados de clientes'},
+    {id:'clientes_exportar_dados',label:'Exportar lista de contatos (Download de base)'},
+    {id:'clientes_historico_fichas',label:'Acessar histórico de procedimentos e fichas de anamnese'}
+  ]},
+  comandas:{label:'Comandas',sub_permissoes:[
+    {id:'comandas_abrir',label:'Abrir novas comandas de atendimento'},
+    {id:'comandas_add_itens',label:'Adicionar serviços e produtos na comanda'},
+    {id:'comandas_aplicar_desconto',label:'Aplicar descontos ou cortesias'},
+    {id:'comandas_excluir_itens',label:'Excluir itens de uma comanda aberta'}
+  ]},
+  financeiro:{label:'Financeiro',sub_permissoes:[
+    {id:'fin_receber_pagamentos',label:'Receber pagamentos e fechar comandas'},
+    {id:'fin_fluxo_caixa',label:'Abrir, sangrar, suprir e fechar o Caixa do dia'},
+    {id:'fin_ver_saldo_caixa',label:'Ver valor total do Caixa atual'},
+    {id:'fin_contas_pagar_receber',label:'Gerenciar Contas a Pagar e Receber (Fornecedores/Custos)'},
+    {id:'fin_estornos',label:'Autorizar estornos, devoluções e cancelamentos'},
+    {id:'fin_config_taxas',label:'Configurar taxas de cartão, Pix e meios de pagamento'},
+    {id:'fin_comissoes_vales',label:'Gerenciar vales, adiantamentos e extratos de comissão da equipe'},
+    {id:'fin_faturamento_total',label:'Visualizar faturamento total, lucros líquidos e saldo bancário'},
+    {id:'fin_modificar_passado',label:'Editar ou excluir lançamentos financeiros retroativos (Segurança)'}
+  ]},
+  relatorios:{label:'Relatórios',sub_permissoes:[
+    {id:'rel_desempenho_profissional',label:'Ver relatórios de desempenho por colaborador'},
+    {id:'rel_servicos_mais_vendidos',label:'Ver relatórios de serviços e produtos mais rentáveis'},
+    {id:'rel_auditoria_sistema',label:'Acessar relatório de auditoria (quem alterou o que no sistema)'}
+  ]},
+  metas:{label:'Metas',sub_permissoes:[
+    {id:'metas_visualizar_propria',label:'Visualizar apenas suas próprias metas de faturamento'},
+    {id:'metas_visualizar_geral',label:'Visualizar o painel de metas de todo o salão'},
+    {id:'metas_estipular',label:'Criar, editar e estipular metas para a equipe'}
+  ]}
+};
+var PERM_DEFAULT={
+  agenda:{ativo:true,subs:{agenda_visualizar_propria:true,agenda_visualizar_todas:false,agenda_criar_editar:false,agenda_bloquear_horarios:false}},
+  clientes:{ativo:true,subs:{clientes_visualizar:true,clientes_cadastrar_editar:false,clientes_exportar_dados:false,clientes_historico_fichas:false}},
+  comandas:{ativo:false,subs:{comandas_abrir:false,comandas_add_itens:false,comandas_aplicar_desconto:false,comandas_excluir_itens:false}},
+  financeiro:{ativo:false,subs:{fin_receber_pagamentos:false,fin_fluxo_caixa:false,fin_ver_saldo_caixa:false,fin_contas_pagar_receber:false,fin_estornos:false,fin_config_taxas:false,fin_comissoes_vales:false,fin_faturamento_total:false,fin_modificar_passado:false}},
+  relatorios:{ativo:false,subs:{rel_desempenho_profissional:false,rel_servicos_mais_vendidos:false,rel_auditoria_sistema:false}},
+  metas:{ativo:true,subs:{metas_visualizar_propria:true,metas_visualizar_geral:false,metas_estipular:false}}
+};
+function getPermissoesDefault(){return JSON.parse(JSON.stringify(PERM_DEFAULT));}
+function normalizarPermissoes(p){
+  var out=getPermissoesDefault();
+  if(!p||typeof p!=='object')return out;
+  if(p.agenda&&typeof p.agenda==='object'&&p.agenda.subs!==undefined){
+    Object.keys(PERM_DEFAULT).forEach(function(mod){
+      if(p[mod]&&typeof p[mod]==='object'){
+        if(typeof p[mod].ativo==='boolean')out[mod].ativo=p[mod].ativo;
+        if(p[mod].subs&&typeof p[mod].subs==='object'){
+          Object.keys(out[mod].subs).forEach(function(subId){
+            if(p[mod].subs[subId]!==undefined)out[mod].subs[subId]=!!p[mod].subs[subId];
+          });
+        }
+      }
+    });
+    return out;
+  }
+  if(p.modulos||p.sub){
+    Object.keys(PERM_DEFAULT).forEach(function(mod){
+      if(p.modulos&&p.modulos[mod]!==undefined)out[mod].ativo=!!p.modulos[mod];
+    });
+    ['agenda','clientes','comandas','financeiro','relatorios','metas'].forEach(function(k){
+      if(typeof p[k]==='boolean')out[k].ativo=!!p[k];
+    });
+    if(p.sub&&typeof p.sub==='object'){
+      Object.keys(p.sub).forEach(function(subId){
+        Object.keys(out).forEach(function(mod){
+          if(out[mod].subs[subId]!==undefined)out[mod].subs[subId]=!!p.sub[subId];
+        });
+      });
+    }
+    if(p.caixaVerTotal){out.financeiro.ativo=true;out.financeiro.subs.fin_ver_saldo_caixa=true;}
+    return out;
+  }
+  return out;
+}
+function temPermissao(colab,subId){
+  if(!colab||!colab.permissoes)return false;
+  for(var mod in colab.permissoes){
+    var m=colab.permissoes[mod];
+    if(m&&m.ativo&&m.subs&&m.subs[subId])return true;
+  }
+  return false;
+}
+function renderPermissoesUI(container,permissoes){
+  if(!container)return;
+  var p=normalizarPermissoes(permissoes);
+  var html='';
+  Object.keys(PERMISSOES_ACESSO).forEach(function(modKey){
+    var mod=PERMISSOES_ACESSO[modKey];
+    var modOn=!!(p[modKey]&&p[modKey].ativo);
+    html+='<div class="perm-mod-block" style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:8px;background:#f8f8f8;overflow:hidden">';
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:10px 12px">';
+    html+='<input type="checkbox" id="perm-'+modKey+'-ativo"'+(modOn?' checked':'')+' style="accent-color:#111;flex-shrink:0"/>';
+    html+='<span class="perm-mod-toggle" data-mod="'+modKey+'" style="flex:1;font-weight:700;font-size:13px;cursor:pointer;user-select:none">'+mod.label+'</span>';
+    html+='</div>';
+    html+='<div class="perm-sub-wrap" data-mod="'+modKey+'" style="display:none;padding:0 12px 10px 24px">';
+    mod.sub_permissoes.forEach(function(sp){
+      var checked=!!(p[modKey]&&p[modKey].subs&&p[modKey].subs[sp.id]);
+      html+='<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:4px 0;font-size:12px;color:#444;line-height:1.35;margin:0;opacity:'+(modOn?'1':'0.5')+'">';
+      html+='<input type="checkbox" id="perm-sub-'+sp.id+'"'+(checked?' checked':'')+(modOn?'':' disabled')+' style="accent-color:#111;margin-top:2px;flex-shrink:0"/>';
+      html+='<span>'+sp.label+'</span></label>';
+    });
+    html+='</div></div>';
+  });
+  container.innerHTML=html;
+  container.onclick=function(e){
+    var tg=e.target;
+    if(tg.classList&&tg.classList.contains('perm-mod-toggle')){
+      var mod=tg.getAttribute('data-mod');
+      var wrap=container.querySelector('.perm-sub-wrap[data-mod="'+mod+'"]');
+      if(wrap)wrap.style.display=wrap.style.display==='none'?'block':'none';
+    }
+  };
+  container.onchange=function(e){
+    var tg=e.target;
+    if(!tg.id||tg.id.indexOf('perm-')!==0)return;
+    if(tg.id.indexOf('-ativo')>0&&tg.id.indexOf('perm-sub-')!==0){
+      var modKey=tg.id.replace('perm-','').replace('-ativo','');
+      var modDef=PERMISSOES_ACESSO[modKey];
+      if(!modDef)return;
+      modDef.sub_permissoes.forEach(function(sp){
+        var el=container.querySelector('#perm-sub-'+sp.id);
+        if(!el)return;
+        el.disabled=!tg.checked;
+        var lbl=el.closest('label');
+        if(lbl)lbl.style.opacity=tg.checked?'1':'0.5';
+        if(!tg.checked)el.checked=false;
+      });
+    }
+  };
+}
+function lerPermissoesDoRoot(root){
+  if(!root)return getPermissoesDefault();
+  var out=getPermissoesDefault();
+  Object.keys(PERM_DEFAULT).forEach(function(mod){
+    var mc=root.querySelector('#perm-'+mod+'-ativo');
+    out[mod].ativo=mc?mc.checked:false;
+    PERMISSOES_ACESSO[mod].sub_permissoes.forEach(function(sp){
+      var el=root.querySelector('#perm-sub-'+sp.id);
+      out[mod].subs[sp.id]=el?el.checked:false;
+    });
+  });
+  return out;
+}
 function toggleSenhaVisivel(id,icone){
   var inp=document.getElementById(id);
   if(!inp)return;
@@ -8523,17 +8673,7 @@ function toggleSenhaVisivel(id,icone){
   else{inp.type='password';icone.textContent='👁';}
 }
 function lerPermissoesDoForm(){
-  var root=document.getElementById('modal-colab');
-  function chk(id){return !!root?.querySelector('#'+id)?.checked;}
-  return {
-    agenda:chk('chk-perm-agenda'),
-    clientes:chk('chk-perm-clientes'),
-    financeiro:chk('chk-perm-financeiro'),
-    comandas:chk('chk-perm-comandas'),
-    relatorios:chk('chk-perm-relatorios'),
-    metas:chk('chk-perm-metas'),
-    caixaVerTotal:chk('chk-perm-caixa-total')
-  };
+  return lerPermissoesDoRoot(document.getElementById('modal-colab'));
 }
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
@@ -8647,15 +8787,7 @@ function editarColab(idx){
       <!-- Permissões -->
       <div class="form-group full">
         <label>Permissões de acesso</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-agenda" style="accent-color:#111"/> Agenda</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-clientes" style="accent-color:#111"/> Clientes</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-financeiro" style="accent-color:#111"/> Financeiro</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-comandas" style="accent-color:#111"/> Comandas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-relatorios" style="accent-color:#111"/> Relatórios</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-metas" style="accent-color:#111"/> Metas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px 8px 22px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:11px;grid-column:1/-1;color:#666"><input type="checkbox" id="chk-perm-caixa-total" style="accent-color:#111"/> ↳ Ver valor total do Caixa</label>
-        </div>
+        <div id="edit-permissoes-wrap" class="permissoes-wrap" style="margin-top:6px;max-height:320px;overflow-y:auto"></div>
       </div>
       <!-- Observações -->
       <div class="form-group full">
@@ -8672,15 +8804,7 @@ function editarColab(idx){
     </div>
   </div>`;
   m.classList.add('open');
-  var p=c.permissoes||{};
-  function setPermChk(id,val){var el=m.querySelector('#'+id);if(el)el.checked=!!val;}
-  setPermChk('chk-perm-agenda',p.agenda!==undefined?p.agenda:true);
-  setPermChk('chk-perm-clientes',p.clientes!==undefined?p.clientes:true);
-  setPermChk('chk-perm-financeiro',p.financeiro!==undefined?p.financeiro:false);
-  setPermChk('chk-perm-comandas',p.comandas!==undefined?p.comandas:true);
-  setPermChk('chk-perm-relatorios',p.relatorios!==undefined?p.relatorios:false);
-  setPermChk('chk-perm-metas',p.metas!==undefined?p.metas:true);
-  setPermChk('chk-perm-caixa-total',p.caixaVerTotal!==undefined?p.caixaVerTotal:false);
+  renderPermissoesUI(m.querySelector('#edit-permissoes-wrap'),c.permissoes);
 }
 function editAtualizarIniciais(){
   var nome=document.getElementById('edit-nome')?.value||'';
@@ -8716,15 +8840,7 @@ function salvarEdicaoColab(idx){
   var novaSenha=document.getElementById('edit-senha')?.value||'';
   if(novaSenha)c.senha=novaSenha;
   var mEdit=document.getElementById('modal-editar-colab');
-  c.permissoes={
-    agenda:mEdit.querySelector('#chk-perm-agenda').checked,
-    clientes:mEdit.querySelector('#chk-perm-clientes').checked,
-    financeiro:mEdit.querySelector('#chk-perm-financeiro').checked,
-    comandas:mEdit.querySelector('#chk-perm-comandas').checked,
-    relatorios:mEdit.querySelector('#chk-perm-relatorios').checked,
-    metas:mEdit.querySelector('#chk-perm-metas').checked,
-    caixaVerTotal:mEdit.querySelector('#chk-perm-caixa-total').checked
-  };
+  c.permissoes=lerPermissoesDoRoot(mEdit);
   atualizarColaboradorSupa(c);
   renderColabs();
   // Atualizar agenda se estiver visível
@@ -9274,6 +9390,7 @@ function entrarComoColaborador(nome){
   document.getElementById('page-colaborador-view').style.display='block';
   // Preencher dados
   var colab=colaboradores.find(function(c){return c.nome===nome;});
+  if(colab)colab.permissoes=normalizarPermissoes(colab.permissoes);
   var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var nomeCurto=nome.split(' ')[0];
   var el=document.getElementById('cv-ola-nome');if(el)el.textContent=nomeCurto;
@@ -9288,7 +9405,12 @@ function entrarComoColaborador(nome){
   var agenda=document.getElementById('cv-agenda');
   if(agenda){
     var apptsDia=agendaDiaAtual;
-    var meusAppts=Object.values(apptsDia).filter(function(a){return a.prof===nome||a.prof.startsWith(nomeCurto);});
+    var meusAppts;
+    if(colab&&temPermissao(colab,'agenda_visualizar_todas')){
+      meusAppts=Object.values(apptsDia);
+    }else{
+      meusAppts=Object.values(apptsDia).filter(function(a){return a.prof===nome||a.prof.startsWith(nomeCurto);});
+    }
     if(!meusAppts.length){
       agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>';
     } else {
@@ -9351,10 +9473,9 @@ function entrarComoColaborador(nome){
   var caixaSec=document.getElementById('cv-caixa-section');
   var caixaCont=document.getElementById('cv-caixa-conteudo');
   if(caixaSec&&caixaCont){
-    var perm=colab&&colab.permissoes?colab.permissoes:{};
-    if(perm.financeiro){
+    if(colab&&(temPermissao(colab,'fin_fluxo_caixa')||temPermissao(colab,'fin_receber_pagamentos'))){
       caixaSec.style.display='block';
-      var verTotal=!!perm.caixaVerTotal;
+      var verTotal=temPermissao(colab,'fin_ver_saldo_caixa');
       var movs=caixaState&&caixaState.movimentos?caixaState.movimentos:[];
       var html='<div style="font-size:12px;font-weight:700;margin-bottom:12px">'+(caixaState&&caixaState.aberto?'🟢 Caixa Aberto':'🔴 Caixa Fechado')+'</div>';
       if(!movs.length){
