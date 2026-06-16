@@ -4600,6 +4600,28 @@ function showAlert(msg){
   a.textContent=msg;a.classList.add('show');
   setTimeout(()=>a.classList.remove('show'),3000);
 }
+function showConfirmBotoes(msg,botoes,callback){
+  var ant=document.getElementById('confirm-botoes-overlay');
+  if(ant)ant.remove();
+  var ov=document.createElement('div');
+  ov.id='confirm-botoes-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px';
+  var html='<div style="background:#fff;border-radius:14px;padding:22px;max-width:360px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.2)">';
+  html+='<div style="font-size:14px;color:#333;margin-bottom:18px;line-height:1.45">'+msg+'</div><div style="display:flex;flex-direction:column;gap:8px">';
+  (botoes||[]).forEach(function(b,i){
+    html+='<button type="button" data-idx="'+i+'" style="padding:11px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;'+(b.primario?'background:#111;color:#fff':'background:#f5f5f5;color:#333')+'">'+b.label+'</button>';
+  });
+  html+='</div></div>';
+  ov.innerHTML=html;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('button').forEach(function(btn){
+    btn.onclick=function(){
+      var idx=parseInt(btn.getAttribute('data-idx'),10);
+      ov.remove();
+      if(callback&&botoes[idx])callback(botoes[idx].valor);
+    };
+  });
+}
 
 function toggleSidebar(e){
   if(e)e.stopPropagation();
@@ -6495,7 +6517,88 @@ function calcComandaPopup(key){
     nome:nomeServicoAgendamento(dados)
   };
 }
-
+function atendimentoConcluido(dados){
+  if(!dados)return false;
+  var st=(dados.status||'').toLowerCase();
+  return st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
+}
+function agendaDataKeyAtual(){
+  var d=agendaDataAtual;
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function estornarSinalAgendamento(reg){
+  if(!reg)return;
+  var movIdRem=reg.sinalMovId;
+  if(movIdRem&&typeof caixaState!=='undefined'&&caixaState.aberto&&caixaState.movimentos&&caixaState.movimentos.some(function(m){return m.id===movIdRem;})){
+    removerMovimento(movIdRem);
+  }
+  reg.sinalMovId=null;
+  reg.sinalLancadoCaixa=false;
+}
+function cancelarComandaVinculada(cliente){
+  if(typeof comandas==='undefined'||!comandas.length)return;
+  comandas.forEach(function(c){
+    if((c.status||'').toLowerCase()==='fechada')return;
+    if(c.cliente===cliente&&c.status!=='Cancelada')c.status='Cancelada';
+  });
+  if(typeof renderComandas==='function')renderComandas();
+}
+function excluirAgendamentoLocal(key){
+  delete agendaDiaAtual[key];
+  var dataKey=agendaDataKeyAtual();
+  if(agendamentosPorData[dataKey])delete agendamentosPorData[dataKey][key];
+}
+function excluirAgendamentoSupa(supaId){
+  if(!supaId)return Promise.resolve();
+  return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{
+    method:'DELETE',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  }).then(function(r){if(!r.ok)throw new Error('delete failed');});
+}
+function finalizarCancelamentoAtendimento(key,a){
+  cancelarComandaVinculada(a.cliente);
+  var supaId=a.id||null;
+  excluirAgendamentoLocal(key);
+  fecharAgendaPopup();
+  renderAgenda();
+  if(supaId){
+    excluirAgendamentoSupa(supaId).catch(function(){
+      showAlert('Atendimento removido localmente. Erro ao excluir no servidor.');
+    });
+  }
+  showAlert('Atendimento cancelado.');
+}
+function executarCancelamentoAtendimento(key,estornarSinal){
+  var a=agendaDiaAtual[key]||agendaAppts[key];
+  if(!a){showAlert('Agendamento não encontrado.');return;}
+  if(estornarSinal)estornarSinalAgendamento(a);
+  var dataKey=agendaDataKeyAtual();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]&&estornarSinal){
+    estornarSinalAgendamento(agendamentosPorData[dataKey][key]);
+  }
+  finalizarCancelamentoAtendimento(key,a);
+}
+function cancelarAtendimentoAgenda(key){
+  var a=agendaDiaAtual[key];
+  if(!a){showAlert('Agendamento não encontrado.');return;}
+  if(atendimentoConcluido(a)){showAlert('Este atendimento já foi pago integralmente.');return;}
+  showConfirmBotoes('Tem certeza que deseja cancelar este atendimento?',[
+    {label:'Sim',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp!=='sim')return;
+    var sinal=lerSinalAgendamento(a);
+    if(sinal.pago&&sinal.valor>0){
+      showConfirmBotoes('Sinal de '+formatMoedaBR(sinal.valor)+' já foi pago. Estornar o sinal do Caixa?',[
+        {label:'Sim, estornar',valor:'estornar',primario:true},
+        {label:'Não, manter no caixa',valor:'manter'}
+      ],function(esc){
+        if(esc==='estornar')executarCancelamentoAtendimento(key,true);
+        else if(esc==='manter')executarCancelamentoAtendimento(key,false);
+      });
+    }else executarCancelamentoAtendimento(key,false);
+  });
+}
 function abrirAgendaPopup(key,dados,event){
   // Fechar popup anterior
   fecharAgendaPopup();
@@ -6519,6 +6622,15 @@ function abrirAgendaPopup(key,dados,event){
   var sinalInputPg=sinalInfoPg.valor;
   var abatePg=sinalInfoPg.pago?sinalInputPg:0;
   var totalPagarPg=Math.max(0,servicoValPg-abatePg);
+  var stAg=(dados.status||'').toLowerCase();
+  var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
+  var atendEmAberto=!atendConcluido;
+  var comandaBadgeHtml=atendConcluido?
+    '<span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px">Paga</span>':
+    '<span style="font-size:10px;font-weight:700;background:#f0f0f0;color:#555;padding:2px 8px;border-radius:20px">Em aberto</span>';
+  var btnCancelarHtml=atendEmAberto?
+    '<button type="button" onclick="cancelarAtendimentoAgenda(\''+key+'\')" style="width:100%;padding:9px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px">🗑️ Cancelar Atendimento</button>':
+    '';
   var sinalStatusHtml=sinalInfoPg.pago?
     '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">✅ Sinal pago</span>':
     (sinalInfoPg.temSinal||sinalInfoPg.valor>0?
@@ -6575,7 +6687,7 @@ function abrirAgendaPopup(key,dados,event){
     <div style="background:#fff;border:2px solid #111;border-radius:9px;padding:11px;margin-bottom:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-size:11px;font-weight:700;color:#111">📋 COMANDA DO ATENDIMENTO</div>
-        <span style="font-size:10px;font-weight:700;background:#f0f0f0;color:#555;padding:2px 8px;border-radius:20px">Em aberto</span>
+        ${comandaBadgeHtml}
       </div>
       <div style="border-top:1px solid #f0f0f0;padding-top:8px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
@@ -6596,6 +6708,7 @@ function abrirAgendaPopup(key,dados,event){
         <button onclick="fecharAgendaPopup();showPage('comandas')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
       </div>
     </div>
+    ${btnCancelarHtml}
     <div style="display:flex;gap:6px">
       <button onclick="fecharAgendaPopup()" style="flex:1;padding:9px;background:#f5f5f5;color:#333;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">Fechar</button>
       <button onclick="fecharAgendaPopup();showAlert('Agendamento editado!')" style="flex:1;padding:9px;background:#111;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">✏️ Editar</button>
