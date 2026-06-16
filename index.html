@@ -9827,7 +9827,8 @@ function atualizarTotaisCaixa(){
   });
   lista.innerHTML=html;
 }
-function abrirModalMovimento(tipo){
+function abrirModalMovimento(tipo,histIdx){
+  caixaHistMovIdx=(typeof histIdx==='number'&&histIdx>=0)?histIdx:-1;
   caixaState.tipoAtual=tipo;caixaState.formaAtual='';
   document.getElementById('modal-mov-titulo').textContent=tipo==='entrada'?'Nova Entrada':'Nova Saida';
   var btn=document.getElementById('mov-confirmar-btn');
@@ -9841,7 +9842,10 @@ function abrirModalMovimento(tipo){
   var modal=document.getElementById('modal-movimento-caixa');
   modal.style.display='flex';
 }
-function fecharModalMovimento(){document.getElementById('modal-movimento-caixa').style.display='none';}
+function fecharModalMovimento(){
+  caixaHistMovIdx=-1;
+  document.getElementById('modal-movimento-caixa').style.display='none';
+}
 function selecionarForma(btn){
   document.querySelectorAll('.mov-pag-btn').forEach(function(b){b.style.borderColor='#e5e5e5';b.style.background='#fff';b.style.color='var(--dark)';});
   btn.style.borderColor='#8b5cf6';btn.style.background='#f3f0ff';btn.style.color='#7c3aed';
@@ -9859,6 +9863,24 @@ function confirmarMovimento(){
   if(!forma){showAlert('Selecione a forma de pagamento!');return;}
   var agora=new Date();
   var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
+  if(caixaHistMovIdx>=0){
+    var idxHist=caixaHistMovIdx;
+    var reg=historicoCaixas[idxHist];
+    if(!reg){showAlert('Registro do dia não encontrado.');return;}
+    if(!reg.movimentos)reg.movimentos=[];
+    var maxHistId=0;
+    reg.movimentos.forEach(function(m){if(m.id&&m.id>maxHistId)maxHistId=m.id;});
+    var movHist={id:maxHistId+1,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr};
+    reg.movimentos.push(movHist);
+    recalcularRegistroHistorico(reg);
+    historicoCaixas[idxHist]=reg;
+    persistirHistoricoCaixas();
+    historicoDetalheAberto=idxHist;
+    fecharModalMovimento();
+    renderHistoricoCaixa();
+    showAlert(caixaState.tipoAtual==='entrada'?'Entrada adicionada ao histórico!':'Saída adicionada ao histórico!');
+    return;
+  }
   var mov={id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,supaId:null};
   caixaState.movimentos.push(mov);
   fecharModalMovimento();atualizarTotaisCaixa();
@@ -9895,6 +9917,8 @@ function fecharCaixaConfirmar(){
 }
 function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.display='block';document.getElementById('caixa-fechamento-view').style.display='none';}
 var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
+var caixaHistMovIdx=-1;
+var historicoDetalheAberto=-1;
 var caixaNavIdx = -1; // -1 = hoje (caixa atual)
 
 function caixaNavData(dir){
@@ -9984,7 +10008,28 @@ function salvarHistoricoCaixa(movimentos, troco){
   };
   historicoCaixas.unshift(registro);
   if(historicoCaixas.length>30)historicoCaixas=historicoCaixas.slice(0,30);
-  localStorage.setItem('aflor_historico_caixas', JSON.stringify(historicoCaixas));
+  persistirHistoricoCaixas();
+}
+function recalcularRegistroHistorico(reg){
+  var movimentos=reg.movimentos||[];
+  reg.entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(parseFloat(m.valor)||0);},0);
+  reg.saidas=movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(parseFloat(m.valor)||0);},0);
+  reg.saldo=(parseFloat(reg.troco)||0)+reg.entradas-reg.saidas;
+  return reg;
+}
+function persistirHistoricoCaixas(){
+  try{localStorage.setItem('aflor_historico_caixas',JSON.stringify(historicoCaixas));}catch(e){console.log('err persistir historico caixa',e);}
+}
+function removerMovimentoHistorico(histIdx,movIdx,ev){
+  if(ev){ev.stopPropagation();}
+  var reg=historicoCaixas[histIdx];
+  if(!reg||!reg.movimentos||movIdx<0||movIdx>=reg.movimentos.length)return;
+  reg.movimentos.splice(movIdx,1);
+  recalcularRegistroHistorico(reg);
+  historicoCaixas[histIdx]=reg;
+  persistirHistoricoCaixas();
+  historicoDetalheAberto=histIdx;
+  renderHistoricoCaixa();
 }
 
 function renderHistoricoCaixa(){
@@ -9995,6 +10040,17 @@ function renderHistoricoCaixa(){
     return;
   }
   lista.innerHTML=historicoCaixas.map(function(r,i){
+    var movsHtml=(r.movimentos&&r.movimentos.length)?r.movimentos.map(function(m,mi){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:1px solid #f8f8f8;gap:8px" onclick="event.stopPropagation()">'
+        +'<span style="color:#555;flex:1;min-width:0">'+m.descricao+(m.categoria?' <span style="color:#aaa">('+m.categoria+')</span>':'')+'</span>'
+        +'<span style="font-weight:700;color:'+(m.tipo==='entrada'?'#22c55e':'#ef4444')+';flex-shrink:0">'+(m.tipo==='entrada'?'+':'-')+' '+fmtCaixa(m.valor)+'</span>'
+        +'<button type="button" onclick="removerMovimentoHistorico('+i+','+mi+',event)" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0" title="Remover">✕</button>'
+        +'</div>';
+    }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Sem movimentações</div>';
+    var footerBtns='<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e5e5;display:flex;gap:8px;flex-wrap:wrap" onclick="event.stopPropagation()">'
+      +'<button type="button" onclick="event.stopPropagation();abrirModalMovimento(\'entrada\','+i+')" style="flex:1;min-width:140px;padding:8px 10px;border:1px dashed #bbb;border-radius:8px;background:#fafafa;font-size:11px;font-weight:700;color:#333;cursor:pointer">+ Adicionar Lançamento</button>'
+      +'<button type="button" onclick="event.stopPropagation();abrirModalMovimento(\'saida\','+i+')" style="padding:8px 10px;border:1px dashed #fca5a5;border-radius:8px;background:#fff5f5;font-size:11px;font-weight:600;color:#ef4444;cursor:pointer">Registrar saída</button>'
+      +'</div>';
     return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer" onclick="toggleHistoricoDetalhe('+i+')">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
       +'<div style="font-size:13px;font-weight:700;color:#111">'+r.data+'</div>'
@@ -10006,20 +10062,23 @@ function renderHistoricoCaixa(){
       +'<span style="font-size:11px;color:#f59e0b">Sinal: '+fmtCaixa(r.troco)+'</span>'
       +'</div>'
       +'<div id="historico-detalhe-'+i+'" style="display:none;margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">'
-      +(r.movimentos.length?r.movimentos.map(function(m){
-        return '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid #f8f8f8">'
-          +'<span style="color:#555">'+m.descricao+'</span>'
-          +'<span style="font-weight:700;color:'+(m.tipo==='entrada'?'#22c55e':'#ef4444')+'">'+(m.tipo==='entrada'?'+':'-')+' '+fmtCaixa(m.valor)+'</span>'
-          +'</div>';
-      }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Sem movimentações</div>')
+      +movsHtml+footerBtns
       +'</div>'
       +'</div>';
   }).join('');
+  if(historicoDetalheAberto>=0){
+    var elAberto=document.getElementById('historico-detalhe-'+historicoDetalheAberto);
+    if(elAberto)elAberto.style.display='block';
+  }
 }
 
 function toggleHistoricoDetalhe(i){
   var el=document.getElementById('historico-detalhe-'+i);
-  if(el)el.style.display=el.style.display==='none'?'block':'none';
+  if(el){
+    var abrir=el.style.display==='none';
+    el.style.display=abrir?'block':'none';
+    historicoDetalheAberto=abrir?i:-1;
+  }
 }
 
 function limparHistoricoCaixa(){
