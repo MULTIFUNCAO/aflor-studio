@@ -3551,11 +3551,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" list="ag-cliente-lista" placeholder="Nome do cliente" autocomplete="off"/><datalist id="ag-cliente-lista"></datalist></div>
       <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
       <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
-      <div class="form-group full"><label>Profissional *</label>
-        <select id="ag-prof" onchange="agFiltrarServicos()">
-          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
-        </select>
-      </div>
 
       <!-- TIPO DE AGENDAMENTO -->
       <div class="form-group full">
@@ -3584,7 +3579,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <span>Serviço *</span>
           <button type="button" onclick="agAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
         </label>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;align-items:center">
           <select id="ag-servico" onchange="agCalcSinal()" style="flex:2">
             <option value="40">Manicure — R$ 40,00</option>
             <option value="45">Pedicure — R$ 45,00</option>
@@ -3595,7 +3590,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option value="100">Manutenção — R$ 100,00</option>
             <option value="12">Design de Sobrancelhas — R$ 12,00</option>
           </select>
-          <select id="ag-servico-prof" style="flex:1">
+          <select id="ag-servico-prof" style="flex:1" title="Profissional">
             <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
           </select>
         </div>
@@ -4726,6 +4721,32 @@ function agProfissionaisQueFazem(nomeServico){
 }
 function agOpcoesProfPorServico(nomeServico){
   return agProfissionaisQueFazem(nomeServico).map(function(p){return '<option>'+p+'</option>';}).join('');
+}
+function agProfParaAgenda(profNome){
+  var mapaInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapa={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var supa=mapaInv[profNome]||profNome;
+  return mapa[supa]||profNome;
+}
+function agColetarProfissionaisServico(){
+  var profs=[];
+  var main=document.getElementById('ag-servico-prof')?.value;
+  if(main)profs.push(main);
+  document.querySelectorAll('#ag-servicos-extra-list > div').forEach(function(row){
+    var p=row.querySelectorAll('select')[1]?.value;
+    if(p&&profs.indexOf(p)<0)profs.push(p);
+  });
+  return profs;
+}
+function agVerificarConflitoHorarioAgenda(data,hora,profs){
+  var partes=data.split('-');
+  var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
+  var appts=agendamentosPorData[dataKey]||{};
+  for(var i=0;i<profs.length;i++){
+    var pAg=agProfParaAgenda(profs[i]);
+    if(appts[pAg+':'+hora])return {prof:profs[i],ocupado:appts[pAg+':'+hora]};
+  }
+  return null;
 }
 
 function agNormalizarNome(s){
@@ -8974,27 +8995,41 @@ function abrirModalAgendar(prof,hora){
   var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   var elData=document.getElementById('ag-data');
   var elHora=document.getElementById('ag-hora');
-  var elProf=document.getElementById('ag-prof');
   if(elData)elData.value=iso;
   if(elHora)elHora.value=hora||elHora.value||'09:00';
-  if(elProf&&prof)elProf.value=prof;
+  if(prof){
+    agAtualizarProfServico();
+    var selServProf=document.getElementById('ag-servico-prof');
+    if(selServProf&&[...selServProf.options].some(function(o){return o.value===prof||o.textContent===prof;})){
+      selServProf.value=[...selServProf.options].find(function(o){return o.value===prof||o.textContent===prof;}).value;
+    }
+  }
   openModal('modal-agendar');
 }
 function salvarAgendamento(){
   var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
   var data=document.getElementById('ag-data')?.value||'';
   var hora=normalizarHoraAgenda(document.getElementById('ag-hora')?.value||'');
-  var prof=document.getElementById('ag-prof')?.value||'';
   var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
-  if(!cliente||!data||!hora||!prof){
-    showAlert('Preencha cliente, data, horário e profissional.');
+  if(!cliente||!data||!hora){
+    showAlert('Preencha cliente, data e horário.');
     return;
   }
+  if(tipo==='servico'){
+    var profsServ=agColetarProfissionaisServico();
+    if(!profsServ.length){showAlert('Selecione o profissional do serviço.');return;}
+    var conflito=agVerificarConflitoHorarioAgenda(data,hora,profsServ);
+    if(conflito){showAlert('Horário '+hora+' já ocupado para '+conflito.prof+'.');return;}
+  }else{
+    var profPac=document.getElementById('ag-pacote-prof')?.value||'';
+    if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
+  }
 
-  var servico, valorFmt, ehPacote=false, pacoteIdx=-1;
+  var servico, valorFmt, ehPacote=false, pacoteIdx=-1, servicosDetalhe, prof;
 
   if(tipo==='pacote'){
     ehPacote=true;
+    prof=document.getElementById('ag-pacote-prof')?.value||'';
     var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
     var itensPacote=[];
     var selPac=document.getElementById('ag-pacote-sel');
@@ -9029,10 +9064,11 @@ function salvarAgendamento(){
     servico=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
     valorFmt='R$ 0,00';
   } else {
+    prof=document.getElementById('ag-servico-prof')?.value||'';
     var selServ=document.getElementById('ag-servico');
     var selServProf=document.getElementById('ag-servico-prof');
     var nomes=[(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0]];
-    var servicosDetalhe=[{
+    servicosDetalhe=[{
       nome:nomes[0],
       valor:parseFloat(selServ?.value)||0,
       profissional:selServProf?.value||prof
@@ -9077,19 +9113,29 @@ function salvarAgendamento(){
   }).then(function(rows){
     var inserted=Array.isArray(rows)?rows[0]:rows;
     var supaId=inserted&&inserted.id?inserted.id:null;
-    var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
-    var profAgenda=mapaNomes[profSupa]||prof;
     var partes=data.split('-');
     var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
-    agendamentosPorData[dataKey][profAgenda+':'+hora]={
-      id:supaId,cliente:cliente,tel:'',servico:servico,prof:profAgenda,hora:hora,
+    var apptBase={
+      id:supaId,cliente:cliente,tel:'',servico:servico,hora:hora,
       duracao:'60 min',valor:valorFmt,status:'Pendente',
       sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,
       sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:'',
       ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs,
       sinalLancadoCaixa:!!(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0)
     };
+    var profsAgenda=[];
+    if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
+      servicosDetalhe.forEach(function(sd){
+        var pAg=agProfParaAgenda(sd.profissional);
+        if(pAg&&profsAgenda.indexOf(pAg)<0)profsAgenda.push(pAg);
+      });
+    }else{
+      profsAgenda=[agProfParaAgenda(prof)];
+    }
+    profsAgenda.forEach(function(pAg){
+      agendamentosPorData[dataKey][pAg+':'+hora]=Object.assign({},apptBase,{prof:pAg});
+    });
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
     if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
       lancarEntradaCaixaAuto('Sinal — '+servico+' — '+cliente,sinalValNum,agFormaSinal||'pix');
