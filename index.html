@@ -4598,7 +4598,8 @@ function saveModal(id,msg){closeModal(id);showAlert(msg)}
 function showAlert(msg){
   const a=document.getElementById('alert-global');
   a.textContent=msg;a.classList.add('show');
-  setTimeout(()=>a.classList.remove('show'),3000);
+  a.style.cssText='display:block;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10001;max-width:90vw;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;box-shadow:0 4px 20px rgba(0,0,0,.15)';
+  setTimeout(function(){a.classList.remove('show');a.style.cssText='';},3000);
 }
 function showConfirmBotoes(msg,botoes,callback){
   var ant=document.getElementById('confirm-botoes-overlay');
@@ -6988,21 +6989,20 @@ function popupRecalcularComanda(key){
 }
 
 function toggleSinalPopup(key){
-  console.log('DEBUG confirmar sinal - popupFormaSinal:', popupFormaSinal, 'tipo:', typeof popupFormaSinal);
   var a=agendaDiaAtual[key]||agendaAppts[key];
   if(!a){
     showAlert('Agendamento não encontrado.');
     return;
   }
+  var btnSinal=document.getElementById('popup-sinal-btn');
+  var vaiConfirmar=!!(btnSinal&&(btnSinal.textContent||'').indexOf('Confirmar')>=0);
+  if(vaiConfirmar&&!popupFormaSinal){
+    showAlert('Escolha a forma de pagamento do sinal (Pix, Dinheiro ou Link)');
+    return;
+  }
   var sinalVal=parseFloat(document.getElementById('popup-sinal-valor')?.value)||0;
   sincronizarSinalLocal(key,sinalVal);
   var eraPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  if(!eraPago){
-    if(!popupFormaSinal){
-      showAlert('Escolha a forma de pagamento do sinal (Pix, Dinheiro ou Link)');
-      return;
-    }
-  }
   var novoPago=!eraPago;
   a.sinalPago=novoPago;
   a.sinal_status=novoPago?'pago':'pendente';
