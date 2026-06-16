@@ -6988,6 +6988,7 @@ function popupRecalcularComanda(key){
 }
 
 function toggleSinalPopup(key){
+  console.log('DEBUG confirmar sinal - popupFormaSinal:', popupFormaSinal, 'tipo:', typeof popupFormaSinal);
   var a=agendaDiaAtual[key]||agendaAppts[key];
   if(!a){
     showAlert('Agendamento não encontrado.');
