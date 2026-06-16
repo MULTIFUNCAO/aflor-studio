@@ -9733,7 +9733,7 @@ async function carregarCaixaSupa(){
           caixaState.movimentos.push({
             id:localId,supaId:mrow.id,tipo:mrow.tipo,categoria:mrow.categoria||'',
             descricao:mrow.descricao||'',valor:parseFloat(mrow.valor)||0,forma:mrow.forma||'',
-            hora:mrow.hora||'00:00'
+            hora:mrow.hora||'00:00',profissional:mrow.profissional||''
           });
         });
         movIdCounter=maxLocalId+1;
@@ -9774,10 +9774,14 @@ async function sincronizarMovimentoCaixaSupa(mov){
     if(!supa||!window.SALAO_ID)return;
     var r=await supa.from('caixa_movimentos').insert([{
       salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
-      valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin')
+      valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin'),
+      profissional:mov.profissional||null
     }]).select('id');
     if(r.data&&r.data[0])mov.supaId=r.data[0].id;
-  }catch(e){console.log('err salvar mov caixa supa',e);}
+  }catch(e){
+    console.log('err salvar mov caixa supa',e);
+    if(mov.profissional)showAlert('⚠️ Profissional não sincronizado. Rode no Supabase: alter table caixa_movimentos add column if not exists profissional text;');
+  }
 }
 async function sincronizarRemocaoMovimentoCaixaSupa(supaId){
   try{
@@ -9790,9 +9794,12 @@ async function sincronizarAtualizacaoMovimentoCaixaSupa(mov){
     if(!supa||!window.SALAO_ID||!mov||!mov.supaId)return;
     await supa.from('caixa_movimentos').update({
       tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
-      valor:mov.valor,forma:mov.forma,hora:mov.hora
+      valor:mov.valor,forma:mov.forma,hora:mov.hora,profissional:mov.profissional||null
     }).eq('id',mov.supaId).eq('salao_id',window.SALAO_ID);
-  }catch(e){console.log('err atualizar mov caixa supa',e);}
+  }catch(e){
+    console.log('err atualizar mov caixa supa',e);
+    if(mov.profissional)showAlert('⚠️ Profissional não sincronizado. Rode no Supabase: alter table caixa_movimentos add column if not exists profissional text;');
+  }
 }
 async function sincronizarFechamentoCaixaSupa(){
   try{
@@ -9832,9 +9839,29 @@ function atualizarTotaisCaixa(){
     var sinal=m.tipo==='entrada'?'+':'-';
     var icone={dinheiro:'💵',pix:'📱',cartao:'💳'}[m.forma]||'💰';
     var bg=m.tipo==='entrada'?'#dcfce7':'#fee2e2';
-    html+='<div style="padding:12px 20px;border-bottom:1px solid #f8f8f8;display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:8px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+icone+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+m.descricao+'</div><div style="font-size:11px;color:var(--gray-400)">'+m.categoria+' · '+m.hora+'</div></div><div style="font-size:15px;font-weight:800;color:'+cor+'">'+sinal+' '+fmtCaixa(m.valor)+'</div><button onclick="editarMovimento('+m.id+')" style="background:none;border:none;color:#888;cursor:pointer;font-size:14px;padding:4px" title="Editar">✏️</button><button onclick="removerMovimento('+m.id+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:4px">✕</button></div>';
+    var profLinha=fmtProfMovHtml(m);
+    html+='<div style="padding:12px 20px;border-bottom:1px solid #f8f8f8;display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:8px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+icone+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+m.descricao+'</div><div style="font-size:11px;color:var(--gray-400)">'+m.categoria+' · '+m.hora+'</div>'+profLinha+'</div><div style="font-size:15px;font-weight:800;color:'+cor+'">'+sinal+' '+fmtCaixa(m.valor)+'</div><button onclick="editarMovimento('+m.id+')" style="background:none;border:none;color:#888;cursor:pointer;font-size:14px;padding:4px" title="Editar">✏️</button><button onclick="removerMovimento('+m.id+')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:4px">✕</button></div>';
   });
   lista.innerHTML=html;
+}
+function fmtProfMovHtml(m){
+  var p=m&&m.profissional;
+  if(!p||p==='Não informado')return '';
+  return '<div style="font-size:10px;color:#888;margin-top:2px">Profissional: '+p+'</div>';
+}
+function popularSelectProfMovimento(selecionado){
+  var sel=document.getElementById('mov-profissional');
+  if(!sel)return;
+  var opts='<option value="">Não informado</option>';
+  (typeof colaboradores!=='undefined'?colaboradores:[]).filter(function(c){return c.status==='Ativo';}).forEach(function(c){
+    opts+='<option value="'+c.nome+'">'+c.nome+'</option>';
+  });
+  sel.innerHTML=opts;
+  if(selecionado&&[...sel.options].some(function(o){return o.value===selecionado;}))sel.value=selecionado;
+  else sel.value='';
+}
+function lerProfissionalMov(){
+  return document.getElementById('mov-profissional')?.value||'';
 }
 function abrirModalMovimento(tipo,histIdx){
   caixaHistMovIdx=(typeof histIdx==='number'&&histIdx>=0)?histIdx:-1;
@@ -9846,6 +9873,7 @@ function abrirModalMovimento(tipo,histIdx){
   btn.textContent=tipo==='entrada'?'Registrar Entrada':'Registrar Saida';
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
   document.getElementById('mov-valor').value='';document.getElementById('mov-descricao').value='';
+  popularSelectProfMovimento('');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   document.getElementById('mov-categoria').selectedIndex=0;
@@ -9863,6 +9891,7 @@ function abrirModalMovimentoPreenchido(mov){
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
   document.getElementById('mov-valor').value=mov.valor;
   document.getElementById('mov-descricao').value=mov.descricao||'';
+  popularSelectProfMovimento(mov.profissional||'');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   var catSel=document.getElementById('mov-categoria');
@@ -9912,6 +9941,7 @@ function confirmarMovimento(){
   var desc=document.getElementById('mov-descricao').value.trim();
   var valor=parseFloat(document.getElementById('mov-valor').value);
   var forma=caixaState.formaAtual;
+  var profissional=lerProfissionalMov();
   if(!cat){showAlert('Selecione uma categoria!');return;}
   if(!desc){showAlert('Digite uma descricao!');return;}
   if(!valor||valor<=0){showAlert('Digite um valor valido!');return;}
@@ -9925,7 +9955,7 @@ function confirmarMovimento(){
       if(modoEdicaoMovimentoId!=null)movEd=regEd.movimentos.find(function(m){return m.id===modoEdicaoMovimentoId;});
       if(!movEd&&modoEdicaoMovArrayIdx!=null)movEd=regEd.movimentos[modoEdicaoMovArrayIdx];
       if(!movEd){showAlert('Lançamento não encontrado.');return;}
-      movEd.tipo=caixaState.tipoAtual;movEd.categoria=cat;movEd.descricao=desc;movEd.valor=valor;movEd.forma=forma;
+      movEd.tipo=caixaState.tipoAtual;movEd.categoria=cat;movEd.descricao=desc;movEd.valor=valor;movEd.forma=forma;movEd.profissional=profissional;
       recalcularRegistroHistorico(regEd);
       historicoCaixas[idxHistEd]=regEd;
       persistirHistoricoCaixas();
@@ -9937,7 +9967,7 @@ function confirmarMovimento(){
     }
     var movAtual=caixaState.movimentos.find(function(m){return m.id===modoEdicaoMovimentoId;});
     if(!movAtual){showAlert('Lançamento não encontrado.');return;}
-    movAtual.tipo=caixaState.tipoAtual;movAtual.categoria=cat;movAtual.descricao=desc;movAtual.valor=valor;movAtual.forma=forma;
+    movAtual.tipo=caixaState.tipoAtual;movAtual.categoria=cat;movAtual.descricao=desc;movAtual.valor=valor;movAtual.forma=forma;movAtual.profissional=profissional;
     fecharModalMovimento();
     atualizarTotaisCaixa();
     if(movAtual.supaId)sincronizarAtualizacaoMovimentoCaixaSupa(movAtual).catch(function(e){console.log(e);});
@@ -9953,7 +9983,7 @@ function confirmarMovimento(){
     if(!reg.movimentos)reg.movimentos=[];
     var maxHistId=0;
     reg.movimentos.forEach(function(m){if(m.id&&m.id>maxHistId)maxHistId=m.id;});
-    var movHist={id:maxHistId+1,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr};
+    var movHist={id:maxHistId+1,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,profissional:profissional};
     reg.movimentos.push(movHist);
     recalcularRegistroHistorico(reg);
     historicoCaixas[idxHist]=reg;
@@ -9964,7 +9994,7 @@ function confirmarMovimento(){
     showAlert(caixaState.tipoAtual==='entrada'?'Entrada adicionada ao histórico!':'Saída adicionada ao histórico!');
     return;
   }
-  var mov={id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,supaId:null};
+  var mov={id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,profissional:profissional,supaId:null};
   caixaState.movimentos.push(mov);
   fecharModalMovimento();atualizarTotaisCaixa();
   showAlert(caixaState.tipoAtual==='entrada'?'Entrada registrada!':'Saida registrada!');
@@ -10124,8 +10154,9 @@ function renderHistoricoCaixa(){
   }
   lista.innerHTML=historicoCaixas.map(function(r,i){
     var movsHtml=(r.movimentos&&r.movimentos.length)?r.movimentos.map(function(m,mi){
+      var profHist=fmtProfMovHtml(m);
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:1px solid #f8f8f8;gap:8px" onclick="event.stopPropagation()">'
-        +'<span style="color:#555;flex:1;min-width:0">'+m.descricao+(m.categoria?' <span style="color:#aaa">('+m.categoria+')</span>':'')+'</span>'
+        +'<div style="flex:1;min-width:0"><div style="color:#555">'+m.descricao+(m.categoria?' <span style="color:#aaa">('+m.categoria+')</span>':'')+'</div>'+profHist+'</div>'
         +'<span style="font-weight:700;color:'+(m.tipo==='entrada'?'#22c55e':'#ef4444')+';flex-shrink:0">'+(m.tipo==='entrada'?'+':'-')+' '+fmtCaixa(m.valor)+'</span>'
         +'<button type="button" onclick="editarMovimentoHistorico('+i+','+mi+',event)" style="background:none;border:none;color:#888;cursor:pointer;font-size:13px;padding:0 4px;flex-shrink:0" title="Editar">✏️</button>'
         +'<button type="button" onclick="removerMovimentoHistorico('+i+','+mi+',event)" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0" title="Remover">✕</button>'
@@ -10275,6 +10306,12 @@ function renderCardDetalhe(tipo){
       <div>
         <label style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">DESCRIÇÃO</label>
         <input id="mov-descricao" type="text" placeholder="Ex: Pagamento serviço..." style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">PROFISSIONAL</label>
+        <select id="mov-profissional" style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;background:#fff">
+          <option value="">Não informado</option>
+        </select>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">FORMA DE PAGAMENTO</label>
