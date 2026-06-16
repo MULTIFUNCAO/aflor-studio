@@ -9709,6 +9709,24 @@ renderMetas();
 var caixaState={aberto:false,troco:0,horaAbertura:null,movimentos:[],tipoAtual:'entrada',formaAtual:''};
 var catEntradas=['Servico de cabelo','Manicure/Pedicure','Estetica','Produto vendido','Sinal/Reserva','Outros'];
 var catSaidas=['Compra de material','Aluguel/Conta','Comissao','Alimentacao','Transporte','Outros'];
+var movIdCounter=1;
+var modoEdicaoMovimentoId=null;
+var modoEdicaoMovArrayIdx=null;
+var suprimirChangeCatMov=false;
+var caixaHistMovIdx=-1;
+function emEdicaoMovimento(){return modoEdicaoMovimentoId!=null||modoEdicaoMovArrayIdx!=null;}
+function onCategoriaMovChange(){
+  if(suprimirChangeCatMov||emEdicaoMovimento())return;
+  document.getElementById('mov-descricao').value='';
+}
+function definirCategoriaMov(val){
+  var catSel=document.getElementById('mov-categoria');
+  if(!catSel)return;
+  suprimirChangeCatMov=true;
+  if(val&&[...catSel.options].some(function(o){return o.value===val;}))catSel.value=val;
+  else catSel.selectedIndex=0;
+  suprimirChangeCatMov=false;
+}
 function fmtCaixa(v){return 'R$ '+Number(v).toFixed(2).replace('.',',');}
 async function carregarCaixaSupa(){
   try{
@@ -9876,7 +9894,7 @@ function abrirModalMovimento(tipo,histIdx){
   popularSelectProfMovimento('');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
-  document.getElementById('mov-categoria').selectedIndex=0;
+  definirCategoriaMov('');
   document.querySelectorAll('.mov-pag-btn').forEach(function(b){b.style.borderColor='#e5e5e5';b.style.background='#fff';b.style.color='var(--dark)';});
   var modal=document.getElementById('modal-movimento-caixa');
   modal.style.display='flex';
@@ -9894,9 +9912,7 @@ function abrirModalMovimentoPreenchido(mov){
   popularSelectProfMovimento(mov.profissional||'');
   var cats=tipo==='entrada'?catEntradas:catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
-  var catSel=document.getElementById('mov-categoria');
-  if(mov.categoria&&[...catSel.options].some(function(o){return o.value===mov.categoria;}))catSel.value=mov.categoria;
-  else catSel.selectedIndex=0;
+  definirCategoriaMov(mov.categoria||'');
   document.querySelectorAll('.mov-pag-btn').forEach(function(b){
     if(b.getAttribute('data-forma')===mov.forma)selecionarForma(b);
     else{b.style.borderColor='#e5e5e5';b.style.background='#fff';b.style.color='var(--dark)';}
@@ -9905,11 +9921,15 @@ function abrirModalMovimentoPreenchido(mov){
   document.getElementById('modal-movimento-caixa').style.display='flex';
 }
 function editarMovimento(id){
-  var mov=caixaState.movimentos.find(function(m){return m.id===id;});
+  var movId=Number(id);
+  if(isNaN(movId))movId=id;
+  var mov=caixaState.movimentos.find(function(m){return m.id==movId;});
   if(!mov)return;
   caixaHistMovIdx=-1;
-  modoEdicaoMovimentoId=id;
+  modoEdicaoMovimentoId=mov.id;
   modoEdicaoMovArrayIdx=null;
+  var modal=document.getElementById('modal-movimento-caixa');
+  if(modal)modal.style.display='flex';
   abrirModalMovimentoPreenchido(mov);
 }
 function editarMovimentoHistorico(histIdx,movIdx,ev){
@@ -9918,14 +9938,18 @@ function editarMovimentoHistorico(histIdx,movIdx,ev){
   if(!reg||!reg.movimentos||!reg.movimentos[movIdx])return;
   var mov=reg.movimentos[movIdx];
   caixaHistMovIdx=histIdx;
-  modoEdicaoMovimentoId=mov.id||null;
+  modoEdicaoMovimentoId=mov.id!=null?mov.id:null;
   modoEdicaoMovArrayIdx=movIdx;
+  var modal=document.getElementById('modal-movimento-caixa');
+  if(modal)modal.style.display='flex';
   abrirModalMovimentoPreenchido(mov);
 }
 function fecharModalMovimento(){
   caixaHistMovIdx=-1;
   modoEdicaoMovimentoId=null;
   modoEdicaoMovArrayIdx=null;
+  suprimirChangeCatMov=false;
+  caixaState.formaAtual='';
   document.getElementById('modal-movimento-caixa').style.display='none';
 }
 function selecionarForma(btn){
@@ -9933,9 +9957,6 @@ function selecionarForma(btn){
   btn.style.borderColor='#8b5cf6';btn.style.background='#f3f0ff';btn.style.color='#7c3aed';
   caixaState.formaAtual=btn.getAttribute('data-forma');
 }
-var movIdCounter=1;
-var modoEdicaoMovimentoId=null;
-var modoEdicaoMovArrayIdx=null;
 function confirmarMovimento(){
   var cat=document.getElementById('mov-categoria').value;
   var desc=document.getElementById('mov-descricao').value.trim();
@@ -10030,7 +10051,6 @@ function fecharCaixaConfirmar(){
 }
 function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.display='block';document.getElementById('caixa-fechamento-view').style.display='none';}
 var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
-var caixaHistMovIdx=-1;
 var historicoDetalheAberto=-1;
 var caixaNavIdx = -1; // -1 = hoje (caixa atual)
 
@@ -10298,7 +10318,7 @@ function renderCardDetalhe(tipo){
     <div style="display:flex;flex-direction:column;gap:14px">
       <div>
         <label style="font-size:12px;font-weight:700;color:var(--gray-400);display:block;margin-bottom:6px">CATEGORIA</label>
-        <select id="mov-categoria" style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;background:#fff">
+        <select id="mov-categoria" onchange="onCategoriaMovChange()" style="width:100%;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;background:#fff">
           <option value="">Selecione...</option>
           <optgroup id="mov-categorias-grupo" label="Categorias"></optgroup>
         </select>
