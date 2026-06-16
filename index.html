@@ -428,7 +428,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div class="ob-iw">
           <span class="ob-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
-          <input id="login-senha" class="ob-inp" placeholder="Sua senha" type="password"/>
+          <input id="login-senha" class="ob-inp" placeholder="Sua senha" type="password" style="padding-right:38px"/>
+          <span onclick="toggleSenhaVisivel('login-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none;z-index:1">👁</span>
         </div>
         <button class="btn-aflor" onclick="fazerLogin()">Entrar na Conta</button>
         <div class="forgot-lnk" onclick="recuperarSenhaSalao()">Esqueceu sua senha?</div>
@@ -9441,7 +9442,7 @@ function fazerLogin(){
     }
     if(colabObj&&colabObj.senha){
       if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
-      if(colabObj.senha!==senhaDigitada){showAlertOb('Senha incorreta!');return;}
+      if(colabObj.senha!==senhaDigitada){showAlert('Senha incorreta');return;}
     }
     colaboradorLogado=sel;
     try{localStorage.setItem('aflor_logado','colab_'+sel);}catch(e){}
@@ -9454,7 +9455,12 @@ function fazerLogin(){
     if(!supa){showAlertOb('Erro de conexão. Tente novamente.');return;}
     showAlertOb('Entrando...');
     supa.auth.signInWithPassword({email:email,password:senha}).then(function(res){
-      if(res.error){showAlertOb('Email ou senha incorretos.');return;}
+      if(res.error){
+        supa.from('saloes').select('id').eq('email',email).maybeSingle().then(function(chk){
+          showAlert(chk.data?'Senha incorreta':'Email ou senha incorretos.');
+        }).catch(function(){showAlert('Senha incorreta');});
+        return;
+      }
       colaboradorLogado=null;
       try{localStorage.setItem('aflor_logado','admin');}catch(e){}
       carregarSalaoAtual().then(function(){
