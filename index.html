@@ -4496,8 +4496,26 @@ async function carregarServicosSupa(){
     if(r.data&&r.data.length>0){
       servicos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
       renderServicos();
+    } else {
+      await seedServicosPadraoSupa();
     }
   }catch(e){console.log('err carregar servicos',e);}
+}
+async function seedServicosPadraoSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var existentes=(servicos||[]).map(function(s){return s.nome;});
+    var faltando=SERVICOS_PADRAO.filter(function(s){return existentes.indexOf(s.nome)===-1;});
+    if(!faltando.length){console.log('Nenhum servico padrao faltando.');return;}
+    var rows=faltando.map(function(s){return{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID};});
+    var r=await supa.from('servicos_cadastro').insert(rows).select('*');
+    if(r.data&&r.data.length){
+      var novos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor};});
+      servicos=servicos.concat(novos);
+      renderServicos();
+      console.log('Inseridos '+r.data.length+' servicos padrao no Supabase.');
+    }
+  }catch(e){console.log('err seed servicos padrao',e);}
 }
 
 const pages = {
@@ -5399,7 +5417,7 @@ async function salvarComissaoPacoteSupa(lanc){
   }catch(e){console.log('err supa comissao pacote',e);}
 }
 
-let servicos=[
+var SERVICOS_PADRAO=[
   {cat:'Unhas',nome:'Manicure',dur:'1h',preco:'40,00',cor:'#ec4899'},
   {cat:'Unhas',nome:'Alongamento Fibra',dur:'4h',preco:'200,00',cor:'#ec4899'},
   {cat:'Unhas',nome:'Alongamento Gel',dur:'2h30',preco:'150,00',cor:'#ec4899'},
@@ -5509,6 +5527,7 @@ let servicos=[
   {cat:'Massagem',nome:'Ventosaterapia',dur:'30min',preco:'90,00',cor:'#6366f1'},
   {cat:'Massagem',nome:'Quick Massage',dur:'30min',preco:'70,00',cor:'#6366f1'},
 ];
+let servicos=SERVICOS_PADRAO.slice();
 
 
 const clientes=[
