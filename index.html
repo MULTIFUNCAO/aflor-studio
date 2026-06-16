@@ -9719,8 +9719,14 @@ var caixaCatParaServicoCats={
   'Manicure/Pedicure':['Unhas'],
   'Estetica':['Estética','Sobrancelhas','Cílios','Depilação','Maquiagem','Piercign']
 };
-function caixaCatUsaCatalogo(cat){return !!(cat&&caixaCatParaServicoCats[cat]);}
-function caixaCatsServicoPara(cat){return caixaCatParaServicoCats[cat]||[];}
+function categoriasEntradaAtuais(){
+  var catsServico=(typeof servicos!=='undefined'?[...new Set(servicos.map(function(s){return s.cat;}))].filter(Boolean):[]).sort();
+  var extras=['Produto vendido','Sinal/Reserva','Outros'];
+  var todas=catsServico.concat(extras.filter(function(e){return catsServico.indexOf(e)===-1;}));
+  return todas;
+}
+function caixaCatUsaCatalogo(cat){return !!(cat&&['Produto vendido','Sinal/Reserva','Outros'].indexOf(cat)===-1);}
+function caixaCatsServicoPara(cat){return cat?[cat]:[];}
 function lerDescricaoMov(){
   var sel=document.getElementById('mov-servico-select');
   var inp=document.getElementById('mov-descricao');
@@ -9785,6 +9791,10 @@ function definirCategoriaMov(val){
   var catSel=document.getElementById('mov-categoria');
   if(!catSel)return;
   suprimirChangeCatMov=true;
+  if(val&&![...catSel.options].some(function(o){return o.value===val;})){
+    var grupo=document.getElementById('mov-categorias-grupo');
+    if(grupo){var opt=document.createElement('option');opt.value=val;opt.textContent=val+' (antiga)';grupo.appendChild(opt);}
+  }
   if(val&&[...catSel.options].some(function(o){return o.value===val;}))catSel.value=val;
   else catSel.selectedIndex=0;
   suprimirChangeCatMov=false;
@@ -9954,7 +9964,7 @@ function abrirModalMovimento(tipo,histIdx){
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
   document.getElementById('mov-valor').value='';
   popularSelectProfMovimento('');
-  var cats=tipo==='entrada'?catEntradas:catSaidas;
+  var cats=tipo==='entrada'?categoriasEntradaAtuais():catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   definirCategoriaMov('');
   atualizarCampoServicoMov('');
@@ -9972,7 +9982,7 @@ function abrirModalMovimentoPreenchido(mov){
   btn.style.background=tipo==='entrada'?'#22c55e':'#ef4444';
   document.getElementById('mov-valor').value=mov.valor;
   popularSelectProfMovimento(mov.profissional||'');
-  var cats=tipo==='entrada'?catEntradas:catSaidas;
+  var cats=tipo==='entrada'?categoriasEntradaAtuais():catSaidas;
   document.getElementById('mov-categorias-grupo').innerHTML=cats.map(function(cat){return '<option value="'+cat+'">'+cat+'</option>';}).join('');
   definirCategoriaMov(mov.categoria||'');
   atualizarCampoServicoMov(mov.descricao||'');
