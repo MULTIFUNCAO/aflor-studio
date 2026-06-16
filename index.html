@@ -3999,6 +3999,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- Financeiro -->
       <div class="form-group"><label>Comissão (%)</label><input type="number" id="colab-comissao" value="50" min="0" max="100" placeholder="50"/></div>
       <div class="form-group"><label>Salário fixo (R$)</label><input type="number" id="colab-salario" placeholder="0,00" value="0"/></div>
+      <div class="form-group full">
+        <label>🔐 Senha de acesso</label>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Senha que o colaborador vai usar para entrar no sistema (mínimo 4 caracteres)</div>
+        <input type="password" id="colab-senha" placeholder="Mínimo 4 caracteres"/>
+      </div>
       <!-- Acesso ao sistema -->
       <div class="form-group full">
         <label>Permissões de acesso</label>
@@ -4321,21 +4326,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 <script>
-var agendamentosPorData={
-    '26/5/2026': {},
-    '27/5/2026': {
-      'Ana Flor:10:00':{cliente:'Andreia De Paula',tel:'(11) 98765-4321',servico:'Pedicure',prof:'Ana Flor',hora:'10:00',duracao:'45 min',valor:'R$ 50,00',cls:'#22c55e',sinal:true,sinalPago:true,sinalValor:'R$ 25,00'},
-      'Edu:14:00':{cliente:'Janaine Brito',tel:'(11) 96789-0123',servico:'Design de Sobrancelhas',prof:'Edu',hora:'14:00',duracao:'30 min',valor:'R$ 12,00',cls:'#555',sinal:false,sinalPago:false,sinalValor:null},
-    },
-    '28/5/2026': {
-      'Jeny:09:30':{cliente:'Julia Barrozo',tel:'(11) 97890-1234',servico:'Manicure + Pedicure',prof:'Jeny',hora:'09:30',duracao:'1h30',valor:'R$ 85,00',cls:'#8b5cf6',sinal:true,sinalPago:false,sinalValor:'R$ 30,00'},
-      'Ana Flor:11:00':{cliente:'Denilda',tel:'(11) 92345-6789',servico:'Escova',prof:'Ana Flor',hora:'11:00',duracao:'45 min',valor:'R$ 60,00',cls:'#FF5722',sinal:false,sinalPago:false,sinalValor:null},
-      'Vi:15:00':{cliente:'Mãe Ana',tel:'(11) 91234-5678',servico:'Coloração',prof:'Vi',hora:'15:00',duracao:'2h',valor:'R$ 150,00',cls:'#ec4899',sinal:true,sinalPago:true,sinalValor:'R$ 75,00'},
-    },
-    '29/5/2026': {
-      'Ana Flor:09:00':{cliente:'Alessandra Say',tel:'(11) 95678-9012',servico:'Manutenção',prof:'Ana Flor',hora:'09:00',duracao:'1h',valor:'R$ 100,00',cls:'#14b8a6',sinal:true,sinalPago:true,sinalValor:'R$ 50,00'},
-    },
-  };
+var agendamentosPorData={};
 
 const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
@@ -5867,7 +5858,7 @@ async function salvarColaboradorSupa(c){
     var r=await supa.from('colaboradores').insert([{
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null,salao_id:window.SALAO_ID
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||'',salao_id:window.SALAO_ID
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa colaborador insert',e);return null;}
@@ -5883,7 +5874,7 @@ async function atualizarColaboradorSupa(c){
     await supa.from('colaboradores').update({
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||''
     }).eq('id',c.id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa colaborador update',e);}
 }
@@ -8515,18 +8506,19 @@ function salvarColaborador(){
   var cargo=document.getElementById('colab-cargo')?.value||'Colaborador(a)';
   var comissao=document.getElementById('colab-comissao')?.value||'50';
   var email=document.getElementById('colab-email')?.value||'';
+  var senha=document.getElementById('colab-senha')?.value||'';
   var iniciais=nome.split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var novoColab={
     nome:nome, email:email, cargo:cargo,
     comissao:comissao+'%', cor:colabCorAtual,
-    foto:colabFotoAtual, status:'Ativo'
+    foto:colabFotoAtual, status:'Ativo', senha:senha
   };
   colaboradores.push(novoColab);
   salvarColaboradorSupa(novoColab).then(function(newId){if(newId!=null)novoColab.id=newId;});
   renderColabs();
   closeModal('modal-colab');
   // Limpar
-  ['colab-nome','colab-email','colab-wpp','colab-cpf'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['colab-nome','colab-email','colab-wpp','colab-cpf','colab-senha'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var txt=document.getElementById('colab-avatar-txt');
   var img=document.getElementById('colab-avatar-img');
   var av=document.getElementById('colab-avatar');
@@ -8607,6 +8599,12 @@ function editarColab(idx){
           <option ${c.status==='Férias'?'selected':''}>Férias</option>
         </select>
       </div>
+      <!-- Senha de acesso -->
+      <div class="form-group full">
+        <label>🔐 Alterar senha de acesso</label>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual</div>
+        <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar"/>
+      </div>
       <!-- Permissões -->
       <div class="form-group full">
         <label>Permissões de acesso</label>
@@ -8666,6 +8664,8 @@ function salvarEdicaoColab(idx){
   c.cargo=document.getElementById('edit-cargo')?.value||c.cargo;
   c.comissao=(document.getElementById('edit-comissao')?.value||'50')+'%';
   c.status=document.getElementById('edit-status')?.value||'Ativo';
+  var novaSenha=document.getElementById('edit-senha')?.value||'';
+  if(novaSenha)c.senha=novaSenha;
   atualizarColaboradorSupa(c);
   renderColabs();
   // Atualizar agenda se estiver visível
@@ -9045,11 +9045,13 @@ function setPerfilLogin(perfil){
     if(lCol){lCol.style.background='#fff';lCol.style.color='#333';lCol.style.borderColor='#ddd';}
     if(selC)selC.style.display='none';
     if(emailW)emailW.style.display='block';
+    var ls=document.getElementById('login-senha');if(ls)ls.placeholder='Sua senha';
   } else {
     if(lCol){lCol.style.background='#111';lCol.style.color='#fff';lCol.style.borderColor='#111';}
     if(lAdm){lAdm.style.background='#fff';lAdm.style.color='#333';lAdm.style.borderColor='#ddd';}
     if(selC)selC.style.display='block';
     if(emailW)emailW.style.display='none';
+    var ls2=document.getElementById('login-senha');if(ls2)ls2.placeholder='Sua senha de acesso (se definida)';
     // Popula select com colaboradores ativos do salão (excluindo proprietário)
     var sel=document.getElementById('login-colab-sel');
     if(sel){
@@ -9076,6 +9078,19 @@ function fazerLogin(){
   if(perfilLogin==='colaborador'){
     var sel=document.getElementById('login-colab-sel')?.value;
     if(!sel){showAlertOb('Selecione seu nome!');return;}
+    var senhaDigitada=document.getElementById('login-senha')?.value||'';
+    var colabObj=colaboradores.find(function(c){return c.nome===sel;});
+    if(!colabObj){
+      try{
+        var salaoId=localStorage.getItem('aflor_ultimo_salao_id');
+        var cached=JSON.parse(localStorage.getItem('aflor_colabs_cache_'+salaoId)||'[]');
+        colabObj=cached.find(function(c){return c.nome===sel;});
+      }catch(e){}
+    }
+    if(colabObj&&colabObj.senha){
+      if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
+      if(colabObj.senha!==senhaDigitada){showAlertOb('Senha incorreta!');return;}
+    }
     colaboradorLogado=sel;
     try{localStorage.setItem('aflor_logado','colab_'+sel);}catch(e){}
     obFinish();
