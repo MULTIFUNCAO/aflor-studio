@@ -9609,6 +9609,7 @@ function carregarDadosDoSalao(){
   carregarServicosSupa();
   carregarColaboradoresSupa();
   carregarAgendamentosSupa();
+  carregarCaixaSupa();
 }
 
 // Ao carregar: verifica se já está logado
@@ -9663,6 +9664,59 @@ var caixaState={aberto:false,troco:0,horaAbertura:null,movimentos:[],tipoAtual:'
 var catEntradas=['Servico de cabelo','Manicure/Pedicure','Estetica','Produto vendido','Sinal/Reserva','Outros'];
 var catSaidas=['Compra de material','Aluguel/Conta','Comissao','Alimentacao','Transporte','Outros'];
 function fmtCaixa(v){return 'R$ '+Number(v).toFixed(2).replace('.',',');}
+async function carregarCaixaSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('caixa_estado').select('*').eq('salao_id',window.SALAO_ID).maybeSingle();
+    if(r.error)throw r.error;
+    var row=r.data;
+    if(!row){
+      caixaState.aberto=false;caixaState.troco=0;caixaState.horaAbertura=null;caixaState.movimentos=[];
+    }else{
+      caixaState.aberto=!!row.aberto;
+      caixaState.troco=parseFloat(row.troco)||0;
+      caixaState.horaAbertura=row.hora_abertura?new Date(row.hora_abertura):null;
+      caixaState.movimentos=[];
+      if(caixaState.aberto){
+        var rm=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID).order('id');
+        if(rm.error)throw rm.error;
+        var maxLocalId=0;
+        (rm.data||[]).forEach(function(mrow,idx){
+          var localId=idx+1;
+          if(localId>maxLocalId)maxLocalId=localId;
+          caixaState.movimentos.push({
+            id:localId,supaId:mrow.id,tipo:mrow.tipo,categoria:mrow.categoria||'',
+            descricao:mrow.descricao||'',valor:parseFloat(mrow.valor)||0,forma:mrow.forma||'',
+            hora:mrow.hora||'00:00'
+          });
+        });
+        movIdCounter=maxLocalId+1;
+      }
+    }
+    var elFech=document.getElementById('caixa-fechado-view');
+    var elAber=document.getElementById('caixa-aberto-view');
+    var elFechamento=document.getElementById('caixa-fechamento-view');
+    if(caixaState.aberto){
+      if(elFech)elFech.style.display='none';
+      if(elAber)elAber.style.display='block';
+      if(elFechamento)elFechamento.style.display='none';
+      if(caixaState.horaAbertura){
+        var agora=caixaState.horaAbertura;
+        var elHora=document.getElementById('caixa-hora-abertura');
+        var elData=document.getElementById('caixa-data-abertura');
+        var elTroco=document.getElementById('caixa-troco-display');
+        if(elHora)elHora.textContent=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
+        if(elData)elData.textContent=agora.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
+        if(elTroco)elTroco.textContent=fmtCaixa(caixaState.troco);
+      }
+    }else{
+      if(elFech)elFech.style.display='block';
+      if(elAber)elAber.style.display='none';
+      if(elFechamento)elFechamento.style.display='none';
+    }
+    atualizarTotaisCaixa();
+  }catch(e){console.log('err carregar caixa supa',e);}
+}
 function abrirCaixa(){
   caixaNavIdx = 0;
   var troco=parseFloat(document.getElementById('caixa-troco-input').value)||0;
@@ -9675,6 +9729,12 @@ function abrirCaixa(){
   document.getElementById('caixa-aberto-view').style.display='block';
   document.getElementById('caixa-fechamento-view').style.display='none';
   atualizarTotaisCaixa();showAlert('Caixa aberto!');
+  (async function(){
+    try{
+      if(!supa||!window.SALAO_ID)return;
+      await supa.from('caixa_estado').upsert({salao_id:window.SALAO_ID,aberto:true,troco:troco,hora_abertura:caixaState.horaAbertura.toISOString()});
+    }catch(e){console.log('err abrir caixa supa',e);}
+  })();
 }
 function atualizarTotaisCaixa(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
@@ -9728,11 +9788,35 @@ function confirmarMovimento(){
   if(!valor||valor<=0){showAlert('Digite um valor valido!');return;}
   if(!forma){showAlert('Selecione a forma de pagamento!');return;}
   var agora=new Date();
-  caixaState.movimentos.push({id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0')});
+  var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
+  var mov={id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,supaId:null};
+  caixaState.movimentos.push(mov);
   fecharModalMovimento();atualizarTotaisCaixa();
   showAlert(caixaState.tipoAtual==='entrada'?'Entrada registrada!':'Saida registrada!');
+  (async function(){
+    try{
+      if(!supa||!window.SALAO_ID)return;
+      var r=await supa.from('caixa_movimentos').insert([{
+        salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
+        valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin')
+      }]).select('id');
+      if(r.data&&r.data[0])mov.supaId=r.data[0].id;
+    }catch(e){console.log('err salvar mov caixa supa',e);}
+  })();
 }
-function removerMovimento(id){caixaState.movimentos=caixaState.movimentos.filter(function(m){return m.id!==id;});atualizarTotaisCaixa();}
+function removerMovimento(id){
+  var mov=caixaState.movimentos.find(function(m){return m.id===id;});
+  caixaState.movimentos=caixaState.movimentos.filter(function(m){return m.id!==id;});
+  atualizarTotaisCaixa();
+  if(mov&&mov.supaId){
+    (async function(){
+      try{
+        if(!supa||!window.SALAO_ID)return;
+        await supa.from('caixa_movimentos').delete().eq('id',mov.supaId).eq('salao_id',window.SALAO_ID);
+      }catch(e){console.log('err remover mov caixa supa',e);}
+    })();
+  }
+}
 function fecharCaixaConfirmar(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var saidas=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
@@ -9901,6 +9985,13 @@ function confirmarFechamentoCaixa(){
   document.getElementById('caixa-fechado-view').style.display='block';
   renderHistoricoCaixa();
   showAlert('Caixa fechado!');
+  (async function(){
+    try{
+      if(!supa||!window.SALAO_ID)return;
+      await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
+      await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
+    }catch(e){console.log('err fechar caixa supa',e);}
+  })();
 }
 
 
