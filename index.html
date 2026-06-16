@@ -1964,6 +1964,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="cv-metas" style="padding:14px"></div>
         </div>
 
+        <!-- Caixa de Hoje -->
+        <div id="cv-caixa-section" style="display:none;background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
+            <div style="font-size:14px;font-weight:800">💰 Caixa de Hoje</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Movimentos do salão (valores conforme sua permissão)</div>
+          </div>
+          <div id="cv-caixa-conteudo" style="padding:14px"></div>
+        </div>
+
         <!-- Comissões -->
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
@@ -4011,12 +4020,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full">
         <label>Permissões de acesso</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Agenda</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Clientes</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" style="accent-color:#111"/> Financeiro</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Comandas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" style="accent-color:#111"/> Relatórios</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Metas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-agenda" checked style="accent-color:#111"/> Agenda</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-clientes" checked style="accent-color:#111"/> Clientes</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-financeiro" style="accent-color:#111"/> Financeiro</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-comandas" checked style="accent-color:#111"/> Comandas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-relatorios" style="accent-color:#111"/> Relatórios</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-metas" checked style="accent-color:#111"/> Metas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px 8px 22px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:11px;grid-column:1/-1;color:#666"><input type="checkbox" id="chk-perm-caixa-total" style="accent-color:#111"/> ↳ Ver valor total do Caixa</label>
         </div>
       </div>
       <!-- Observações -->
@@ -5861,7 +5871,8 @@ async function salvarColaboradorSupa(c){
     var r=await supa.from('colaboradores').insert([{
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||'',salao_id:window.SALAO_ID
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||'',
+      permissoes:c.permissoes||null,salao_id:window.SALAO_ID
     }]).select('id');
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa colaborador insert',e);return null;}
@@ -5877,7 +5888,8 @@ async function atualizarColaboradorSupa(c){
     await supa.from('colaboradores').update({
       nome:c.nome,email:c.email||'',cargo:c.cargo||'Colaborador',
       comissao:c.comissao||'50%',status:c.status||'Ativo',cor:c.cor||'',
-      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||''
+      foto:c.foto||'',servicos:c.servicos||null,senha:c.senha||'',
+      permissoes:c.permissoes||null
     }).eq('id',c.id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa colaborador update',e);}
 }
@@ -5892,7 +5904,8 @@ async function carregarColaboradoresSupa(){
       colaboradores=r.data.map(function(row){
         return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
           comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
-          foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||''};
+          foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||'',
+          permissoes:row.permissoes||undefined};
       });
       // Cache para uso no login (antes de ter SALAO_ID na próxima sessão)
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
@@ -8509,6 +8522,19 @@ function toggleSenhaVisivel(id,icone){
   if(inp.type==='password'){inp.type='text';icone.textContent='🙈';}
   else{inp.type='password';icone.textContent='👁';}
 }
+function lerPermissoesDoForm(){
+  var root=document.getElementById('modal-colab');
+  function chk(id){return !!root?.querySelector('#'+id)?.checked;}
+  return {
+    agenda:chk('chk-perm-agenda'),
+    clientes:chk('chk-perm-clientes'),
+    financeiro:chk('chk-perm-financeiro'),
+    comandas:chk('chk-perm-comandas'),
+    relatorios:chk('chk-perm-relatorios'),
+    metas:chk('chk-perm-metas'),
+    caixaVerTotal:chk('chk-perm-caixa-total')
+  };
+}
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
   if(!nome){showAlert('Preencha o nome do colaborador!');return;}
@@ -8520,7 +8546,8 @@ function salvarColaborador(){
   var novoColab={
     nome:nome, email:email, cargo:cargo,
     comissao:comissao+'%', cor:colabCorAtual,
-    foto:colabFotoAtual, status:'Ativo', senha:senha
+    foto:colabFotoAtual, status:'Ativo', senha:senha,
+    permissoes:lerPermissoesDoForm()
   };
   colaboradores.push(novoColab);
   salvarColaboradorSupa(novoColab).then(function(newId){if(newId!=null)novoColab.id=newId;});
@@ -8621,12 +8648,13 @@ function editarColab(idx){
       <div class="form-group full">
         <label>Permissões de acesso</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Agenda</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Clientes</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" style="accent-color:#111"/> Financeiro</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Comandas</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" style="accent-color:#111"/> Relatórios</label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" checked style="accent-color:#111"/> Metas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-agenda" style="accent-color:#111"/> Agenda</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-clientes" style="accent-color:#111"/> Clientes</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-financeiro" style="accent-color:#111"/> Financeiro</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-comandas" style="accent-color:#111"/> Comandas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-relatorios" style="accent-color:#111"/> Relatórios</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:12px"><input type="checkbox" id="chk-perm-metas" style="accent-color:#111"/> Metas</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 10px 8px 22px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:11px;grid-column:1/-1;color:#666"><input type="checkbox" id="chk-perm-caixa-total" style="accent-color:#111"/> ↳ Ver valor total do Caixa</label>
         </div>
       </div>
       <!-- Observações -->
@@ -8644,6 +8672,15 @@ function editarColab(idx){
     </div>
   </div>`;
   m.classList.add('open');
+  var p=c.permissoes||{};
+  function setPermChk(id,val){var el=m.querySelector('#'+id);if(el)el.checked=!!val;}
+  setPermChk('chk-perm-agenda',p.agenda!==undefined?p.agenda:true);
+  setPermChk('chk-perm-clientes',p.clientes!==undefined?p.clientes:true);
+  setPermChk('chk-perm-financeiro',p.financeiro!==undefined?p.financeiro:false);
+  setPermChk('chk-perm-comandas',p.comandas!==undefined?p.comandas:true);
+  setPermChk('chk-perm-relatorios',p.relatorios!==undefined?p.relatorios:false);
+  setPermChk('chk-perm-metas',p.metas!==undefined?p.metas:true);
+  setPermChk('chk-perm-caixa-total',p.caixaVerTotal!==undefined?p.caixaVerTotal:false);
 }
 function editAtualizarIniciais(){
   var nome=document.getElementById('edit-nome')?.value||'';
@@ -8678,6 +8715,16 @@ function salvarEdicaoColab(idx){
   c.status=document.getElementById('edit-status')?.value||'Ativo';
   var novaSenha=document.getElementById('edit-senha')?.value||'';
   if(novaSenha)c.senha=novaSenha;
+  var mEdit=document.getElementById('modal-editar-colab');
+  c.permissoes={
+    agenda:mEdit.querySelector('#chk-perm-agenda').checked,
+    clientes:mEdit.querySelector('#chk-perm-clientes').checked,
+    financeiro:mEdit.querySelector('#chk-perm-financeiro').checked,
+    comandas:mEdit.querySelector('#chk-perm-comandas').checked,
+    relatorios:mEdit.querySelector('#chk-perm-relatorios').checked,
+    metas:mEdit.querySelector('#chk-perm-metas').checked,
+    caixaVerTotal:mEdit.querySelector('#chk-perm-caixa-total').checked
+  };
   atualizarColaboradorSupa(c);
   renderColabs();
   // Atualizar agenda se estiver visível
@@ -9299,6 +9346,45 @@ function entrarComoColaborador(nome){
       +'</div>'
       +'<div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">Detalhamento:</div>'
       +totalVendas.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*pct/100).toFixed(2).replace('.',',')+'</span></div>';}).join('');
+  }
+  // Caixa (se permitido)
+  var caixaSec=document.getElementById('cv-caixa-section');
+  var caixaCont=document.getElementById('cv-caixa-conteudo');
+  if(caixaSec&&caixaCont){
+    var perm=colab&&colab.permissoes?colab.permissoes:{};
+    if(perm.financeiro){
+      caixaSec.style.display='block';
+      var verTotal=!!perm.caixaVerTotal;
+      var movs=caixaState&&caixaState.movimentos?caixaState.movimentos:[];
+      var html='<div style="font-size:12px;font-weight:700;margin-bottom:12px">'+(caixaState&&caixaState.aberto?'🟢 Caixa Aberto':'🔴 Caixa Fechado')+'</div>';
+      if(!movs.length){
+        html+='<div style="text-align:center;padding:16px;color:#aaa;font-size:13px">Nenhum movimento hoje</div>';
+      }else{
+        html+=movs.map(function(m){
+          var icone=m.icone||(m.forma==='pix'?'📱':m.forma==='dinheiro'?'💵':m.forma==='cartao'?'💳':'💰');
+          var valStr=verTotal?((m.tipo==='saida'?'- ':'+ ')+(typeof fmtCaixa==='function'?fmtCaixa(m.valor):('R$ '+Number(m.valor).toFixed(2).replace('.',',')))):'•••• ocultado';
+          var corVal=m.tipo==='saida'?'#ef4444':'#22c55e';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5">'
+            +'<span style="font-size:16px">'+icone+'</span>'
+            +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:#111">'+m.descricao+'</div>'
+            +'<div style="font-size:10px;color:#888">'+m.categoria+' · '+m.forma+' · '+m.hora+'</div></div>'
+            +'<div style="font-size:12px;font-weight:700;color:'+(verTotal?corVal:'#999')+'">'+valStr+'</div></div>';
+        }).join('');
+      }
+      if(verTotal&&movs.length){
+        var ent=movs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+        var sai=movs.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
+        var saldoDia=ent-sai;
+        var corSaldo=saldoDia>=0?'#22c55e':'#ef4444';
+        html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">'
+          +'<span style="font-size:12px;font-weight:700;color:#555">Total do dia</span>'
+          +'<span style="font-size:16px;font-weight:900;color:'+corSaldo+'">'+(typeof fmtCaixa==='function'?fmtCaixa(saldoDia):('R$ '+saldoDia.toFixed(2).replace('.',',')))+'</span></div>';
+      }
+      caixaCont.innerHTML=html;
+    }else{
+      caixaSec.style.display='none';
+      caixaCont.innerHTML='';
+    }
   }
 }
 
