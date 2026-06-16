@@ -6668,13 +6668,22 @@ function abrirConfirmarPagamento(key){
 }
 
 function lancarSinalCaixaSeNecessario(reg,valor,forma){
-  if(!reg||!valor||valor<=0||reg.sinalLancadoCaixa)return false;
+  if(!reg||!valor||valor<=0)return null;
+  if(reg.sinalMovId)return reg.sinalMovId;
+  if(!caixaState.aberto){
+    showAlert('Caixa fechado — lance o sinal manualmente quando abrir o caixa');
+    return null;
+  }
   forma=forma||reg.formaSinal||popupFormaSinal||'Pix';
   reg.formaSinal=forma;
-  var svc=nomeServicoAgendamento(reg)||reg.servico||'Serviço';
-  lancarEntradaCaixaAuto('Sinal — '+svc+' — '+reg.cliente,valor,forma);
-  reg.sinalLancadoCaixa=true;
-  return true;
+  var nomeSvc=nomeServicoAgendamento(reg);
+  var catServ=typeof agCategoriaDoServico==='function'?agCategoriaDoServico(nomeSvc):null;
+  var categoria=caixaCatDeServicoCatalogo(catServ);
+  var noCatalogo=(typeof servicos!=='undefined'?servicos:[]).some(function(s){return s.nome===nomeSvc;});
+  var descricao=noCatalogo?nomeSvc:('Sinal — '+((reg.cliente||'').trim()||'Cliente'));
+  var mov=inserirMovimentoCaixa({categoria:categoria,descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
+  if(mov){reg.sinalMovId=mov.id;reg.sinalLancadoCaixa=true;return mov.id;}
+  return null;
 }
 function sincronizarFormaSinalAgenda(key,forma){
   if(agendaDiaAtual[key])agendaDiaAtual[key].formaSinal=forma;
@@ -6685,28 +6694,8 @@ function sincronizarFormaSinalAgenda(key,forma){
   }
 }
 function lancarEntradaCaixaAuto(desc,valor,forma){
-  var mapaForma={'Pix':'pix','pix':'pix','PIX':'pix','Cartão':'cartao','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
-  var formaKey=mapaForma[forma]||'pix';
-  if(!caixaState.aberto){
-    caixaState.aberto=true;
-    caixaState.troco=caixaState.troco||0;
-    caixaState.horaAbertura=new Date();
-    if(!caixaState.movimentos)caixaState.movimentos=[];
-    var agora=caixaState.horaAbertura;
-    var elHora=document.getElementById('caixa-hora-abertura');
-    var elData=document.getElementById('caixa-data-abertura');
-    var elTroco=document.getElementById('caixa-troco-display');
-    if(elHora)elHora.textContent=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
-    if(elData)elData.textContent=agora.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
-    if(elTroco)elTroco.textContent=fmtCaixa(caixaState.troco);
-    document.getElementById('caixa-fechado-view').style.display='none';
-    document.getElementById('caixa-aberto-view').style.display='block';
-    document.getElementById('caixa-fechamento-view').style.display='none';
-  }
-  var agora=new Date();
-  var iconeForma={pix:'📱',dinheiro:'💵',cartao:'💳',link:'🔗'}[formaKey]||'💰';
-  caixaState.movimentos.push({id:movIdCounter++,tipo:'entrada',categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaKey,icone:iconeForma,hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0')});
-  atualizarTotaisCaixa();
+  if(!caixaState.aberto)return null;
+  return inserirMovimentoCaixa({categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaPagamentoParaCaixa(forma)});
 }
 
 function confirmarFechamentoPagamento(){
@@ -6730,11 +6719,12 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].valor=valorTotalFmt;
     }
     // Sinal: só lança se ainda não foi registrado ao confirmar o sinal
-    if(ctx.sinalAbate>0&&!ctx.dados.sinalLancadoCaixa){
+    if(ctx.sinalAbate>0&&!ctx.dados.sinalMovId){
       var formaSinalCtx=(ctx.dados&&ctx.dados.formaSinal)||popupFormaSinal||'Pix';
-      lancarSinalCaixaSeNecessario(ctx.dados,ctx.sinalAbate,formaSinalCtx);
+      var movIdSinal=lancarSinalCaixaSeNecessario(ctx.dados,ctx.sinalAbate,formaSinalCtx);
       if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
-        agendamentosPorData[dataKey][key].sinalLancadoCaixa=true;
+        if(movIdSinal)agendamentosPorData[dataKey][key].sinalMovId=movIdSinal;
+        agendamentosPorData[dataKey][key].sinalLancadoCaixa=!!movIdSinal;
         agendamentosPorData[dataKey][key].formaSinal=ctx.dados.formaSinal;
       }
     }
@@ -6922,14 +6912,23 @@ function toggleSinalPopup(key){
       return;
     }
     sincronizarFormaSinalAgenda(key,formaSinal);
-    lancarSinalCaixaSeNecessario(a,sinalVal,formaSinal);
+    var movId=lancarSinalCaixaSeNecessario(a,sinalVal,formaSinal);
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
-      agendamentosPorData[dataKey][key].sinalLancadoCaixa=true;
+      if(movId){
+        agendamentosPorData[dataKey][key].sinalMovId=movId;
+        agendamentosPorData[dataKey][key].sinalLancadoCaixa=true;
+      }
       agendamentosPorData[dataKey][key].formaSinal=formaSinal;
     }
   } else if(!novoPago){
+    var movIdRem=a.sinalMovId;
+    if(movIdRem&&caixaState.aberto&&caixaState.movimentos&&caixaState.movimentos.some(function(m){return m.id===movIdRem;})){
+      removerMovimento(movIdRem);
+    }
+    a.sinalMovId=null;
     a.sinalLancadoCaixa=false;
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+      agendamentosPorData[dataKey][key].sinalMovId=null;
       agendamentosPorData[dataKey][key].sinalLancadoCaixa=false;
     }
   }
@@ -9157,7 +9156,9 @@ function salvarAgendamento(){
     });
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
     if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
-      lancarEntradaCaixaAuto('Sinal — '+servico+' — '+cliente,sinalValNum,agFormaSinal||'pix');
+      var chaveSinal=profsAgenda[0]+':'+hora;
+      var apptSinal=agendamentosPorData[dataKey][chaveSinal];
+      if(apptSinal)lancarSinalCaixaSeNecessario(apptSinal,sinalValNum,agFormaSinal||'Pix');
     }
     agFormaSinal='';
     document.querySelectorAll('.ag-forma-btn').forEach(function(b){
@@ -10049,6 +10050,28 @@ function selecionarForma(btn){
   btn.style.borderColor='#8b5cf6';btn.style.background='#f3f0ff';btn.style.color='#7c3aed';
   caixaState.formaAtual=btn.getAttribute('data-forma');
 }
+function formaPagamentoParaCaixa(forma){
+  var mapa={'Pix':'pix','pix':'pix','PIX':'pix','Cartão':'cartao','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
+  return mapa[forma]||'pix';
+}
+function caixaCatDeServicoCatalogo(catServ){
+  if(!catServ)return 'Outros';
+  if(catServ==='Cabelo')return 'Servico de cabelo';
+  if(catServ==='Unhas')return 'Manicure/Pedicure';
+  if(['Estética','Sobrancelhas','Cílios','Depilação','Maquiagem','Piercign'].indexOf(catServ)>=0)return 'Estetica';
+  return 'Outros';
+}
+function inserirMovimentoCaixa(opts){
+  if(!caixaState.aberto)return null;
+  if(!caixaState.movimentos)caixaState.movimentos=[];
+  var agora=new Date();
+  var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
+  var mov={id:movIdCounter++,tipo:opts.tipo||caixaState.tipoAtual||'entrada',categoria:opts.categoria||'Outros',descricao:opts.descricao||'',valor:parseFloat(opts.valor)||0,forma:opts.forma||'pix',hora:horaStr,profissional:opts.profissional||'',supaId:null};
+  caixaState.movimentos.push(mov);
+  atualizarTotaisCaixa();
+  sincronizarMovimentoCaixaSupa(mov).catch(function(e){console.log(e);});
+  return mov;
+}
 function confirmarMovimento(){
   var cat=document.getElementById('mov-categoria').value;
   var desc=lerDescricaoMov();
@@ -10107,11 +10130,10 @@ function confirmarMovimento(){
     showAlert(caixaState.tipoAtual==='entrada'?'Entrada adicionada ao histórico!':'Saída adicionada ao histórico!');
     return;
   }
-  var mov={id:movIdCounter++,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,profissional:profissional,supaId:null};
-  caixaState.movimentos.push(mov);
-  fecharModalMovimento();atualizarTotaisCaixa();
+  var mov=inserirMovimentoCaixa({tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,profissional:profissional});
+  if(!mov)return;
+  fecharModalMovimento();
   showAlert(caixaState.tipoAtual==='entrada'?'Entrada registrada!':'Saida registrada!');
-  sincronizarMovimentoCaixaSupa(mov).catch(function(e){console.log(e);});
 }
 function removerMovimento(id){
   var mov=caixaState.movimentos.find(function(m){return m.id===id;});
