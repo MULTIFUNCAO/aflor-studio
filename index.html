@@ -4429,6 +4429,40 @@ function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   salvarComissaoPacoteSupa(lancObj);
   if(typeof renderRemuneracoes==='function')renderRemuneracoes();
 }
+function lancarComissaoServico(profissional,nomeServico,clienteNome,valorServico){
+  // Igual a lancarComissaoPacote, mas pro pagamento de serviço NORMAL
+  // (não descontado de pacote) — recebe o valor já pago de verdade,
+  // em vez de buscar no catálogo (pode ter sido múltiplos serviços ou
+  // valor ajustado manualmente).
+  valorServico=parseFloat(valorServico)||0;
+  if(valorServico<=0)return;
+  var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
+  var nomeNorm=norm(profissional);
+  var colab=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){
+    var cNorm=norm(c.nome);
+    return cNorm===nomeNorm||cNorm.indexOf(nomeNorm)>=0||nomeNorm.indexOf(cNorm)>=0;
+  });
+  var pct=colab&&colab.comissao?parseFloat(String(colab.comissao).replace('%',''))||100:100;
+  var valor=valorServico*(pct/100);
+  var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var nomeRem=mapaNomesInv[profissional]||profissional;
+  var r=remuneracoes.find(function(x){return x.nome===nomeRem||x.nome===profissional;});
+  if(!r){
+    r={nome:nomeRem,total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''};
+    remuneracoes.push(r);
+  }
+  r.total=fmtCaixa(parseMoedaBR(r.total)+valor).replace('R$ ','');
+  r.pendente=fmtCaixa(parseMoedaBR(r.pendente)+valor).replace('R$ ','');
+  atualizarRemuneracaoSupa(r);
+  var lancObj={data:new Date().toISOString(),profissional:nomeRem,servico:nomeServico,valor_servico:valorServico,comissao_pct:pct,valor:valor,cliente:clienteNome,origem:'servico'};
+  try{
+    var lanc=JSON.parse(localStorage.getItem('flora_comissoes_servico')||'[]');
+    lanc.unshift(lancObj);
+    localStorage.setItem('flora_comissoes_servico',JSON.stringify(lanc));
+  }catch(e){}
+  salvarComissaoPacoteSupa(lancObj);
+  if(typeof renderRemuneracoes==='function')renderRemuneracoes();
+}
 async function carregarPacotesClientesSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
@@ -6949,6 +6983,11 @@ function confirmarFechamentoPagamento(){
     if(ctx.restante>0){
       var svcNome=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
       lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,ctx.restante,forma);
+    }
+    // Lançar comissão do colaborador sobre o valor total do serviço pago
+    if(typeof lancarComissaoServico==='function'){
+      var svcNomeComissao=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
+      lancarComissaoServico(ctx.dados.prof,svcNomeComissao,ctx.dados.cliente,ctx.total);
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
