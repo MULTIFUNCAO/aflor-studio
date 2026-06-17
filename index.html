@@ -1387,7 +1387,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Profissional</th><th>Valor Total (R$)</th><th>Valor Pago (R$)</th><th>Pendente Pgto (R$)</th><th>Vales Pendentes (R$)</th></tr></thead>
+          <thead><tr><th>Profissional</th><th>Valor Total (R$)</th><th>Valor Pago (R$)</th><th>Pendente Pgto (R$)</th><th>Vales Pendentes (R$)</th><th>Ações</th></tr></thead>
           <tbody id="remuneracoes-table"></tbody>
         </table>
       </div>
@@ -6193,11 +6193,40 @@ function renderComandas(){
 
 function renderRemuneracoes(){
   const tb=document.getElementById('remuneracoes-table');
-  tb.innerHTML=remuneracoes.map(r=>`<tr>
+  tb.innerHTML=remuneracoes.map((r,i)=>`<tr>
     <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${r.cor}" style="width:28px;height:28px;font-size:10px">${initials(r.nome)}</div>${r.nome}</div></td>
     <td>${r.total}</td><td>${r.pago}</td><td>${r.pendente}</td>
     <td style="font-weight:${r.vales!=='0,00'?'700':'400'};color:${r.vales!=='0,00'?'var(--orange)':'inherit'}">${r.vales}</td>
+    <td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="marcarRemuneracaoPaga(${i})">💰 Marcar pago</button><button class="btn btn-outline btn-sm" onclick="lancarValeColaborador(${i})">📋 Lançar vale</button></td>
   </tr>`).join('');
+}
+async function marcarRemuneracaoPaga(i){
+  var r=remuneracoes[i];
+  if(!r)return;
+  if(parseMoedaBR(r.pendente)<=0){showAlert('Não há valor pendente para marcar como pago.');return;}
+  if(!confirm('Marcar R$ '+r.pendente+' como pago para '+r.nome+'?'))return;
+  r.pago=fmtCaixa(parseMoedaBR(r.pago)+parseMoedaBR(r.pendente)).replace('R$ ','');
+  r.pendente='0,00';
+  await atualizarRemuneracaoSupa(r);
+  renderRemuneracoes();
+  showAlert('Pagamento registrado para '+r.nome+'.');
+}
+async function lancarValeColaborador(i){
+  var r=remuneracoes[i];
+  if(!r)return;
+  var valStr=prompt('Valor do vale/adiantamento para '+r.nome+' (R$):','');
+  if(valStr==null)return;
+  var valor=parseMoedaBR(valStr);
+  if(!valor||valor<=0){showAlert('Valor inválido.');return;}
+  r.vales=fmtCaixa(parseMoedaBR(r.vales)+valor).replace('R$ ','');
+  await atualizarRemuneracaoSupa(r);
+  try{
+    var lanc=JSON.parse(localStorage.getItem('flora_vales_colaboradores')||'[]');
+    lanc.unshift({data:new Date().toISOString(),profissional:r.nome,valor:fmtCaixa(valor)});
+    localStorage.setItem('flora_vales_colaboradores',JSON.stringify(lanc));
+  }catch(e){}
+  renderRemuneracoes();
+  showAlert('Vale de '+fmtCaixa(valor)+' lançado para '+r.nome+'.');
 }
 
 function renderServicos(){
