@@ -6182,7 +6182,7 @@ function renderComandas(){
   if(!tb)return;
   var deAgenda=listarComandasDeAgendamentos();
   var manuais=(typeof comandas!=='undefined'?comandas:[]).map(function(c,i){
-    return {origem:'manual',n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
+    return {origem:c.origem||'manual',n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
   });
   var todas=deAgenda.concat(manuais);
   if(!todas.length){
