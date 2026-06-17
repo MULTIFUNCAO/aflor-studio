@@ -3840,6 +3840,74 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
       </div>
       <div class="form-group full"><label>Observações</label><textarea id="cmd-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
+      <div class="form-group full" id="cmd-sinal-bloco">
+        <div style="background:#f8f8f8;border-radius:12px;padding:14px;border:1px solid #e5e5e5">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:#111">💰 Sinal / Entrada</div>
+              <div style="font-size:11px;color:#888;margin-top:2px">O cliente pagou algum valor para confirmar?</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="cmd-sinal-ativo" onchange="cmdToggleSinal()" style="width:16px;height:16px;accent-color:#111"/>
+              <span style="font-size:12px;font-weight:600">Sim, deu sinal</span>
+            </label>
+          </div>
+          <div id="cmd-sinal-area" style="display:none">
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+              <span style="font-size:11px;color:#888;align-self:center">Atalhos:</span>
+              <button type="button" class="btn btn-outline btn-sm" onclick="cmdSetPct(25)">25%</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="cmdSetPct(30)">30%</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="cmdSetPct(50)">50%</button>
+              <button type="button" class="btn btn-outline btn-sm" onclick="cmdSetPct(100)">100%</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div class="form-group">
+                <label>Porcentagem (%)</label>
+                <input type="number" id="cmd-sinal-pct" value="50" min="1" max="100" oninput="cmdCalcSinal()" style="font-weight:700"/>
+              </div>
+              <div class="form-group">
+                <label>Valor do sinal (R$)</label>
+                <input type="number" id="cmd-sinal-val" oninput="cmdCalcSinalVal()" style="font-weight:700"/>
+              </div>
+            </div>
+            <div style="background:#fff;border-radius:9px;padding:12px;border:1px solid #e5e5e5">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+                <span style="color:#666">Valor total do serviço</span>
+                <span id="cmd-total-servico" style="font-weight:700">R$ 0,00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+                <span style="color:#666">Sinal a receber agora</span>
+                <span id="cmd-sinal-agora" style="font-weight:800;color:#111">R$ 0,00</span>
+              </div>
+              <div style="border-top:1px dashed #e5e5e5;margin:6px 0;padding-top:6px;display:flex;justify-content:space-between;font-size:12px">
+                <span style="color:#888">Restante após o serviço</span>
+                <span id="cmd-sinal-resto" style="font-weight:700;color:#888">R$ 0,00</span>
+              </div>
+            </div>
+            <div style="margin-top:10px">
+              <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Status do sinal</label>
+              <div style="display:flex;gap:6px">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
+                  <input type="radio" name="cmd-sinal-status" value="pendente" checked style="accent-color:#111"/>
+                  <span style="font-size:12px;font-weight:600">⏳ Pendente</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
+                  <input type="radio" name="cmd-sinal-status" value="pago" style="accent-color:#111"/>
+                  <span style="font-size:12px;font-weight:600">✅ Já foi pago</span>
+                </label>
+              </div>
+              <div style="margin-top:10px">
+                <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                  <button type="button" onclick="cmdSetFormaSinal(this,'Pix')" class="cmd-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
+                  <button type="button" onclick="cmdSetFormaSinal(this,'Dinheiro')" class="cmd-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
+                  <button type="button" onclick="cmdSetFormaSinal(this,'Link')" class="cmd-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-group full">
         <div style="background:#f8f8f8;border-radius:10px;padding:14px;border:1px solid #e5e5e5">
           <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800">
@@ -9332,20 +9400,83 @@ function cmdSetTipo(tipo){
   var pac=document.getElementById('cmd-tipo-pac');
   var areaSrv=document.getElementById('cmd-area-servico');
   var areaPac=document.getElementById('cmd-area-pacote');
+  var sinalBloco=document.getElementById('cmd-sinal-bloco');
   if(tipo==='servico'){
     if(srv){srv.style.border='2px solid #111';srv.style.background='#f5f5f5';}
     if(pac){pac.style.border='2px solid #ddd';pac.style.background='#fff';}
     if(areaSrv)areaSrv.style.display='';
     if(areaPac)areaPac.style.display='none';
+    if(sinalBloco)sinalBloco.style.display='';
     cmdCalcTotal();
   }else{
     if(pac){pac.style.border='2px solid #111';pac.style.background='#f5f5f5';}
     if(srv){srv.style.border='2px solid #ddd';srv.style.background='#fff';}
     if(areaSrv)areaSrv.style.display='none';
     if(areaPac)areaPac.style.display='';
+    if(sinalBloco)sinalBloco.style.display='none';
     cmdCarregarPacotes();
     cmdVerPacote();
   }
+}
+var cmdFormaSinal='';
+function cmdSetFormaSinal(btn,forma){
+  cmdFormaSinal=forma;
+  document.querySelectorAll('.cmd-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+  btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
+}
+function cmdToggleSinal(){
+  var ativo=document.getElementById('cmd-sinal-ativo')?.checked;
+  var area=document.getElementById('cmd-sinal-area');
+  if(area)area.style.display=ativo?'block':'none';
+  if(ativo)cmdCalcSinal();
+}
+function cmdCalcSinal(){
+  var tipo=document.getElementById('cmd-tipo-val')?.value||'servico';
+  var total=tipo==='pacote'?0:(cmdSomaServicos()||0);
+  var pct=parseFloat(document.getElementById('cmd-sinal-pct')?.value)||50;
+  var sinal=total*(pct/100);
+  var elV=document.getElementById('cmd-sinal-val');
+  if(elV)elV.value=sinal.toFixed(2);
+  var elT=document.getElementById('cmd-total-servico');
+  var elA=document.getElementById('cmd-sinal-agora');
+  var elR=document.getElementById('cmd-sinal-resto');
+  if(elT)elT.textContent='R$ '+total.toFixed(2).replace('.',',');
+  if(elA)elA.textContent='R$ '+sinal.toFixed(2).replace('.',',');
+  if(elR)elR.textContent='R$ '+(total-sinal).toFixed(2).replace('.',',');
+}
+function cmdCalcSinalVal(){
+  var tipo=document.getElementById('cmd-tipo-val')?.value||'servico';
+  var total=tipo==='pacote'?0:(cmdSomaServicos()||0);
+  var val=parseFloat(document.getElementById('cmd-sinal-val')?.value)||0;
+  var pct=total>0?(val/total)*100:0;
+  var elP=document.getElementById('cmd-sinal-pct');
+  if(elP)elP.value=Math.min(100,pct).toFixed(0);
+  var elA=document.getElementById('cmd-sinal-agora');
+  var elR=document.getElementById('cmd-sinal-resto');
+  if(elA)elA.textContent='R$ '+val.toFixed(2).replace('.',',');
+  if(elR)elR.textContent='R$ '+Math.max(0,total-val).toFixed(2).replace('.',',');
+}
+function cmdSetPct(pct){
+  var el=document.getElementById('cmd-sinal-pct');
+  if(el){el.value=pct;cmdCalcSinal();}
+}
+function cmdResetSinal(){
+  var chk=document.getElementById('cmd-sinal-ativo');
+  if(chk)chk.checked=false;
+  var area=document.getElementById('cmd-sinal-area');
+  if(area)area.style.display='none';
+  var pct=document.getElementById('cmd-sinal-pct');
+  if(pct)pct.value='50';
+  var val=document.getElementById('cmd-sinal-val');
+  if(val)val.value='';
+  var pend=document.querySelector('input[name="cmd-sinal-status"][value="pendente"]');
+  if(pend)pend.checked=true;
+  cmdFormaSinal='';
+  document.querySelectorAll('.cmd-forma-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
 }
 function cmdCarregarPacotes(){
   agCarregarPacotes('cmd-pacote-sel','cmd-cliente');
@@ -9438,9 +9569,10 @@ function cmdCalcTotal(){
   }
   var total=cmdSomaServicos();
   elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
+  if(document.getElementById('cmd-sinal-ativo')?.checked)cmdCalcSinal();
 }
 function cmdSetFormReadonly(ro){
-  ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto','cmd-pacote-sel','cmd-pacote-prof'].forEach(function(id){
+  ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto','cmd-pacote-sel','cmd-pacote-prof','cmd-sinal-ativo','cmd-sinal-pct','cmd-sinal-val'].forEach(function(id){
     var el=document.getElementById(id);
     if(el)el.disabled=!!ro;
   });
@@ -9452,6 +9584,8 @@ function cmdSetFormReadonly(ro){
   if(addBtn)addBtn.style.display=ro?'none':'';
   var addPac=document.getElementById('cmd-btn-add-pac');
   if(addPac)addPac.style.display=ro?'none':'';
+  document.querySelectorAll('input[name="cmd-sinal-status"]').forEach(function(el){el.disabled=!!ro;});
+  document.querySelectorAll('.cmd-forma-btn').forEach(function(el){el.disabled=!!ro;el.style.pointerEvents=ro?'none':'';});
   ['cmd-tipo-srv','cmd-tipo-pac'].forEach(function(id){
     var el=document.getElementById(id);
     if(el){el.style.pointerEvents=ro?'none':'';el.style.opacity=ro?'0.65':'1';}
@@ -9492,6 +9626,7 @@ function cmdPreencherDeComanda(c){
     cmdCarregarPacotes();
     cmdVerPacote();
     if(c.total)document.getElementById('cmd-total').textContent=c.total;
+    cmdPreencherSinalDeComanda(c);
     return;
   }
   cmdSetTipo('servico');
@@ -9513,6 +9648,26 @@ function cmdPreencherDeComanda(c){
   }
   cmdCalcTotal();
   if(c.total)document.getElementById('cmd-total').textContent=c.total;
+  cmdPreencherSinalDeComanda(c);
+}
+function cmdPreencherSinalDeComanda(c){
+  if(!c||!c.sinal){cmdResetSinal();return;}
+  var chk=document.getElementById('cmd-sinal-ativo');
+  if(chk)chk.checked=true;
+  var area=document.getElementById('cmd-sinal-area');
+  if(area)area.style.display='block';
+  var valNum=typeof c.sinal_valor==='number'?c.sinal_valor:parseMoedaBR(c.sinalValor||'0');
+  var elVal=document.getElementById('cmd-sinal-val');
+  if(elVal&&valNum>0)elVal.value=valNum.toFixed(2);
+  cmdCalcSinalVal();
+  var st=c.sinalStatus||'pendente';
+  var radio=document.querySelector('input[name="cmd-sinal-status"][value="'+st+'"]');
+  if(radio)radio.checked=true;
+  if(c.formaSinal){
+    document.querySelectorAll('.cmd-forma-btn').forEach(function(b){
+      if((b.getAttribute('onclick')||'').indexOf("'"+c.formaSinal+"'")>=0)cmdSetFormaSinal(b,c.formaSinal);
+    });
+  }
 }
 function abrirModalComanda(editIdx){
   var isVer=typeof editIdx==='number'&&editIdx>=0;
@@ -9537,6 +9692,7 @@ function abrirModalComanda(editIdx){
     if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
     cmdSetTipo('servico');
     cmdFiltrarServicos();
+    cmdResetSinal();
     cmdSetFormReadonly(false);
     var btnSalvar=document.getElementById('cmd-btn-salvar');
     if(btnSalvar){btnSalvar.style.display='';btnSalvar.textContent='Criar Comanda';}
@@ -9618,6 +9774,10 @@ function criarComanda(){
   var dataFmt=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0]+' '+hora;
   var obs=(document.getElementById('cmd-obs')?.value||'').trim();
   var pgto=ehPacote?'Pacote':(document.getElementById('cmd-pgto')?.value||'—');
+  var sinalAtivo=!ehPacote&&(document.getElementById('cmd-sinal-ativo')?.checked);
+  var sinalStatus=document.querySelector('input[name="cmd-sinal-status"]:checked')?.value||'pendente';
+  var sinalAgora=document.getElementById('cmd-sinal-agora')?.textContent||'R$ 0,00';
+  var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
   var item={
     origem:'manual',
     tipo:tipo,
@@ -9631,9 +9791,11 @@ function criarComanda(){
     pgto:pgto,
     status:'Em aberto',
     obs:obs,
-    sinal:false,
-    sinalStatus:'pendente',
-    sinalValor:''
+    sinal:!!sinalAtivo,
+    sinalStatus:sinalStatus,
+    sinalValor:sinalAtivo?sinalAgora:'',
+    sinal_valor:sinalValNum,
+    formaSinal:sinalAtivo?(cmdFormaSinal||''):''
   };
   if(typeof comandas==='undefined')window.comandas=[];
   comandas.push(item);
@@ -9642,6 +9804,8 @@ function criarComanda(){
   if(typeof renderComandas==='function')renderComandas();
   var msg='Comanda criada para '+cliente+'! Total: '+totalFmt;
   if(ehPacote)msg+=' 🎁 Sessão de pacote descontada!';
+  else if(sinalAtivo&&sinalStatus==='pago')msg+=' 💰 Sinal de '+sinalAgora+' registrado!';
+  else if(sinalAtivo)msg+=' Sinal: '+sinalAgora+' ⏳ pendente';
   showAlert(msg);
 }
 // ===== FIM COMANDA =====
