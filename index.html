@@ -1137,7 +1137,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- Barra visual -->
       <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:14px 18px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <span style="font-size:12px;font-weight:700;color:#333">Receitas vs Despesas — Maio 2026</span>
+          <span style="font-size:12px;font-weight:700;color:#333" id="fluxo-barra-mes">Receitas vs Despesas</span>
           <span style="font-size:11px;color:#888">Sobra <strong style="color:#22c55e">R$ 0,00</strong> no final do mês</span>
         </div>
         <div style="display:flex;gap:3px;height:14px;border-radius:7px;overflow:hidden">
@@ -1173,7 +1173,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div id="fluxo-view-lancamentos">
         <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div style="font-size:13px;font-weight:800">Lançamentos — Maio 2026</div>
+            <div style="font-size:13px;font-weight:800" id="fluxo-lancamentos-titulo">Lançamentos</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <input placeholder="🔍 Buscar..." style="font-size:11px;padding:5px 8px;border:1px solid #ddd;border-radius:7px;width:140px" oninput="renderFluxo()"/>
               <select style="font-size:11px;padding:5px 8px;border:1px solid #ddd;border-radius:7px" id="fluxo-filtro-tipo" onchange="renderFluxo()">
@@ -1289,11 +1289,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#22c55e">📥 Receitas por Categoria</div>
-            ${[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#22c55e">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#22c55e;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das receitas</div></div>';}).join('')}
+            <div id="fluxo-cat-receitas"></div>
           </div>
           <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#ef4444">📤 Despesas por Categoria</div>
-            ${[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}].map(function(r){return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:#ef4444">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:#ef4444;border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% das despesas</div></div>';}).join('')}
+            <div id="fluxo-cat-despesas"></div>
           </div>
         </div>
       </div>
@@ -1301,7 +1301,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <!-- TAB DRE -->
       <div id="fluxo-view-dre" style="display:none">
         <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800">📑 DRE — Demonstrativo de Resultado · Maio 2026</div>
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800" id="fluxo-dre-titulo">📑 DRE — Demonstrativo de Resultado</div>
           <table style="width:100%;border-collapse:collapse">
             <tbody>
               <tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">RECEITAS</td></tr>
@@ -9120,14 +9120,39 @@ function removerColab(idx){
   }
 }
 // ===== FLUXO DE CAIXA =====
-var fluxoMes=new Date(2026,4,1);
+var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
 function fluxoNavMes(dir){
-  fluxoMes=new Date(fluxoMes.getFullYear(),fluxoMes.getMonth()+dir,1);
-  var m=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  var el=document.getElementById('fluxo-mes-label');
-  if(el)el.textContent=m[fluxoMes.getMonth()]+' '+fluxoMes.getFullYear();
+  if(dir===0){
+    fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  }else{
+    fluxoMes=new Date(fluxoMes.getFullYear(),fluxoMes.getMonth()+dir,1);
+  }
+  fluxoAtualizarMesUI();
   renderFluxo();
+}
+function fluxoAtualizarMesUI(){
+  var m=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var label=m[fluxoMes.getMonth()]+' '+fluxoMes.getFullYear();
+  var el=document.getElementById('fluxo-mes-label');
+  if(el)el.textContent=label;
+  var bar=document.getElementById('fluxo-barra-mes');
+  if(bar)bar.textContent='Receitas vs Despesas — '+label;
+  var lanc=document.getElementById('fluxo-lancamentos-titulo');
+  if(lanc)lanc.textContent='Lançamentos — '+label;
+  var dre=document.getElementById('fluxo-dre-titulo');
+  if(dre)dre.textContent='📑 DRE — Demonstrativo de Resultado · '+label;
+}
+function fluxoCatRowHtml(r,cor,pctLabel){
+  return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:'+cor+'">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:'+cor+';border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% '+pctLabel+'</div></div>';
+}
+function renderFluxoCategorias(){
+  var receitas=[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}];
+  var despesas=[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}];
+  var elR=document.getElementById('fluxo-cat-receitas');
+  var elD=document.getElementById('fluxo-cat-despesas');
+  if(elR)elR.innerHTML=receitas.map(function(r){return fluxoCatRowHtml(r,'#22c55e','das receitas');}).join('');
+  if(elD)elD.innerHTML=despesas.map(function(r){return fluxoCatRowHtml(r,'#ef4444','das despesas');}).join('');
 }
 function switchFluxoTab(tab,el){
   ['lancamentos','mensal','categorias','dre'].forEach(function(t){
@@ -9137,8 +9162,10 @@ function switchFluxoTab(tab,el){
     if(b)b.classList.toggle('active',t===tab);
   });
   if(tab==='lancamentos')renderFluxo();
+  if(tab==='categorias')renderFluxoCategorias();
 }
 function renderFluxo(){
+  fluxoAtualizarMesUI();
   var tbody=document.getElementById('fluxo-tbody');
   if(!tbody)return;
   var tipo=document.getElementById('fluxo-filtro-tipo')?.value||'';
@@ -9161,6 +9188,40 @@ function renderFluxo(){
   var saldo=totalR-totalD;
   var el=document.getElementById('fluxo-total-val');
   if(el){el.textContent=(saldo>=0?'+ R$ ':'- R$ ')+Math.abs(saldo).toFixed(2).replace('.',',');el.style.color=saldo>=0?'#22c55e':'#ef4444';}
+}
+var _tipoLanc='receita';
+function setTipoLanc(t){
+  _tipoLanc=t;
+  var r=document.getElementById('lbl-receita');
+  var d=document.getElementById('lbl-despesa');
+  if(!r||!d)return;
+  if(t==='receita'){
+    r.style.border='2px solid #22c55e';r.style.background='#dcfce7';
+    d.style.border='2px solid #ddd';d.style.background='#fff';
+  }else{
+    d.style.border='2px solid #ef4444';d.style.background='#fee2e2';
+    r.style.border='2px solid #ddd';r.style.background='#fff';
+  }
+}
+function salvarLancamento(){
+  var desc=(document.getElementById('lanc-desc')?.value||'').trim();
+  var dataVal=document.getElementById('lanc-data')?.value||'';
+  var val=parseFloat(document.getElementById('lanc-val')?.value)||0;
+  var cat=document.getElementById('lanc-cat')?.value||'Outros';
+  var forma=document.getElementById('lanc-forma')?.value||'';
+  var status=document.querySelector('input[name="lanc-status"]:checked')?.value||'confirmado';
+  if(!desc){showAlert('Informe a descrição.');return;}
+  if(!dataVal){showAlert('Informe a data.');return;}
+  if(val<=0){showAlert('Informe um valor válido.');return;}
+  var partes=dataVal.split('-');
+  var dataFmt=partes[2]+'/'+partes[1]+'/'+partes[0];
+  fluxoLancamentos.push({tipo:_tipoLanc,data:dataFmt,desc:desc,cat:cat,forma:forma,val:val,status:status});
+  closeModal('modal-lancamento-caixa');
+  document.getElementById('lanc-desc').value='';
+  document.getElementById('lanc-val').value='';
+  setTipoLanc('receita');
+  renderFluxo();
+  showAlert('Lançamento salvo!');
 }
 // Init fluxo ao navegar
 // ===== FIM FLUXO =====
