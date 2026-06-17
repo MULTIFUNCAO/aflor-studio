@@ -6154,7 +6154,14 @@ function listarComandasDeAgendamentos(){
   return lista;
 }
 function abrirComandaAgendamentoLista(dataKey,key){
-  if(!agendamentosPorData[dataKey]||!agendamentosPorData[dataKey][key]){
+  var dia=agendamentosPorData&&agendamentosPorData[dataKey];
+  var dados=dia&&dia[key];
+  if(!dados&&dia&&typeof buscarApptAgenda==='function'){
+    var pk=(key||'').split(':');
+    var slot=buscarApptAgenda(dia,pk[0]||'',pk[1]||'',null);
+    if(slot){key=slot.key;dados=slot.a;}
+  }
+  if(!dados){
     showAlert('Agendamento não encontrado.');
     return;
   }
@@ -6163,13 +6170,11 @@ function abrirComandaAgendamentoLista(dataKey,key){
     agendaDataAtual=new Date(parseInt(parts[2],10),parseInt(parts[1],10)-1,parseInt(parts[0],10));
     if(typeof agendaAtualizarLabel==='function')agendaAtualizarLabel();
   }
+  if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
+  agendamentosPorData[dataKey][key]=dados;
   agendaDiaAtual=agendamentosPorData[dataKey];
-  var dados=agendamentosPorData[dataKey][key];
-  showPage('agenda');
-  setTimeout(function(){
-    if(typeof renderAgenda==='function')renderAgenda();
-    abrirAgendaPopup(key,dados,{clientX:Math.min(window.innerWidth/2,400),clientY:120,stopPropagation:function(){}});
-  },100);
+  fecharAgendaPopup();
+  abrirAgendaPopup(key,dados,{clientX:Math.min(window.innerWidth/2,400),clientY:120,stopPropagation:function(){}});
 }
 
 function renderComandas(){
@@ -6190,7 +6195,7 @@ function renderComandas(){
     if(st==='Em aberto')badgeCls='badge-yellow';
     var sinalHtml=c.sinal?'<span class="badge '+(c.sinalStatus==='pago'?'badge-green':'badge-yellow')+'" style="margin-left:4px">'+(c.sinalStatus==='pago'?'✅ Sinal pago':'⏳ Sinal pendente')+(c.sinalValor?' '+c.sinalValor:'')+'</span>':'';
     var escAttr=function(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");};
-    var abrirArg=c.origem==='agenda'?"abrirComandaAgendamentoLista('"+escAttr(c.dataKey)+"','"+escAttr(c.key)+"')":'';
+    var abrirArg=c.origem==='agenda'?"event.stopPropagation();abrirComandaAgendamentoLista('"+escAttr(c.dataKey)+"','"+escAttr(c.key)+"')":'';
     var btnVer=c.origem==='agenda'
       ?'<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();'+abrirArg+'">Ver</button>'
       :'<button class="btn btn-outline btn-sm" onclick="openModal(\'modal-comanda\')">Ver</button>';
