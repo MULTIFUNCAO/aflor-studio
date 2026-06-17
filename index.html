@@ -1217,68 +1217,27 @@ tr.row-retorno-retornou td{background:#f0fff4}
               <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700">Saldo Acum.</th>
               <th style="padding:12px 16px;text-align:left;font-size:11px;font-weight:700">Desempenho</th>
             </tr></thead>
-            <tbody>
-              <tr style="border-bottom:1px solid #f5f5f5">
-                <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 1 · 01–07/Mai</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#22c55e;font-weight:700">R$ 1.240</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 320</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 920</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 920</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
-              </tr>
-              <tr style="border-bottom:1px solid #f5f5f5;background:#fafafa">
-                <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 2 · 08–14/Mai</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#22c55e;font-weight:700">R$ 1.080</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 280</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 800</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 1.720</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:74%;background:#22c55e;border-radius:3px"></div></div></td>
-              </tr>
-              <tr style="border-bottom:1px solid #f5f5f5">
-                <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 3 · 15–21/Mai</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#22c55e;font-weight:700">R$ 1.360</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 390</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 970</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 2.690</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:78%;background:#22c55e;border-radius:3px"></div></div></td>
-              </tr>
-              <tr style="border-bottom:1px solid #f5f5f5;background:#fafafa">
-                <td style="padding:12px 16px;font-size:12px;font-weight:600">Semana 4 · 22–26/Mai</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#22c55e;font-weight:700">R$ 1.140</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">R$ 250</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">R$ 890</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">R$ 3.580</td>
-                <td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:82%;background:#22c55e;border-radius:3px"></div></div></td>
-              </tr>
-              <tr style="background:#111;color:#fff">
-                <td style="padding:12px 16px;font-size:13px;font-weight:900">TOTAL MAIO 2026</td>
-                <td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900;color:#4ade80">R$ 4.820</td>
-                <td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900;color:#f87171">R$ 1.240</td>
-                <td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900">R$ 3.580</td>
-                <td style="padding:12px 16px;text-align:right;font-size:12px;color:rgba(255,255,255,.6)">Margem 74%</td>
-                <td></td>
-              </tr>
-            </tbody>
+            <tbody id="fluxo-semanal-tbody"></tbody>
           </table>
         </div>
         <!-- Projeção -->
         <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px">
-          <div style="font-size:13px;font-weight:800;margin-bottom:12px">📈 Projeção Junho 2026</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:12px" id="fluxo-proj-titulo">📈 Projeção</div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
             <div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center">
               <div style="font-size:11px;color:#888;margin-bottom:4px">Receita esperada</div>
-              <div style="font-size:18px;font-weight:800;color:#22c55e">R$ 5.200</div>
-              <div style="font-size:10px;color:#aaa">+8% vs maio</div>
+              <div style="font-size:18px;font-weight:800;color:#22c55e" id="fluxo-proj-receita">R$ 0,00</div>
+              <div style="font-size:10px;color:#aaa" id="fluxo-proj-receita-sub">com base nos lançamentos</div>
             </div>
             <div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center">
-              <div style="font-size:11px;color:#888;margin-bottom:4px">Dia dos Namorados</div>
-              <div style="font-size:18px;font-weight:800;color:#f59e0b">+R$ 480</div>
-              <div style="font-size:10px;color:#aaa">Potencial da campanha</div>
+              <div style="font-size:11px;color:#888;margin-bottom:4px">Despesas do mês</div>
+              <div style="font-size:18px;font-weight:800;color:#ef4444" id="fluxo-proj-despesas">R$ 0,00</div>
+              <div style="font-size:10px;color:#aaa" id="fluxo-proj-despesas-sub">com base nos lançamentos</div>
             </div>
             <div style="background:#111;border-radius:9px;padding:12px;text-align:center">
               <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Lucro projetado</div>
-              <div style="font-size:18px;font-weight:800;color:#fff">R$ 3.960</div>
-              <div style="font-size:10px;color:rgba(255,255,255,.4)">Margem est. 76%</div>
+              <div style="font-size:18px;font-weight:800;color:#fff" id="fluxo-proj-lucro">R$ 0,00</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.4)" id="fluxo-proj-margem">Margem est. 0%</div>
             </div>
           </div>
         </div>
@@ -1303,24 +1262,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800" id="fluxo-dre-titulo">📑 DRE — Demonstrativo de Resultado</div>
           <table style="width:100%;border-collapse:collapse">
-            <tbody>
-              <tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">RECEITAS</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Serviços prestados</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#22c55e">R$ 4.440,00</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Venda de produtos</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#22c55e">R$ 380,00</td></tr>
-              <tr style="border-bottom:2px solid #111;background:#f0fff4"><td style="padding:12px 18px;font-size:13px;font-weight:800">RECEITA BRUTA</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#22c55e">R$ 4.820,00</td></tr>
-
-              <tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:8px" colspan="3">CUSTOS E DESPESAS</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Comissões pagas à equipe</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 248,00)</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Produtos e materiais</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 310,00)</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Aluguel do espaço</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 420,00)</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Energia, água, internet</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 100,00)</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Marketing e campanhas</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 100,00)</td></tr>
-              <tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">Outros custos</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">(R$ 62,00)</td></tr>
-              <tr style="border-bottom:2px solid #111;background:#fff5f5"><td style="padding:12px 18px;font-size:13px;font-weight:800">TOTAL DESPESAS</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#ef4444">(R$ 1.240,00)</td></tr>
-
-              <tr style="background:#111"><td style="padding:14px 18px;font-size:15px;font-weight:900;color:#fff">LUCRO LÍQUIDO</td><td></td><td style="padding:14px 18px;text-align:right;font-size:18px;font-weight:900;color:#4ade80">R$ 3.580,00</td></tr>
-              <tr style="background:#1a1a1a"><td style="padding:10px 18px;font-size:12px;color:rgba(255,255,255,.5)">Margem de lucro</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)">74,3%</td></tr>
-            </tbody>
+            <tbody id="fluxo-dre-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -9142,17 +9084,129 @@ function fluxoAtualizarMesUI(){
   if(lanc)lanc.textContent='Lançamentos — '+label;
   var dre=document.getElementById('fluxo-dre-titulo');
   if(dre)dre.textContent='📑 DRE — Demonstrativo de Resultado · '+label;
+  var proj=document.getElementById('fluxo-proj-titulo');
+  if(proj)proj.textContent='📈 Projeção '+label;
+}
+function fluxoFmtMoeda(v){
+  return 'R$ '+(v||0).toFixed(2).replace('.',',');
+}
+function fluxoParseData(str){
+  var m=(str||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(!m)return null;
+  return new Date(parseInt(m[3],10),parseInt(m[2],10)-1,parseInt(m[1],10));
+}
+function fluxoLancamentosDoMes(){
+  var mes=fluxoMes.getMonth(),ano=fluxoMes.getFullYear();
+  return fluxoLancamentos.filter(function(l){
+    var d=fluxoParseData(l.data);
+    return d&&d.getMonth()===mes&&d.getFullYear()===ano;
+  });
+}
+function fluxoAgruparPorCat(lancs,tipo){
+  var map={};
+  lancs.forEach(function(l){
+    if(l.tipo!==tipo)return;
+    var k=l.cat||'Outros';
+    map[k]=(map[k]||0)+(parseFloat(l.val)||0);
+  });
+  var total=Object.keys(map).reduce(function(s,k){return s+map[k];},0);
+  return Object.keys(map).map(function(cat){
+    return {cat:cat,val:map[cat],pct:total>0?Math.round(map[cat]/total*100):0};
+  }).sort(function(a,b){return b.val-a.val;});
 }
 function fluxoCatRowHtml(r,cor,pctLabel){
   return '<div style="padding:11px 16px;border-bottom:1px solid #f5f5f5"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">'+r.cat+'</span><span style="font-size:12px;font-weight:800;color:'+cor+'">R$ '+r.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span></div><div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+r.pct+'%;background:'+cor+';border-radius:3px"></div></div><div style="font-size:10px;color:#aaa;margin-top:2px">'+r.pct+'% '+pctLabel+'</div></div>';
 }
 function renderFluxoCategorias(){
-  var receitas=[{cat:'Serviços de cabelo',val:2100,pct:44},{cat:'Manicure & Pedicure',val:1380,pct:29},{cat:'Estética & Cílios',val:840,pct:17},{cat:'Produtos vendidos',val:380,pct:8},{cat:'Outros',val:120,pct:2}];
-  var despesas=[{cat:'Aluguel & Contas',val:520,pct:42},{cat:'Produtos & Materiais',val:310,pct:25},{cat:'Comissões pagas',val:248,pct:20},{cat:'Marketing',val:100,pct:8},{cat:'Outros',val:62,pct:5}];
+  var lancs=fluxoLancamentosDoMes();
+  var receitas=fluxoAgruparPorCat(lancs,'receita');
+  var despesas=fluxoAgruparPorCat(lancs,'despesa');
+  var vazio='<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Nenhum lançamento neste período.</div>';
   var elR=document.getElementById('fluxo-cat-receitas');
   var elD=document.getElementById('fluxo-cat-despesas');
-  if(elR)elR.innerHTML=receitas.map(function(r){return fluxoCatRowHtml(r,'#22c55e','das receitas');}).join('');
-  if(elD)elD.innerHTML=despesas.map(function(r){return fluxoCatRowHtml(r,'#ef4444','das despesas');}).join('');
+  if(elR)elR.innerHTML=receitas.length?receitas.map(function(r){return fluxoCatRowHtml(r,'#22c55e','das receitas');}).join(''):vazio;
+  if(elD)elD.innerHTML=despesas.length?despesas.map(function(r){return fluxoCatRowHtml(r,'#ef4444','das despesas');}).join(''):vazio;
+}
+function renderFluxoProjecao(totalR,totalD){
+  var lucro=totalR-totalD;
+  var margem=totalR>0?((lucro/totalR)*100).toFixed(1):'0';
+  var elR=document.getElementById('fluxo-proj-receita');
+  var elD=document.getElementById('fluxo-proj-despesas');
+  var elL=document.getElementById('fluxo-proj-lucro');
+  var elM=document.getElementById('fluxo-proj-margem');
+  if(elR)elR.textContent=fluxoFmtMoeda(totalR);
+  if(elD)elD.textContent=fluxoFmtMoeda(totalD);
+  if(elL)elL.textContent=fluxoFmtMoeda(lucro);
+  if(elM)elM.textContent='Margem est. '+margem+'%';
+}
+function renderFluxoSemanal(){
+  var lancs=fluxoLancamentosDoMes();
+  var ano=fluxoMes.getFullYear(),mes=fluxoMes.getMonth();
+  var mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var mesAbrev=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var ultimoDia=new Date(ano,mes+1,0).getDate();
+  var semanas=[],d=1,n=1;
+  while(d<=ultimoDia){var fim=Math.min(d+6,ultimoDia);semanas.push({n:n,ini:d,fim:fim});d=fim+1;n++;}
+  var acum=0,totalR=0,totalD=0;
+  var rows=semanas.map(function(s,idx){
+    var r=0,desp=0;
+    lancs.forEach(function(l){
+      var dt=fluxoParseData(l.data);
+      if(!dt||dt.getDate()<s.ini||dt.getDate()>s.fim)return;
+      if(l.tipo==='receita')r+=l.val;else desp+=l.val;
+    });
+    var res=r-desp;
+    acum+=res;totalR+=r;totalD+=desp;
+    var pct=r+desp>0?Math.round(r/(r+desp)*100):0;
+    return '<tr style="border-bottom:1px solid #f5f5f5'+(idx%2?';background:#fafafa':'')+'">'
+      +'<td style="padding:12px 16px;font-size:12px;font-weight:600">Semana '+s.n+' · '+String(s.ini).padStart(2,'0')+'–'+String(s.fim).padStart(2,'0')+'/'+mesAbrev[mes]+'</td>'
+      +'<td style="padding:12px 16px;text-align:right;font-size:12px;color:#22c55e;font-weight:700">'+fluxoFmtMoeda(r)+'</td>'
+      +'<td style="padding:12px 16px;text-align:right;font-size:12px;color:#ef4444;font-weight:700">'+fluxoFmtMoeda(desp)+'</td>'
+      +'<td style="padding:12px 16px;text-align:right;font-size:12px;font-weight:800">'+fluxoFmtMoeda(res)+'</td>'
+      +'<td style="padding:12px 16px;text-align:right;font-size:12px;color:#888">'+fluxoFmtMoeda(acum)+'</td>'
+      +'<td style="padding:12px 16px"><div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:'+pct+'%;background:#22c55e;border-radius:3px"></div></div></td>'
+      +'</tr>';
+  });
+  var margem=totalR>0?Math.round(((totalR-totalD)/totalR)*100):0;
+  rows.push('<tr style="background:#111;color:#fff"><td style="padding:12px 16px;font-size:13px;font-weight:900">TOTAL '+mesNome[mes].toUpperCase()+' '+ano+'</td>'
+    +'<td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900;color:#4ade80">'+fluxoFmtMoeda(totalR)+'</td>'
+    +'<td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900;color:#f87171">'+fluxoFmtMoeda(totalD)+'</td>'
+    +'<td style="padding:12px 16px;text-align:right;font-size:13px;font-weight:900">'+fluxoFmtMoeda(totalR-totalD)+'</td>'
+    +'<td style="padding:12px 16px;text-align:right;font-size:12px;color:rgba(255,255,255,.6)">Margem '+margem+'%</td><td></td></tr>');
+  var tbody=document.getElementById('fluxo-semanal-tbody');
+  if(tbody)tbody.innerHTML=rows.join('');
+  renderFluxoProjecao(totalR,totalD);
+}
+function renderFluxoDRE(){
+  var lancs=fluxoLancamentosDoMes();
+  var receitas=fluxoAgruparPorCat(lancs,'receita');
+  var despesas=fluxoAgruparPorCat(lancs,'despesa');
+  var totalR=receitas.reduce(function(s,r){return s+r.val;},0);
+  var totalD=despesas.reduce(function(s,r){return s+r.val;},0);
+  var lucro=totalR-totalD;
+  var margem=totalR>0?((lucro/totalR)*100).toFixed(1):'0';
+  var html='<tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">RECEITAS</td></tr>';
+  if(!receitas.length){
+    html+='<tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px;color:#aaa">Nenhuma receita</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#22c55e">'+fluxoFmtMoeda(0)+'</td></tr>';
+  }else{
+    receitas.forEach(function(r){
+      html+='<tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">'+r.cat+'</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#22c55e">'+fluxoFmtMoeda(r.val)+'</td></tr>';
+    });
+  }
+  html+='<tr style="border-bottom:2px solid #111;background:#f0fff4"><td style="padding:12px 18px;font-size:13px;font-weight:800">RECEITA BRUTA</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#22c55e">'+fluxoFmtMoeda(totalR)+'</td></tr>';
+  html+='<tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">CUSTOS E DESPESAS</td></tr>';
+  if(!despesas.length){
+    html+='<tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px;color:#aaa">Nenhuma despesa</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">'+fluxoFmtMoeda(0)+'</td></tr>';
+  }else{
+    despesas.forEach(function(r){
+      html+='<tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">'+r.cat+'</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">('+fluxoFmtMoeda(r.val)+')</td></tr>';
+    });
+  }
+  html+='<tr style="border-bottom:2px solid #111;background:#fff5f5"><td style="padding:12px 18px;font-size:13px;font-weight:800">TOTAL DESPESAS</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#ef4444">('+fluxoFmtMoeda(totalD)+')</td></tr>';
+  html+='<tr style="background:#111"><td style="padding:14px 18px;font-size:15px;font-weight:900;color:#fff">LUCRO LÍQUIDO</td><td></td><td style="padding:14px 18px;text-align:right;font-size:18px;font-weight:900;color:#4ade80">'+fluxoFmtMoeda(lucro)+'</td></tr>';
+  html+='<tr style="background:#1a1a1a"><td style="padding:10px 18px;font-size:12px;color:rgba(255,255,255,.5)">Margem de lucro</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)">'+margem+'%</td></tr>';
+  var tb=document.getElementById('fluxo-dre-tbody');
+  if(tb)tb.innerHTML=html;
 }
 function switchFluxoTab(tab,el){
   ['lancamentos','mensal','categorias','dre'].forEach(function(t){
@@ -9162,7 +9216,17 @@ function switchFluxoTab(tab,el){
     if(b)b.classList.toggle('active',t===tab);
   });
   if(tab==='lancamentos')renderFluxo();
+  if(tab==='mensal')renderFluxoSemanal();
   if(tab==='categorias')renderFluxoCategorias();
+  if(tab==='dre')renderFluxoDRE();
+}
+function fluxoRenderAbaAtiva(){
+  var vM=document.getElementById('fluxo-view-mensal');
+  if(vM&&vM.style.display!=='none')renderFluxoSemanal();
+  var vC=document.getElementById('fluxo-view-categorias');
+  if(vC&&vC.style.display!=='none')renderFluxoCategorias();
+  var vD=document.getElementById('fluxo-view-dre');
+  if(vD&&vD.style.display!=='none')renderFluxoDRE();
 }
 function renderFluxo(){
   fluxoAtualizarMesUI();
@@ -9170,7 +9234,8 @@ function renderFluxo(){
   if(!tbody)return;
   var tipo=document.getElementById('fluxo-filtro-tipo')?.value||'';
   var cat=document.getElementById('fluxo-filtro-cat')?.value||'';
-  var filtered=fluxoLancamentos.filter(function(l){
+  var lancsMes=fluxoLancamentosDoMes();
+  var filtered=lancsMes.filter(function(l){
     return(!tipo||l.tipo===tipo)&&(!cat||l.cat===cat);
   });
   var totalR=0,totalD=0;
@@ -9188,6 +9253,7 @@ function renderFluxo(){
   var saldo=totalR-totalD;
   var el=document.getElementById('fluxo-total-val');
   if(el){el.textContent=(saldo>=0?'+ R$ ':'- R$ ')+Math.abs(saldo).toFixed(2).replace('.',',');el.style.color=saldo>=0?'#22c55e':'#ef4444';}
+  fluxoRenderAbaAtiva();
 }
 var _tipoLanc='receita';
 function setTipoLanc(t){
