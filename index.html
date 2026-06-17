@@ -1380,7 +1380,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- REMUNERAÇÕES -->
     <div class="page" id="page-remuneracoes">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <select class="btn btn-outline btn-sm"><option>Todos</option><option>Ana Flor</option><option>Edu</option></select>
+        <select class="btn btn-outline btn-sm" id="remun-filtro-prof" onchange="renderRemuneracoes()"><option value="Todos">Todos</option></select>
         <button class="cal-btn" onclick="remunMudarMes(-1)">◀</button>
         <span style="font-weight:700" id="remun-mes-label">Maio/2026</span>
         <button class="cal-btn" onclick="remunMudarMes(1)">▶</button>
@@ -6299,13 +6299,26 @@ function renderRemuneracoes(){
   var mesesRemunLbl=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var elRemunMesLbl=document.getElementById('remun-mes-label');
   if(elRemunMesLbl)elRemunMesLbl.textContent=mesesRemunLbl[remunMesAtual]+'/'+remunAnoAtual;
+  var selFiltroProf=document.getElementById('remun-filtro-prof');
+  var filtroProfValAtual=selFiltroProf?selFiltroProf.value:'Todos';
+  if(selFiltroProf){
+    var optsHtml='<option value="Todos">Todos</option>'+remuneracoes.map(function(r){return '<option value="'+r.nome+'">'+r.nome+'</option>';}).join('');
+    if(selFiltroProf.innerHTML!==optsHtml)selFiltroProf.innerHTML=optsHtml;
+    var nomesValidos=remuneracoes.map(function(r){return r.nome;});
+    if(filtroProfValAtual!=='Todos'&&nomesValidos.indexOf(filtroProfValAtual)<0)filtroProfValAtual='Todos';
+    selFiltroProf.value=filtroProfValAtual;
+  }
   const tb=document.getElementById('remuneracoes-table');
-  tb.innerHTML=remuneracoes.map((r,i)=>`<tr>
+  var linhasFiltradasRemun=remuneracoes.map(function(r,i){return {r:r,i:i};}).filter(function(o){return filtroProfValAtual==='Todos'||o.r.nome===filtroProfValAtual;});
+  tb.innerHTML=linhasFiltradasRemun.map(function(o){
+    var r=o.r,i=o.i;
+    return `<tr>
     <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${r.cor}" style="width:28px;height:28px;font-size:10px">${initials(r.nome)}</div>${r.nome}</div></td>
     <td>${r.total}</td><td>${r.pago}</td><td>${r.pendente}</td>
     <td style="font-weight:${r.vales!=='0,00'?'700':'400'};color:${r.vales!=='0,00'?'var(--orange)':'inherit'}">${r.vales}</td>
     <td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="marcarRemuneracaoPaga(${i})">💰 Marcar pago</button><button class="btn btn-outline btn-sm" onclick="lancarValeColaborador(${i})">📋 Lançar vale</button><button class="btn btn-outline btn-sm" onclick="abrirDetalheRemuneracao(${i})">🔍 Detalhes</button></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 async function marcarRemuneracaoPaga(i){
   var r=remuneracoes[i];
