@@ -883,7 +883,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#22c55e;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Receita do Mês</div>
-          <div style="font-size:28px;font-weight:900;color:#22c55e;padding-left:6px">R$ 0,00</div>
+          <div id="dash-receita-mes" style="font-size:28px;font-weight:900;color:#22c55e;padding-left:6px">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
             <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
@@ -892,7 +892,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('agenda')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#111;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Atendimentos Hoje</div>
-          <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
+          <div id="dash-atendimentos-hoje" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
             <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px"></span>
             <span style="font-size:10px;color:#aaa"></span>
@@ -901,7 +901,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#8b5cf6;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Clientes Ativos</div>
-          <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
+          <div id="dash-clientes-ativos" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
             <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
           </div>
@@ -909,7 +909,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('relatorios')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#f59e0b;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Ticket Médio</div>
-          <div style="font-size:28px;font-weight:900;color:#111;padding-left:6px">R$ 0,00</div>
+          <div id="dash-ticket-medio" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
             <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">↑ 5%</span>
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
@@ -4652,6 +4652,7 @@ function showPage(id){
     return;
   }
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
+  try{if(typeof renderDashboardCards==='function')renderDashboardCards();}catch(e){}
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   var pg=document.getElementById('page-'+id);
   if(pg){pg.classList.add('active');pg.style.display='block';}
@@ -11204,6 +11205,56 @@ function removerMovimentoHistorico(histIdx,movIdx,ev){
   renderHistoricoCaixa();
 }
 
+function renderDashboardCards(){
+  try{
+    var agora=new Date();
+    var mesAtual=agora.getMonth(), anoAtual=agora.getFullYear();
+    var diaKeyHoje=agora.getDate()+'/'+(agora.getMonth()+1)+'/'+agora.getFullYear();
+    var receitaMes=0;
+    if(typeof historicoCaixas!=='undefined'&&historicoCaixas){
+      historicoCaixas.forEach(function(r){
+        var m=String(r.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if(m){
+          var mesReg=parseInt(m[2],10)-1, anoReg=parseInt(m[3],10);
+          if(mesReg===mesAtual&&anoReg===anoAtual) receitaMes+=Number(r.entradas)||0;
+        }
+      });
+    }
+    if(typeof caixaState!=='undefined'&&caixaState&&caixaState.movimentos){
+      caixaState.movimentos.forEach(function(mv){
+        if(mv.tipo==='entrada') receitaMes+=Number(mv.valor)||0;
+      });
+    }
+    var atendimentosHoje=0, atendimentosMes=0;
+    if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+      Object.keys(agendamentosPorData).forEach(function(dk){
+        var partes=dk.split('/');
+        if(partes.length===3){
+          var mesDk=parseInt(partes[1],10)-1, anoDk=parseInt(partes[2],10);
+          var qtd=Object.keys(agendamentosPorData[dk]||{}).length;
+          if(mesDk===mesAtual&&anoDk===anoAtual) atendimentosMes+=qtd;
+          if(dk===diaKeyHoje) atendimentosHoje=qtd;
+        }
+      });
+    }
+    var clientesAtivos=0;
+    if(typeof clientes!=='undefined'&&clientes){
+      clientesAtivos=clientes.filter(function(c){return c.retornoStatus==='retornou'||!c.retornoStatus;}).length;
+    }
+    var ticketMedio=atendimentosMes>0?(receitaMes/atendimentosMes):0;
+    var elReceita=document.getElementById('dash-receita-mes');
+    var elAtend=document.getElementById('dash-atendimentos-hoje');
+    var elClientes=document.getElementById('dash-clientes-ativos');
+    var elTicket=document.getElementById('dash-ticket-medio');
+    if(elReceita)elReceita.textContent='R$ '+receitaMes.toFixed(2).replace('.',',');
+    if(elAtend)elAtend.textContent=atendimentosHoje;
+    if(elClientes)elClientes.textContent=clientesAtivos;
+    if(elTicket)elTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
+  }catch(e){
+    console.log('erro renderDashboardCards',e);
+  }
+}
+setTimeout(function(){if(typeof renderDashboardCards==='function')renderDashboardCards();},2000);
 function renderHistoricoCaixa(){
   var lista=document.getElementById('caixa-historico-lista');
   if(!lista)return;
