@@ -4474,6 +4474,48 @@ function lancarComissaoServico(profissional,nomeServico,clienteNome,valorServico
   salvarComissaoPacoteSupa(lancObj);
   if(typeof renderRemuneracoes==='function')renderRemuneracoes();
 }
+async function renderRemuneracoesHistorico(filtroProfValAtual){
+  const tb=document.getElementById('remuneracoes-table');
+  tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Carregando histórico...</td></tr>';
+  try{
+    var resp=await supa.from('comissoes_pacote').select('*').eq('salao_id',window.SALAO_ID);
+    if(resp.error){ tb.innerHTML='<tr><td colspan="6" style="color:red">Erro ao carregar histórico.</td></tr>'; return; }
+    var inicioMes=new Date(remunAnoAtual,remunMesAtual,1);
+    var fimMes=new Date(remunAnoAtual,remunMesAtual+1,1);
+    var doMes=(resp.data||[]).filter(function(c){
+      var d=new Date(c.data);
+      return d>=inicioMes&&d<fimMes;
+    });
+    var normH=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
+    var grupos={};
+    doMes.forEach(function(c){
+      var nomeMatch=remuneracoes.find(function(r){
+        var rn=normH(r.nome),cn=normH(c.profissional);
+        return rn===cn||rn.indexOf(cn)>=0||cn.indexOf(rn)>=0;
+      });
+      var nomeFinal=nomeMatch?nomeMatch.nome:c.profissional;
+      if(!grupos[nomeFinal])grupos[nomeFinal]={nome:nomeFinal,total:0,cor:nomeMatch?nomeMatch.cor:''};
+      grupos[nomeFinal].total+=Number(c.valor||0);
+    });
+    var listaHist=Object.keys(grupos).map(function(k){return grupos[k];});
+    if(filtroProfValAtual!=='Todos')listaHist=listaHist.filter(function(g){return g.nome===filtroProfValAtual;});
+    if(listaHist.length===0){
+      tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Nenhuma comissão registrada nesse mês.</td></tr>';
+      return;
+    }
+    tb.innerHTML=listaHist.map(function(g){
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${g.cor}" style="width:28px;height:28px;font-size:10px">${initials(g.nome)}</div>${g.nome}</div></td>
+        <td>R$ ${g.total.toFixed(2).replace('.',',')}</td>
+        <td colspan="3" style="color:#888;font-size:12px">Histórico — somente consulta</td>
+        <td></td>
+      </tr>`;
+    }).join('');
+  }catch(e){
+    tb.innerHTML='<tr><td colspan="6" style="color:red">Erro ao carregar histórico.</td></tr>';
+    console.log('err renderRemuneracoesHistorico',e);
+  }
+}
 async function abrirDetalheRemuneracao(i){
   var r=remuneracoes[i];
   if(!r)return;
@@ -6309,6 +6351,12 @@ function renderRemuneracoes(){
     selFiltroProf.value=filtroProfValAtual;
   }
   const tb=document.getElementById('remuneracoes-table');
+  var hojeCheckRemun=new Date();
+  var ehMesAtualRemun=(remunMesAtual===hojeCheckRemun.getMonth()&&remunAnoAtual===hojeCheckRemun.getFullYear());
+  if(!ehMesAtualRemun){
+    renderRemuneracoesHistorico(filtroProfValAtual);
+    return;
+  }
   var linhasFiltradasRemun=remuneracoes.map(function(r,i){return {r:r,i:i};}).filter(function(o){return filtroProfValAtual==='Todos'||o.r.nome===filtroProfValAtual;});
   tb.innerHTML=linhasFiltradasRemun.map(function(o){
     var r=o.r,i=o.i;
