@@ -1090,7 +1090,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-comandas">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <input placeholder="🔍 Buscar comanda ou cliente..." style="width:300px"/>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-comanda')">+ Nova Comanda</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalComanda()">+ Nova Comanda</button>
       </div>
       <div class="table-card">
         <table>
@@ -3782,60 +3782,42 @@ tr.row-retorno-retornou td{background:#f0fff4}
 </div>
 
 <div class="modal-overlay" id="modal-comanda">
-  <div class="modal" style="width:560px">
+  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
-      <span class="modal-title">Nova Comanda</span>
+      <span class="modal-title" id="cmd-modal-titulo">Nova Comanda</span>
       <button class="modal-close" onclick="closeModal('modal-comanda')">✕</button>
     </div>
+    <input type="hidden" id="cmd-modo" value="criar"/>
+    <input type="hidden" id="cmd-edit-idx" value="-1"/>
     <div class="form-grid">
+      <div class="form-group full"><label>Cliente *</label><input id="cmd-cliente" list="cmd-cliente-lista" placeholder="Nome do cliente" autocomplete="off"/><datalist id="cmd-cliente-lista"></datalist></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="cmd-data"/></div>
+      <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00"/></div>
       <div class="form-group full">
-        <label>Cliente</label>
-        <input id="cmd-cliente" placeholder="Nome do cliente"/>
-      </div>
-      <div class="form-group full">
-        <label>Serviços / Itens</label>
-        <div id="cmd-itens-lista">
-          <div class="cmd-item-row" style="display:flex;gap:8px;margin-bottom:6px">
-            <select style="flex:1" onchange="calcComanda()">
-              <option value="40">Manicure — R$ 40,00</option>
-              <option value="45">Pedicure — R$ 45,00</option>
-              <option value="80">Corte de Cabelo — R$ 80,00</option>
-              <option value="60">Escova — R$ 60,00</option>
-              <option value="150">Coloração — R$ 150,00</option>
-              <option value="80">Hidratação — R$ 80,00</option>
-              <option value="100">Manutenção — R$ 100,00</option>
-              <option value="12">Design de Sobrancelhas — R$ 12,00</option>
-            </select>
-            <button onclick="this.closest('.cmd-item-row').remove();calcComanda()" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:18px;padding:0 4px">✕</button>
-          </div>
+        <label>Categoria</label>
+        <select id="cmd-cat" onchange="cmdFiltrarServicos()" style="margin-bottom:8px">
+          <option value="">Todas as categorias</option>
+        </select>
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Serviço *</span>
+          <button type="button" id="cmd-btn-add-serv" onclick="cmdAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
+        </label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="cmd-servico" onchange="cmdAtualizarProfServico();cmdCalcTotal()" style="flex:2"></select>
+          <select id="cmd-servico-prof" style="flex:1" title="Profissional"></select>
         </div>
-        <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="addCmdItem()">+ Adicionar item</button>
+        <div id="cmd-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
       </div>
-
-      <!-- RESUMO VALORES -->
+      <div class="form-group full"><label>Observações</label><textarea id="cmd-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
       <div class="form-group full">
         <div style="background:#f8f8f8;border-radius:10px;padding:14px;border:1px solid #e5e5e5">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
-            <span style="color:#666">Subtotal</span>
-            <span id="cmd-subtotal" style="font-weight:600">R$ 40,00</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
-            <span style="color:#666">Desconto</span>
-            <span id="cmd-desc-display" style="font-weight:600;color:#ef4444">- R$ 0,00</span>
-          </div>
-          <div style="border-top:1px solid #e5e5e5;margin:8px 0"></div>
           <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800">
             <span>Total</span>
-            <span id="cmd-total">R$ 40,00</span>
+            <span id="cmd-total">R$ 0,00</span>
           </div>
         </div>
       </div>
-
-      <div class="form-group">
-        <label>Desconto (R$)</label>
-        <input type="number" id="cmd-desconto" placeholder="0,00" value="0" oninput="calcComanda()"/>
-      </div>
-      <div class="form-group">
+      <div class="form-group full">
         <label>Forma de Pagamento</label>
         <select id="cmd-pgto">
           <option>PIX</option>
@@ -3844,73 +3826,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <option>Cartão de Débito</option>
         </select>
       </div>
-
-      <!-- SINAL / ENTRADA -->
-      <div class="form-group full">
-        <div style="background:#fff;border:2px solid #111;border-radius:12px;padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#111">💰 Sinal / Entrada</div>
-              <div style="font-size:11px;color:#888;margin-top:2px">Cliente paga uma % para confirmar o agendamento</div>
-            </div>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="cmd-sinal-ativo" onchange="toggleSinal()" style="width:16px;height:16px;accent-color:#111"/>
-              <span style="font-size:12px;font-weight:600">Ativar sinal</span>
-            </label>
-          </div>
-          <div id="cmd-sinal-area" style="display:none">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-              <div class="form-group">
-                <label>Porcentagem do sinal</label>
-                <div style="display:flex;gap:6px">
-                  <input type="number" id="cmd-sinal-pct" value="50" min="1" max="100" oninput="calcSinal()" style="flex:1"/>
-                  <span style="display:flex;align-items:center;font-weight:700;color:#666">%</span>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Valor do sinal (R$)</label>
-                <input type="number" id="cmd-sinal-valor" oninput="calcSinalValor()" style="font-weight:700"/>
-              </div>
-            </div>
-            <!-- Atalhos % -->
-            <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-              <button class="btn btn-outline btn-sm" onclick="setSinalPct(25)">25%</button>
-              <button class="btn btn-outline btn-sm" onclick="setSinalPct(30)">30%</button>
-              <button class="btn btn-outline btn-sm" onclick="setSinalPct(50)">50%</button>
-              <button class="btn btn-outline btn-sm" onclick="setSinalPct(100)">100%</button>
-            </div>
-            <div style="background:#f8f8f8;border-radius:8px;padding:12px;border:1px solid #e5e5e5">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-                <span style="color:#666">Sinal a receber agora</span>
-                <span id="cmd-sinal-agora" style="font-weight:800;color:#111">R$ 20,00</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px">
-                <span style="color:#666">Restante após o serviço</span>
-                <span id="cmd-sinal-resto" style="font-weight:800;color:#666">R$ 20,00</span>
-              </div>
-            </div>
-            <!-- Status do sinal -->
-            <div style="margin-top:10px">
-              <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:5px">Status do sinal</label>
-              <div style="display:flex;gap:6px">
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1" id="lbl-pendente">
-                  <input type="radio" name="cmd-sinal-status" value="pendente" checked onchange="updateSinalStatus()" style="accent-color:#111"/>
-                  <span style="font-size:12px;font-weight:600">⏳ Pendente</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1" id="lbl-pago">
-                  <input type="radio" name="cmd-sinal-status" value="pago" onchange="updateSinalStatus()" style="accent-color:#111"/>
-                  <span style="font-size:12px;font-weight:600">✅ Sinal Pago</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
       <button class="btn btn-outline" onclick="closeModal('modal-comanda')">Cancelar</button>
-      <button class="btn btn-primary" onclick="criarComanda()">Criar Comanda</button>
+      <button class="btn btn-primary" id="cmd-btn-salvar" onclick="criarComanda()">Criar Comanda</button>
     </div>
   </div>
 </div>
@@ -6182,7 +6101,7 @@ function renderComandas(){
   if(!tb)return;
   var deAgenda=listarComandasDeAgendamentos();
   var manuais=(typeof comandas!=='undefined'?comandas:[]).map(function(c,i){
-    return {origem:c.origem||'manual',n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
+    return {origem:c.origem||'manual',comandaIdx:i,n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
   });
   var todas=deAgenda.concat(manuais);
   if(!todas.length){
@@ -6198,7 +6117,7 @@ function renderComandas(){
     var abrirArg=c.origem==='agenda'?"event.stopPropagation();abrirComandaAgendamentoLista('"+escAttr(c.dataKey)+"','"+escAttr(c.key)+"')":'';
     var btnVer=c.origem==='agenda'
       ?'<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();'+abrirArg+'">Ver</button>'
-      :'<button class="btn btn-outline btn-sm" onclick="openModal(\'modal-comanda\')">Ver</button>';
+      :'<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();verComandaManual('+c.comandaIdx+')">Ver</button>';
     var rowClick=c.origem==='agenda'?' onclick="'+abrirArg+'" style="cursor:pointer"':'';
     return '<tr'+rowClick+'><td style="font-weight:700;color:#111">'+c.n+'</td><td>'+c.cliente+'</td><td>'+c.data+'</td><td style="font-weight:700">'+c.total+'</td><td style="font-size:12px;color:var(--gray-500)">'+c.pgto+'</td><td><span class="badge '+badgeCls+'">'+st+'</span>'+sinalHtml+'</td><td>'+btnVer+'</td></tr>';
   }).join('');
@@ -6974,20 +6893,18 @@ function fecharModalSucesso(){
 
 function abrirComandaAtendimento(cliente, servico, valor){
   fecharAgendaPopup();
+  abrirModalComanda();
   var elCliente=document.getElementById('cmd-cliente');
-  var elDesc=document.getElementById('cmd-desconto');
-  if(elCliente)elCliente.value=cliente;
-  var selItens=document.querySelectorAll('#cmd-itens-lista select');
-  if(selItens.length>0){
-    Array.from(selItens[0].options).forEach(function(opt){
-      if(opt.text.toLowerCase().includes(servico.toLowerCase().split(' ')[0])){
-        selItens[0].value=opt.value;
-      }
+  if(elCliente)elCliente.value=cliente||'';
+  var selServ=document.getElementById('cmd-servico');
+  if(selServ&&servico){
+    var alvo=(servico||'').split(' ')[0].toLowerCase();
+    Array.from(selServ.options).forEach(function(opt){
+      if(opt.text.toLowerCase().indexOf(alvo)>=0)selServ.value=opt.value;
     });
+    cmdAtualizarProfServico();
   }
-  if(elDesc)elDesc.value='0';
-  calcComanda();
-  openModal('modal-comanda');
+  cmdCalcTotal();
   showAlert('📋 Comanda aberta para '+cliente);
 }
 function fecharAgendaPopup(){
@@ -9378,90 +9295,224 @@ function salvarAgendamento(){
 }
 // ===== FIM AGENDAMENTO =====
 
-function getCmdTotal(){
-  var total=0;
-  document.querySelectorAll('#cmd-itens-lista select').forEach(function(s){
-    total+=parseFloat(s.value)||0;
+function cmdFiltrarServicos(){
+  var catSel=document.getElementById('cmd-cat');
+  if(catSel&&catSel.options.length<=1){
+    var cats=[...new Set((typeof servicos!=='undefined'?servicos:[]).map(function(s){return s.cat;}))].sort();
+    cats.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
+  }
+  var cat=(catSel||{}).value||'';
+  var sel=document.getElementById('cmd-servico');
+  if(!sel)return;
+  var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
+  sel.innerHTML=filtrados.map(function(s){return'<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';}).join('');
+  if(!sel.innerHTML)sel.innerHTML='<option value="0">Nenhum serviço nessa categoria</option>';
+  cmdAtualizarProfServico();
+  cmdCalcTotal();
+}
+function cmdAtualizarProfExtra(selServEl){
+  var row=selServEl.closest('div');
+  var selProf=row.querySelectorAll('select')[1];
+  if(!selProf)return;
+  var nome=(selServEl.options[selServEl.selectedIndex]?.text||'').split(' — ')[0];
+  var atual=selProf.value;
+  selProf.innerHTML=agOpcoesProfPorServico(nome);
+  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+}
+function cmdAtualizarProfServico(){
+  var selServ=document.getElementById('cmd-servico');
+  var selProf=document.getElementById('cmd-servico-prof');
+  if(!selServ||!selProf)return;
+  var nome=(selServ.options[selServ.selectedIndex]?.text||'').split(' — ')[0];
+  var atual=selProf.value;
+  selProf.innerHTML=agOpcoesProfPorServico(nome);
+  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+}
+function cmdAddServicoExtra(){
+  var list=document.getElementById('cmd-servicos-extra-list');
+  if(!list)return;
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  var opts=(typeof servicos!=='undefined'?servicos:[]).map(function(s){
+    return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
+  }).join('');
+  var primeiroNome=(typeof servicos!=='undefined'&&servicos[0])?servicos[0].nome:'';
+  row.innerHTML='<select onchange="cmdAtualizarProfExtra(this);cmdCalcTotal()" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(primeiroNome)+'</select>'
+    +'<button onclick="this.closest(\'div\').remove();cmdCalcTotal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+  list.appendChild(row);
+  cmdCalcTotal();
+}
+function cmdSomaServicos(){
+  var total=parseFloat(document.getElementById('cmd-servico')?.value)||0;
+  document.querySelectorAll('#cmd-servicos-extra-list > div > select:first-child').forEach(function(sel){
+    total+=parseFloat(sel.value)||0;
   });
-  var desc=parseFloat(document.getElementById('cmd-desconto')?.value)||0;
-  return Math.max(0,total-desc);
+  return total;
 }
-function calcComanda(){
-  var sub=0;
-  document.querySelectorAll('#cmd-itens-lista select').forEach(function(s){sub+=parseFloat(s.value)||0;});
-  var desc=parseFloat(document.getElementById('cmd-desconto')?.value)||0;
-  var total=Math.max(0,sub-desc);
-  var elSub=document.getElementById('cmd-subtotal');
-  var elDesc=document.getElementById('cmd-desc-display');
+function cmdColetarServicosDetalhe(){
+  var lista=[];
+  var selServ=document.getElementById('cmd-servico');
+  var selProf=document.getElementById('cmd-servico-prof');
+  if(selServ){
+    var nome=(selServ.options[selServ.selectedIndex]?.text||'').split(' — ')[0];
+    if(nome)lista.push({nome:nome,valor:parseFloat(selServ.value)||0,profissional:selProf?.value||''});
+  }
+  document.querySelectorAll('#cmd-servicos-extra-list > div').forEach(function(row){
+    var selExtra=row.querySelector('select:first-child');
+    var profExtra=row.querySelectorAll('select')[1];
+    var n=(selExtra?.options[selExtra?.selectedIndex]?.text||'').split(' — ')[0];
+    if(n)lista.push({nome:n,valor:parseFloat(selExtra.value)||0,profissional:profExtra?.value||''});
+  });
+  return lista;
+}
+function cmdCalcTotal(){
+  var total=cmdSomaServicos();
   var elTot=document.getElementById('cmd-total');
-  if(elSub)elSub.textContent='R$ '+sub.toFixed(2).replace('.',',');
-  if(elDesc)elDesc.textContent='- R$ '+desc.toFixed(2).replace('.',',');
   if(elTot)elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
-  calcSinal();
 }
-function addCmdItem(){
-  var lista=document.getElementById('cmd-itens-lista');
-  var div=document.createElement('div');
-  div.className='cmd-item-row';
-  div.style.cssText='display:flex;gap:8px;margin-bottom:6px';
-  div.innerHTML='<select style="flex:1" onchange="calcComanda()"><option value="40">Manicure — R$ 40,00</option><option value="45">Pedicure — R$ 45,00</option><option value="80">Corte de Cabelo — R$ 80,00</option><option value="60">Escova — R$ 60,00</option><option value="150">Coloração — R$ 150,00</option><option value="80">Hidratação — R$ 80,00</option><option value="100">Manutenção — R$ 100,00</option><option value="12">Design de Sobrancelhas — R$ 12,00</option></select><button onclick="this.closest(\'.cmd-item-row\').remove();calcComanda()" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:18px;padding:0 4px">✕</button>';
-  lista.appendChild(div);
-  calcComanda();
+function cmdSetFormReadonly(ro){
+  ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.disabled=!!ro;
+  });
+  document.querySelectorAll('#cmd-servicos-extra-list select').forEach(function(el){el.disabled=!!ro;});
+  document.querySelectorAll('#cmd-servicos-extra-list button').forEach(function(el){el.style.display=ro?'none':'';});
+  var addBtn=document.getElementById('cmd-btn-add-serv');
+  if(addBtn)addBtn.style.display=ro?'none':'';
 }
-function toggleSinal(){
-  var ativo=document.getElementById('cmd-sinal-ativo')?.checked;
-  var area=document.getElementById('cmd-sinal-area');
-  if(area)area.style.display=ativo?'block':'none';
-  if(ativo)calcSinal();
+function cmdSelecionarServicoLinha(selServ,selProf,det){
+  if(!selServ||!det)return;
+  var nome=det.nome||'';
+  var found=Array.from(selServ.options).find(function(o){return o.text.split(' — ')[0]===nome||o.text.indexOf(nome)===0;});
+  if(found)selServ.value=found.value;
+  else if(det.valor){
+    var opt=document.createElement('option');
+    opt.value=det.valor;
+    opt.textContent=nome+' — R$ '+Number(det.valor).toFixed(2).replace('.',',');
+    selServ.appendChild(opt);
+    selServ.value=opt.value;
+  }
+  cmdAtualizarProfExtra(selServ);
+  if(selProf&&det.profissional){
+    if([...selProf.options].some(function(o){return o.value===det.profissional;}))selProf.value=det.profissional;
+  }
 }
-function calcSinal(){
-  var total=getCmdTotal();
-  var pct=parseFloat(document.getElementById('cmd-sinal-pct')?.value)||50;
-  var sinal=total*(pct/100);
-  var resto=total-sinal;
-  var elV=document.getElementById('cmd-sinal-valor');
-  if(elV)elV.value=sinal.toFixed(2);
-  var elA=document.getElementById('cmd-sinal-agora');
-  var elR=document.getElementById('cmd-sinal-resto');
-  if(elA)elA.textContent='R$ '+sinal.toFixed(2).replace('.',',');
-  if(elR)elR.textContent='R$ '+resto.toFixed(2).replace('.',',');
+function cmdPreencherDeComanda(c){
+  if(!c)return;
+  document.getElementById('cmd-cliente').value=c.cliente||'';
+  var m=(c.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}:\d{2}))?/);
+  if(m){
+    document.getElementById('cmd-data').value=m[3]+'-'+String(parseInt(m[2],10)).padStart(2,'0')+'-'+String(parseInt(m[1],10)).padStart(2,'0');
+    document.getElementById('cmd-hora').value=m[4]||c.hora||'09:00';
+  }else if(c.hora){
+    document.getElementById('cmd-hora').value=c.hora;
+  }
+  document.getElementById('cmd-obs').value=c.obs||'';
+  if(document.getElementById('cmd-pgto')&&c.pgto&&c.pgto!=='—')document.getElementById('cmd-pgto').value=c.pgto;
+  var detalhe=c.servicos_detalhe;
+  if(!detalhe&&c.servico){
+    detalhe=c.servico.split(' + ').map(function(n){return{nome:n.trim(),valor:0,profissional:''};});
+  }
+  document.getElementById('cmd-servicos-extra-list').innerHTML='';
+  cmdFiltrarServicos();
+  if(detalhe&&detalhe.length){
+    cmdSelecionarServicoLinha(document.getElementById('cmd-servico'),document.getElementById('cmd-servico-prof'),detalhe[0]);
+    for(var i=1;i<detalhe.length;i++){
+      cmdAddServicoExtra();
+      var rows=document.querySelectorAll('#cmd-servicos-extra-list > div');
+      var row=rows[rows.length-1];
+      var sels=row.querySelectorAll('select');
+      cmdSelecionarServicoLinha(sels[0],sels[1],detalhe[i]);
+    }
+  }
+  cmdCalcTotal();
+  if(c.total)document.getElementById('cmd-total').textContent=c.total;
 }
-function calcSinalValor(){
-  var total=getCmdTotal();
-  var val=parseFloat(document.getElementById('cmd-sinal-valor')?.value)||0;
-  var pct=total>0?(val/total)*100:0;
-  var elP=document.getElementById('cmd-sinal-pct');
-  if(elP)elP.value=Math.min(100,pct).toFixed(0);
-  var resto=total-val;
-  var elA=document.getElementById('cmd-sinal-agora');
-  var elR=document.getElementById('cmd-sinal-resto');
-  if(elA)elA.textContent='R$ '+val.toFixed(2).replace('.',',');
-  if(elR)elR.textContent='R$ '+Math.max(0,resto).toFixed(2).replace('.',',');
+function abrirModalComanda(editIdx){
+  var isVer=typeof editIdx==='number'&&editIdx>=0;
+  document.getElementById('cmd-modo').value=isVer?'ver':'criar';
+  document.getElementById('cmd-edit-idx').value=isVer?editIdx:-1;
+  document.getElementById('cmd-modal-titulo').textContent=isVer?'Detalhes da Comanda':'Nova Comanda';
+  var dl=document.getElementById('cmd-cliente-lista');
+  if(dl&&typeof clientes!=='undefined'){
+    dl.innerHTML=clientes.map(function(c){return '<option value="'+c.nome+'"></option>';}).join('');
+  }
+  var d=new Date();
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  if(!isVer){
+    document.getElementById('cmd-cliente').value='';
+    document.getElementById('cmd-data').value=iso;
+    document.getElementById('cmd-hora').value='09:00';
+    document.getElementById('cmd-obs').value='';
+    document.getElementById('cmd-pgto').value='PIX';
+    document.getElementById('cmd-servicos-extra-list').innerHTML='';
+    var catSel=document.getElementById('cmd-cat');
+    if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
+    cmdFiltrarServicos();
+    cmdSetFormReadonly(false);
+    var btnSalvar=document.getElementById('cmd-btn-salvar');
+    if(btnSalvar){btnSalvar.style.display='';btnSalvar.textContent='Criar Comanda';}
+  }else{
+    var c=(typeof comandas!=='undefined'?comandas:[])[editIdx];
+    if(!c){showAlert('Comanda não encontrada.');return;}
+    var catSel=document.getElementById('cmd-cat');
+    if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
+    cmdPreencherDeComanda(c);
+    cmdSetFormReadonly(true);
+    var btnSalvar=document.getElementById('cmd-btn-salvar');
+    if(btnSalvar)btnSalvar.style.display='none';
+  }
+  openModal('modal-comanda');
 }
-function setSinalPct(pct){
-  var el=document.getElementById('cmd-sinal-pct');
-  if(el){el.value=pct;calcSinal();}
-}
-function updateSinalStatus(){
-  var pago=document.querySelector('input[name="cmd-sinal-status"]:checked')?.value==='pago';
-  var lblP=document.getElementById('lbl-pago');
-  var lblPend=document.getElementById('lbl-pendente');
-  if(lblP)lblP.style.borderColor=pago?'#111':'#e5e5e5';
-  if(lblPend)lblPend.style.borderColor=!pago?'#111':'#e5e5e5';
+function verComandaManual(idx){
+  abrirModalComanda(idx);
 }
 function criarComanda(){
-  var cliente=document.getElementById('cmd-cliente')?.value||'Cliente';
-  var sinalAtivo=document.getElementById('cmd-sinal-ativo')?.checked;
-  var sinalStatus=document.querySelector('input[name="cmd-sinal-status"]:checked')?.value||'pendente';
-  var sinalValor=document.getElementById('cmd-sinal-agora')?.textContent||'R$ 0,00';
-  var total=document.getElementById('cmd-total')?.textContent||'R$ 0,00';
-  var msg='Comanda criada para '+cliente+'! Total: '+total;
-  if(sinalAtivo){
-    msg+='\nSinal: '+sinalValor+' — '+(sinalStatus==='pago'?'✅ PAGO':'⏳ PENDENTE');
+  if(document.getElementById('cmd-modo')?.value==='ver')return;
+  var cliente=(document.getElementById('cmd-cliente')?.value||'').trim();
+  var data=document.getElementById('cmd-data')?.value||'';
+  var hora=normalizarHoraAgenda(document.getElementById('cmd-hora')?.value||'');
+  if(!cliente||!data||!hora){
+    showAlert('Preencha cliente, data e horário.');
+    return;
   }
+  var servicosDetalhe=cmdColetarServicosDetalhe();
+  if(!servicosDetalhe.length){
+    showAlert('Selecione ao menos um serviço.');
+    return;
+  }
+  var profs=servicosDetalhe.map(function(s){return s.profissional;}).filter(Boolean);
+  if(!profs.length){showAlert('Selecione o profissional do serviço.');return;}
+  var nomes=servicosDetalhe.map(function(s){return s.nome;});
+  var servicoStr=nomes.join(' + ');
+  var valorTotal=cmdSomaServicos();
+  var totalFmt='R$ '+valorTotal.toFixed(2).replace('.',',');
+  var partes=data.split('-');
+  var dataFmt=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0]+' '+hora;
+  var obs=(document.getElementById('cmd-obs')?.value||'').trim();
+  var pgto=document.getElementById('cmd-pgto')?.value||'—';
+  var item={
+    origem:'manual',
+    cliente:cliente,
+    data:dataFmt,
+    hora:hora,
+    servico:servicoStr,
+    servicos_detalhe:servicosDetalhe,
+    total:totalFmt,
+    pgto:pgto,
+    status:'Em aberto',
+    obs:obs,
+    sinal:false,
+    sinalStatus:'pendente',
+    sinalValor:''
+  };
+  if(typeof comandas==='undefined')window.comandas=[];
+  comandas.push(item);
+  if(typeof salvarComandaSupa==='function')salvarComandaSupa(item);
   closeModal('modal-comanda');
-  var msgFinal=sinalAtivo&&sinalStatus==='pago'?'Comanda criada! Sinal de '+sinalValor+' confirmado.':'Comanda criada!'+(sinalAtivo?' Sinal pendente: '+sinalValor:'');
-  showAlert(msgFinal);
+  if(typeof renderComandas==='function')renderComandas();
+  showAlert('Comanda criada para '+cliente+'! Total: '+totalFmt);
 }
 // ===== FIM COMANDA =====
 function obGo(screen){
