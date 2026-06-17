@@ -4482,9 +4482,15 @@ async function abrirDetalheRemuneracao(i){
   body.innerHTML='<div style="text-align:center;padding:20px;color:#888">Carregando...</div>';
   openModal('modal-detalhe-remuneracao');
   try{
-    var resp=await supa.from('comissoes_pacote').select('*').eq('salao_id',window.SALAO_ID).eq('profissional',r.nome).order('data',{ascending:false});
-    var data=resp.data,error=resp.error;
+    var resp=await supa.from('comissoes_pacote').select('*').eq('salao_id',window.SALAO_ID).order('data',{ascending:false});
+    var allData=resp.data,error=resp.error;
     if(error){ body.innerHTML='<div style="color:red">Erro ao carregar lançamentos.</div>'; return; }
+    var normRD=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
+    var nomeNormRD=normRD(r.nome);
+    var data=(allData||[]).filter(function(c){
+      var cNorm=normRD(c.profissional);
+      return cNorm===nomeNormRD||cNorm.indexOf(nomeNormRD)>=0||nomeNormRD.indexOf(cNorm)>=0;
+    });
     var vales=[];
     try{ vales=JSON.parse(localStorage.getItem('flora_vales_colaboradores')||'[]').filter(function(v){return v.profissional===r.nome;}); }catch(e){}
     var html='';
