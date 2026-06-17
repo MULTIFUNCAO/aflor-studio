@@ -4599,8 +4599,9 @@ function saveModal(id,msg){closeModal(id);showAlert(msg)}
 
 function showAlert(msg){
   const a=document.getElementById('alert-global');
+  if(window._alertHideTimer)clearTimeout(window._alertHideTimer);
   a.textContent=msg;a.classList.add('show');
-  setTimeout(function(){a.classList.remove('show');},3000);
+  window._alertHideTimer=setTimeout(function(){a.classList.remove('show');window._alertHideTimer=null;},3000);
 }
 function showConfirmBotoes(msg,botoes,callback){
   var ant=document.getElementById('confirm-botoes-overlay');
@@ -9456,9 +9457,8 @@ function fazerLogin(){
     showAlertOb('Entrando...');
     supa.auth.signInWithPassword({email:email,password:senha}).then(function(res){
       if(res.error){
-        supa.from('saloes').select('id').eq('email',email).maybeSingle().then(function(chk){
-          showAlert(chk.data?'Senha incorreta':'Email ou senha incorretos.');
-        }).catch(function(){showAlert('Senha incorreta');});
+        var em=((res.error.message)||'').toLowerCase();
+        showAlert((em.includes('credentials')||em.includes('invalid')||!em)?'Senha incorreta':'Não foi possível entrar. Verifique a senha.');
         return;
       }
       colaboradorLogado=null;
@@ -9468,7 +9468,10 @@ function fazerLogin(){
         aplicarPermissoesAdmin();
         carregarDadosDoSalao();
       });
-    }).catch(function(){showAlertOb('Erro ao entrar. Tente novamente.');});
+    }).catch(function(err){
+      var em=((err&&err.message)||'').toLowerCase();
+      showAlert((em.includes('credentials')||em.includes('invalid')||!em)?'Senha incorreta':'Não foi possível entrar. Verifique a senha.');
+    });
   }
 }
 
