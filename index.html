@@ -2007,6 +2007,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="modal-upgrade-plano">
+  <div style="background:#fff;border:2px solid #e5e5e5;border-radius:20px;padding:24px;max-width:420px;width:92%;text-align:center;position:relative">
+    <button class="modal-close" onclick="closeModal('modal-upgrade-plano')">×</button>
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px">Recurso exclusivo do plano Profissional</div>
+    <div style="font-size:13px;color:#888;margin-bottom:20px" id="upgrade-plano-texto">Esse recurso não está incluso no seu plano atual.</div>
+    <button class="btn btn-primary" style="width:100%" onclick="closeModal('modal-upgrade-plano');showPage('plano');">Ver planos</button>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-relatorio" style="z-index:1100">
       <div class="modal" style="width:600px;max-height:85vh;overflow-y:auto">
         <div class="modal-header">
@@ -4633,6 +4642,15 @@ const pages = {
 };
 
 function showPage(id){
+  var IDS_BLOQUEADOS_INICIAL=['remuneracoes','colaboradores','metas','marketing','influenciadoras'];
+  var nomesRecursoBloqueado={remuneracoes:'Remunerações',colaboradores:'Colaboradores',metas:'Metas',marketing:'Marketing',influenciadoras:'Influenciadoras'};
+  if(IDS_BLOQUEADOS_INICIAL.indexOf(id)>=0 && window.SALAO_PLANO==='inicial'){
+    var elTxtUpg=document.getElementById('upgrade-plano-texto');
+    if(elTxtUpg)elTxtUpg.textContent=(nomesRecursoBloqueado[id]||'Esse recurso')+' não está incluso no plano Inicial. Faça upgrade para o plano Profissional para desbloquear.';
+    if(typeof openModal==='function')openModal('modal-upgrade-plano');
+    else alert('Esse recurso é exclusivo do plano Profissional.');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   var pg=document.getElementById('page-'+id);
@@ -10285,11 +10303,12 @@ async function carregarSalaoAtual(){
       window.SALAO_ID=r.data.id;
       window.SALAO_NOME=r.data.nome_salao;
       window.SALAO_RESPONSAVEL=r.data.responsavel||null;
+      window.SALAO_PLANO=r.data.plano||'trial';
       try{localStorage.setItem('aflor_ultimo_salao_id',r.data.id);}catch(e){}
     }else{
       // Salão ainda não cadastrado (ex: criado fora do fluxo normal) — cria registro básico
       var ins=await supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).select('*').maybeSingle();
-      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;window.SALAO_RESPONSAVEL=ins.data.responsavel||null;}
+      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;window.SALAO_RESPONSAVEL=ins.data.responsavel||null;window.SALAO_PLANO=ins.data.plano||'trial';}
     }
     aplicarDadosSalaoNaUI();
   }catch(e){console.log('err carregar salao',e);}
