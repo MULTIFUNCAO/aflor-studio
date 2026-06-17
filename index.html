@@ -4394,6 +4394,7 @@ async function carregarAgendamentosSupa(){
       };
     });
     if(typeof renderAgenda==='function')renderAgenda();
+    if(typeof renderComandas==='function')renderComandas();
   }catch(e){console.log('err carregar agendamentos',e);}
 }
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([Object.assign({},c,{salao_id:window.SALAO_ID})]);}catch(e){}}
@@ -6104,24 +6105,96 @@ function renderVendas(){
   </tr>`).join('');
 }
 
-function renderComandas(){
-  const tb=document.getElementById('comandas-table');
-  if(!comandas.length){
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:#aaa">Nenhuma comanda registrada ainda.</td></tr>';
+function comandaStatusAgendamento(dados){
+  if(!dados)return 'Em aberto';
+  var st=(dados.status||'').toLowerCase();
+  if(st==='cancelada')return 'Cancelada';
+  if(st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado')return 'Paga';
+  return 'Em aberto';
+}
+function listarComandasDeAgendamentos(){
+  var lista=[];
+  if(typeof agendamentosPorData==='undefined')return lista;
+  Object.keys(agendamentosPorData).forEach(function(dataKey){
+    var dia=agendamentosPorData[dataKey];
+    if(!dia)return;
+    Object.keys(dia).forEach(function(key){
+      var a=dia[key];
+      if(!a||!(a.servico||'').trim())return;
+      var servicoVal=typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):0;
+      if(servicoVal<=0&&!(a.servico||'').trim())return;
+      var sinal=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{valor:0,pago:false,temSinal:false,abate:0};
+      var totalPagar=Math.max(0,servicoVal-sinal.abate);
+      var pgto=a.formaSinal||'—';
+      if(comandaStatusAgendamento(a)==='Paga'&&pgto==='—')pgto='Pago';
+      lista.push({
+        origem:'agenda',
+        dataKey:dataKey,
+        key:key,
+        hora:a.hora||'',
+        cliente:a.cliente||'',
+        data:dataKey+(a.hora?(' '+a.hora):''),
+        total:typeof formatMoedaBR==='function'?formatMoedaBR(totalPagar>0?totalPagar:servicoVal):('R$ '+servicoVal.toFixed(2)),
+        pgto:pgto,
+        status:comandaStatusAgendamento(a),
+        sinal:!!sinal.temSinal||sinal.valor>0,
+        sinalStatus:sinal.pago?'pago':'pendente',
+        sinalValor:sinal.valor>0&&typeof formatMoedaBR==='function'?formatMoedaBR(sinal.valor):''
+      });
+    });
+  });
+  lista.sort(function(x,y){
+    var px=x.dataKey.split('/'),py=y.dataKey.split('/');
+    var dx=new Date(parseInt(px[2],10),parseInt(px[1],10)-1,parseInt(px[0],10));
+    var dy=new Date(parseInt(py[2],10),parseInt(py[1],10)-1,parseInt(py[0],10));
+    if(dy-dx!==0)return dy-dx;
+    return (y.hora||'').localeCompare(x.hora||'');
+  });
+  lista.forEach(function(item,i){item.n='AG-'+(i+1);});
+  return lista;
+}
+function abrirComandaAgendamentoLista(dataKey,key){
+  if(!agendamentosPorData[dataKey]||!agendamentosPorData[dataKey][key]){
+    showAlert('Agendamento não encontrado.');
     return;
   }
-  tb.innerHTML=comandas.map(c=>`<tr>
-    <td style="font-weight:700;color:#111">${c.n}</td>
-    <td>${c.cliente}</td>
-    <td>${c.data}</td>
-    <td style="font-weight:700">${c.total}</td>
-    <td style="font-size:12px;color:var(--gray-500)">${c.pgto}</td>
-    <td>
-      <span class="badge ${c.status==='Fechada'?'badge-gray':'badge-green'}">${c.status}</span>
-      ${c.sinal?`<span class="badge ${c.sinalStatus==='pago'?'badge-green':'badge-yellow'}" style="margin-left:4px">${c.sinalStatus==='pago'?'✅ Sinal pago':'⏳ Sinal pendente'} ${c.sinal}</span>`:''}
-    </td>
-    <td><button class="btn btn-outline btn-sm" onclick="openModal('modal-comanda')">Ver</button></td>
-  </tr>`).join('');
+  var parts=dataKey.split('/');
+  if(parts.length===3){
+    agendaDataAtual=new Date(parseInt(parts[2],10),parseInt(parts[1],10)-1,parseInt(parts[0],10));
+    if(typeof agendaAtualizarLabel==='function')agendaAtualizarLabel();
+  }
+  agendaDiaAtual=agendamentosPorData[dataKey];
+  var dados=agendamentosPorData[dataKey][key];
+  showPage('agenda');
+  setTimeout(function(){
+    if(typeof renderAgenda==='function')renderAgenda();
+    abrirAgendaPopup(key,dados,{clientX:Math.min(window.innerWidth/2,400),clientY:120,stopPropagation:function(){}});
+  },100);
+}
+
+function renderComandas(){
+  const tb=document.getElementById('comandas-table');
+  if(!tb)return;
+  var deAgenda=listarComandasDeAgendamentos();
+  var manuais=(typeof comandas!=='undefined'?comandas:[]).map(function(c,i){
+    return {origem:'manual',n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
+  });
+  var todas=deAgenda.concat(manuais);
+  if(!todas.length){
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:#aaa">Nenhuma comanda registrada ainda.</td></tr>';
+    return;
+  }
+  tb.innerHTML=todas.map(function(c){
+    var st=c.status||'Em aberto';
+    var badgeCls=st==='Paga'||st==='Fechada'?'badge-gray':(st==='Cancelada'?'badge-yellow':'badge-green');
+    if(st==='Em aberto')badgeCls='badge-yellow';
+    var sinalHtml=c.sinal?'<span class="badge '+(c.sinalStatus==='pago'?'badge-green':'badge-yellow')+'" style="margin-left:4px">'+(c.sinalStatus==='pago'?'✅ Sinal pago':'⏳ Sinal pendente')+(c.sinalValor?' '+c.sinalValor:'')+'</span>':'';
+    var btnVer=c.origem==='agenda'
+      ?'<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();abrirComandaAgendamentoLista('+JSON.stringify(c.dataKey)+','+JSON.stringify(c.key)+')">Ver</button>'
+      :'<button class="btn btn-outline btn-sm" onclick="openModal(\'modal-comanda\')">Ver</button>';
+    var rowClick=c.origem==='agenda'?' onclick="abrirComandaAgendamentoLista('+JSON.stringify(c.dataKey)+','+JSON.stringify(c.key)+')" style="cursor:pointer"':'';
+    return '<tr'+rowClick+'><td style="font-weight:700;color:#111">'+c.n+'</td><td>'+c.cliente+'</td><td>'+c.data+'</td><td style="font-weight:700">'+c.total+'</td><td style="font-size:12px;color:var(--gray-500)">'+c.pgto+'</td><td><span class="badge '+badgeCls+'">'+st+'</span>'+sinalHtml+'</td><td>'+btnVer+'</td></tr>';
+  }).join('');
 }
 
 function renderRemuneracoes(){
@@ -7361,6 +7434,7 @@ function renderAgenda(){
     </div>
   `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
   agendaAtualizarLabel();
+  if(document.getElementById('page-comandas')&&document.getElementById('page-comandas').classList.contains('active')&&typeof renderComandas==='function')renderComandas();
 }
 
 // Close modals on overlay click
