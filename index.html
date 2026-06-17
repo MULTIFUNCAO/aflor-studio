@@ -5344,7 +5344,7 @@ var remuneracoes=[
   {nome:'Aluno',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Ana Flor',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'blue'},
   {nome:'Angélica',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
-  {nome:'Edu',total:'0,00',pago:'0,00',pendente:'0,00',vales:'102,80',cor:'orange'},
+  {nome:'Edu',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'orange'},
   {nome:'Flora',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Jeny',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'purple'},
   {nome:'Lara',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
@@ -5381,6 +5381,7 @@ async function carregarRemuneracoesSupa(){
         return{id:row.id,nome:row.nome,total:row.total||'0,00',pago:row.pago||'0,00',
           pendente:row.pendente||'0,00',vales:row.vales||'0,00',cor:row.cor||''};
       });
+      await mesclarRemuneracoesDuplicadas();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
     }else if(r.data&&r.data.length===0){
       // Primeira vez: semeia os colaboradores padrão no Supabase
@@ -5390,6 +5391,32 @@ async function carregarRemuneracoesSupa(){
       }
     }
   }catch(e){console.log('err carregar remuneracoes',e);}
+}
+async function mesclarRemuneracoesDuplicadas(){
+  try{
+    var norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
+    var grupos={};
+    remuneracoes.forEach(function(r){
+      var k=norm(r.nome);
+      if(!grupos[k])grupos[k]=[];
+      grupos[k].push(r);
+    });
+    var nova=[];
+    for(var k in grupos){
+      var lista=grupos[k];
+      if(lista.length===1){nova.push(lista[0]);continue;}
+      lista.sort(function(a,b){return (b.id||0)-(a.id||0);});
+      var manter=lista[0];
+      for(var j=1;j<lista.length;j++){
+        var dup=lista[j];
+        if(dup.id!=null&&supa){
+          try{await supa.from('remuneracoes').delete().eq('id',dup.id).eq('salao_id',window.SALAO_ID);}catch(e){}
+        }
+      }
+      nova.push(manter);
+    }
+    remuneracoes=nova;
+  }catch(e){console.log('err mesclar remuneracoes duplicadas',e);}
 }
 async function salvarComissaoPacoteSupa(lanc){
   try{
