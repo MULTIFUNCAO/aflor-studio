@@ -3790,10 +3790,22 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <input type="hidden" id="cmd-modo" value="criar"/>
     <input type="hidden" id="cmd-edit-idx" value="-1"/>
     <div class="form-grid">
-      <div class="form-group full"><label>Cliente *</label><input id="cmd-cliente" list="cmd-cliente-lista" placeholder="Nome do cliente" autocomplete="off"/><datalist id="cmd-cliente-lista"></datalist></div>
+      <div class="form-group full"><label>Cliente *</label><input id="cmd-cliente" list="cmd-cliente-lista" placeholder="Nome do cliente" autocomplete="off" oninput="if(document.getElementById('cmd-tipo-val')?.value==='pacote')cmdCarregarPacotes()"/><datalist id="cmd-cliente-lista"></datalist></div>
       <div class="form-group"><label>Data *</label><input type="date" id="cmd-data"/></div>
       <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00"/></div>
       <div class="form-group full">
+        <label>Tipo de Atendimento</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label onclick="cmdSetTipo('servico')" id="cmd-tipo-srv" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #111;border-radius:10px;cursor:pointer;background:#f5f5f5">
+            <span>✂️</span><div><div style="font-size:12px;font-weight:700">Serviço</div><div style="font-size:10px;color:#888">Cobrado normalmente</div></div>
+          </label>
+          <label onclick="cmdSetTipo('pacote')" id="cmd-tipo-pac" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
+            <span>🎁</span><div><div style="font-size:12px;font-weight:700">Pacote</div><div style="font-size:10px;color:#888">Já pago, desconta do pacote</div></div>
+          </label>
+        </div>
+        <input type="hidden" id="cmd-tipo-val" value="servico"/>
+      </div>
+      <div id="cmd-area-servico" class="form-group full">
         <label>Categoria</label>
         <select id="cmd-cat" onchange="cmdFiltrarServicos()" style="margin-bottom:8px">
           <option value="">Todas as categorias</option>
@@ -3807,6 +3819,25 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <select id="cmd-servico-prof" style="flex:1" title="Profissional"></select>
         </div>
         <div id="cmd-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div id="cmd-area-pacote" class="form-group full" style="display:none">
+        <label style="display:flex;align-items:center;justify-content:space-between">
+          <span>Selecionar Pacote do Cliente</span>
+          <button type="button" id="cmd-btn-add-pac" onclick="cmdAddPacoteExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço do pacote</button>
+        </label>
+        <select id="cmd-pacote-sel" onchange="cmdVerPacote()">
+          <option value="">— Selecione o pacote —</option>
+        </select>
+        <div id="cmd-pacote-info" style="margin-top:8px;display:none;background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #bbf7d0">
+          <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">📦 Detalhes do Pacote</div>
+          <div id="cmd-pacote-detalhe" style="font-size:12px;color:#166534"></div>
+        </div>
+        <label style="margin-top:8px;display:block">Profissional que vai executar</label>
+        <select id="cmd-pacote-prof" onchange="cmdVerPacote()">
+          <option>Ana Flor</option><option>Edu</option><option>Jeny</option><option>Vi</option>
+        </select>
+        <div id="cmd-pacote-extra-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+        <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
       </div>
       <div class="form-group full"><label>Observações</label><textarea id="cmd-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
       <div class="form-group full">
@@ -4715,9 +4746,9 @@ function agVerificarConflitoHorarioAgenda(data,hora,profs){
 function agNormalizarNome(s){
   return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
 }
-function agOpcoesPacotesCliente(){
+function agOpcoesPacotesCliente(clienteInputId){
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-  var cliente = (document.getElementById('ag-cliente')||{}).value||'';
+  var cliente = (document.getElementById(clienteInputId||'ag-cliente')||{}).value||'';
   var clienteNorm = agNormalizarNome(cliente);
   var opts=[];
   pacotes.forEach(function(p,i){
@@ -4731,10 +4762,10 @@ function agOpcoesPacotesCliente(){
   });
   return opts;
 }
-function agCarregarPacotes(){
-  var sel = document.getElementById('ag-pacote-sel');
+function agCarregarPacotes(selId,clienteInputId){
+  var sel = document.getElementById(selId||'ag-pacote-sel');
   if(!sel) return;
-  var opts=agOpcoesPacotesCliente();
+  var opts=agOpcoesPacotesCliente(clienteInputId);
   sel.innerHTML = '<option value="">— Selecione o pacote —</option>' + opts.join('');
   if(!opts.length) sel.innerHTML = '<option value="">Nenhum pacote encontrado para este cliente</option>';
 }
@@ -4764,9 +4795,9 @@ function agAtualizarProfPacoteExtra(selPacEl){
       +(selProf?(' — Profissional: <b>'+(selProf.value||'—')+'</b>'):'');
   }
 }
-function agAddPacoteExtra(){
-  var list = document.getElementById('ag-pacote-extra-list');
-  var opts=agOpcoesPacotesCliente();
+function agAddPacoteExtra(listId,clienteInputId){
+  var list = document.getElementById(listId||'ag-pacote-extra-list');
+  var opts=agOpcoesPacotesCliente(clienteInputId);
   if(!opts.length){showAlert('Nenhum outro pacote disponível para este cliente.');return;}
   var row = document.createElement('div');
   row.setAttribute('data-pacote-extra-row','1');
@@ -4798,11 +4829,11 @@ function agAtualizarProfPacoteExtraDetalhe(selProfEl){
     +' — Profissional: <b>'+(selProfEl.value||'—')+'</b>';
 }
 
-function agVerPacote(){
-  var sel = document.getElementById('ag-pacote-sel');
-  var info = document.getElementById('ag-pacote-info');
-  var det = document.getElementById('ag-pacote-detalhe');
-  var selProf = document.getElementById('ag-pacote-prof');
+function agVerPacote(selId,infoId,detId,profId){
+  var sel = document.getElementById(selId||'ag-pacote-sel');
+  var info = document.getElementById(infoId||'ag-pacote-info');
+  var det = document.getElementById(detId||'ag-pacote-detalhe');
+  var selProf = document.getElementById(profId||'ag-pacote-prof');
   if(!sel || !info || !det) return;
   var pacotes = JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
   var idx = parseInt(sel.value);
@@ -9295,6 +9326,37 @@ function salvarAgendamento(){
 }
 // ===== FIM AGENDAMENTO =====
 
+function cmdSetTipo(tipo){
+  document.getElementById('cmd-tipo-val').value=tipo;
+  var srv=document.getElementById('cmd-tipo-srv');
+  var pac=document.getElementById('cmd-tipo-pac');
+  var areaSrv=document.getElementById('cmd-area-servico');
+  var areaPac=document.getElementById('cmd-area-pacote');
+  if(tipo==='servico'){
+    if(srv){srv.style.border='2px solid #111';srv.style.background='#f5f5f5';}
+    if(pac){pac.style.border='2px solid #ddd';pac.style.background='#fff';}
+    if(areaSrv)areaSrv.style.display='';
+    if(areaPac)areaPac.style.display='none';
+    cmdCalcTotal();
+  }else{
+    if(pac){pac.style.border='2px solid #111';pac.style.background='#f5f5f5';}
+    if(srv){srv.style.border='2px solid #ddd';srv.style.background='#fff';}
+    if(areaSrv)areaSrv.style.display='none';
+    if(areaPac)areaPac.style.display='';
+    cmdCarregarPacotes();
+    cmdVerPacote();
+  }
+}
+function cmdCarregarPacotes(){
+  agCarregarPacotes('cmd-pacote-sel','cmd-cliente');
+}
+function cmdVerPacote(){
+  agVerPacote('cmd-pacote-sel','cmd-pacote-info','cmd-pacote-detalhe','cmd-pacote-prof');
+  cmdCalcTotal();
+}
+function cmdAddPacoteExtra(){
+  agAddPacoteExtra('cmd-pacote-extra-list','cmd-cliente');
+}
 function cmdFiltrarServicos(){
   var catSel=document.getElementById('cmd-cat');
   if(catSel&&catSel.options.length<=1){
@@ -9367,19 +9429,33 @@ function cmdColetarServicosDetalhe(){
   return lista;
 }
 function cmdCalcTotal(){
-  var total=cmdSomaServicos();
   var elTot=document.getElementById('cmd-total');
-  if(elTot)elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
+  if(!elTot)return;
+  var tipo=document.getElementById('cmd-tipo-val')?.value||'servico';
+  if(tipo==='pacote'){
+    elTot.textContent='R$ 0,00';
+    return;
+  }
+  var total=cmdSomaServicos();
+  elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
 }
 function cmdSetFormReadonly(ro){
-  ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto'].forEach(function(id){
+  ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto','cmd-pacote-sel','cmd-pacote-prof'].forEach(function(id){
     var el=document.getElementById(id);
     if(el)el.disabled=!!ro;
   });
   document.querySelectorAll('#cmd-servicos-extra-list select').forEach(function(el){el.disabled=!!ro;});
   document.querySelectorAll('#cmd-servicos-extra-list button').forEach(function(el){el.style.display=ro?'none':'';});
+  document.querySelectorAll('#cmd-pacote-extra-list select').forEach(function(el){el.disabled=!!ro;});
+  document.querySelectorAll('#cmd-pacote-extra-list button').forEach(function(el){el.style.display=ro?'none':'';});
   var addBtn=document.getElementById('cmd-btn-add-serv');
   if(addBtn)addBtn.style.display=ro?'none':'';
+  var addPac=document.getElementById('cmd-btn-add-pac');
+  if(addPac)addPac.style.display=ro?'none':'';
+  ['cmd-tipo-srv','cmd-tipo-pac'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.style.pointerEvents=ro?'none':'';el.style.opacity=ro?'0.65':'1';}
+  });
 }
 function cmdSelecionarServicoLinha(selServ,selProf,det){
   if(!selServ||!det)return;
@@ -9410,6 +9486,15 @@ function cmdPreencherDeComanda(c){
   }
   document.getElementById('cmd-obs').value=c.obs||'';
   if(document.getElementById('cmd-pgto')&&c.pgto&&c.pgto!=='—')document.getElementById('cmd-pgto').value=c.pgto;
+  var ehPacote=c.tipo==='pacote'||!!c.ehPacote;
+  if(ehPacote){
+    cmdSetTipo('pacote');
+    cmdCarregarPacotes();
+    cmdVerPacote();
+    if(c.total)document.getElementById('cmd-total').textContent=c.total;
+    return;
+  }
+  cmdSetTipo('servico');
   var detalhe=c.servicos_detalhe;
   if(!detalhe&&c.servico){
     detalhe=c.servico.split(' + ').map(function(n){return{nome:n.trim(),valor:0,profissional:''};});
@@ -9447,8 +9532,10 @@ function abrirModalComanda(editIdx){
     document.getElementById('cmd-obs').value='';
     document.getElementById('cmd-pgto').value='PIX';
     document.getElementById('cmd-servicos-extra-list').innerHTML='';
+    document.getElementById('cmd-pacote-extra-list').innerHTML='';
     var catSel=document.getElementById('cmd-cat');
     if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
+    cmdSetTipo('servico');
     cmdFiltrarServicos();
     cmdSetFormReadonly(false);
     var btnSalvar=document.getElementById('cmd-btn-salvar');
@@ -9473,27 +9560,68 @@ function criarComanda(){
   var cliente=(document.getElementById('cmd-cliente')?.value||'').trim();
   var data=document.getElementById('cmd-data')?.value||'';
   var hora=normalizarHoraAgenda(document.getElementById('cmd-hora')?.value||'');
+  var tipo=document.getElementById('cmd-tipo-val')?.value||'servico';
   if(!cliente||!data||!hora){
     showAlert('Preencha cliente, data e horário.');
     return;
   }
-  var servicosDetalhe=cmdColetarServicosDetalhe();
-  if(!servicosDetalhe.length){
-    showAlert('Selecione ao menos um serviço.');
-    return;
+  var servicoStr,servicosDetalhe,totalFmt,ehPacote=false;
+  if(tipo==='pacote'){
+    ehPacote=true;
+    var profPac=document.getElementById('cmd-pacote-prof')?.value||'';
+    if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
+    var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+    var itensPacote=[];
+    var selPac=document.getElementById('cmd-pacote-sel');
+    var idxPrincipal=parseInt(selPac?.value);
+    if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
+    itensPacote.push({idx:idxPrincipal,prof:profPac});
+    document.querySelectorAll('#cmd-pacote-extra-list > div').forEach(function(row){
+      var sels=row.querySelectorAll('select');
+      var idx=parseInt(sels[0]?.value);
+      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac});
+    });
+    for(var vi=0;vi<itensPacote.length;vi++){
+      var vp=pacotes[itensPacote[vi].idx];
+      if(!vp){showAlert('Pacote não encontrado.');return;}
+      var jaUsadosNeste=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
+      if(vp.total-vp.usado<jaUsadosNeste){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
+    }
+    var nomesServ=[];
+    itensPacote.forEach(function(item){
+      var pac=pacotes[item.idx];
+      pac.usado=(pac.usado||0)+1;
+      pacotes[item.idx]=pac;
+      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
+      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
+      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
+    });
+    syncPacotesLegacyStorage();
+    var pacPrincipal=pacotes[idxPrincipal];
+    servicoStr=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
+    totalFmt='R$ 0,00';
+    servicosDetalhe=[];
+  }else{
+    servicosDetalhe=cmdColetarServicosDetalhe();
+    if(!servicosDetalhe.length){
+      showAlert('Selecione ao menos um serviço.');
+      return;
+    }
+    var profs=servicosDetalhe.map(function(s){return s.profissional;}).filter(Boolean);
+    if(!profs.length){showAlert('Selecione o profissional do serviço.');return;}
+    var nomes=servicosDetalhe.map(function(s){return s.nome;});
+    servicoStr=nomes.join(' + ');
+    var valorTotal=cmdSomaServicos();
+    totalFmt='R$ '+valorTotal.toFixed(2).replace('.',',');
   }
-  var profs=servicosDetalhe.map(function(s){return s.profissional;}).filter(Boolean);
-  if(!profs.length){showAlert('Selecione o profissional do serviço.');return;}
-  var nomes=servicosDetalhe.map(function(s){return s.nome;});
-  var servicoStr=nomes.join(' + ');
-  var valorTotal=cmdSomaServicos();
-  var totalFmt='R$ '+valorTotal.toFixed(2).replace('.',',');
   var partes=data.split('-');
   var dataFmt=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0]+' '+hora;
   var obs=(document.getElementById('cmd-obs')?.value||'').trim();
-  var pgto=document.getElementById('cmd-pgto')?.value||'—';
+  var pgto=ehPacote?'Pacote':(document.getElementById('cmd-pgto')?.value||'—');
   var item={
     origem:'manual',
+    tipo:tipo,
+    ehPacote:ehPacote,
     cliente:cliente,
     data:dataFmt,
     hora:hora,
@@ -9512,7 +9640,9 @@ function criarComanda(){
   if(typeof salvarComandaSupa==='function')salvarComandaSupa(item);
   closeModal('modal-comanda');
   if(typeof renderComandas==='function')renderComandas();
-  showAlert('Comanda criada para '+cliente+'! Total: '+totalFmt);
+  var msg='Comanda criada para '+cliente+'! Total: '+totalFmt;
+  if(ehPacote)msg+=' 🎁 Sessão de pacote descontada!';
+  showAlert(msg);
 }
 // ===== FIM COMANDA =====
 function obGo(screen){
