@@ -7639,7 +7639,7 @@ function renderAgenda(){
         if(!a){
           var pn=normalizeProfAgenda(p);
           var bloqueado=false;
-          var bloqCliente='',bloqServico='',bloqFim='';
+          var bloqCliente='',bloqServico='',bloqFim='',bloqAppt=null;
           for(var k2 in apptsDiaFull){
             var a2=apptsDiaFull[k2];
             if(!a2)continue;
@@ -7656,13 +7656,14 @@ function renderAgenda(){
               bloqueado=true;
               bloqCliente=a2.cliente||'';
               bloqServico=a2.servico||'';
+              bloqAppt=a2;
               var fimH=Math.floor(fimMin/60).toString().padStart(2,'0')+':'+((fimMin%60).toString().padStart(2,'0'));
               bloqFim=fimH;
               break;
             }
           }
           if(bloqueado){
-            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:#FEF3C7;cursor:not-allowed;position:relative"><div style="position:absolute;inset:2px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#92400E;opacity:.7">🔒</div></div>`;
+            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:${corBlocoAgenda(bloqAppt)};cursor:not-allowed;position:relative;opacity:.55"><div style="position:absolute;inset:2px;display:flex;align-items:center;justify-content:center;font-size:13px">🔒</div></div>`;
           }
           return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
