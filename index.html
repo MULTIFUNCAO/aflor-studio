@@ -311,6 +311,9 @@ textarea{resize:vertical;min-height:80px}
 
 /* RESPONSIVE */
 @media(max-width:900px){
+.kpi-grid{grid-template-columns:1fr 1fr!important}
+.dash-alerts-grid{grid-template-columns:1fr!important}
+.dash-grid-inferior{grid-template-columns:1fr!important}
   .cards-grid{grid-template-columns:1fr 1fr}
 }
 /* SIDEBAR RECOLHÍVEL */
@@ -879,7 +882,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
 
       <!-- KPI CARDS -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#22c55e;border-radius:4px 0 0 4px"></div>
           <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Receita do Mês</div>
@@ -918,7 +921,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
 
       <!-- ALERTAS RÁPIDOS -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+      <div class="dash-alerts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
         <!-- Florescimento -->
         <div style="background:linear-gradient(135deg,#111,#333);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showPage('florescimento')">
           <div style="font-size:32px;flex-shrink:0">🌷</div>
@@ -949,7 +952,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
 
       <!-- GRID INFERIOR -->
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px">
+      <div class="dash-grid-inferior" style="display:grid;grid-template-columns:1fr 300px;gap:14px">
         <!-- Tabela atendimentos -->
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
