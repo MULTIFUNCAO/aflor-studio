@@ -7663,7 +7663,7 @@ function renderAgenda(){
             }
           }
           if(bloqueado){
-            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:${corBlocoAgenda(bloqAppt)};cursor:not-allowed;position:relative;opacity:.55"><div style="position:absolute;inset:2px;display:flex;align-items:center;justify-content:center;font-size:13px">🔒</div></div>`;
+            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:${corBlocoAgenda(bloqAppt)};cursor:not-allowed;position:relative;opacity:.55"></div>`;
           }
           return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
