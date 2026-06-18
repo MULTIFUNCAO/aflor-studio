@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FLORA Studio — Sistema de Gestão</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c084fc">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <style>
 /* ===== FLORA OVERLAY — PRETO & BRANCO ===== */
@@ -11449,5 +11452,12 @@ function renderCardDetalhe(tipo){
     <button id="mov-confirmar-btn" onclick="confirmarMovimento()" class="btn btn-primary" style="width:100%;margin-top:20px;padding:13px;font-size:15px">Registrar</button>
   </div>
 </div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(err){console.log('SW falhou:',err);});
+  });
+}
+</script>
 </body>
 </html>
