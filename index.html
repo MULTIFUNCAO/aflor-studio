@@ -7552,7 +7552,9 @@ function buscarApptAgenda(appts,profCol,hora,filtroProf){
 
 function renderAgenda(){
   const profCores={'Ana Flor':'#111','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
-  const agendaProfs=['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
+  const agendaProfs=(typeof colaboradores!=='undefined'&&colaboradores&&colaboradores.length>0)
+    ?colaboradores.filter(function(c){return !c.status||c.status==='Ativo';}).map(function(c){return c.nome;})
+    :['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
   var filtro=(document.getElementById('agenda-prof-filtro')?.value||'').trim();
   var profNames=filtro
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
