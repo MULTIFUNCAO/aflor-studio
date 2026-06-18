@@ -314,6 +314,7 @@ textarea{resize:vertical;min-height:80px}
 .kpi-grid{grid-template-columns:1fr 1fr!important}
 .dash-alerts-grid{grid-template-columns:1fr!important}
 .dash-grid-inferior{grid-template-columns:1fr!important}
+.caixa-kpi-grid{grid-template-columns:1fr 1fr!important}
   .cards-grid{grid-template-columns:1fr 1fr}
 }
 /* SIDEBAR RECOLHÍVEL */
@@ -1318,7 +1319,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn" onclick="fecharCaixaConfirmar()" style="background:#f59e0b;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">Fechar Caixa</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+    <div class="caixa-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
       <div onclick="toggleCardDetalhe('entradas')" id="card-btn-entradas" style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px 18px;cursor:pointer;border-top:3px solid #22c55e">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:11px;font-weight:700;color:#22c55e;text-transform:uppercase">Entradas</div>
