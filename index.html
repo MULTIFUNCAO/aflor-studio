@@ -317,6 +317,7 @@ textarea{resize:vertical;min-height:80px}
 .caixa-kpi-grid{grid-template-columns:1fr 1fr!important}
 .fluxo-kpi-grid{grid-template-columns:1fr 1fr!important}
 .fluxo-stats-grid{grid-template-columns:1fr 1fr!important}
+.table-card{overflow-x:auto!important}
   .cards-grid{grid-template-columns:1fr 1fr}
 }
 /* SIDEBAR RECOLHÍVEL */
@@ -1094,8 +1095,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
     <!-- COMANDAS -->
     <div class="page" id="page-comandas">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <input placeholder="🔍 Buscar comanda ou cliente..." style="width:300px"/>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <input placeholder="🔍 Buscar comanda ou cliente..." style="flex:1;min-width:200px;max-width:300px"/>
         <button class="btn btn-primary btn-sm" onclick="abrirModalComanda()">+ Nova Comanda</button>
       </div>
       <div class="table-card">
