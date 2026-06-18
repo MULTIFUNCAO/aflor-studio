@@ -315,6 +315,8 @@ textarea{resize:vertical;min-height:80px}
 .dash-alerts-grid{grid-template-columns:1fr!important}
 .dash-grid-inferior{grid-template-columns:1fr!important}
 .caixa-kpi-grid{grid-template-columns:1fr 1fr!important}
+.fluxo-kpi-grid{grid-template-columns:1fr 1fr!important}
+.fluxo-stats-grid{grid-template-columns:1fr 1fr!important}
   .cards-grid{grid-template-columns:1fr 1fr}
 }
 /* SIDEBAR RECOLHÍVEL */
@@ -1107,7 +1109,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- FLUXO DE CAIXA -->
     <div class="page" id="page-fluxo">
       <!-- KPI Cards -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      <div class="fluxo-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #22c55e;cursor:pointer" onclick="switchFluxoTab('lancamentos',document.getElementById('fluxo-tab-lancamentos'))">
           <div style="font-size:10px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📥 Receitas do Mês</div>
           <div style="font-size:26px;font-weight:900;color:#22c55e">R$ 0,00</div>
@@ -1148,7 +1150,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="width:74%;background:#22c55e;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">74% Receitas</span></div>
           <div style="width:26%;background:#ef4444;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;color:#fff;font-weight:700">26% Desp.</span></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
+        <div class="fluxo-stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
           <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#22c55e">R$ 0,00</div><div style="font-size:9px;color:#aaa">Receitas</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#ef4444">R$ 0,00</div><div style="font-size:9px;color:#aaa">Despesas</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800">R$ 0,00</div><div style="font-size:9px;color:#aaa">Ticket médio</div></div>
