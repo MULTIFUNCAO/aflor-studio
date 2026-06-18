@@ -7636,7 +7636,36 @@ function renderAgenda(){
         var slot=buscarApptAgenda(apptsDiaFull,p,h,filtro||null);
         const a=slot?slot.a:null;
         const key=slot?slot.key:(normalizeProfAgenda(p)+':'+h);
-        if(!a) return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        if(!a){
+          var pn=normalizeProfAgenda(p);
+          var bloqueado=false;
+          var bloqCliente='',bloqServico='',bloqFim='';
+          for(var k2 in apptsDiaFull){
+            var a2=apptsDiaFull[k2];
+            if(!a2)continue;
+            var p2=normalizeProfAgenda(a2.prof||k2.split(':')[0]);
+            if(p2!==pn)continue;
+            var hIni=normalizarHoraAgenda(a2.hora||k2.split(':')[1]||'');
+            var durMin=parseInt((a2.duracao||'60 min').replace(/\D/g,''))||60;
+            var [hh,mm]=hIni.split(':').map(Number);
+            var inicioMin=hh*60+mm;
+            var fimMin=inicioMin+durMin;
+            var [hh2,mm2]=h.split(':').map(Number);
+            var slotMin=hh2*60+mm2;
+            if(slotMin>inicioMin&&slotMin<fimMin){
+              bloqueado=true;
+              bloqCliente=a2.cliente||'';
+              bloqServico=a2.servico||'';
+              var fimH=Math.floor(fimMin/60).toString().padStart(2,'0')+':'+((fimMin%60).toString().padStart(2,'0'));
+              bloqFim=fimH;
+              break;
+            }
+          }
+          if(bloqueado){
+            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:#FEF3C7;cursor:not-allowed;position:relative"><div style="position:absolute;inset:2px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#92400E;opacity:.7">🔒</div></div>`;
+          }
+          return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+        }
         const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
         const corBloco=corBlocoAgenda(a);
         const corTexto=corTextoBlocoAgenda(corBloco);
