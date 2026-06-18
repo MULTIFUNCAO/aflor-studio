@@ -842,7 +842,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Buscar
         </button>
-        <div id="busca-agenda-dropdown" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500">
+        <div id="busca-agenda-dropdown" style="display:none;position:absolute;top:38px;right:0;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px;width:min(300px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500">
           <input id="busca-agenda-input" placeholder="🔍 Cliente, telefone, serviço ou profissional..." oninput="buscarAgendamentos(this.value)" style="width:100%;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box"/>
           <div id="busca-agenda-resultados" style="margin-top:8px;max-height:280px;overflow-y:auto"></div>
         </div>
@@ -1015,7 +1015,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <!-- AGENDA -->
     <div class="page" id="page-agenda">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
           <button class="cal-btn" onclick="agendaHoje()">Hoje</button>
           <button class="cal-btn" onclick="agendaNavegar(-1)">◀</button>
