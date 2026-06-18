@@ -7639,7 +7639,7 @@ function renderAgenda(){
         if(!a){
           var pn=normalizeProfAgenda(p);
           var bloqueado=false;
-          var bloqCliente='',bloqServico='',bloqFim='',bloqAppt=null;
+          var bloqCliente='',bloqServico='',bloqFim='',bloqAppt=null,bloqFimMin=0;
           for(var k2 in apptsDiaFull){
             var a2=apptsDiaFull[k2];
             if(!a2)continue;
@@ -7657,13 +7657,17 @@ function renderAgenda(){
               bloqCliente=a2.cliente||'';
               bloqServico=a2.servico||'';
               bloqAppt=a2;
+              bloqFimMin=fimMin;
               var fimH=Math.floor(fimMin/60).toString().padStart(2,'0')+':'+((fimMin%60).toString().padStart(2,'0'));
               bloqFim=fimH;
               break;
             }
           }
           if(bloqueado){
-            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="background:${corBlocoAgenda(bloqAppt)};cursor:not-allowed;margin-top:-1px"></div>`;
+            var [hh2b,mm2b]=h.split(':').map(Number);
+            var isUltimoBloq=(hh2b*60+mm2b+30)>=bloqFimMin;
+            var raioB=isUltimoBloq?'0 0 6px 6px':'0';
+            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed"><div style="position:absolute;inset:0 2px ${isUltimoBloq?'2px':'0'} 2px;background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
           }
           return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
@@ -7671,7 +7675,7 @@ function renderAgenda(){
         const corBloco=corBlocoAgenda(a);
         const corTexto=corTextoBlocoAgenda(corBloco);
         return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
-          <div style="position:absolute;inset:2px;background:${corBloco};border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:${corTexto};overflow:hidden;cursor:pointer">
+          <div style="position:absolute;inset:2px 2px 0 2px;background:${corBloco};border-radius:6px 6px 0 0;padding:4px 6px;font-size:10px;font-weight:700;color:${corTexto};overflow:hidden;cursor:pointer">
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
