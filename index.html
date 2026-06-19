@@ -6453,6 +6453,7 @@ function renderClientes(search=''){
       <td style="font-weight:700;color:var(--green)">${c.total}</td>
       <td style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
         ${c.tel?`<button class="btn btn-sm" onclick="enviarWhatsApp('${c.nome}','${c.tel}','ola')" title="Enviar WhatsApp" style="background:#22c55e;color:#fff;border:none;padding:5px 8px;font-size:12px">📱</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="editarCliente(${i})" title="Editar cliente">✏️</button>
         <button class="btn btn-outline btn-sm" onclick="abrirRetornoRapido(${i})" title="Lembrete de retorno">🔔</button>
         ${rs&&rs!=='retornou'?`<button class="btn btn-outline btn-sm" onclick="marcarRetornou(${i})" title="Marcar como retornou" style="color:var(--green);border-color:var(--green)">✓</button>`:''}
       </td>
@@ -6460,6 +6461,41 @@ function renderClientes(search=''){
   }).join('');
 }
 
+function editarCliente(i){
+  var c=clientes[i];
+  var m=document.getElementById('modal-editar-cliente');
+  if(!m){m=document.createElement('div');m.id='modal-editar-cliente';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  m.innerHTML='<div class="modal-box" style="max-width:520px;border-radius:20px;overflow:hidden;padding:0">'
+    +'<div style="background:linear-gradient(135deg,#22c55e 0%,#15803d 100%);padding:24px 28px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div><div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Cliente</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#fff">Editar Cliente</div></div>'
+    +'<button onclick="document.getElementById(\'modal-editar-cliente\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>'
+    +'</div>'
+    +'<div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;background:#fff">'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">👤 Nome completo *</label>'
+    +'<input id="ec-nome" value="'+c.nome+'" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📱 WhatsApp</label>'
+    +'<input id="ec-tel" value="'+(c.tel||'')+'" placeholder="(11) 99999-9999" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📅 Nascimento</label>'
+    +'<input id="ec-nasc" value="'+(c.nascimento||'')+'" placeholder="dd/mm/aaaa" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
+    +'</div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📝 Observações</label>'
+    +'<textarea id="ec-obs" rows="3" placeholder="Alergias, preferências..." style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'">'+(c.obs||'')+'</textarea></div>'
+    +'<button onclick="salvarEdicaoCliente('+i+')" style="width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px" onmouseover="this.style.background=\'#15803d\'" onmouseout="this.style.background=\'#22c55e\'">✅ Salvar Alterações</button>'
+    +'</div></div>';
+  m.classList.add('open');
+}
+function salvarEdicaoCliente(i){
+  var c=clientes[i];
+  c.nome=document.getElementById('ec-nome')?.value?.trim()||c.nome;
+  c.tel=document.getElementById('ec-tel')?.value?.trim()||c.tel;
+  c.nascimento=document.getElementById('ec-nasc')?.value?.trim()||'';
+  c.obs=document.getElementById('ec-obs')?.value?.trim()||'';
+  document.getElementById('modal-editar-cliente').classList.remove('open');
+  renderClientes();
+  showAlert('✅ Cliente atualizado!');
+}
 function filterClienteStatus(status,el){
   window._clienteStatusFilter=status;
   document.querySelectorAll('#page-clientes .tab').forEach(t=>{t.classList.remove('active')});
