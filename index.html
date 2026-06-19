@@ -4649,7 +4649,11 @@ function showPage(id){
   });
   // Renderizar páginas dinâmicas
   setTimeout(function(){
-    if(id==='dashboard'&&typeof renderDashProximos==='function')renderDashProximos();
+    if(id==='dashboard'&&typeof renderDashProximos==='function'){
+      if(typeof carregarAgendamentosSupa==='function'){
+        carregarAgendamentosSupa().then(function(){renderDashProximos();renderDashboardCards();});
+      } else { renderDashProximos(); }
+    }
     if(id==='ia')renderIA();
     if(id==='marketing')renderMarketing();
     if(id==='fluxo')setTimeout(renderFluxo,50);
