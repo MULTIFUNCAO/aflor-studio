@@ -3961,19 +3961,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>CPF</label><input id="colab-cpf" placeholder="000.000.000-00"/></div>
       <!-- Cargo e função -->
       <div class="form-group"><label>Cargo / Função *</label>
-        <select id="colab-cargo">
-          <option>Cabeleireiro(a)</option>
-          <option>Manicure</option>
-          <option>Pedicure</option>
-          <option>Manicure e Pedicure</option>
-          <option>Esteticista</option>
-          <option>Maquiadora</option>
-          <option>Lash Designer</option>
-          <option>Designer de Sobrancelhas</option>
-          <option>Recepcionista</option>
-          <option>Gerente</option>
-          <option>Auxiliar</option>
-        </select>
+        <div id="colab-cargo" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Cabeleireiro(a)" style="width:15px;height:15px;cursor:pointer"> Cabeleireiro(a)</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Manicure" style="width:15px;height:15px;cursor:pointer"> Manicure</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Pedicure" style="width:15px;height:15px;cursor:pointer"> Pedicure</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Esteticista" style="width:15px;height:15px;cursor:pointer"> Esteticista</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Maquiadora" style="width:15px;height:15px;cursor:pointer"> Maquiadora</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Lash Designer" style="width:15px;height:15px;cursor:pointer"> Lash Designer</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Designer de Sobrancelhas" style="width:15px;height:15px;cursor:pointer"> Designer de Sobrancelhas</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Recepcionista" style="width:15px;height:15px;cursor:pointer"> Recepcionista</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Gerente" style="width:15px;height:15px;cursor:pointer"> Gerente</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Auxiliar" style="width:15px;height:15px;cursor:pointer"> Auxiliar</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="Proprietário(a)" style="width:15px;height:15px;cursor:pointer"> Proprietário(a)</label></div>
       </div>
       <div class="form-group"><label>Tipo de vínculo</label>
         <select id="colab-vinculo">
@@ -9167,7 +9155,8 @@ function lerPermissoesDoForm(){
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
   if(!nome){showAlert('Preencha o nome do colaborador!');return;}
-  var cargo=document.getElementById('colab-cargo')?.value||'Colaborador(a)';
+  var cargoChecks=document.getElementById('colab-cargo')?.querySelectorAll('input:checked');
+  var cargo=cargoChecks&&cargoChecks.length>0?Array.from(cargoChecks).map(function(x){return x.value;}).join(' / '):'Colaborador(a)';
   var comissao=document.getElementById('colab-comissao')?.value||'50';
   var email=document.getElementById('colab-email')?.value||'';
   var senha=document.getElementById('colab-senha')?.value||'';
@@ -9246,9 +9235,7 @@ function editarColab(idx){
       <div class="form-group"><label>CPF</label><input id="edit-cpf" placeholder="000.000.000-00"/></div>
       <!-- Cargo -->
       <div class="form-group"><label>Cargo / Função *</label>
-        <select id="edit-cargo">
-          ${['Cabeleireiro(a)','Manicure','Pedicure','Manicure e Pedicure','Esteticista','Maquiadora','Lash Designer','Designer de Sobrancelhas','Recepcionista','Gerente','Auxiliar'].map(op=>`<option ${c.cargo===op?'selected':''}>${op}</option>`).join('')}
-        </select>
+        <div id="edit-cargo" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid #e5e5e5;border-radius:8px;background:#fafafa">${["Cabeleireiro(a)","Manicure","Pedicure","Esteticista","Maquiadora","Lash Designer","Designer de Sobrancelhas","Recepcionista","Gerente","Auxiliar","Proprietário(a)"].map(op=>`<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" value="${op}" ${(c.cargo||'').split(' / ').includes(op)?'checked':''} style="width:15px;height:15px;cursor:pointer"> ${op}</label>`).join('')}</div>
       </div>
       <div class="form-group"><label>Tipo de vínculo</label>
         <select id="edit-vinculo"><option>CLT</option><option>Autônomo(a)</option><option>Parceiro(a) / Locatário(a)</option><option>Sócio(a)</option><option>Estagiário(a)</option></select>
@@ -9323,7 +9310,8 @@ function salvarEdicaoColab(idx){
   var c=colaboradores[idx];
   c.nome=document.getElementById('edit-nome')?.value?.trim()||c.nome;
   c.email=document.getElementById('edit-email')?.value||'';
-  c.cargo=document.getElementById('edit-cargo')?.value||c.cargo;
+  var editCargoChecks=document.getElementById('edit-cargo')?.querySelectorAll('input:checked');
+  c.cargo=editCargoChecks&&editCargoChecks.length>0?Array.from(editCargoChecks).map(function(x){return x.value;}).join(' / '):c.cargo;
   c.comissao=(document.getElementById('edit-comissao')?.value||'50')+'%';
   c.status=document.getElementById('edit-status')?.value||'Ativo';
   var novaSenha=document.getElementById('edit-senha')?.value||'';
