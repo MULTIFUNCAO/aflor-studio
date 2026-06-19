@@ -8067,7 +8067,19 @@ function editarPacote(i){
   var p=pacotes[i];
   var m=document.getElementById('modal-editar-pacote');
   if(!m){m=document.createElement('div');m.id='modal-editar-pacote';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
-  m.innerHTML=`<div class="modal-box" style="max-width:520px;border-radius:20px;overflow:hidden;padding:0">
+  // Montar itens de serviço atuais
+  var itensAtuais=p.servicosItens&&p.servicosItens.length?p.servicosItens:
+    String(p.servicos||'').split(/\s*\+\s*/).filter(Boolean).map(function(s){return{servico:s.trim(),qtd:1};});
+  var servicosOpts=servicos.map(function(s){return '<option>'+s.nome+'</option>';}).join('');
+  var itensHtml=itensAtuais.map(function(it,ii){
+    return '<div id="epac-item-'+ii+'" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'
+      +'<select id="epac-srv-'+ii+'" style="flex:1;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:13px;outline:none"><option>'+it.servico+'</option>'+servicosOpts+'</select>'
+      +'<input id="epac-qtd-'+ii+'" type="number" min="1" value="'+it.qtd+'" style="width:64px;padding:10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:13px;text-align:center;outline:none"/>'
+      +'<span style="font-size:11px;color:#6b7280">sessões</span>'
+      +'<button onclick="epacRemoverItem('+ii+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;padding:4px">✕</button>'
+      +'</div>';
+  }).join('');
+  m.innerHTML=`<div class="modal-box" style="max-width:540px;border-radius:20px;overflow:hidden;padding:0">
     <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);padding:24px 28px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Pacote</div>
@@ -8075,14 +8087,15 @@ function editarPacote(i){
       </div>
       <button onclick="document.getElementById('modal-editar-pacote').classList.remove('open')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
     </div>
-    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;background:#fff">
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;background:#fff;max-height:80vh;overflow-y:auto">
       <div>
         <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📦 Nome do Pacote *</label>
         <input id="epac-nome" value="${p.nome}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
       </div>
       <div>
-        <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">✂️ Serviços incluídos</label>
-        <input id="epac-servicos" value="${p.servicos}" placeholder="Ex: Corte + Hidratação" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
+        <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">✂️ Serviços + Quantidade</label>
+        <div id="epac-itens-lista">${itensHtml}</div>
+        <button onclick="epacAdicionarItem()" style="width:100%;padding:10px;border:1.5px dashed #8b5cf6;border-radius:8px;background:transparent;color:#8b5cf6;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px">+ Adicionar serviço</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div>
@@ -8097,14 +8110,38 @@ function editarPacote(i){
       <button onclick="salvarEdicaoPacote(${i})" style="width:100%;padding:14px;background:#8b5cf6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#8b5cf6'">✅ Salvar Alterações</button>
     </div>
   </div>`;
+  window._epacSrvOpts=servicosOpts;
   m.classList.add('open');
 }
+function epacAdicionarItem(){
+  var lista=document.getElementById('epac-itens-lista');if(!lista)return;
+  var ii=lista.children.length;
+  var d=document.createElement('div');d.id='epac-item-'+ii;d.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  d.innerHTML='<select id="epac-srv-'+ii+'" style="flex:1;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:13px;outline:none">'+(window._epacSrvOpts||'')+'</select>'
+    +'<input id="epac-qtd-'+ii+'" type="number" min="1" value="1" style="width:64px;padding:10px;border:1.5px solid #e5e5e5;border-radius:8px;font-size:13px;text-align:center;outline:none"/>'
+    +'<span style="font-size:11px;color:#6b7280">sessões</span>'
+    +'<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;padding:4px">✕</button>';
+  lista.appendChild(d);
+}
+function epacRemoverItem(ii){var el=document.getElementById('epac-item-'+ii);if(el)el.remove();}
 function salvarEdicaoPacote(i){
   var p=pacotes[i];
   p.nome=document.getElementById('epac-nome')?.value?.trim()||p.nome;
-  p.servicos=document.getElementById('epac-servicos')?.value?.trim()||p.servicos;
   p.preco=document.getElementById('epac-preco')?.value?.trim()||p.preco;
   p.validade=document.getElementById('epac-validade')?.value?.trim()||p.validade;
+  // Coletar itens de serviço
+  var lista=document.getElementById('epac-itens-lista');
+  if(lista&&lista.children.length){
+    var novosItens=[];
+    Array.from(lista.children).forEach(function(row){
+      var sel=row.querySelector('select');var qtdEl=row.querySelector('input[type=number]');
+      if(sel&&qtdEl&&sel.value){novosItens.push({servico:sel.value,qtd:parseInt(qtdEl.value)||1});}
+    });
+    if(novosItens.length){
+      p.servicosItens=novosItens;
+      p.servicos=novosItens.map(function(it){return it.servico;}).join(' + ');
+    }
+  }
   document.getElementById('modal-editar-pacote').classList.remove('open');
   renderPacotes();
   showAlert('✅ Pacote atualizado!');
