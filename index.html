@@ -1484,7 +1484,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-clientes">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input placeholder="🔍 Procurar por nome ou telefone..." style="width:280px" oninput="renderClientes(this.value)"/>
+          <input placeholder="🔍 Procurar por nome ou telefone..." style="width:100%;max-width:280px;min-width:160px;box-sizing:border-box" oninput="renderClientes(this.value)"/>
           <button class="tab active" id="tab-todos" onclick="filterClienteStatus('todos',this)">Todos</button>
           <button class="tab" id="tab-retorno" onclick="filterClienteStatus('retorno',this)" style="background:#fff3cd;color:#92400e;border:1px solid #fbbf24">
             🔔 Retorno pendente
