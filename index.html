@@ -991,16 +991,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <!-- Próximos agendamentos -->
           <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
             <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Próximos</div>
-            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
-              <div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px">Amanhã</div>
-              <div style="display:flex;align-items:center;justify-content:space-between">
-                <div><div style="font-size:12px;font-weight:700">Julia Barrozo</div><div style="font-size:10px;color:#888">Escova + Corte · Edu</div></div>
-                <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">09:00</span>
-              </div>
-              <div style="border-top:1px solid #f5f5f5;padding-top:8px;display:flex;align-items:center;justify-content:space-between">
-                <div><div style="font-size:12px;font-weight:700">Janaine Brito</div><div style="font-size:10px;color:#888">Design de Sobrancelhas · Jeny</div></div>
-                <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">10:30</span>
-              </div>
+            <div id="dash-proximos-lista" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Carregando...</div>
             </div>
           </div>
           <!-- Acesso rápido -->
@@ -11289,6 +11281,48 @@ function renderDashboardCards(){
   }
 }
 setTimeout(function(){if(typeof renderDashboardCards==='function')renderDashboardCards();},2000);
+setTimeout(function(){if(typeof renderDashProximos==='function')renderDashProximos();},2500);
+function renderDashProximos(){
+  var el=document.getElementById('dash-proximos-lista');
+  if(!el||typeof agendamentosPorData==='undefined')return;
+  var hoje=new Date();
+  var items=[];
+  // Pegar os próximos 7 dias
+  for(var d=1;d<=7;d++){
+    var dt=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+d);
+    var dk=(dt.getDate())+'/'+(dt.getMonth()+1)+'/'+dt.getFullYear();
+    var dayData=agendamentosPorData[dk];
+    if(!dayData)continue;
+    var slots=Object.keys(dayData).sort();
+    slots.forEach(function(k){
+      var a=dayData[k];
+      if(!a||!a.cliente)return;
+      items.push({data:dt,dk:dk,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:a.servico||'',prof:a.prof||''});
+    });
+  }
+  if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
+  // Agrupar por dia
+  var grupos={};
+  items.forEach(function(i){if(!grupos[i.dk])grupos[i.dk]=[];grupos[i.dk].push(i);});
+  var diasNome=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  var mesesNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var html='';
+  Object.keys(grupos).forEach(function(dk){
+    var lista=grupos[dk];
+    var dt=lista[0].data;
+    var diff=Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())-new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()))/(1000*60*60*24));
+    var label=diff===1?'Amanhã':diasNome[dt.getDay()]+', '+dt.getDate()+' '+mesesNome[dt.getMonth()];
+    html+='<div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:4px">'+label+'</div>';
+    lista.slice(0,3).forEach(function(a,i){
+      html+='<div style="'+(i>0?'border-top:1px solid #f5f5f5;padding-top:8px;':'')+' display:flex;align-items:center;justify-content:space-between">'
+        +'<div><div style="font-size:12px;font-weight:700">'+a.cliente+'</div><div style="font-size:10px;color:#888">'+a.servico+(a.prof?' · '+a.prof:'')+'</div></div>'
+        +'<span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">'+a.hora+'</span>'
+        +'</div>';
+    });
+    if(lista.length>3)html+='<div style="font-size:10px;color:#aaa;text-align:center">+' +(lista.length-3)+' mais</div>';
+  });
+  el.innerHTML=html;
+}
 function renderHistoricoCaixa(){
   var lista=document.getElementById('caixa-historico-lista');
   if(!lista)return;
