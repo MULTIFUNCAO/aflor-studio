@@ -320,6 +320,7 @@ textarea{resize:vertical;min-height:80px}
 .caixa-kpi-grid{grid-template-columns:1fr 1fr!important}
 .fluxo-kpi-grid{grid-template-columns:1fr 1fr!important}
 .fluxo-stats-grid{grid-template-columns:1fr 1fr!important}
+.vendas-metas-grid{grid-template-columns:1fr!important}
 .table-card{overflow-x:auto!important}
   .cards-grid{grid-template-columns:1fr 1fr}
 }
@@ -1066,20 +1067,20 @@ tr.row-retorno-retornou td{background:#f0fff4}
             ✏️ Definir Metas
           </button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="metas-cards-vendas">
+        <div class="vendas-metas-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="metas-cards-vendas">
           <!-- Cards gerados por JS -->
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <select class="btn btn-outline btn-sm">
           <option>Tipo</option><option>Serviço</option><option>Produto</option>
         </select>
         <select class="btn btn-outline btn-sm">
           <option>Situação</option><option>Pago</option><option>Pendente</option>
         </select>
-        <div style="flex:1;position:relative">
-          <input style="width:100%" placeholder="🔍 Procurar por palavra..." />
+        <div style="flex:1;min-width:160px;position:relative">
+          <input style="width:100%;box-sizing:border-box" placeholder="🔍 Procurar por palavra..." />
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-venda')">+ Nova Venda</button>
       </div>
