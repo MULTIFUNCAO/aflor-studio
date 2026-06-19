@@ -1038,7 +1038,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
       <div class="calendar-container">
-        <div class="prof-headers" id="agenda-prof-headers" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div class="prof-headers" id="agenda-prof-headers">
           <div style="min-width:70px;border-right:1px solid var(--gray-100)"></div>
           <div class="prof-col"><div class="pro-avatar" style="background:#007BFF">AF</div><div style="font-size:11px;font-weight:600">Ana Flor</div></div>
           <div class="prof-col"><div class="pro-avatar" style="background:#FF5722">ED</div><div style="font-size:11px;font-weight:600">Edu</div></div>
@@ -7579,31 +7579,19 @@ function buscarApptAgenda(appts,profCol,hora,filtroProf){
   return null;
 }
 
-var agendaMobileProfIdx=0;
-function agendaMobileNav(dir){
-  var profs=(typeof colaboradores!=='undefined'&&colaboradores&&colaboradores.length>0)
-    ?colaboradores.filter(function(c){return !c.status||c.status==='Ativo';}).map(function(c){return c.nome;})
-    :['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
-  var filtro=(document.getElementById('agenda-prof-filtro')?.value||'').trim();
-  var lista=filtro?profs.filter(function(p){return p.toLowerCase().includes(filtro.toLowerCase());}):profs;
-  agendaMobileProfIdx=Math.max(0,Math.min(lista.length-1,agendaMobileProfIdx+dir));
-  renderAgenda();
-  return false;
-}
 function renderAgenda(){
   const profCores={'Ana Flor':'#111','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
   const agendaProfs=(typeof colaboradores!=='undefined'&&colaboradores&&colaboradores.length>0)
     ?colaboradores.filter(function(c){return !c.status||c.status==='Ativo';}).map(function(c){return c.nome;})
     :['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
   var filtro=(document.getElementById('agenda-prof-filtro')?.value||'').trim();
-  var profNamesAll=filtro
+  var profNames=filtro
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
     :agendaProfs.slice();
-  if(filtro&&!profNamesAll.length)profNamesAll=[normalizeProfAgenda(filtro)];
-  var profNames=profNamesAll;
+  if(filtro&&!profNames.length)profNames=[normalizeProfAgenda(filtro)];
   var headers=document.getElementById('agenda-prof-headers');
   if(headers){
-    headers.innerHTML='<div style="display:flex"><div style="min-width:70px;flex-shrink:0;border-right:1px solid #f0f0f0"></div>'+
+    headers.innerHTML='<div style="min-width:70px;border-right:1px solid #f0f0f0"></div>'+
     profNames.map(function(nome){
       var colab=colaboradores.find(function(c){return c.nome.startsWith(nome.split(' ')[0]);});
       var cor=colab&&colab.cor&&colab.cor!==''?colab.cor:profCores[nome]||'#111';
@@ -7611,8 +7599,8 @@ function renderAgenda(){
       var avatarHtml=colab&&colab.foto?
         '<img src="'+colab.foto+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e5e5e5;display:block"/>':
         '<div style="width:44px;height:44px;border-radius:50%;background:'+cor+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(255,255,255,.3)">'+ini+'</div>';
-      return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-width:90px;flex:1">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
-    }).join('')+'</div>';
+      return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
+    }).join('');
   }
   const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
