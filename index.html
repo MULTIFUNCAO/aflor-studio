@@ -10526,7 +10526,7 @@ async function carregarSalaoAtual(){
     if(r.data){
       window.SALAO_ID=r.data.id;
       window.SALAO_NOME=r.data.nome_salao;
-      window.SALAO_RESPONSAVEL=r.data.responsavel||null;
+      window.SALAO_RESPONSAVEL=r.data.responsavel||(user.email?user.email.split("@")[0].replace(/[._]/g," "):null);
       window.SALAO_PLANO=r.data.plano||'trial';
       try{localStorage.setItem('aflor_ultimo_salao_id',r.data.id);}catch(e){}
     }else{
