@@ -4357,6 +4357,8 @@ async function carregarAgendamentosSupa(){
     });
     if(typeof renderAgenda==='function')renderAgenda();
     if(typeof renderComandas==='function')renderComandas();
+    if(typeof renderDashProximos==='function')renderDashProximos();
+    if(typeof renderDashboardCards==='function')renderDashboardCards();
   }catch(e){console.log('err carregar agendamentos',e);}
 }
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([Object.assign({},c,{salao_id:window.SALAO_ID})]);}catch(e){}}
