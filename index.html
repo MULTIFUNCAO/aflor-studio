@@ -7586,6 +7586,7 @@ function agendaMobileNav(dir){
   var lista=filtro?profs.filter(function(p){return p.toLowerCase().includes(filtro.toLowerCase());}):profs;
   agendaMobileProfIdx=Math.max(0,Math.min(lista.length-1,agendaMobileProfIdx+dir));
   renderAgenda();
+  return false;
 }
 function renderAgenda(){
   const profCores={'Ana Flor':'#111','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
@@ -7597,14 +7598,14 @@ function renderAgenda(){
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
     :agendaProfs.slice();
   if(filtro&&!profNamesAll.length)profNamesAll=[normalizeProfAgenda(filtro)];
-  var isMobile=window.innerWidth<=600;
+  var isMobile=window.innerWidth<=900;
   if(isMobile&&profNamesAll.length>0){
     agendaMobileProfIdx=Math.max(0,Math.min(profNamesAll.length-1,agendaMobileProfIdx));
   }
   var profNames=isMobile&&!filtro?[profNamesAll[agendaMobileProfIdx]]:profNamesAll;
   var headers=document.getElementById('agenda-prof-headers');
   if(headers){
-    var isMob=window.innerWidth<=600;
+    var isMob=window.innerWidth<=900;
     var navHtml=isMob&&profNamesAll.length>1?
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#f8f8f8;border-bottom:1px solid #f0f0f0">'
       +'<button onclick="agendaMobileNav(-1)" style="background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:4px 12px;font-size:16px;cursor:pointer;'+(agendaMobileProfIdx===0?'opacity:.3;cursor:default':'')+'">◀</button>'
