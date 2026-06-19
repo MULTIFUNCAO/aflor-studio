@@ -1385,11 +1385,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
     <!-- REMUNERAÇÕES -->
     <div class="page" id="page-remuneracoes">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <select class="btn btn-outline btn-sm" id="remun-filtro-prof" onchange="renderRemuneracoes()"><option value="Todos">Todos</option></select>
-        <button class="cal-btn" onclick="remunMudarMes(-1)">◀</button>
-        <span style="font-weight:700" id="remun-mes-label">Maio/2026</span>
-        <button class="cal-btn" onclick="remunMudarMes(1)">▶</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <select class="btn btn-outline btn-sm" id="remun-filtro-prof" onchange="renderRemuneracoes()" style="min-width:120px"><option value="Todos">Todos</option></select>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap">
+          <button class="cal-btn" onclick="remunMudarMes(-1)">◀</button>
+          <span style="font-weight:700;white-space:nowrap" id="remun-mes-label">Maio/2026</span>
+          <button class="cal-btn" onclick="remunMudarMes(1)">▶</button>
+        </div>
       </div>
       <div class="table-card">
         <table>
@@ -1401,8 +1403,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
     <!-- DESPESAS -->
     <div class="page" id="page-despesas">
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-        <input id="despesa-busca" placeholder="🔍 Buscar despesa..." style="width:300px" oninput="renderDespesasList()"/>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input id="despesa-busca" placeholder="🔍 Buscar despesa..." style="flex:1;min-width:160px" oninput="renderDespesasList()"/>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-despesa')">+ Nova Despesa</button>
       </div>
       <div class="table-card" id="despesas-table-wrap">
