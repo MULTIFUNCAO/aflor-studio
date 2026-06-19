@@ -7947,15 +7947,43 @@ function editarProduto(i){
   var p=produtos[i];
   var m=document.getElementById('modal-editar-produto');
   if(!m){m=document.createElement('div');m.id='modal-editar-produto';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
-  m.innerHTML=`<div class="modal-box" style="max-width:480px">
-    <div class="modal-header"><h3>✏️ Editar Produto</h3><button class="modal-close" onclick="document.getElementById('modal-editar-produto').classList.remove('open')">✕</button></div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
-      <div class="form-group"><label>Nome *</label><input id="ep-nome" value="${p.nome}"/></div>
-      <div class="form-group"><label>Categoria</label><input id="ep-cat" value="${p.cat}"/></div>
-      <div class="form-group"><label>Preço de Venda (R$)</label><input id="ep-preco" value="${p.preco}"/></div>
-      <div class="form-group"><label>Estoque</label><input id="ep-estoque" type="number" value="${p.estoque}"/></div>
-      <div class="form-group"><label>Status</label><select id="ep-status"><option ${p.status==='Ativo'?'selected':''}>Ativo</option><option ${p.status==='Inativo'?'selected':''}>Inativo</option></select></div>
-      <button class="btn btn-primary" onclick="salvarEdicaoProduto(${i})" style="width:100%;margin-top:4px">✅ Salvar Alterações</button>
+  m.innerHTML=`<div class="modal-box" style="max-width:520px;border-radius:20px;overflow:hidden;padding:0">
+    <div style="background:linear-gradient(135deg,#111 0%,#333 100%);padding:24px 28px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Produto</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">Editar Produto</div>
+      </div>
+      <button onclick="document.getElementById('modal-editar-produto').classList.remove('open')" style="background:rgba(255,255,255,.15);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;background:#fff">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📦 Nome do Produto *</label>
+        <input id="ep-nome" value="${p.nome}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">🏷️ Categoria</label>
+          <input id="ep-cat" value="${p.cat}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">💰 Preço Venda (R$)</label>
+          <input id="ep-preco" value="${p.preco}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📊 Estoque</label>
+          <input id="ep-estoque" type="number" value="${p.estoque}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">⚡ Status</label>
+          <select id="ep-status" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;background:#fff;cursor:pointer">
+            <option ${p.status==='Ativo'?'selected':''}>Ativo</option>
+            <option ${p.status==='Inativo'?'selected':''}>Inativo</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="salvarEdicaoProduto(${i})" style="width:100%;padding:14px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.3px" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#111'">✅ Salvar Alterações</button>
     </div>
   </div>`;
   m.classList.add('open');
