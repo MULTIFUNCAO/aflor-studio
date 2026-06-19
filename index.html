@@ -11495,7 +11495,7 @@ function renderDashProximos(){
     slots.forEach(function(k){
       var a=dayData[k];
       if(!a||!a.cliente)return;
-      items.push({data:dt,dk:dk,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:a.servico||'',prof:a.prof||''});
+      items.push({data:dt,dk:dk,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:a.servico||'',prof:a.prof||a.profissional||''});
     });
   }
   if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
