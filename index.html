@@ -8021,6 +8021,7 @@ function renderPacotes(){
       +'<td style="font-weight:700">'+p.preco+'</td>'
       +'<td style="white-space:nowrap">'
       +'<button class="btn btn-primary btn-sm" onclick="abrirVenderPacote('+i+')" style="margin-right:6px;font-size:11px;padding:5px 10px">💳 Vender</button>'
+      +'<button onclick="editarPacote('+i+')" style="background:none;border:1px solid #e5e5e5;border-radius:6px;cursor:pointer;color:#555;padding:4px 8px;margin-right:4px" title="Editar">✏️</button>'
       +'<button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px" title="Remover">🗑</button>'
       +'</td></tr>');
   });
@@ -8062,6 +8063,52 @@ function renderPacotes(){
   tb.innerHTML=linhas.join('');
 }
 
+function editarPacote(i){
+  var p=pacotes[i];
+  var m=document.getElementById('modal-editar-pacote');
+  if(!m){m=document.createElement('div');m.id='modal-editar-pacote';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  m.innerHTML=`<div class="modal-box" style="max-width:520px;border-radius:20px;overflow:hidden;padding:0">
+    <div style="background:linear-gradient(135deg,#8b5cf6 0%,#6d28d9 100%);padding:24px 28px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Pacote</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">Editar Pacote</div>
+      </div>
+      <button onclick="document.getElementById('modal-editar-pacote').classList.remove('open')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;background:#fff">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📦 Nome do Pacote *</label>
+        <input id="epac-nome" value="${p.nome}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">✂️ Serviços incluídos</label>
+        <input id="epac-servicos" value="${p.servicos}" placeholder="Ex: Corte + Hidratação" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">💰 Preço (R$)</label>
+          <input id="epac-preco" value="${p.preco}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">⏱️ Validade</label>
+          <input id="epac-validade" value="${p.validade}" placeholder="Ex: 30 dias" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#8b5cf6'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+      </div>
+      <button onclick="salvarEdicaoPacote(${i})" style="width:100%;padding:14px;background:#8b5cf6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#8b5cf6'">✅ Salvar Alterações</button>
+    </div>
+  </div>`;
+  m.classList.add('open');
+}
+function salvarEdicaoPacote(i){
+  var p=pacotes[i];
+  p.nome=document.getElementById('epac-nome')?.value?.trim()||p.nome;
+  p.servicos=document.getElementById('epac-servicos')?.value?.trim()||p.servicos;
+  p.preco=document.getElementById('epac-preco')?.value?.trim()||p.preco;
+  p.validade=document.getElementById('epac-validade')?.value?.trim()||p.validade;
+  document.getElementById('modal-editar-pacote').classList.remove('open');
+  renderPacotes();
+  showAlert('✅ Pacote atualizado!');
+}
 function deletePacote(i){
   if(confirm('Remover este pacote?')){
     var removido=pacotes[i];
