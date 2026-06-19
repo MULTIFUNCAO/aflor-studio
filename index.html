@@ -7667,7 +7667,8 @@ function renderAgenda(){
             var [hh2b,mm2b]=h.split(':').map(Number);
             var isUltimoBloq=(hh2b*60+mm2b+30)>=bloqFimMin;
             var raioB=isUltimoBloq?'0 0 6px 6px':'0';
-            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed"><div style="position:absolute;inset:0 2px ${isUltimoBloq?'2px':'0'} 2px;background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
+            var insetB=isUltimoBloq?'0 2px 2px 2px':'-1px 2px 0 2px';
+            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed;border-bottom:none"><div style="position:absolute;inset:${insetB};background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
           }
           return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
