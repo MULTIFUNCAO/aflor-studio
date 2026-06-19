@@ -10546,7 +10546,7 @@ function aplicarDadosSalaoNaUI(){
       el.textContent=saud+(primeiroNome?(', '+primeiroNome):'')+' 🌷';
     });
     document.querySelectorAll('[data-nome-salao]').forEach(function(el){
-      el.textContent=window.SALAO_NOME||'';
+      el.textContent=window.SALAO_RESPONSAVEL||window.SALAO_NOME||'';
     });
   }catch(e){}
 }
