@@ -5469,7 +5469,7 @@ function imprimirRelatorio(){
   win.document.write('<html><head><title>Relatório Flora</title><style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}h1{font-size:18px}</style></head><body>');
   win.document.write('<h1>'+document.getElementById('relatorio-titulo').textContent+'</h1>');
   win.document.write(document.getElementById('relatorio-conteudo').innerHTML);
-  win.document.write('<script>if(window.innerWidth<=768){var el=document.querySelector("[data-section=acesso-rapido]");if(el)el.style.display="none";}</script></body></html>');
+  win.document.write('</body></html>');
   win.document.close();
   win.print();
 }
