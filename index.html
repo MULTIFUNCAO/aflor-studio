@@ -380,7 +380,7 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
+<style>@media(max-width:768px){.dash-acesso-rapido-section{display:none!important;}}</style></head>
 <body>
 <div id="alert-global" class="alert alert-success"></div>
 
@@ -1006,7 +1006,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
           <!-- Acesso rápido -->
           <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;padding:14px">
-            <div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px">Acesso Rápido</div>
+            <div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px" class="dash-acesso-rapido-section">Acesso Rápido</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
               <button onclick="showPage('agenda')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📅<br>Agenda</button>
               <button onclick="showPage('clientes')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">👤<br>Clientes</button>
