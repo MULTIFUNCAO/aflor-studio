@@ -206,7 +206,7 @@ tr:hover td{background:#fafafa}
 .pro-avatar{width:32px;height:32px;border-radius:50%;margin:0 auto 4px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .time-slots{display:contents}
 .time-label{padding:8px 12px;font-size:11px;color:var(--gray-400);text-align:right;border-right:1px solid var(--gray-100)}
-.slot{border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);height:48px;position:relative;cursor:pointer}
+.slot{border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);height:48px;position:relative;cursor:pointer}.slot.occupied{border-bottom:none}
 .slot:hover{background:var(--blue-light)}
 .slot.occupied{background:var(--blue-light)}
 .appt{position:absolute;inset:2px;background:var(--blue);border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden}
@@ -7668,7 +7668,7 @@ function renderAgenda(){
             var isUltimoBloq=(hh2b*60+mm2b+30)>=bloqFimMin;
             var raioB=isUltimoBloq?'0 0 6px 6px':'0';
             var insetB=isUltimoBloq?'0 2px 2px 2px':'-1px 2px 0 2px';
-            return `<div class="slot" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed;border-bottom:none"><div style="position:absolute;inset:${insetB};background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
+            return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed;border-bottom:none"><div style="position:absolute;inset:${insetB};background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
           }
           return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
