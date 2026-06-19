@@ -7930,15 +7930,46 @@ function renderProdutos(search=''){
     </td>
     <td><span class="badge ${p.status==='Ativo'?'badge-green':'badge-red'}">${p.status}</span></td>
     <td>
-      <button class="btn btn-outline btn-sm" onclick="deleteProduto(${i})" style="color:var(--red);border-color:var(--red)">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="editarProduto(${i})" title="Editar">✏️</button>
+        <button class="btn btn-outline btn-sm" onclick="deleteProduto(${i})" style="color:var(--red);border-color:var(--red)" title="Remover">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
     </td>
   </tr>`).join('');
 }
 
 function deleteProduto(i){
   if(confirm('Remover este produto?')){produtos.splice(i,1);renderProdutos();showAlert('Produto removido!');}
+}
+function editarProduto(i){
+  var p=produtos[i];
+  var m=document.getElementById('modal-editar-produto');
+  if(!m){m=document.createElement('div');m.id='modal-editar-produto';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  m.innerHTML=`<div class="modal-box" style="max-width:480px">
+    <div class="modal-header"><h3>✏️ Editar Produto</h3><button class="modal-close" onclick="document.getElementById('modal-editar-produto').classList.remove('open')">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group"><label>Nome *</label><input id="ep-nome" value="${p.nome}"/></div>
+      <div class="form-group"><label>Categoria</label><input id="ep-cat" value="${p.cat}"/></div>
+      <div class="form-group"><label>Preço de Venda (R$)</label><input id="ep-preco" value="${p.preco}"/></div>
+      <div class="form-group"><label>Estoque</label><input id="ep-estoque" type="number" value="${p.estoque}"/></div>
+      <div class="form-group"><label>Status</label><select id="ep-status"><option ${p.status==='Ativo'?'selected':''}>Ativo</option><option ${p.status==='Inativo'?'selected':''}>Inativo</option></select></div>
+      <button class="btn btn-primary" onclick="salvarEdicaoProduto(${i})" style="width:100%;margin-top:4px">✅ Salvar Alterações</button>
+    </div>
+  </div>`;
+  m.classList.add('open');
+}
+function salvarEdicaoProduto(i){
+  var p=produtos[i];
+  p.nome=document.getElementById('ep-nome')?.value?.trim()||p.nome;
+  p.cat=document.getElementById('ep-cat')?.value?.trim()||p.cat;
+  p.preco=document.getElementById('ep-preco')?.value?.trim()||p.preco;
+  p.estoque=parseInt(document.getElementById('ep-estoque')?.value)||0;
+  p.status=document.getElementById('ep-status')?.value||p.status;
+  document.getElementById('modal-editar-produto').classList.remove('open');
+  renderProdutos();
+  showAlert('✅ Produto atualizado!');
 }
 
 function addProduto(){
