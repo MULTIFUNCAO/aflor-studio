@@ -1072,17 +1072,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <select class="btn btn-outline btn-sm">
-          <option>Tipo</option><option>Serviço</option><option>Produto</option>
-        </select>
-        <select class="btn btn-outline btn-sm">
-          <option>Situação</option><option>Pago</option><option>Pendente</option>
-        </select>
-        <div style="flex:1;min-width:160px;position:relative">
-          <input style="width:100%;box-sizing:border-box" placeholder="🔍 Procurar por palavra..." />
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select class="btn btn-outline btn-sm" style="flex:1;min-width:100px">
+            <option>Tipo</option><option>Serviço</option><option>Produto</option>
+          </select>
+          <select class="btn btn-outline btn-sm" style="flex:1;min-width:100px">
+            <option>Situação</option><option>Pago</option><option>Pendente</option>
+          </select>
+          <input style="flex:2;min-width:140px;box-sizing:border-box" placeholder="🔍 Procurar..." />
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-venda')">+ Nova Venda</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-venda')" style="width:100%">+ Nova Venda</button>
       </div>
       <div class="table-card">
         <table>
