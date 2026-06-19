@@ -10608,6 +10608,7 @@ function entrarComoColaborador(nome){
   if(colab)colab.permissoes=normalizarPermissoes(colab.permissoes);
   var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var nomeCurto=nome.split(' ')[0];
+    window.SALAO_RESPONSAVEL=nome;
   var el=document.getElementById('cv-ola-nome');if(el)el.textContent=nomeCurto;
   var elN=document.getElementById('cv-nome');if(elN)elN.textContent=nome;
   var elC=document.getElementById('cv-cargo');if(elC)elC.textContent=colab?colab.cargo:'Colaborador(a)';
