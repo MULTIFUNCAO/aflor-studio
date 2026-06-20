@@ -7061,7 +7061,7 @@ function abrirAgendaPopup(key,dados,event){
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
         <button onclick="abrirConfirmarPagamento('${key}')" style="flex:1;padding:8px;background:#111;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💳 Registrar Pagamento</button>
-        <button onclick="debugVerComanda('${key}')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
+        <button onclick="verComandaEspecifica('${key}')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
       </div>
     </div>
     ${btnCancelarHtml}
@@ -7280,18 +7280,10 @@ function fecharAgendaPopup(){
   agendaPopupAtivo=null;
   window._popupExtraProdOpts=null;
 }
-function debugVerComanda(key){
+function verComandaEspecifica(key){
   var d=agendaDataAtual;
   var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
-  var agdkType=typeof agendaDataKeyAtual;
-  var agdkVal=agdkType==='function'?'[function]':JSON.stringify(agendaDataKeyAtual);
-  console.log('[VerComanda] key='+key+' dataKey(de agendaDataAtual)='+dataKey);
-  console.log('[VerComanda] agendaDataKeyAtual type='+agdkType+' value='+agdkVal);
-  var dia=agendamentosPorData&&agendamentosPorData[dataKey];
-  var dado=dia&&dia[key];
-  console.log('[VerComanda] dia existe='+!!dia+' dado existe='+!!dado+(dado?' | cliente='+dado.cliente+' servico='+dado.servico:''));
-  fecharAgendaPopup();
-  showPage('comandas');
+  abrirComandaAgendamentoLista(dataKey,key);
 }
 
 function sincronizarSinalLocal(key,valorNum){
