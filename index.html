@@ -7608,9 +7608,11 @@ function toggleSinalPopup(key){
   }
 }
 // Fechar popup ao clicar fora
+// Checa document.contains(e.target) para ignorar cliques em elementos que foram removidos do DOM
+// durante o próprio handler (ex: botões dentro de wrap.innerHTML = '' recalculado)
 document.addEventListener('click',function(e){
   var p=document.getElementById('agenda-popup');
-  if(p&&!p.contains(e.target))fecharAgendaPopup();
+  if(p&&!p.contains(e.target)&&document.contains(e.target))fecharAgendaPopup();
 });
 
 var agendaAppts={
