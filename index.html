@@ -6829,7 +6829,7 @@ function calcComandaPopup(key){
   if(isNaN(sinalInput))sinalInput=lerSinalAgendamento(dados).valor;
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
   var servicoVal=lerValorServicoAgendamento(dados);
-  var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor;},0);
+  var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
   var abate=sinalPago?sinalInput:0;
   return {
@@ -6952,7 +6952,7 @@ function abrirAgendaPopup(key,dados,event){
   try{if(dados.servicos_extras){var _ex=typeof dados.servicos_extras==='string'?JSON.parse(dados.servicos_extras):dados.servicos_extras;if(Array.isArray(_ex))popupServicosExtras=_ex;}}catch(e){}
   popupDescontoValor=parseFloat(dados.desconto_valor)||0;
   popupDescontoTipo=dados.desconto_tipo||'salao';
-  var extrasTotalPg=popupServicosExtras.reduce(function(s,e){return s+e.valor;},0);
+  var extrasTotalPg=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var totalPagarPg=Math.max(0,servicoValPg+extrasTotalPg-abatePg-popupDescontoValor);
   var stAg=(dados.status||'').toLowerCase();
   var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
@@ -7028,7 +7028,7 @@ function abrirAgendaPopup(key,dados,event){
           <span id="popup-servico-valor" style="font-weight:700">${formatMoedaBR(servicoValPg)}</span>
         </div>
         <div id="popup-extras-lista">${popupExtrasToHtml(key)}</div>
-        ${atendEmAberto?`<button onclick="popupAbrirSeletorServico('${key}')" style="width:100%;margin:4px 0 8px;padding:6px;background:#f5f5f5;color:#555;border:1.5px dashed #ccc;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer">+ Adicionar Serviço</button>`:''}
+        ${atendEmAberto?`<button id="popup-btn-add-svc" onclick="popupAbrirFormExtra('${key}')" style="width:100%;margin:4px 0 4px;padding:6px;background:#f5f5f5;color:#555;border:1.5px dashed #ccc;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer">+ Adicionar Serviço</button><div id="popup-form-extra-wrap"></div>`:''}
         <div id="popup-linha-sinal-abate" style="display:${sinalInfoPg.pago&&abatePg>0?'flex':'none'};justify-content:space-between;font-size:11px;margin-bottom:5px">
           <span style="color:#888">(-) Sinal pago</span>
           <span id="popup-sinal-abate-valor" style="color:#22c55e;font-weight:700">- ${formatMoedaBR(abatePg)}</span>
@@ -7104,7 +7104,7 @@ function abrirConfirmarPagamento(key){
   var dados=agendaDiaAtual[key];
   if(!dados){showAlert('Agendamento não encontrado.');return;}
   fecharAgendaPopup();
-  var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor;},0);
+  var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
   var total=lerValorServicoAgendamento(dados)+extrasTotal-descontoVal;
   total=Math.max(0,total);
@@ -7273,9 +7273,8 @@ function abrirComandaAtendimento(cliente, servico, valor){
 function fecharAgendaPopup(){
   var p=document.getElementById('agenda-popup');
   if(p)p.remove();
-  var s=document.getElementById('popup-seletor-servico');
-  if(s)s.remove();
   agendaPopupAtivo=null;
+  window._popupExtraProdOpts=null;
 }
 
 function sincronizarSinalLocal(key,valorNum){
@@ -7374,10 +7373,19 @@ function popupRecalcularComanda(key){
 function popupExtrasToHtml(key){
   if(!popupServicosExtras||!popupServicosExtras.length)return '';
   return popupServicosExtras.map(function(e,i){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px">'
-      +'<span style="color:#555">+ '+e.nome+'</span>'
-      +'<span style="display:flex;align-items:center;gap:6px"><span style="font-weight:700">'+formatMoedaBR(e.valor)+'</span>'
-      +'<button onclick="popupRemoverExtra(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button></span>'
+    var profLabel=e.profissional?'<span style="font-size:10px;color:#888;display:block">👤 '+e.profissional+'</span>':'';
+    var prodsHtml=(e.produtos||[]).map(function(p){
+      return '<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;padding-left:10px">'
+        +'<span>📦 '+p.nome+'</span><span>'+formatMoedaBR(p.valor)+'</span></div>';
+    }).join('');
+    return '<div style="border:1px solid #e5e5e5;border-radius:7px;padding:6px 8px;margin-bottom:6px;background:#fafafa">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      +'<div><span style="font-size:12px;color:#333;font-weight:600">+ '+e.nome+'</span>'+profLabel+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+      +'<span style="font-size:12px;font-weight:700">'+formatMoedaBR(e.valor)+'</span>'
+      +'<button onclick="popupRemoverExtra(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>'
+      +'</div></div>'
+      +prodsHtml
       +'</div>';
   }).join('');
 }
@@ -7398,12 +7406,12 @@ function sincronizarExtrasDesconto(key){
   }
 }
 
-function popupAdicionarExtra(key,nome,valor){
-  popupServicosExtras.push({nome:nome,valor:valor});
+function popupAdicionarExtra(key,item){
+  // item = {nome, valor, profissional, produtos:[{nome,valor}]}
+  popupServicosExtras.push(item);
   sincronizarExtrasDesconto(key);
   atualizarPopupComandaUI(key);
-  var sel=document.getElementById('popup-seletor-servico');
-  if(sel)sel.remove();
+  popupFecharFormExtra();
 }
 
 function popupRemoverExtra(key,idx){
@@ -7428,39 +7436,93 @@ function popupDescontoTipoChange(key,tipo){
   if(btnComissao){btnComissao.style.background=tipo==='comissao'?'#111':'#fff';btnComissao.style.color=tipo==='comissao'?'#fff':'#555';btnComissao.style.borderColor=tipo==='comissao'?'#111':'#ddd';}
 }
 
-function popupAbrirSeletorServico(key){
-  var el=document.getElementById('popup-seletor-servico');
-  if(el){el.remove();return;}
+function popupAbrirFormExtra(key){
+  var wrap=document.getElementById('popup-form-extra-wrap');
+  if(!wrap)return;
+  if(wrap.innerHTML){popupFecharFormExtra();return;}
   var lista=(typeof servicos!=='undefined'?servicos:[]);
   if(!lista.length){showAlert('Nenhum serviço cadastrado.');return;}
-  var btnRef=document.querySelector('#agenda-popup button[onclick*="popupAbrirSeletorServico"]');
-  var rect=btnRef?btnRef.getBoundingClientRect():{top:300,left:20,bottom:320};
-  var div=document.createElement('div');
-  div.id='popup-seletor-servico';
-  var top=rect.bottom+4;
-  if(top+240>window.innerHeight)top=rect.top-244;
-  div.style.cssText='position:fixed;z-index:1100;background:#fff;border:1.5px solid #ddd;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);width:280px;max-height:240px;overflow-y:auto;padding:8px 0;top:'+top+'px;left:'+Math.min(rect.left,window.innerWidth-290)+'px';
-  var html='<div style="padding:6px 10px 4px"><input id="popup-svc-busca" type="text" placeholder="Buscar serviço..." oninput="popupFiltrarServicos()" style="width:100%;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:12px;outline:none;box-sizing:border-box"/></div>';
-  html+='<div id="popup-svc-lista">'+lista.map(function(s){
+  var svcOpts=lista.map(function(s){
     var v=typeof parseMoedaBR==='function'?parseMoedaBR(s.preco):parseFloat(s.preco)||0;
-    return '<div onclick="popupAdicionarExtra(\''+key+'\',\''+s.nome.replace(/'/g,"\\'")+'\',' +v+')" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'\'"><span>'+s.nome+'</span><span style="font-weight:700;color:#111">'+formatMoedaBR(v)+'</span></div>';
-  }).join('')+'</div>';
-  div.innerHTML=html;
-  document.body.appendChild(div);
-  setTimeout(function(){var i=document.getElementById('popup-svc-busca');if(i)i.focus();},50);
+    return '<option value="'+v+'" data-nome="'+s.nome.replace(/"/g,'&quot;')+'">'+s.nome+' — R$ '+s.preco+'</option>';
+  }).join('');
+  var primeiroNome=lista[0]?lista[0].nome:'';
+  var profOpts=typeof agOpcoesProfPorServico==='function'?agOpcoesProfPorServico(primeiroNome)
+    :(typeof AG_PROF_LISTA!=='undefined'?AG_PROF_LISTA:[]).map(function(p){return '<option>'+p+'</option>';}).join('');
+  var prodOpts='<option value="">— Selecione —</option>'
+    +(typeof produtos!=='undefined'?produtos:[]).filter(function(p){return p.status!=='Inativo';}).map(function(p){
+      return '<option>'+p.nome+'</option>';
+    }).join('');
+  wrap.innerHTML='<div style="background:#f0f4ff;border:1.5px solid #c7d7ff;border-radius:9px;padding:10px 10px 8px;margin-bottom:8px">'
+    +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;margin-bottom:8px">NOVO SERVIÇO EXTRA</div>'
+    +'<div style="margin-bottom:6px">'
+    +'<label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Serviço</label>'
+    +'<select id="popup-add-svc-sel" onchange="popupFormExtraUpdateProf()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff">'+svcOpts+'</select>'
+    +'</div>'
+    +'<div style="margin-bottom:8px">'
+    +'<label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Profissional</label>'
+    +'<select id="popup-add-svc-prof" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff">'+profOpts+'</select>'
+    +'</div>'
+    +'<div style="margin-bottom:8px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+    +'<span style="font-size:10px;color:#555">Produtos usados <span style="color:#aaa">(opcional)</span></span>'
+    +'<button type="button" onclick="popupFormExtraAddProduto(\''+key+'\')" style="background:none;border:1px dashed #aaa;border-radius:6px;padding:2px 8px;font-size:10px;color:#666;cursor:pointer">+ Produto</button>'
+    +'</div>'
+    +'<div id="popup-add-svc-produtos" style="display:flex;flex-direction:column;gap:4px"></div>'
+    +'<div style="font-size:10px;color:#aaa;margin-top:3px">Cobrados à parte na comanda</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:6px">'
+    +'<button type="button" onclick="popupFecharFormExtra()" style="flex:1;padding:7px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">Cancelar</button>'
+    +'<button type="button" onclick="popupConfirmarExtra(\''+key+'\')" style="flex:2;padding:7px;background:#3b5bdb;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">✓ Adicionar</button>'
+    +'</div>'
+    +'</div>';
+  window._popupExtraProdOpts=prodOpts;
 }
 
-function popupFiltrarServicos(){
-  var busca=(document.getElementById('popup-svc-busca')?.value||'').toLowerCase();
-  var key=agendaPopupAtivo;
-  var lista=(typeof servicos!=='undefined'?servicos:[]).filter(function(s){return !busca||s.nome.toLowerCase().includes(busca)||(s.cat||'').toLowerCase().includes(busca);});
-  var el=document.getElementById('popup-svc-lista');
-  if(!el)return;
-  if(!lista.length){el.innerHTML='<div style="padding:10px 12px;font-size:12px;color:#888">Nenhum serviço encontrado</div>';return;}
-  el.innerHTML=lista.map(function(s){
-    var v=typeof parseMoedaBR==='function'?parseMoedaBR(s.preco):parseFloat(s.preco)||0;
-    return '<div onclick="popupAdicionarExtra(\''+key+'\',\''+s.nome.replace(/'/g,"\\'")+'\',' +v+')" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'\'"><span>'+s.nome+'</span><span style="font-weight:700;color:#111">'+formatMoedaBR(v)+'</span></div>';
-  }).join('');
+function popupFecharFormExtra(){
+  var wrap=document.getElementById('popup-form-extra-wrap');
+  if(wrap)wrap.innerHTML='';
+}
+
+function popupFormExtraUpdateProf(){
+  var sel=document.getElementById('popup-add-svc-sel');
+  if(!sel)return;
+  var nome=sel.options[sel.selectedIndex]?.getAttribute('data-nome')||'';
+  var profSel=document.getElementById('popup-add-svc-prof');
+  if(!profSel)return;
+  var profOpts=typeof agOpcoesProfPorServico==='function'?agOpcoesProfPorServico(nome)
+    :(typeof AG_PROF_LISTA!=='undefined'?AG_PROF_LISTA:[]).map(function(p){return '<option>'+p+'</option>';}).join('');
+  profSel.innerHTML=profOpts;
+}
+
+function popupFormExtraAddProduto(){
+  var list=document.getElementById('popup-add-svc-produtos');
+  if(!list)return;
+  var opts=window._popupExtraProdOpts||('<option value="">— Selecione —</option>'
+    +(typeof produtos!=='undefined'?produtos:[]).filter(function(p){return p.status!=='Inativo';}).map(function(p){return '<option>'+p.nome+'</option>';}).join(''));
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;gap:4px;align-items:center';
+  row.innerHTML='<select style="flex:2;padding:5px 6px;border:1.5px solid #ddd;border-radius:6px;font-size:11px;outline:none">'+opts+'</select>'
+    +'<input type="number" min="0" step="0.01" placeholder="R$" style="width:58px;padding:5px 6px;border:1.5px solid #ddd;border-radius:6px;font-size:11px;text-align:right;outline:none"/>'
+    +'<button type="button" onclick="this.closest(\'div\').remove()" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;line-height:1;padding:0">✕</button>';
+  list.appendChild(row);
+}
+
+function popupConfirmarExtra(key){
+  var selSvc=document.getElementById('popup-add-svc-sel');
+  if(!selSvc||!selSvc.value){showAlert('Selecione um serviço.');return;}
+  var nome=selSvc.options[selSvc.selectedIndex]?.getAttribute('data-nome')||selSvc.options[selSvc.selectedIndex]?.text.split(' — ')[0]||'';
+  var valor=parseFloat(selSvc.value)||0;
+  var prof=(document.getElementById('popup-add-svc-prof')?.value||'').trim();
+  var produtos=[];
+  document.querySelectorAll('#popup-add-svc-produtos > div').forEach(function(row){
+    var sel=row.querySelector('select');
+    var inp=row.querySelector('input[type="number"]');
+    var nomeProd=sel&&sel.value?sel.value:'';
+    var valProd=inp?parseFloat(inp.value)||0:0;
+    if(nomeProd)produtos.push({nome:nomeProd,valor:valProd});
+  });
+  popupAdicionarExtra(key,{nome:nome,valor:valor,profissional:prof,produtos:produtos});
 }
 
 function toggleSinalPopup(key){
