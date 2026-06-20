@@ -4326,7 +4326,7 @@ async function carregarAgendamentosSupa(){
       .lte('data',dataFim);
     if(r.error)throw r.error;
     var rows=r.data||[];
-    var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+    var mapaNomes={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
     rows.forEach(function(row){
       if(!row.data)return;
       var partes=row.data.split('-');
@@ -4424,7 +4424,7 @@ function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   var pct=colab&&colab.comissao?parseFloat(String(colab.comissao).replace('%',''))||100:100;
   var valor=valorServico*(pct/100);
   // Mapeia nome usado na agenda para nome usado em Remunerações
-  var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var nomeRem=mapaNomesInv[profissional]||profissional;
   var r=remuneracoes.find(function(x){return x.nome===nomeRem||x.nome===profissional;});
   if(!r){
@@ -4459,7 +4459,7 @@ function lancarComissaoServico(profissional,nomeServico,clienteNome,valorServico
   });
   var pct=colab&&colab.comissao?parseFloat(String(colab.comissao).replace('%',''))||100:100;
   var valor=valorServico*(pct/100);
-  var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var nomeRem=mapaNomesInv[profissional]||profissional;
   var r=remuneracoes.find(function(x){return x.nome===nomeRem||x.nome===profissional;});
   if(!r){
@@ -4864,8 +4864,8 @@ function agAddProduto(){
   list.appendChild(row);
 }
 
-var AG_PROF_LISTA=['Ana Flor','Edu','Jeny','Vi'];
-var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Jeny':'Jenifer','Vi':'Vitoria'};
+var AG_PROF_LISTA=['Ana Flor','Edu','Jenny','Vi'];
+var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Jenny':'Jenifer','Vi':'Vitoria'};
 function agCategoriaDoServico(nomeServico){
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
   return srv?srv.cat:null;
@@ -4884,8 +4884,8 @@ function agOpcoesProfPorServico(nomeServico){
   return agProfissionaisQueFazem(nomeServico).map(function(p){return '<option>'+p+'</option>';}).join('');
 }
 function agProfParaAgenda(profNome){
-  var mapaInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
-  var mapa={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapaInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapa={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var supa=mapaInv[profNome]||profNome;
   return mapa[supa]||profNome;
 }
@@ -5503,7 +5503,7 @@ var remuneracoes=[
   {nome:'Angélica',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Edu',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'orange'},
   {nome:'Flora',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
-  {nome:'Jeny',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'purple'},
+  {nome:'Jenny',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'purple'},
   {nome:'Lara',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''},
   {nome:'Stephanie',total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:'pink'},
 ];
@@ -6535,8 +6535,8 @@ let retornos=[
   {cliente:'Julia Barrozo',proc:'Progressiva',prof:'Edu',dataProc:'13/02/2026',dataRetorno:'2026-05-14',obs:'',status:'vencido',notif:'7 dias antes'},
   {cliente:'Denilda',proc:'Corte',prof:'Edu',dataProc:'10/04/2026',dataRetorno:'2026-05-25',obs:'Franja mais curta',status:'vencido',notif:'3 dias antes'},
   {cliente:'Adriana - Casa Devi',proc:'Botox',prof:'Ana Flor',dataProc:'26/03/2026',dataRetorno:'2026-06-05',obs:'',status:'pendente',notif:'7 dias antes'},
-  {cliente:'Laura Dentista',proc:'Pedicure',prof:'Jeny',dataProc:'19/05/2026',dataRetorno:'2026-06-09',obs:'',status:'pendente',notif:'3 dias antes'},
-  {cliente:'Janaine Brito',proc:'Design de Sobrancelhas',prof:'Jeny',dataProc:'26/05/2026',dataRetorno:'2026-06-16',obs:'',status:'pendente',notif:'1 dia antes'},
+  {cliente:'Laura Dentista',proc:'Pedicure',prof:'Jenny',dataProc:'19/05/2026',dataRetorno:'2026-06-09',obs:'',status:'pendente',notif:'3 dias antes'},
+  {cliente:'Janaine Brito',proc:'Design de Sobrancelhas',prof:'Jenny',dataProc:'26/05/2026',dataRetorno:'2026-06-16',obs:'',status:'pendente',notif:'1 dia antes'},
 ];
 
 // Sync retornos into clientes
@@ -7407,7 +7407,7 @@ document.addEventListener('click',function(e){
 var agendaAppts={
   'Ana Flor:09:00':{cliente:'Mãe Ana',tel:'(11) 91234-5678',servico:'Manicure Pedicure',prof:'Ana Flor',hora:'09:00',duracao:'1h',valor:'R$ 80,00',cls:'#22c55e',sinal:true,sinalPago:true,sinalValor:'R$ 40,00'},
   'Edu:11:00':{cliente:'Denilda',tel:'(11) 92345-6789',servico:'Corte de Cabelo',prof:'Edu',hora:'11:00',duracao:'45 min',valor:'R$ 100,00',cls:'#555',sinal:true,sinalPago:false,sinalValor:'R$ 30,00'},
-  'Jeny:12:30':{cliente:'Adriana - Casa Devi',tel:'(11) 93456-7890',servico:'Hidratação',prof:'Jeny',hora:'12:30',duracao:'1h',valor:'R$ 40,00',cls:'#FF5722',sinal:false,sinalPago:false,sinalValor:null},
+  'Jeny:12:30':{cliente:'Adriana - Casa Devi',tel:'(11) 93456-7890',servico:'Hidratação',prof:'Jenny',hora:'12:30',duracao:'1h',valor:'R$ 40,00',cls:'#FF5722',sinal:false,sinalPago:false,sinalValor:null},
   'Ana Flor:14:30':{cliente:'Laura Dentista',tel:'(11) 94567-8901',servico:'Pedicure',prof:'Ana Flor',hora:'14:30',duracao:'45 min',valor:'R$ 50,00',cls:'#333',sinal:true,sinalPago:true,sinalValor:'R$ 25,00'},
   'Vi:16:00':{cliente:'Alessandra Say',tel:'(11) 95678-9012',servico:'Manicure',prof:'Vi',hora:'16:00',duracao:'45 min',valor:'R$ 40,00',cls:'#8b5cf6',sinal:true,sinalPago:false,sinalValor:'R$ 20,00'},
 };
@@ -7554,7 +7554,7 @@ function irParaAgendamento(dataKey, key){
 function normalizeProfAgenda(n){
   if(n==null||n==='')return '';
   var s=String(n).trim();
-  var mapa={'Jennifer':'Jeny','Jenifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Vitoria':'Vi','Victoria':'Vi','Ana':'Ana Flor'};
+  var mapa={'Jennifer':'Jenny','Jenifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Vitoria':'Vi','Victoria':'Vi','Ana':'Ana Flor'};
   if(mapa[s])return mapa[s];
   var p=s.split(/\s+/)[0];
   return mapa[p]||s;
@@ -7585,10 +7585,10 @@ function buscarApptAgenda(appts,profCol,hora,filtroProf){
 }
 
 function renderAgenda(){
-  const profCores={'Ana Flor':'#007BFF','Edu':'#555','Jeny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
+  const profCores={'Ana Flor':'#007BFF','Edu':'#555','Jenny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
   const agendaProfs=(typeof colaboradores!=='undefined'&&colaboradores&&colaboradores.length>0)
     ?colaboradores.filter(function(c){return !c.status||c.status==='Ativo';}).map(function(c){return c.nome;})
-    :['Ana Flor','Edu','Jeny','Vi','Lara','Angélica'];
+    :['Ana Flor','Edu','Jenny','Vi','Lara','Angélica'];
   var filtro=(document.getElementById('agenda-prof-filtro')?.value||'').trim();
   var profNames=filtro
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
@@ -7630,7 +7630,7 @@ function renderAgenda(){
       var obj={};
       if(Array.isArray(rows)){
         rows.forEach(function(a){
-          var mapaNomes={'Jennifer':'Jeny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+          var mapaNomes={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
           var profNome=mapaNomes[a.profissional]||a.profissional||'?';
           var horaSlot=normalizarHoraAgenda((a.hora||'00:00').substring(0,5));
           var k=profNome+':'+horaSlot;
@@ -8468,11 +8468,11 @@ function renderMarketing(){
 // ===== TREINAMENTOS =====
 var treinoAtivo='todos';
 var treinos=[
-  {id:1,cat:'tecnica',titulo:'Coloração Avançada — Técnicas e Tendências',desc:'Dominar técnicas de balayage, babylights e coloração fantasy',tipo:'video',duracao:'2h30',instructor:'Ana Flor',nivel:'Avançado',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jeny','Vi']},
-  {id:2,cat:'atendimento',titulo:'Protocolo de Atendimento ao Cliente',desc:'Padrões de atendimento, linguagem e experiência do cliente',tipo:'pdf',duracao:'45 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:true,concluidos:['Ana Flor','Edu','Jeny'],pendentes:['Vi','Lara','Angélica']},
-  {id:3,cat:'gestao',titulo:'Introdução ao Sistema A Flor Business',desc:'Onboarding completo da plataforma de gestão',tipo:'video',duracao:'1h',instructor:'Thiago dos Santos',nivel:'Iniciante',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jeny','Vi','Lara','Angélica']},
-  {id:4,cat:'tecnica',titulo:'Botox Capilar — Passo a Passo',desc:'Técnica completa de botox capilar para diferentes tipos de cabelo',tipo:'video',duracao:'1h30',instructor:'Ana Flor',nivel:'Intermediário',obrigatorio:false,concluidos:['Vi'],pendentes:['Jeny']},
-  {id:5,cat:'atendimento',titulo:'Gestão de Conflitos e Reclamações',desc:'Como lidar com clientes difíceis e reverter situações',tipo:'ebook',duracao:'30 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jeny','Vi']},
+  {id:1,cat:'tecnica',titulo:'Coloração Avançada — Técnicas e Tendências',desc:'Dominar técnicas de balayage, babylights e coloração fantasy',tipo:'video',duracao:'2h30',instructor:'Ana Flor',nivel:'Avançado',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jenny','Vi']},
+  {id:2,cat:'atendimento',titulo:'Protocolo de Atendimento ao Cliente',desc:'Padrões de atendimento, linguagem e experiência do cliente',tipo:'pdf',duracao:'45 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:true,concluidos:['Ana Flor','Edu','Jenny'],pendentes:['Vi','Lara','Angélica']},
+  {id:3,cat:'gestao',titulo:'Introdução ao Sistema A Flor Business',desc:'Onboarding completo da plataforma de gestão',tipo:'video',duracao:'1h',instructor:'Thiago dos Santos',nivel:'Iniciante',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jenny','Vi','Lara','Angélica']},
+  {id:4,cat:'tecnica',titulo:'Botox Capilar — Passo a Passo',desc:'Técnica completa de botox capilar para diferentes tipos de cabelo',tipo:'video',duracao:'1h30',instructor:'Ana Flor',nivel:'Intermediário',obrigatorio:false,concluidos:['Vi'],pendentes:['Jenny']},
+  {id:5,cat:'atendimento',titulo:'Gestão de Conflitos e Reclamações',desc:'Como lidar com clientes difíceis e reverter situações',tipo:'ebook',duracao:'30 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jenny','Vi']},
 ];
 function filtroTreino(cat,el){
   treinoAtivo=cat;
@@ -8523,7 +8523,7 @@ function renderTreinamentos(){
 function salvarTreino(){
   var titulo=document.getElementById('treino-titulo')?.value;
   if(!titulo){showAlert('Preencha o título!');return;}
-  treinos.unshift({id:treinos.length+10,cat:'tecnica',titulo,desc:'',tipo:'video',duracao:'',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jeny']});
+  treinos.unshift({id:treinos.length+10,cat:'tecnica',titulo,desc:'',tipo:'video',duracao:'',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jenny']});
   closeModal('modal-novo-treino');
   renderTreinamentos();
   showAlert('📚 Treinamento "'+titulo+'" criado!');
@@ -8911,8 +8911,8 @@ function renderFinPessoal(){
 let metasList=[
   {id:1,tipo:'meta',titulo:'30 atendimentos em maio',desc:'Realizar pelo menos 30 atendimentos no mês de maio',colab:['Ana Flor'],inicio:'01/05/2026',prazo:'31/05/2026',alvo:30,atual:24,unidade:'atendimentos',status:'andamento',prio:'alta',recompensa:'Bônus de R$ 100,00'},
   {id:2,tipo:'tarefa',titulo:'Fazer curso de coloração avançada',desc:'Concluir o curso online de técnicas avançadas de coloração',colab:['Edu'],inicio:'01/05/2026',prazo:'15/06/2026',alvo:1,atual:0,unidade:'',status:'pendente',prio:'media',recompensa:'Certificado + folga extra'},
-  {id:3,tipo:'meta',titulo:'Faturar R$ 2.000 em junho',desc:'Meta de faturamento individual para junho',colab:['Jeny','Vi'],inicio:'01/06/2026',prazo:'30/06/2026',alvo:2000,atual:0,unidade:'R$ faturamento',status:'pendente',prio:'alta',recompensa:'Comissão extra 5%'},
-  {id:4,tipo:'tarefa',titulo:'Atualizar ficha de todos os clientes',desc:'Preencher o formulário de anamnese para cada cliente da carteira',colab:['Ana Flor','Jeny'],inicio:'20/05/2026',prazo:'26/05/2026',alvo:1,atual:0,unidade:'',status:'atrasada',prio:'alta',recompensa:''},
+  {id:3,tipo:'meta',titulo:'Faturar R$ 2.000 em junho',desc:'Meta de faturamento individual para junho',colab:['Jenny','Vi'],inicio:'01/06/2026',prazo:'30/06/2026',alvo:2000,atual:0,unidade:'R$ faturamento',status:'pendente',prio:'alta',recompensa:'Comissão extra 5%'},
+  {id:4,tipo:'tarefa',titulo:'Atualizar ficha de todos os clientes',desc:'Preencher o formulário de anamnese para cada cliente da carteira',colab:['Ana Flor','Jenny'],inicio:'20/05/2026',prazo:'26/05/2026',alvo:1,atual:0,unidade:'',status:'atrasada',prio:'alta',recompensa:''},
   {id:5,tipo:'meta',titulo:'10 novos clientes em maio',desc:'Captar pelo menos 10 clientes novos no mês',colab:['Lara','Angélica'],inicio:'01/05/2026',prazo:'31/05/2026',alvo:10,atual:6,unidade:'clientes novos',status:'andamento',prio:'media',recompensa:'Vale presente R$ 50,00'},
   {id:6,tipo:'tarefa',titulo:'Treinar técnica de Botox capilar',desc:'Assistir aos vídeos e praticar a técnica com cliente modelo',colab:['Vi'],inicio:'01/05/2026',prazo:'20/05/2026',alvo:1,atual:1,unidade:'',status:'concluida',prio:'baixa',recompensa:''},
 ];
@@ -9933,7 +9933,7 @@ function salvarAgendamento(){
   var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
   var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
   var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
-  var mapaNomesInv={'Jeny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
   var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs};
   if(!ehPacote&&typeof servicosDetalhe!=='undefined')obj.servicos_detalhe=servicosDetalhe;
