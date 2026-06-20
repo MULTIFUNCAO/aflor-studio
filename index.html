@@ -1454,7 +1454,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th style="width:40px"></th><th>Nome</th><th>Categoria</th><th>Preço venda</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th style="width:40px"></th><th>Nome</th><th>Categoria</th><th>Custo</th><th>Preço venda</th><th>Margem</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
           <tbody id="produtos-table"></tbody>
         </table>
       </div>
@@ -2486,18 +2486,18 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <span style="font-size:10px;color:var(--gray-400)">Foto</span>
         </div>
       </div>
-      <div class="form-group full"><label>Nome do Produto</label><input placeholder="Ex: Tinta Aneethun 0.66"/></div>
+      <div class="form-group full"><label>Nome do Produto</label><input id="prod-nome" placeholder="Ex: Tinta Aneethun 0.66"/></div>
       <div class="form-group"><label>Categoria</label>
-        <select><option>Tonalizante</option><option>Cremes</option><option>Shampoo</option><option>Condicionador</option><option>Máscara</option><option>Óleo</option><option>Outros</option></select>
+        <select id="prod-cat"><option>Tonalizante</option><option>Cremes</option><option>Shampoo</option><option>Condicionador</option><option>Máscara</option><option>Óleo</option><option>Outros</option></select>
       </div>
-      <div class="form-group"><label>Marca</label><input placeholder="Ex: Aneethun"/></div>
-      <div class="form-group"><label>Preço de Custo (R$)</label><input type="number" placeholder="0,00"/></div>
-      <div class="form-group"><label>Preço de Venda (R$)</label><input type="number" placeholder="0,00"/></div>
-      <div class="form-group"><label>Estoque atual (unid.)</label><input type="number" placeholder="0" value="0"/></div>
-      <div class="form-group"><label>Estoque mínimo</label><input type="number" placeholder="0" value="1"/></div>
-      <div class="form-group full"><label>Código de barras / SKU</label><input placeholder="Ex: 7891234567890"/></div>
+      <div class="form-group"><label>Marca</label><input id="prod-marca" placeholder="Ex: Aneethun"/></div>
+      <div class="form-group"><label>Valor de Compra (R$)</label><input id="prod-custo" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+      <div class="form-group"><label>Preço de Venda (R$)</label><input id="prod-preco" type="number" min="0" step="0.01" placeholder="0,00"/></div>
+      <div class="form-group"><label>Estoque atual (unid.)</label><input id="prod-estoque" type="number" placeholder="0" value="0"/></div>
+      <div class="form-group"><label>Estoque mínimo</label><input id="prod-estoque-min" type="number" placeholder="0" value="1"/></div>
+      <div class="form-group full"><label>Código de barras / SKU</label><input id="prod-sku" placeholder="Ex: 7891234567890"/></div>
       <div class="form-group full"><label>Uso</label>
-        <select><option>Venda e Uso interno</option><option>Apenas venda</option><option>Apenas uso interno</option></select>
+        <select id="prod-uso"><option>Venda e Uso interno</option><option>Apenas venda</option><option>Apenas uso interno</option></select>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
@@ -4591,6 +4591,10 @@ async function carregarPacotesClientesSupa(){
     }
   }catch(e){console.log('err carregar pacotes clientes',e);}
 }
+async function salvarProdutoSupa(p){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('produtos').insert([{nome:p.nome,cat:p.cat,marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo',salao_id:window.SALAO_ID}]).select('id').single();if(r.data&&r.data.id)p.id=r.data.id;}catch(e){console.log('err supa produto insert',e);}}
+async function atualizarProdutoSupa(p){try{if(!supa||!p.id)return;await supa.from('produtos').update({nome:p.nome,cat:p.cat,marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,status:p.status}).eq('id',p.id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa produto update',e);}}
+async function deletarProdutoSupa(id){try{if(!supa||!id)return;await supa.from('produtos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
+async function carregarProdutosSupa(){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('produtos').select('*').eq('salao_id',window.SALAO_ID).order('cat').order('nome');if(r.data&&r.data.length>0){produtos=r.data.map(function(p){return{id:p.id,nome:p.nome,cat:p.cat||'Outros',marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo'};});renderProdutos();}}catch(e){console.log('err carregar produtos',e);}}
 async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID}]);}catch(e){console.log('err supa servico',e);}}
 async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
@@ -4673,7 +4677,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='produtos')renderProdutos();
+    if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa')renderHistoricoCaixa();
     if(id==='agenda')renderAgenda();
@@ -8170,7 +8174,14 @@ function renderProdutos(search=''){
     tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum produto encontrado</td></tr>`;
     return;
   }
-  tb.innerHTML=filtered.map((p,i)=>`<tr>
+  tb.innerHTML=filtered.map((p,i)=>{
+    var custoNum=parseMoedaBR(p.custo)||0;
+    var precoNum=parseMoedaBR(p.preco)||0;
+    var margem=custoNum>0&&precoNum>0?Math.round((precoNum-custoNum)/precoNum*100):null;
+    var margemHtml=margem!==null
+      ?`<span style="font-size:11px;font-weight:700;color:${margem>=40?'var(--green)':margem>=20?'var(--orange)':'var(--red)'}">${margem}%</span>`
+      :'<span style="color:var(--gray-300);font-size:12px">—</span>';
+    return `<tr>
     <td>
       <div style="width:36px;height:36px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -8178,10 +8189,11 @@ function renderProdutos(search=''){
     </td>
     <td style="font-weight:600">${p.nome}</td>
     <td><span class="badge badge-gray">${p.cat}</span></td>
+    <td style="color:var(--gray-500)">${custoNum>0?'R$ '+p.custo:'<span style="color:var(--gray-300)">—</span>'}</td>
     <td style="font-weight:700">R$ ${p.preco}</td>
+    <td>${margemHtml}</td>
     <td>
       <div style="font-size:13px;font-weight:600;color:${p.estoque===0?'var(--red)':p.estoque<=2?'var(--yellow)':'var(--gray-800)'}">${p.estoque} unid.</div>
-      <div style="font-size:11px;color:var(--gray-400)">(${p.estoque} unid.)</div>
     </td>
     <td><span class="badge ${p.status==='Ativo'?'badge-green':'badge-red'}">${p.status}</span></td>
     <td>
@@ -8192,11 +8204,18 @@ function renderProdutos(search=''){
         </button>
       </div>
     </td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 function deleteProduto(i){
-  if(confirm('Remover este produto?')){produtos.splice(i,1);renderProdutos();showAlert('Produto removido!');}
+  if(confirm('Remover este produto?')){
+    var p=produtos[i];
+    if(p&&p.id)deletarProdutoSupa(p.id);
+    produtos.splice(i,1);
+    renderProdutos();
+    showAlert('Produto removido!');
+  }
 }
 function editarProduto(i){
   var p=produtos[i];
@@ -8221,8 +8240,17 @@ function editarProduto(i){
           <input id="ep-cat" value="${p.cat}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
         </div>
         <div>
+          <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">🛒 Valor de Compra (R$)</label>
+          <input id="ep-custo" type="number" min="0" step="0.01" value="${p.custo||''}" placeholder="0,00" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
           <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">💰 Preço Venda (R$)</label>
           <input id="ep-preco" value="${p.preco}" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:2px">
+          ${(()=>{var c=parseMoedaBR(p.custo)||0;var v=parseMoedaBR(p.preco)||0;var m=c>0&&v>0?Math.round((v-c)/v*100):null;return m!==null?`<div style="width:100%;padding:12px 14px;background:#f8f8f8;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:700;color:${m>=40?'#16a34a':m>=20?'#d97706':'#ef4444'}">Margem: ${m}%</div>`:'<div style="width:100%;padding:12px 14px;background:#f8f8f8;border:1.5px dashed #e5e5e5;border-radius:10px;font-size:11px;color:#aaa">Informe o custo para ver a margem</div>'})()}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -8247,17 +8275,35 @@ function salvarEdicaoProduto(i){
   var p=produtos[i];
   p.nome=document.getElementById('ep-nome')?.value?.trim()||p.nome;
   p.cat=document.getElementById('ep-cat')?.value?.trim()||p.cat;
+  var custoRaw=parseFloat(document.getElementById('ep-custo')?.value);
+  if(!isNaN(custoRaw))p.custo=custoRaw.toFixed(2).replace('.',',');
   p.preco=document.getElementById('ep-preco')?.value?.trim()||p.preco;
   p.estoque=parseInt(document.getElementById('ep-estoque')?.value)||0;
   p.status=document.getElementById('ep-status')?.value||p.status;
   document.getElementById('modal-editar-produto').classList.remove('open');
+  atualizarProdutoSupa(p);
   renderProdutos();
   showAlert('✅ Produto atualizado!');
 }
 
 function addProduto(){
+  var nome=(document.getElementById('prod-nome')?.value||'').trim()||'Novo Produto';
+  var cat=document.getElementById('prod-cat')?.value||'Outros';
+  var marca=(document.getElementById('prod-marca')?.value||'').trim();
+  var custo=(parseFloat(document.getElementById('prod-custo')?.value)||0).toFixed(2).replace('.',',');
+  var preco=(parseFloat(document.getElementById('prod-preco')?.value)||0).toFixed(2).replace('.',',');
+  var estoque=parseInt(document.getElementById('prod-estoque')?.value)||0;
+  var estoqueMin=parseInt(document.getElementById('prod-estoque-min')?.value)||1;
+  var uso=document.getElementById('prod-uso')?.value||'Venda e Uso interno';
+  var sku=(document.getElementById('prod-sku')?.value||'').trim();
+  var p={nome,cat,marca,custo,preco,estoque,estoque_minimo:estoqueMin,uso,sku,status:'Ativo'};
   closeModal('modal-produto');
-  produtos.unshift({nome:'Novo Produto',cat:'Outros',preco:'0,00',estoque:0,status:'Ativo'});
+  // Limpar form
+  ['prod-nome','prod-marca','prod-custo','prod-preco','prod-sku'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('prod-estoque')&&(document.getElementById('prod-estoque').value='0');
+  document.getElementById('prod-estoque-min')&&(document.getElementById('prod-estoque-min').value='1');
+  produtos.unshift(p);
+  salvarProdutoSupa(p);
   renderProdutos();
   showAlert('Produto cadastrado com sucesso!');
 }
@@ -11034,6 +11080,7 @@ function carregarDadosDoSalao(){
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
   carregarServicosSupa();
+  carregarProdutosSupa();
   carregarColaboradoresSupa();
   carregarAgendamentosSupa();
   carregarCaixaSupa();
