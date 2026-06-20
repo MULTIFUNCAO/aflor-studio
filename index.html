@@ -8219,6 +8219,7 @@ function deleteProduto(i){
 }
 function editarProduto(i){
   var p=produtos[i];
+  console.log('[editarProduto] i='+i+' p.custo='+JSON.stringify(p.custo)+' typeof='+typeof p.custo+' p.id='+p.id);
   var m=document.getElementById('modal-editar-produto');
   if(!m){m=document.createElement('div');m.id='modal-editar-produto';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
   m.innerHTML=`<div class="modal-box" style="max-width:520px;border-radius:20px;overflow:hidden;padding:0">
