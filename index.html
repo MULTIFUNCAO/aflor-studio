@@ -8241,7 +8241,7 @@ function editarProduto(i){
         </div>
         <div>
           <label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">🛒 Valor de Compra (R$)</label>
-          <input id="ep-custo" type="number" min="0" step="0.01" value="${p.custo||''}" placeholder="0,00" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
+          <input id="ep-custo" type="number" min="0" step="0.01" value="${p.custo?parseMoedaBR(p.custo).toFixed(2):''}" placeholder="0,00" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#111'" onblur="this.style.borderColor='#e5e5e5'"/>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
