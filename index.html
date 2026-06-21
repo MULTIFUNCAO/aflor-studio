@@ -3527,7 +3527,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="form-grid">
       <!-- Cliente -->
-      <div class="form-group full"><label>Cliente *</label><input id="ag-cliente" list="ag-cliente-lista" placeholder="Nome do cliente" autocomplete="off"/><datalist id="ag-cliente-lista"></datalist></div>
+      <div class="form-group full">
+        <label>Cliente *</label>
+        <input id="ag-cliente" list="ag-cliente-lista" placeholder="Nome do cliente" autocomplete="off" oninput="agClienteInput(this)"/>
+        <datalist id="ag-cliente-lista"></datalist>
+        <div id="ag-cadastrar-btn-wrap" style="display:none;margin-top:6px">
+          <button type="button" onclick="agCadastrarClienteRapido()" style="background:none;border:1.5px dashed #6366f1;border-radius:8px;padding:7px 14px;font-size:12px;color:#6366f1;cursor:pointer;font-weight:600;width:100%;text-align:left">➕ Cadastrar "<span id="ag-cadastrar-nome-hint"></span>" como nova cliente</button>
+        </div>
+      </div>
       <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
       <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
 
@@ -10172,6 +10179,64 @@ function abrirModalAgendar(prof,hora){
     }
   }
   openModal('modal-agendar');
+}
+function agClienteInput(inp){
+  var val=(inp.value||'').trim();
+  var wrap=document.getElementById('ag-cadastrar-btn-wrap');
+  var hint=document.getElementById('ag-cadastrar-nome-hint');
+  if(!wrap)return;
+  if(!val){wrap.style.display='none';return;}
+  var existe=clientes.some(function(c){return c.nome.toLowerCase()===val.toLowerCase();});
+  if(existe){wrap.style.display='none';return;}
+  if(hint)hint.textContent=val;
+  wrap.style.display='block';
+}
+function agCadastrarClienteRapido(){
+  var nomePreench=(document.getElementById('ag-cliente').value||'').trim();
+  var ov=document.getElementById('modal-cadastro-rapido-cliente');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='modal-cadastro-rapido-cliente';
+    ov.className='modal-overlay';
+    ov.style.zIndex='10000';
+    ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('open');});
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div class="modal" style="width:480px">'
+    +'<div class="modal-header"><span class="modal-title">➕ Cadastrar Nova Cliente</span>'
+    +'<button class="modal-close" onclick="document.getElementById(\'modal-cadastro-rapido-cliente\').classList.remove(\'open\')">✕</button></div>'
+    +'<div class="form-grid">'
+    +'<div class="form-group full"><label>Nome completo *</label><input id="crn-nome" placeholder="Nome da cliente" value="'+nomePreench.replace(/"/g,'&quot;')+'"/></div>'
+    +'<div class="form-group"><label>WhatsApp *</label><input id="crn-tel" placeholder="(11) 99999-9999" type="tel"/></div>'
+    +'<div class="form-group"><label>Data de nascimento</label><input id="crn-nasc" type="date"/></div>'
+    +'</div>'
+    +'<div class="modal-footer">'
+    +'<button class="btn btn-outline" onclick="document.getElementById(\'modal-cadastro-rapido-cliente\').classList.remove(\'open\')">Cancelar</button>'
+    +'<button class="btn btn-primary" onclick="salvarClienteRapido()">Salvar e Selecionar</button>'
+    +'</div></div>';
+  ov.classList.add('open');
+  setTimeout(function(){var t=document.getElementById('crn-tel');if(t)t.focus();},80);
+}
+function salvarClienteRapido(){
+  var nome=(document.getElementById('crn-nome').value||'').trim();
+  var tel=(document.getElementById('crn-tel').value||'').trim();
+  var nasc=document.getElementById('crn-nasc').value||'';
+  if(!nome){showAlert('⚠️ Informe o nome da cliente.');return;}
+  if(!tel){showAlert('⚠️ Informe o WhatsApp da cliente.');return;}
+  var hoje=new Date();
+  var dataHoje=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  var novaCliente={nome:nome,tel:tel,ultima:dataHoje,total:'R$ 0,00',atend:0,retornoStatus:'',retornoData:'',ultimoProc:'',email:'',nascimento:nasc};
+  clientes.unshift(novaCliente);
+  salvarClienteSupa(novaCliente);
+  var dl=document.getElementById('ag-cliente-lista');
+  if(dl)dl.innerHTML=clientes.map(function(c){return '<option value="'+c.nome+'"></option>';}).join('');
+  var inp=document.getElementById('ag-cliente');
+  if(inp)inp.value=nome;
+  var wrap=document.getElementById('ag-cadastrar-btn-wrap');
+  if(wrap)wrap.style.display='none';
+  document.getElementById('modal-cadastro-rapido-cliente').classList.remove('open');
+  showAlert('✅ '+nome+' cadastrada com sucesso!');
+  if(typeof renderClientes==='function')renderClientes();
 }
 function salvarAgendamento(){
   var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
