@@ -8044,9 +8044,11 @@ function renderAgenda(){
           <div style="position:absolute;inset:2px 2px -1px 2px;background:${corBloco};border-radius:6px 6px 0 0;padding:4px 6px;font-size:10px;font-weight:700;color:${corTexto};overflow:hidden;cursor:pointer">
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
-            ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
+            <div style="font-size:9px;margin-top:2px;display:flex;align-items:center;justify-content:space-between;gap:3px">
+              ${a.sinal?`<span style="opacity:.9">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:'<span></span>'}
+              ${!a.confirmado?`<button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="background:rgba(255,255,255,.9);color:#ea580c;border:none;border-radius:3px;padding:1px 4px;font-size:7px;font-weight:800;cursor:pointer;flex-shrink:0;line-height:13px;white-space:nowrap">📲 Conf.</button>`:''}
+            </div>
           </div>
-          ${!a.confirmado?`<button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="position:absolute;bottom:1px;left:2px;right:2px;background:rgba(255,255,255,.95);color:#ea580c;border:none;border-radius:0 0 5px 5px;padding:2px 4px;font-size:8px;font-weight:800;cursor:pointer;z-index:3;line-height:13px">📲 Confirmar</button>`:''}
         </div>`;
       }).join('')}
     </div>
