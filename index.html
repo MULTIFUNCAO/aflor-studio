@@ -7151,11 +7151,8 @@ function lancarSinalCaixaSeNecessario(reg,valor,forma){
   forma=forma||reg.formaSinal||popupFormaSinal||'Pix';
   reg.formaSinal=forma;
   var nomeSvc=nomeServicoAgendamento(reg);
-  var catServ=typeof agCategoriaDoServico==='function'?agCategoriaDoServico(nomeSvc):null;
-  var categoria=caixaCatDeServicoCatalogo(catServ);
-  var noCatalogo=(typeof servicos!=='undefined'?servicos:[]).some(function(s){return s.nome===nomeSvc;});
-  var descricao=noCatalogo?nomeSvc:('Sinal — '+((reg.cliente||'').trim()||'Cliente'));
-  var mov=inserirMovimentoCaixa({categoria:categoria,descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
+  var descricao='Sinal · '+(nomeSvc||reg.servico||'Serviço')+' · '+((reg.cliente||'').trim()||'Cliente');
+  var mov=inserirMovimentoCaixa({categoria:'Sinal/Reserva',descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
   if(mov){reg.sinalMovId=mov.id;reg.sinalLancadoCaixa=true;return mov.id;}
   return null;
 }
@@ -11346,18 +11343,29 @@ function abrirCaixa(){
   sincronizarAberturaCaixaSupa(troco,caixaState.horaAbertura.toISOString()).catch(function(e){console.log(e);});
 }
 function calcularSinaisHoje(){
-  var hoje=new Date();
-  var dk=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
-  var total=0;
-  if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData&&agendamentosPorData[dk]){
-    Object.keys(agendamentosPorData[dk]).forEach(function(k){
-      var a=agendamentosPorData[dk][k];
-      if(a&&(a.sinalPago||(a.sinal_status||'')==='pago')){
-        total+=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a).valor:(parseFloat(a.sinal_valor)||0);
-      }
+  if(!caixaState||!caixaState.movimentos)return 0;
+  // Coleta sinalMovIds de TODOS os agendamentos (qualquer data) da sessão atual
+  var sinalMovIdSet={};
+  if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+    Object.keys(agendamentosPorData).forEach(function(dk){
+      var dia=agendamentosPorData[dk]||{};
+      Object.keys(dia).forEach(function(k){
+        var a=dia[k];
+        if(a&&a.sinalMovId!=null)sinalMovIdSet[a.sinalMovId]=true;
+      });
     });
   }
-  return total;
+  // Auto-migra movimentos antigos identificados pelo sinalMovId para 'Sinal/Reserva'
+  caixaState.movimentos.forEach(function(m){
+    if(sinalMovIdSet[m.id]&&m.categoria!=='Sinal/Reserva'){
+      m.categoria='Sinal/Reserva';
+      if(typeof sincronizarAtualizacaoMovimentoCaixaSupa==='function')
+        sincronizarAtualizacaoMovimentoCaixaSupa(m).catch(function(){});
+    }
+  });
+  return caixaState.movimentos
+    .filter(function(m){return m.categoria==='Sinal/Reserva';})
+    .reduce(function(s,m){return s+m.valor;},0);
 }
 function atualizarTotaisCaixa(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
