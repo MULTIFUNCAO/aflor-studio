@@ -6177,110 +6177,86 @@ function salvarMetasVendas(){
 }
 
 function renderMetasCards(){
-  var el = document.getElementById('metas-cards-vendas');
-  if(!el) return;
-  var mv = metasVendas;
-  // Calcular realizados a partir dos lançamentos do caixa
-  var totalRealizado = caixaState.movimentos
-    .filter(function(m){return m.tipo==='entrada';})
-    .reduce(function(s,m){return s+m.valor;},0);
-  var qtdServicos = caixaState.movimentos
-    .filter(function(m){return m.tipo==='entrada' && m.categoria==='Servico de cabelo';}).length;
-
-  // Comissões do mês por colaborador
+  var el=document.getElementById('metas-cards-vendas');
+  if(!el)return;
+  var mv=metasVendas;
+  var totalRealizado=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+  var qtdServicos=caixaState.movimentos.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Servico de cabelo';}).length;
   var lancComissoes=[];
   try{lancComissoes=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');}catch(e){}
   var hojeM=new Date();
   var individuais=mv.individuais||{};
-  // backward compat: migra formato antigo {colab, individual}
-  if(!mv.individuais && mv.colab && mv.individual) individuais[mv.colab]=mv.individual;
-  var colabsAtivos=colaboradores.filter(function(c){
-    return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)'&&c.cargo!=='Proprietario(a)';
-  });
-  var corPares=[['#db2777','#fdf2f8'],['#7c3aed','#f5f3ff'],['#d97706','#fffbeb'],['#0284c7','#eff6ff'],['#dc2626','#fff1f2'],['#0891b2','#ecfeff'],['#65a30d','#f7fee7'],['#ea580c','#fff7ed']];
+  if(!mv.individuais&&mv.colab&&mv.individual)individuais[mv.colab]=mv.individual;
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)'&&c.cargo!=='Proprietario(a)';});
+  var avatarCores=['#ef4444','#ec4899','#14b8a6','#8b5cf6','#f97316','#0ea5e9','#22c55e','#f59e0b'];
+  function iniciais(nome){var p=(nome||'').trim().split(/\s+/);return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():(nome||'').substring(0,2).toUpperCase();}
+  function barraClara(pct,corBarra){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+corBarra+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
 
-  function pctBar(val, meta, cor){
-    var pct = meta>0 ? Math.min(100, Math.round(val/meta*100)) : 0;
-    var barCor = pct>=100?'#22c55e':pct>=70?cor:'#e5e5e5';
-    var textCor = pct>=100?'#22c55e':pct>=50?cor:'#aaa';
-    return '<div style="margin-top:12px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
-      +'<span style="font-size:10px;font-weight:700;color:'+textCor+'">'+pct+'% atingido</span>'
-      +(pct>=100?'<span style="font-size:10px;font-weight:800;color:#22c55e">✅ Meta batida!</span>':'')
-      +'</div>'
-      +'<div style="background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden">'
-      +'<div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div>'
-      +'</div>'
-      +'</div>';
-  }
+  // 1. CARD META GERAL (topo, fundo roxo)
+  var pctG=mv.geral>0?Math.min(100,Math.round(totalRealizado/mv.geral*100)):0;
+  var faltaG=Math.max(0,(mv.geral||0)-totalRealizado);
+  var cardGeral='<div style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:16px;padding:20px 22px;color:#fff">'
+    +'<div style="font-size:10px;font-weight:800;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🏢 Meta geral do salão</div>'
+    +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">'
+    +'<div><div style="font-size:28px;font-weight:900;line-height:1">'+fmtCaixa(totalRealizado)+'</div>'
+    +'<div style="font-size:13px;opacity:.8;margin-top:3px">de <b>'+fmtCaixa(mv.geral||0)+'</b> no mês</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:30px;font-weight:900;line-height:1">'+(pctG>=100?'✅':pctG+'%')+'</div>'
+    +'<div style="font-size:11px;opacity:.7">'+(pctG>=100?'Meta batida!':'atingido')+'</div></div>'
+    +'</div>'
+    +barraClara(pctG,'#fff')
+    +(faltaG>0?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaG)+'</div>':'')
+    +'</div>';
 
-  function metaCard(icon, label, cor, bgCor, realizado, meta, unidade, extra){
-    var realizadoNum = typeof realizado==='string'?parseFloat(realizado.replace('R$','').replace(/\./g,'').replace(',','.'))||0:realizado;
-    var metaNum = typeof meta==='string'?parseFloat(meta.replace('R$','').replace(/\./g,'').replace(',','.'))||0:meta;
-    var falta = Math.max(0, metaNum - realizadoNum);
-    var faltaFmt = (typeof meta==='string'&&meta.indexOf('R$')>=0)?fmtCaixa(falta):falta;
-    return '<div style="background:'+bgCor+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden">'
-      +'<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.08">'+icon+'</div>'
-      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">'
-      +'<span style="font-size:16px">'+icon+'</span>'
-      +'<span style="font-size:11px;font-weight:800;color:'+cor+';text-transform:uppercase;letter-spacing:.5px">'+label+'</span>'
-      +'</div>'
-      +(extra?'<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px">'+extra+'</div>':'')
-      +'<div style="font-size:26px;font-weight:900;color:#111;line-height:1">'+realizado+'</div>'
-      +'<div style="font-size:12px;color:#888;margin-top:3px">de <b style="color:#555">'+meta+'</b> '+unidade+'</div>'
-      +'<div style="font-size:11px;color:#777;margin-top:5px;background:rgba(0,0,0,.05);display:inline-block;padding:2px 8px;border-radius:20px">Falta '+faltaFmt+' '+unidade+'</div>'
-      +pctBar(realizadoNum, metaNum, cor)
-      +'</div>';
-  }
-
-  // Agrega realizado e meta de todos os colaboradores
-  var totalRealizadoInd=0, totalMetaInd=0;
-  var colabCards=colabsAtivos.map(function(c,i){
-    var par=corPares[i%corPares.length];
+  // 2. LISTA DE COLABORADORES
+  var linhas=colabsAtivos.map(function(c,i){
+    var cor=avatarCores[i%avatarCores.length];
     var metaC=individuais[c.nome]||0;
-    var realizadoC=lancComissoes.filter(function(l){
+    var realC=lancComissoes.filter(function(l){
       if(l.profissional!==c.nome)return false;
       var d=new Date(l.data);
       return d.getFullYear()===hojeM.getFullYear()&&d.getMonth()===hojeM.getMonth();
     }).reduce(function(s,l){return s+(l.valor||0);},0);
-    totalRealizadoInd+=realizadoC;
-    totalMetaInd+=metaC;
-    return metaCard('👤',c.nome,par[0],par[1],fmtCaixa(realizadoC),fmtCaixa(metaC),'no mês',metaC===0?'Meta não definida':null);
-  });
-
-  // Card Meta Individual com hint de detalhe clicável
-  var pctInd=totalMetaInd>0?Math.min(100,Math.round(totalRealizadoInd/totalMetaInd*100)):0;
-  var cardIndividual='<div onclick="toggleMetasColabDetalhe()" style="cursor:pointer;background:#fdf2f8;border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;border:2px solid transparent" id="card-meta-individual">'
-    +'<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.08">👥</div>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-    +'<div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px">👥</span><span style="font-size:11px;font-weight:800;color:#db2777;text-transform:uppercase;letter-spacing:.5px">Meta Individual</span></div>'
-    +'<span id="meta-ind-toggle-icon" style="font-size:11px;color:#db2777;font-weight:700;background:#fce7f3;padding:2px 8px;border-radius:20px">Ver ▼</span>'
-    +'</div>'
-    +'<div style="font-size:26px;font-weight:900;color:#111;line-height:1">'+fmtCaixa(totalRealizadoInd)+'</div>'
-    +'<div style="font-size:12px;color:#888;margin-top:3px">de <b style="color:#555">'+fmtCaixa(totalMetaInd)+'</b> no mês</div>'
-    +'<div style="font-size:11px;color:#777;margin-top:5px;background:rgba(0,0,0,.05);display:inline-block;padding:2px 8px;border-radius:20px">'+pctInd+'% atingido · '+colabsAtivos.length+' colaboradores</div>'
-    +'<div style="margin-top:12px;background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden"><div style="background:'+(pctInd>=100?'#22c55e':'#db2777')+';height:6px;border-radius:20px;width:'+pctInd+'%;transition:width .5s ease"></div></div>'
+    var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
+    var corBarra=pctC>=100?'#22c55e':cor;
+    return '<div style="padding:11px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:12px">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:'+cor+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0">'+iniciais(c.nome)+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.nome+'</div>'
+      +'<div style="background:#f0f0f0;border-radius:20px;height:4px;overflow:hidden;margin-top:5px">'
+      +'<div style="background:'+corBarra+';height:4px;border-radius:20px;width:'+pctC+'%;transition:width .5s ease"></div></div></div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+      +'<div style="font-size:12px;font-weight:800;color:#111">'+fmtCaixa(realC)+'</div>'
+      +(metaC>0
+        ?'<div style="font-size:10px;color:#888">de '+fmtCaixa(metaC)+'</div>'
+         +'<div style="font-size:10px;font-weight:700;color:'+corBarra+'">'+(pctC>=100?'✅ 100%':pctC+'%')+'</div>'
+        :'<div style="font-size:10px;color:#bbb">sem meta</div>')
+      +'</div></div>';
+  }).join('');
+  var cardColabs='<div style="background:#fff;border:1px solid #e5e5e5;border-radius:16px;overflow:hidden">'
+    +'<div style="padding:12px 18px;border-bottom:1px solid #f0f0f0"><span style="font-size:11px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px">👥 Meta Individual</span></div>'
+    +(colabsAtivos.length?linhas:'<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Nenhum colaborador ativo.</div>')
     +'</div>';
 
-  // Seção de detalhe colapsável (grid dentro do grid pai, span full-width)
-  var detalheHtml='<div id="metas-detalhe-colab" style="display:none;grid-column:1/-1">'
-    +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding-top:4px">'+colabCards.join('')+'</div>'
+  // 3. RODAPÉ — Serviços (teal) + Produtos (âmbar)
+  var pctS=mv.servicos>0?Math.min(100,Math.round(qtdServicos/mv.servicos*100)):0;
+  var rodape='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'<div style="background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:16px 18px;color:#fff">'
+    +'<div style="font-size:22px;margin-bottom:6px">✂️</div>'
+    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdServicos+' atend.</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.servicos||0)+' atend.</div>'
+    +barraClara(pctS,'rgba(255,255,255,.9)')
+    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctS+'% atingido</div></div>'
+    +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
+    +'<div style="font-size:22px;margin-bottom:6px">📦</div>'
+    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">0 unid.</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.produtos||0)+' unid.</div>'
+    +barraClara(0,'rgba(255,255,255,.9)')
+    +'<div style="font-size:10px;opacity:.7;margin-top:4px">0% atingido</div></div>'
     +'</div>';
 
-  el.innerHTML=metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff',fmtCaixa(totalRealizado),fmtCaixa(mv.geral||0),'no mês',null)
-    +cardIndividual
-    +metaCard('✂️','Serviços','#16a34a','#f0fdf4',qtdServicos+' atend.',(mv.servicos||0)+' atend.','atend.',null)
-    +metaCard('📦','Produtos','#d97706','#fffbeb','0 unid.',(mv.produtos||0)+' unid.','unid.',null)
-    +detalheHtml;
-}
-
-function toggleMetasColabDetalhe(){
-  var el=document.getElementById('metas-detalhe-colab');
-  var icon=document.getElementById('meta-ind-toggle-icon');
-  if(!el)return;
-  var aberto=el.style.display!=='none';
-  el.style.display=aberto?'none':'block';
-  if(icon)icon.textContent=aberto?'Ver ▼':'Fechar ▲';
+  el.style.cssText='display:flex;flex-direction:column;gap:12px';
+  el.innerHTML=cardGeral+cardColabs+rodape;
 }
 function renderVendas(){
   const tb=document.getElementById('vendas-table');
