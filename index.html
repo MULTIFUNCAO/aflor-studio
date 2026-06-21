@@ -2381,6 +2381,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:8px">💡 Sugestão de quantidade por serviço</div>
           <div id="meta-sugestao-msg" style="display:none;font-size:11px;color:#7c3aed;opacity:.75;font-style:italic;margin-bottom:8px"></div>
           <div id="meta-sugestao-lista"></div>
+          <div id="meta-sugestao-aviso" style="display:none;font-size:10px;color:#9ca3af;margin-top:8px;padding-top:8px;border-top:1px solid #f0e7ff">⚠️ Alguns atendimentos antigos não bateram com os nomes de serviço cadastrados hoje e foram ignorados nesse cálculo.</div>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços (quantidade)</label>
@@ -6230,6 +6231,7 @@ async function calcularSugestaoMeta(){
   document.getElementById('meta-sugestao-msg').style.display='none';
   var usouHistorico=false;
   var proporcoes={};
+  var semMatchRatio=0;
   try{
     if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
       var hoje=new Date();
@@ -6237,12 +6239,14 @@ async function calcularSugestaoMeta(){
       var r=await supa.from('agendamentos').select('servico,valor').eq('salao_id',window.SALAO_ID).gte('data',tresMesesAtras.toISOString().slice(0,10)).lte('data',hoje.toISOString().slice(0,10)).neq('status','Cancelado');
       var rows=(r&&r.data)||[];
       if(rows.length>0){
-        var recPorSvc={};var totalHist=0;
+        var recPorSvc={};var totalHist=0;var semMatchCount=0;
         rows.forEach(function(row){
           var nomeRow=(row.servico||'').trim().toLowerCase();
-          var match=servicosValidos.find(function(s){var n=s.nome.toLowerCase();return nomeRow===n||nomeRow.includes(n)||n.includes(nomeRow);});
+          var match=servicosValidos.find(function(s){return nomeRow===s.nome.trim().toLowerCase();});
           if(match){var val=parseMoedaBR(row.valor);if(val>0){recPorSvc[match.nome]=(recPorSvc[match.nome]||0)+val;totalHist+=val;}}
+          else{semMatchCount++;}
         });
+        semMatchRatio=rows.length>0?semMatchCount/rows.length:0;
         if(Object.keys(recPorSvc).length>0&&totalHist>0){
           servicosValidos.forEach(function(s){proporcoes[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
           usouHistorico=true;
@@ -6269,6 +6273,8 @@ async function calcularSugestaoMeta(){
       +'<span style="font-size:13px;font-weight:800;color:#7c3aed">'+s.qtd+'×</span>'
       +'</div>';
   }).join('');
+  var avisoEl=document.getElementById('meta-sugestao-aviso');
+  if(avisoEl){avisoEl.style.display=semMatchRatio>0.2?'block':'none';}
 }
 
 function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
