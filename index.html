@@ -1357,13 +1357,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <span id="card-arrow-sinal" style="font-size:11px;color:#f59e0b">▼</span>
         </div>
         <div id="caixa-troco-display" style="font-size:24px;font-weight:800;color:#111;margin-bottom:4px">R$ 0,00</div>
-        <div style="font-size:11px;color:#9ca3af">valor inicial</div>
+        <div style="font-size:11px;color:#9ca3af">sinais do dia</div>
       </div>
     </div>
     <div id="card-detalhe-entradas" style="display:none;margin-bottom:12px"><div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;border-top:3px solid #22c55e"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:#22c55e">Relacao de Entradas</div><button onclick="toggleCardDetalhe('entradas')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div id="card-lista-entradas" style="min-height:60px"></div><div style="padding:12px 20px;background:#f9fafb;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:#666">Total</span><span id="card-total-entradas-rodape" style="font-size:14px;font-weight:800;color:#22c55e">R$ 0,00</span></div></div></div>
     <div id="card-detalhe-saidas" style="display:none;margin-bottom:12px"><div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;border-top:3px solid #ef4444"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:#ef4444">Relacao de Saidas</div><button onclick="toggleCardDetalhe('saidas')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div id="card-lista-saidas" style="min-height:60px"></div><div style="padding:12px 20px;background:#f9fafb;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600;color:#666">Total</span><span id="card-total-saidas-rodape" style="font-size:14px;font-weight:800;color:#ef4444">R$ 0,00</span></div></div></div>
     <div id="card-detalhe-saldo" style="display:none;margin-bottom:12px"><div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;border-top:3px solid #8b5cf6"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:#8b5cf6">Composicao do Saldo</div><button onclick="toggleCardDetalhe('saldo')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div id="card-lista-saldo" style="padding:16px 20px"></div></div></div>
-    <div id="card-detalhe-sinal" style="display:none;margin-bottom:12px"><div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;border-top:3px solid #f59e0b"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:#f59e0b">Sinal de Caixa</div><button onclick="toggleCardDetalhe('sinal')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div style="padding:20px"><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a"><div><div style="font-size:13px;font-weight:700">Sinal inicial em caixa</div></div><div id="card-sinal-valor" style="font-size:22px;font-weight:800;color:#f59e0b">R$ 0,00</div></div></div></div></div>
+    <div id="card-detalhe-sinal" style="display:none;margin-bottom:12px"><div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;border-top:3px solid #f59e0b"><div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px;font-weight:800;color:#f59e0b">Sinal de Caixa</div><button onclick="toggleCardDetalhe('sinal')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">x</button></div><div style="padding:20px"><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a"><div><div style="font-size:13px;font-weight:700">Sinais recebidos hoje</div></div><div id="card-sinal-valor" style="font-size:22px;font-weight:800;color:#f59e0b">R$ 0,00</div></div></div></div></div>
     <div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden">
       <div style="padding:14px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:14px;font-weight:800;color:#111">Movimentacoes do dia</div>
@@ -11345,6 +11345,20 @@ function abrirCaixa(){
   atualizarTotaisCaixa();showAlert('Caixa aberto!');
   sincronizarAberturaCaixaSupa(troco,caixaState.horaAbertura.toISOString()).catch(function(e){console.log(e);});
 }
+function calcularSinaisHoje(){
+  var hoje=new Date();
+  var dk=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
+  var total=0;
+  if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData&&agendamentosPorData[dk]){
+    Object.keys(agendamentosPorData[dk]).forEach(function(k){
+      var a=agendamentosPorData[dk][k];
+      if(a&&(a.sinalPago||(a.sinal_status||'')==='pago')){
+        total+=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a).valor:(parseFloat(a.sinal_valor)||0);
+      }
+    });
+  }
+  return total;
+}
 function atualizarTotaisCaixa(){
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var saidas=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
@@ -11352,6 +11366,8 @@ function atualizarTotaisCaixa(){
   document.getElementById('caixa-total-entradas').textContent=fmtCaixa(entradas);
   document.getElementById('caixa-total-saidas').textContent=fmtCaixa(saidas);
   document.getElementById('caixa-saldo-atual').textContent=fmtCaixa(saldo);
+  var elTroco=document.getElementById('caixa-troco-display');
+  if(elTroco)elTroco.textContent=fmtCaixa(calcularSinaisHoje());
   document.getElementById('caixa-saldo-atual').style.color=saldo>=0?'var(--dark)':'#ef4444';
   var lista=document.getElementById('caixa-movimentos-lista');
   document.getElementById('caixa-mov-count').textContent=caixaState.movimentos.length+' registros';
@@ -11934,7 +11950,7 @@ function renderCardDetalhe(tipo){
     document.getElementById('card-lista-saldo').innerHTML=html;
   } else if(tipo==='sinal'){
     var el=document.getElementById('card-sinal-valor');
-    if(el) el.textContent=fmtCaixa(caixaState.troco);
+    if(el) el.textContent=fmtCaixa(calcularSinaisHoje());
   }
 }
 
