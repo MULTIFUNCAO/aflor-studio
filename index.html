@@ -4679,7 +4679,7 @@ function showPage(id){
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
-    if(id==='caixa')renderHistoricoCaixa();
+    if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
     if(id==='agenda')renderAgenda();
     if(id==='vendas'){renderVendas();renderMetasCards();}
     if(id==='comandas')renderComandas();
@@ -11084,7 +11084,7 @@ function carregarDadosDoSalao(){
   carregarServicosSupa();
   carregarProdutosSupa();
   carregarColaboradoresSupa();
-  carregarAgendamentosSupa();
+  carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
 }
 
@@ -11343,11 +11343,7 @@ function abrirCaixa(){
   sincronizarAberturaCaixaSupa(troco,caixaState.horaAbertura.toISOString()).catch(function(e){console.log(e);});
 }
 function calcularSinaisHoje(){
-  if(!caixaState||!caixaState.movimentos){console.log('[SINAL DEBUG] caixaState ou movimentos nulo');return 0;}
-  console.log('[SINAL DEBUG] total movimentos no caixa:',caixaState.movimentos.length);
-  caixaState.movimentos.forEach(function(m,i){
-    console.log('[SINAL DEBUG] mov['+i+']','id:'+m.id,'categoria:"'+m.categoria+'"','descricao:"'+m.descricao+'"','valor:'+m.valor,'supaId:'+m.supaId);
-  });
+  if(!caixaState||!caixaState.movimentos)return 0;
   // Coleta sinalMovIds de TODOS os agendamentos (qualquer data) da sessão atual
   var sinalMovIdSet={};
   if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
@@ -11359,20 +11355,21 @@ function calcularSinaisHoje(){
       });
     });
   }
-  console.log('[SINAL DEBUG] sinalMovIdSet:',JSON.stringify(sinalMovIdSet));
-  // Auto-migra movimentos antigos identificados pelo sinalMovId para 'Sinal/Reserva'
+  // Auto-migra movimentos desta sessão (identificados pelo sinalMovId) para 'Sinal/Reserva'
   caixaState.movimentos.forEach(function(m){
     if(sinalMovIdSet[m.id]&&m.categoria!=='Sinal/Reserva'){
-      console.log('[SINAL DEBUG] migrando mov id:'+m.id+' de "'+m.categoria+'" para Sinal/Reserva');
       m.categoria='Sinal/Reserva';
       if(typeof sincronizarAtualizacaoMovimentoCaixaSupa==='function')
         sincronizarAtualizacaoMovimentoCaixaSupa(m).catch(function(){});
     }
   });
   var total=caixaState.movimentos
-    .filter(function(m){return m.categoria==='Sinal/Reserva';})
+    .filter(function(m){
+      return m.categoria==='Sinal/Reserva'
+        ||(m.descricao||'').startsWith('Sinal — ')
+        ||(m.descricao||'').startsWith('Sinal · ');
+    })
     .reduce(function(s,m){return s+m.valor;},0);
-  console.log('[SINAL DEBUG] total sinais calculado:',total);
   return total;
 }
 function atualizarTotaisCaixa(){
