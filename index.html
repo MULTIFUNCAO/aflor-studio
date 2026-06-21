@@ -4324,7 +4324,7 @@ const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
-async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID}]);}catch(e){}}
+async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nascimento:c.nascimento||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);}catch(e){}}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function carregarAgendamentosSupa(){
   try{
@@ -10209,6 +10209,9 @@ function agCadastrarClienteRapido(){
     +'<div class="form-group full"><label>Nome completo *</label><input id="crn-nome" placeholder="Nome da cliente" value="'+nomePreench.replace(/"/g,'&quot;')+'"/></div>'
     +'<div class="form-group"><label>WhatsApp *</label><input id="crn-tel" placeholder="(11) 99999-9999" type="tel"/></div>'
     +'<div class="form-group"><label>Data de nascimento</label><input id="crn-nasc" type="date"/></div>'
+    +'<div class="form-group"><label>CEP</label><input id="crn-cep" placeholder="00000-000" maxlength="9"/></div>'
+    +'<div class="form-group full"><label>Endereço</label><input id="crn-endereco" placeholder="Rua, número, bairro, cidade"/></div>'
+    +'<div class="form-group full"><label>Como conheceu a gente?</label><select id="crn-como"><option value="">Selecione...</option><option>Instagram</option><option>Indicação</option><option>Google</option><option>Passou na rua</option><option>Outro</option></select></div>'
     +'</div>'
     +'<div class="modal-footer">'
     +'<button class="btn btn-outline" onclick="document.getElementById(\'modal-cadastro-rapido-cliente\').classList.remove(\'open\')">Cancelar</button>'
@@ -10221,11 +10224,14 @@ function salvarClienteRapido(){
   var nome=(document.getElementById('crn-nome').value||'').trim();
   var tel=(document.getElementById('crn-tel').value||'').trim();
   var nasc=document.getElementById('crn-nasc').value||'';
+  var cep=(document.getElementById('crn-cep').value||'').trim();
+  var endereco=(document.getElementById('crn-endereco').value||'').trim();
+  var como=document.getElementById('crn-como').value||'';
   if(!nome){showAlert('⚠️ Informe o nome da cliente.');return;}
   if(!tel){showAlert('⚠️ Informe o WhatsApp da cliente.');return;}
   var hoje=new Date();
   var dataHoje=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
-  var novaCliente={nome:nome,tel:tel,ultima:dataHoje,total:'R$ 0,00',atend:0,retornoStatus:'',retornoData:'',ultimoProc:'',email:'',nascimento:nasc};
+  var novaCliente={nome:nome,tel:tel,ultima:dataHoje,total:'R$ 0,00',atend:0,retornoStatus:'',retornoData:'',ultimoProc:'',email:'',nascimento:nasc,cep:cep,endereco:endereco,como_conheceu:como};
   clientes.unshift(novaCliente);
   salvarClienteSupa(novaCliente);
   var dl=document.getElementById('ag-cliente-lista');
