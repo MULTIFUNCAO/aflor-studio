@@ -886,7 +886,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div style="font-size:13px;color:rgba(255,255,255,.6)"><span data-nome-salao>FLORA / STUDIO</span></div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-            <span style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
+            <span id="dash-badge-caixa" style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
               <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto
             </span>
             <div id="dash-header-atend-hoje" style="font-size:11px;color:rgba(255,255,255,.4)">0 atendimentos hoje</div>
@@ -1141,7 +1141,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#111;border-radius:14px;padding:18px;cursor:pointer" onclick="showPage('caixa')">
           <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏦 Saldo em Caixa</div>
           <div style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
-          <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
+          <div id="dash-saldo-caixa-status" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
         </div>
       </div>
 
@@ -11339,7 +11339,7 @@ function abrirCaixa(){
   document.getElementById('caixa-fechado-view').style.display='none';
   document.getElementById('caixa-aberto-view').style.display='block';
   document.getElementById('caixa-fechamento-view').style.display='none';
-  atualizarTotaisCaixa();showAlert('Caixa aberto!');
+  atualizarTotaisCaixa();if(typeof renderDashboardCards==='function')renderDashboardCards();showAlert('Caixa aberto!');
   sincronizarAberturaCaixaSupa(troco,caixaState.horaAbertura.toISOString()).catch(function(e){console.log(e);});
 }
 function calcularSinaisHoje(){
@@ -11790,6 +11790,19 @@ function renderDashboardCards(){
         }).join('');
       }
     }
+    var cxAberto=typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto;
+    var elBadge=document.getElementById('dash-badge-caixa');
+    if(elBadge){
+      if(cxAberto){
+        elBadge.style.background='rgba(34,197,94,.2)';elBadge.style.border='1px solid rgba(34,197,94,.4)';elBadge.style.color='#4ade80';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto';
+      } else {
+        elBadge.style.background='rgba(239,68,68,.2)';elBadge.style.border='1px solid rgba(239,68,68,.4)';elBadge.style.color='#f87171';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#f87171;border-radius:50%;display:inline-block"></span>Caixa Fechado';
+      }
+    }
+    var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
+    if(elSaldoSt)elSaldoSt.textContent=cxAberto?'● Caixa aberto · Atualizado agora':'● Caixa fechado';
   }catch(e){
     console.log('erro renderDashboardCards',e);
   }
@@ -11909,6 +11922,7 @@ function confirmarFechamentoCaixa(){
   if(elAberto)elAberto.style.display='none';
   if(elFechado)elFechado.style.display='block';
   renderHistoricoCaixa();
+  if(typeof renderDashboardCards==='function')renderDashboardCards();
   showAlert('Caixa fechado!');
   sincronizarFechamentoCaixaSupa().catch(function(e){console.log(e);});
 }
