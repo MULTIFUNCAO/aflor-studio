@@ -2375,7 +2375,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="display:grid;gap:14px">
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Geral da Empresa (R$)</label>
-          <input type="number" id="meta-geral-valor" placeholder="Ex: 10000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <input type="number" id="meta-geral-valor" placeholder="Ex: 10000" oninput="calcularSugestaoMeta()" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div id="meta-sugestao-bloco" style="display:none;background:#f8f0ff;border:1px solid #e9d5ff;border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:8px">💡 Sugestão de quantidade por serviço</div>
+          <div id="meta-sugestao-msg" style="display:none;font-size:11px;color:#7c3aed;opacity:.75;font-style:italic;margin-bottom:8px"></div>
+          <div id="meta-sugestao-lista"></div>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços (quantidade)</label>
@@ -6184,6 +6189,7 @@ function abrirModalMetas(){
   var campos=document.getElementById('meta-colab-campos');
   if(campos)campos.style.display='none';
   openModal('modal-metas-vendas');
+  calcularSugestaoMeta();
 }
 
 function salvarMetasVendas(){
@@ -6211,6 +6217,58 @@ function salvarMetasVendas(){
   closeModal('modal-metas-vendas');
   renderMetasCards();
   showAlert('Metas salvas!');
+}
+
+async function calcularSugestaoMeta(){
+  var metaVal=parseFloat(document.getElementById('meta-geral-valor').value)||0;
+  var bloco=document.getElementById('meta-sugestao-bloco');
+  if(!bloco)return;
+  var servicosValidos=servicos.filter(function(s){return parseMoedaBR(s.preco)>0;});
+  if(metaVal<=0||servicosValidos.length===0){bloco.style.display='none';return;}
+  bloco.style.display='block';
+  document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:11px;color:#9ca3af;padding:4px 0">Calculando...</div>';
+  document.getElementById('meta-sugestao-msg').style.display='none';
+  var usouHistorico=false;
+  var proporcoes={};
+  try{
+    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+      var hoje=new Date();
+      var tresMesesAtras=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
+      var r=await supa.from('agendamentos').select('servico,valor').eq('salao_id',window.SALAO_ID).gte('data',tresMesesAtras.toISOString().slice(0,10)).lte('data',hoje.toISOString().slice(0,10)).neq('status','Cancelado');
+      var rows=(r&&r.data)||[];
+      if(rows.length>0){
+        var recPorSvc={};var totalHist=0;
+        rows.forEach(function(row){
+          var nomeRow=(row.servico||'').trim().toLowerCase();
+          var match=servicosValidos.find(function(s){var n=s.nome.toLowerCase();return nomeRow===n||nomeRow.includes(n)||n.includes(nomeRow);});
+          if(match){var val=parseMoedaBR(row.valor);if(val>0){recPorSvc[match.nome]=(recPorSvc[match.nome]||0)+val;totalHist+=val;}}
+        });
+        if(Object.keys(recPorSvc).length>0&&totalHist>0){
+          servicosValidos.forEach(function(s){proporcoes[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
+          usouHistorico=true;
+        }
+      }
+    }
+  }catch(e){console.log('meta sugestao err',e);}
+  if(!usouHistorico){var pi=1/servicosValidos.length;servicosValidos.forEach(function(s){proporcoes[s.nome]=pi;});}
+  var sugestoes=servicosValidos.map(function(s){
+    var preco=parseMoedaBR(s.preco);
+    return{nome:s.nome,qtd:Math.ceil(metaVal*(proporcoes[s.nome]||0)/preco)};
+  }).filter(function(s){return s.qtd>0;});
+  sugestoes.sort(function(a,b){return b.qtd-a.qtd;});
+  var msgEl=document.getElementById('meta-sugestao-msg');
+  if(usouHistorico){msgEl.textContent='Baseado nos seus serviços mais vendidos nos últimos 3 meses.';msgEl.style.display='block';}
+  else{msgEl.style.display='none';}
+  if(sugestoes.length===0){
+    document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:12px;color:#9ca3af">Cadastre serviços com valores para calcular a meta.</div>';
+    return;
+  }
+  document.getElementById('meta-sugestao-lista').innerHTML=sugestoes.map(function(s){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0e7ff">'
+      +'<span style="font-size:12px;color:#374151">'+s.nome+'</span>'
+      +'<span style="font-size:13px;font-weight:800;color:#7c3aed">'+s.qtd+'×</span>'
+      +'</div>';
+  }).join('');
 }
 
 function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
