@@ -6233,8 +6233,9 @@ function renderMetasCards(){
       +'</div>';
   }
 
-  var cards=[metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff',fmtCaixa(totalRealizado),fmtCaixa(mv.geral||0),'no mês',null)];
-  colabsAtivos.forEach(function(c,i){
+  // Agrega realizado e meta de todos os colaboradores
+  var totalRealizadoInd=0, totalMetaInd=0;
+  var colabCards=colabsAtivos.map(function(c,i){
     var par=corPares[i%corPares.length];
     var metaC=individuais[c.nome]||0;
     var realizadoC=lancComissoes.filter(function(l){
@@ -6242,13 +6243,45 @@ function renderMetasCards(){
       var d=new Date(l.data);
       return d.getFullYear()===hojeM.getFullYear()&&d.getMonth()===hojeM.getMonth();
     }).reduce(function(s,l){return s+(l.valor||0);},0);
-    cards.push(metaCard('👤',c.nome,par[0],par[1],fmtCaixa(realizadoC),fmtCaixa(metaC),'no mês',metaC===0?'Meta não definida':null));
+    totalRealizadoInd+=realizadoC;
+    totalMetaInd+=metaC;
+    return metaCard('👤',c.nome,par[0],par[1],fmtCaixa(realizadoC),fmtCaixa(metaC),'no mês',metaC===0?'Meta não definida':null);
   });
-  cards.push(metaCard('✂️','Serviços','#16a34a','#f0fdf4',qtdServicos+' atend.',(mv.servicos||0)+' atend.','atend.',null));
-  cards.push(metaCard('📦','Produtos','#d97706','#fffbeb','0 unid.',(mv.produtos||0)+' unid.','unid.',null));
-  el.innerHTML=cards.join('');
+
+  // Card Meta Individual com hint de detalhe clicável
+  var pctInd=totalMetaInd>0?Math.min(100,Math.round(totalRealizadoInd/totalMetaInd*100)):0;
+  var cardIndividual='<div onclick="toggleMetasColabDetalhe()" style="cursor:pointer;background:#fdf2f8;border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;border:2px solid transparent" id="card-meta-individual">'
+    +'<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.08">👥</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    +'<div style="display:flex;align-items:center;gap:6px"><span style="font-size:16px">👥</span><span style="font-size:11px;font-weight:800;color:#db2777;text-transform:uppercase;letter-spacing:.5px">Meta Individual</span></div>'
+    +'<span id="meta-ind-toggle-icon" style="font-size:11px;color:#db2777;font-weight:700;background:#fce7f3;padding:2px 8px;border-radius:20px">Ver ▼</span>'
+    +'</div>'
+    +'<div style="font-size:26px;font-weight:900;color:#111;line-height:1">'+fmtCaixa(totalRealizadoInd)+'</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:3px">de <b style="color:#555">'+fmtCaixa(totalMetaInd)+'</b> no mês</div>'
+    +'<div style="font-size:11px;color:#777;margin-top:5px;background:rgba(0,0,0,.05);display:inline-block;padding:2px 8px;border-radius:20px">'+pctInd+'% atingido · '+colabsAtivos.length+' colaboradores</div>'
+    +'<div style="margin-top:12px;background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden"><div style="background:'+(pctInd>=100?'#22c55e':'#db2777')+';height:6px;border-radius:20px;width:'+pctInd+'%;transition:width .5s ease"></div></div>'
+    +'</div>';
+
+  // Seção de detalhe colapsável (grid dentro do grid pai, span full-width)
+  var detalheHtml='<div id="metas-detalhe-colab" style="display:none;grid-column:1/-1">'
+    +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding-top:4px">'+colabCards.join('')+'</div>'
+    +'</div>';
+
+  el.innerHTML=metaCard('🏢','Meta Geral','#7c3aed','#f5f3ff',fmtCaixa(totalRealizado),fmtCaixa(mv.geral||0),'no mês',null)
+    +cardIndividual
+    +metaCard('✂️','Serviços','#16a34a','#f0fdf4',qtdServicos+' atend.',(mv.servicos||0)+' atend.','atend.',null)
+    +metaCard('📦','Produtos','#d97706','#fffbeb','0 unid.',(mv.produtos||0)+' unid.','unid.',null)
+    +detalheHtml;
 }
 
+function toggleMetasColabDetalhe(){
+  var el=document.getElementById('metas-detalhe-colab');
+  var icon=document.getElementById('meta-ind-toggle-icon');
+  if(!el)return;
+  var aberto=el.style.display!=='none';
+  el.style.display=aberto?'none':'block';
+  if(icon)icon.textContent=aberto?'Ver ▼':'Fechar ▲';
+}
 function renderVendas(){
   const tb=document.getElementById('vendas-table');
   if(!vendas.length){
@@ -11240,7 +11273,7 @@ function definirCategoriaMov(val){
   else catSel.selectedIndex=0;
   suprimirChangeCatMov=false;
 }
-function fmtCaixa(v){return 'R$ '+Number(v).toFixed(2).replace('.',',');}
+function fmtCaixa(v){var p=Number(v).toFixed(2).split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return 'R$ '+p[0]+','+p[1];}
 async function carregarCaixaSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
