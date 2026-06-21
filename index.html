@@ -6290,32 +6290,30 @@ function renderMetasColabSelecionado(){
   var pctSC=metaSvcC>0?Math.min(100,Math.round(svcC/metaSvcC*100)):0;
   var pctPC=metaProdC>0?Math.min(100,Math.round(prodC/metaProdC*100)):0;
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:linear-gradient(135deg,#64748b,#334155);border-radius:16px;padding:20px 22px;color:#fff">'
-    +'<div style="font-size:10px;font-weight:800;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👤 '+nome+'</div>'
-    +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">'
-    +'<div><div style="font-size:28px;font-weight:900;line-height:1">'+fmtCaixa(realC)+'</div>'
-    +'<div style="font-size:13px;opacity:.8;margin-top:3px">de <b>'+fmtCaixa(metaC||0)+'</b> no mês</div></div>'
-    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:30px;font-weight:900;line-height:1">'+(pctC>=100?'✅':pctC+'%')+'</div>'
-    +'<div style="font-size:11px;opacity:.7">'+(pctC>=100?'Meta batida!':metaC?'atingido':'sem meta')+'</div></div>'
-    +'</div>'
-    +_metasBarraClara(pctC,'#fff')
-    +(faltaC>0&&metaC?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaC)+'</div>':'')
+    +'<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e5e5e5;border-left:4px solid #6366f1">'
+    +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">👤 '+nome+'</div>'
+    +'<div style="font-size:28px;font-weight:900;color:#6366f1;line-height:1">'+fmtCaixa(realC)+'</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:4px">de <b style="color:#333">'+fmtCaixa(metaC||0)+'</b> no mês · '+(pctC>=100?'<span style="color:#22c55e;font-weight:700">Meta batida! ✅</span>':metaC?pctC+'% atingido':'sem meta definida')+'</div>'
+    +(metaC>0?'<div style="background:#f0f0f0;border-radius:20px;height:5px;overflow:hidden;margin-top:10px"><div style="background:#6366f1;height:5px;border-radius:20px;width:'+pctC+'%;transition:width .5s ease"></div></div>':'')
+    +(faltaC>0&&metaC?'<div style="font-size:11px;color:#888;margin-top:5px">Falta '+fmtCaixa(faltaC)+'</div>':'')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-    +'<div style="background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:16px 18px;color:#fff">'
-    +'<div style="font-size:20px;margin-bottom:5px">✂️</div>'
-    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
-    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+svcC+' atend.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+(metaSvcC!==null?'meta: '+metaSvcC+' atend.':'meta não definida')+'</div>'
-    +(metaSvcC!==null?_metasBarraClara(pctSC,'rgba(255,255,255,.9)'):'')
-    +(metaSvcC!==null?'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctSC+'% da meta</div>':'')+'</div>'
-    +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
-    +'<div style="font-size:20px;margin-bottom:5px">📦</div>'
-    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
-    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+prodC+' unid.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+(metaProdC!==null?'meta: '+metaProdC+' unid.':'meta não definida')+'</div>'
-    +(metaProdC!==null?_metasBarraClara(pctPC,'rgba(255,255,255,.9)'):'')
-    +(metaProdC!==null?'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctPC+'% da meta</div>':'')+'</div>'
+    +'<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e5e5e5;border-left:4px solid #0d9488">'
+    +'<div style="font-size:18px;margin-bottom:5px">✂️</div>'
+    +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Serviços</div>'
+    +'<div style="font-size:22px;font-weight:900;color:#0d9488">'+svcC+' atend.</div>'
+    +'<div style="font-size:11px;color:#888;margin-top:2px">'+(metaSvcC!==null?'meta: '+metaSvcC+' atend.':'meta não definida')+'</div>'
+    +(metaSvcC!==null?'<div style="background:#f0f0f0;border-radius:20px;height:4px;overflow:hidden;margin-top:8px"><div style="background:#0d9488;height:4px;border-radius:20px;width:'+pctSC+'%;transition:width .5s ease"></div></div>':'')
+    +(metaSvcC!==null?'<div style="font-size:10px;color:#888;margin-top:4px">'+pctSC+'% da meta</div>':'')
+    +'</div>'
+    +'<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e5e5e5;border-left:4px solid #d97706">'
+    +'<div style="font-size:18px;margin-bottom:5px">📦</div>'
+    +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Produtos</div>'
+    +'<div style="font-size:22px;font-weight:900;color:#d97706">'+prodC+' unid.</div>'
+    +'<div style="font-size:11px;color:#888;margin-top:2px">'+(metaProdC!==null?'meta: '+metaProdC+' unid.':'meta não definida')+'</div>'
+    +(metaProdC!==null?'<div style="background:#f0f0f0;border-radius:20px;height:4px;overflow:hidden;margin-top:8px"><div style="background:#d97706;height:4px;border-radius:20px;width:'+pctPC+'%;transition:width .5s ease"></div></div>':'')
+    +(metaProdC!==null?'<div style="font-size:10px;color:#888;margin-top:4px">'+pctPC+'% da meta</div>':'')
+    +'</div>'
     +'</div></div>';
 }
 function renderVendas(){
