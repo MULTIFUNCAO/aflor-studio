@@ -889,7 +889,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
               <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto
             </span>
-            <div style="font-size:11px;color:rgba(255,255,255,.4)">0 atendimentos hoje</div>
+            <div id="dash-header-atend-hoje" style="font-size:11px;color:rgba(255,255,255,.4)">0 atendimentos hoje</div>
           </div>
         </div>
       </div>
@@ -986,7 +986,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
               <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Hora</th>
               <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Status</th>
             </tr></thead>
-            <tbody><tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr></tbody>
+            <tbody id="dash-atend-hoje-tbody"><tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr></tbody>
           </table>
         </div>
 
@@ -10080,6 +10080,7 @@ function normalizarHoraAgenda(hora){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
 function abrirModalAgendar(prof,hora){
+  if(!caixaState||!caixaState.aberto){showAlert('⚠️ Abra o caixa do dia antes de realizar agendamentos.');return;}
   var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
   agFiltrarServicos();
   var d=agendaDataAtual;
@@ -11736,6 +11737,30 @@ function renderDashboardCards(){
     if(elAtend)elAtend.textContent=atendimentosHoje;
     if(elClientes)elClientes.textContent=clientesAtivos;
     if(elTicket)elTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
+    var elHeaderAtend=document.getElementById('dash-header-atend-hoje');
+    if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
+    var tbodyAtend=document.getElementById('dash-atend-hoje-tbody');
+    if(tbodyAtend){
+      var diaData=agendamentosPorData&&agendamentosPorData[diaKeyHoje];
+      var apptKeys=diaData?Object.keys(diaData).filter(function(k){return diaData[k]&&diaData[k].cliente;}).sort():[];
+      if(!apptKeys.length){
+        tbodyAtend.innerHTML='<tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr>';
+      } else {
+        tbodyAtend.innerHTML=apptKeys.map(function(k){
+          var a=diaData[k];
+          var st=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
+          var badgeColor=st==='Paga'?'#888':st==='Cancelada'?'#d97706':'#15803d';
+          var badgeBg=st==='Paga'?'#f3f4f6':st==='Cancelada'?'#fef3c7':'#dcfce7';
+          return '<tr style="border-top:1px solid #f5f5f5">'
+            +'<td style="padding:9px 16px;font-size:12px;font-weight:600">'+a.cliente+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+a.servico+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+a.prof+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+a.hora+'</td>'
+            +'<td style="padding:9px 16px"><span style="font-size:10px;font-weight:700;color:'+badgeColor+';background:'+badgeBg+';padding:2px 8px;border-radius:20px">'+st+'</span></td>'
+            +'</tr>';
+        }).join('');
+      }
+    }
   }catch(e){
     console.log('erro renderDashboardCards',e);
   }
