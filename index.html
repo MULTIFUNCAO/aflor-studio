@@ -7070,6 +7070,12 @@ function abrirAgendaPopup(key,dados,event){
         <div style="font-size:11px;color:#888;margin-top:1px">${dados.tel||'(11) 99999-9999'}</div>
       </div>
     </div>
+    <div id="popup-confirmacao-badge" style="margin-bottom:12px">
+      ${dados.confirmado
+        ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:5px">✅ Confirmado via WhatsApp</span>`
+        : `<div style="display:flex;align-items:center;justify-content:space-between;background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:9px 12px"><span style="font-size:11px;font-weight:700;color:#92400e">🟡 Confirmação pendente</span><button onclick="confirmarAgendamentoWpp('${key}')" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`
+      }
+    </div>
     <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">✂️</span>
@@ -7160,6 +7166,29 @@ function abrirAgendaPopup(key,dados,event){
   document.body.appendChild(popup);
   agendaPopupAtivo=key;
   popupFormaSinal=null;
+}
+function confirmarAgendamentoWpp(key){
+  var dados=agendaDiaAtual[key];
+  if(!dados)return;
+  var clienteObj=clientes.find(function(c){return c.nome===dados.cliente;});
+  var tel=(clienteObj&&clienteObj.tel)||dados.tel||'';
+  if(tel){
+    var num=tel.replace(/\D/g,'');
+    if(num.length===10||num.length===11)num='55'+num;
+    var primeiroNome=dados.cliente.split(' ')[0];
+    var partes=(agendaDataKeyAtual||'').split('/');
+    var dataFmt=partes.length===3?(partes[0].padStart(2,'0')+'/'+partes[1].padStart(2,'0')+'/'+partes[2]):agendaDataKeyAtual||'';
+    var msg='Oi '+primeiroNome+'! 😊 Passando para confirmar seu horário no dia '+dataFmt+' às '+dados.hora+' para '+dados.servico+' com '+dados.prof+'. Pode confirmar para nós? 💕';
+    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+  }else{
+    showAlert('⚠️ Telefone da cliente não cadastrado. Confirmação marcada manualmente.');
+  }
+  dados.confirmado=true;
+  if(supa&&dados.id){
+    supa.from('agendamentos').update({confirmado:true}).eq('id',dados.id).eq('salao_id',window.SALAO_ID).catch(function(){});
+  }
+  var badge=document.getElementById('popup-confirmacao-badge');
+  if(badge)badge.innerHTML='<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:5px">✅ Confirmado via WhatsApp</span>';
 }
 var pagamentoCtx=null;
 
@@ -7922,7 +7951,7 @@ function renderAgenda(){
   if(!agendamentosPorData[dataKey]){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
-    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs',{
+    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado',{
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
@@ -7943,7 +7972,7 @@ function renderAgenda(){
             if(mSvc)valNum=parseMoedaBR('R$ '+mSvc[1]);
           }
           var valFmt=valNum>0?formatMoedaBR(valNum):(a.valor||'R$ 0,00');
-          obj[k]={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:'60 min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt};
+          obj[k]={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:'60 min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado};
         });
       }
       agendamentosPorData[dataKey]=obj;
@@ -8016,6 +8045,7 @@ function renderAgenda(){
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
           </div>
+          ${!a.confirmado?'<div title="Confirmação pendente" style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#f59e0b;border:1.5px solid rgba(255,255,255,.85);z-index:2"></div>':''}
         </div>`;
       }).join('')}
     </div>
