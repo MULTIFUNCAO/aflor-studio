@@ -11611,7 +11611,7 @@ var historicoDetalheAberto=-1;
 var caixaNavIdx = -1; // -1 = hoje (caixa atual)
 
 function caixaNavData(dir){
-  var max = historicoCaixas.length - 1;
+  var max = historicoCaixas.length;
   var novoIdx = caixaNavIdx + dir;
   if(novoIdx > 0) return; // não pode ir além de hoje
   if(novoIdx < -max) return; // não pode ir além do histórico
