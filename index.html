@@ -6176,26 +6176,15 @@ function salvarMetasVendas(){
   showAlert('Metas salvas!');
 }
 
-function renderMetasCards(){
-  var el=document.getElementById('metas-cards-vendas');
-  if(!el)return;
-  var mv=metasVendas;
-  var totalRealizado=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
-  var qtdServicos=caixaState.movimentos.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Servico de cabelo';}).length;
-  var lancComissoes=[];
-  try{lancComissoes=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');}catch(e){}
-  var hojeM=new Date();
-  var individuais=mv.individuais||{};
-  if(!mv.individuais&&mv.colab&&mv.individual)individuais[mv.colab]=mv.individual;
-  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)'&&c.cargo!=='Proprietario(a)';});
-  var avatarCores=['#ef4444','#ec4899','#14b8a6','#8b5cf6','#f97316','#0ea5e9','#22c55e','#f59e0b'];
-  function iniciais(nome){var p=(nome||'').trim().split(/\s+/);return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():(nome||'').substring(0,2).toUpperCase();}
-  function barraClara(pct,corBarra){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+corBarra+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
-
-  // 1. CARD META GERAL (topo, fundo roxo)
+function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
+function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos){
   var pctG=mv.geral>0?Math.min(100,Math.round(totalRealizado/mv.geral*100)):0;
   var faltaG=Math.max(0,(mv.geral||0)-totalRealizado);
-  var cardGeral='<div style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:16px;padding:20px 22px;color:#fff">'
+  var pctS=mv.servicos>0?Math.min(100,Math.round(qtdServicos/mv.servicos*100)):0;
+  var pctP=mv.produtos>0?Math.min(100,Math.round(qtdProdutos/mv.produtos*100)):0;
+  return '<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px">Metas do Salão</div>'
+    +'<div style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:16px;padding:20px 22px;color:#fff">'
     +'<div style="font-size:10px;font-weight:800;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🏢 Meta geral do salão</div>'
     +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">'
     +'<div><div style="font-size:28px;font-weight:900;line-height:1">'+fmtCaixa(totalRealizado)+'</div>'
@@ -6203,60 +6192,97 @@ function renderMetasCards(){
     +'<div style="text-align:right;flex-shrink:0"><div style="font-size:30px;font-weight:900;line-height:1">'+(pctG>=100?'✅':pctG+'%')+'</div>'
     +'<div style="font-size:11px;opacity:.7">'+(pctG>=100?'Meta batida!':'atingido')+'</div></div>'
     +'</div>'
-    +barraClara(pctG,'#fff')
+    +_metasBarraClara(pctG,'#fff')
     +(faltaG>0?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaG)+'</div>':'')
-    +'</div>';
-
-  // 2. LISTA DE COLABORADORES
-  var linhas=colabsAtivos.map(function(c,i){
-    var cor=avatarCores[i%avatarCores.length];
-    var metaC=individuais[c.nome]||0;
-    var realC=lancComissoes.filter(function(l){
-      if(l.profissional!==c.nome)return false;
-      var d=new Date(l.data);
-      return d.getFullYear()===hojeM.getFullYear()&&d.getMonth()===hojeM.getMonth();
-    }).reduce(function(s,l){return s+(l.valor||0);},0);
-    var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
-    var corBarra=pctC>=100?'#22c55e':cor;
-    return '<div style="padding:11px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:12px">'
-      +'<div style="width:36px;height:36px;border-radius:50%;background:'+cor+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0">'+iniciais(c.nome)+'</div>'
-      +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.nome+'</div>'
-      +'<div style="background:#f0f0f0;border-radius:20px;height:4px;overflow:hidden;margin-top:5px">'
-      +'<div style="background:'+corBarra+';height:4px;border-radius:20px;width:'+pctC+'%;transition:width .5s ease"></div></div></div>'
-      +'<div style="text-align:right;flex-shrink:0">'
-      +'<div style="font-size:12px;font-weight:800;color:#111">'+fmtCaixa(realC)+'</div>'
-      +(metaC>0
-        ?'<div style="font-size:10px;color:#888">de '+fmtCaixa(metaC)+'</div>'
-         +'<div style="font-size:10px;font-weight:700;color:'+corBarra+'">'+(pctC>=100?'✅ 100%':pctC+'%')+'</div>'
-        :'<div style="font-size:10px;color:#bbb">sem meta</div>')
-      +'</div></div>';
-  }).join('');
-  var cardColabs='<div style="background:#fff;border:1px solid #e5e5e5;border-radius:16px;overflow:hidden">'
-    +'<div style="padding:12px 18px;border-bottom:1px solid #f0f0f0"><span style="font-size:11px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.5px">👥 Meta Individual</span></div>'
-    +(colabsAtivos.length?linhas:'<div style="padding:24px;text-align:center;color:#aaa;font-size:13px">Nenhum colaborador ativo.</div>')
-    +'</div>';
-
-  // 3. RODAPÉ — Serviços (teal) + Produtos (âmbar)
-  var pctS=mv.servicos>0?Math.min(100,Math.round(qtdServicos/mv.servicos*100)):0;
-  var rodape='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div style="background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:16px 18px;color:#fff">'
-    +'<div style="font-size:22px;margin-bottom:6px">✂️</div>'
+    +'<div style="font-size:20px;margin-bottom:5px">✂️</div>'
     +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
     +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdServicos+' atend.</div>'
     +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.servicos||0)+' atend.</div>'
-    +barraClara(pctS,'rgba(255,255,255,.9)')
+    +_metasBarraClara(pctS,'rgba(255,255,255,.9)')
     +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctS+'% atingido</div></div>'
     +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
-    +'<div style="font-size:22px;margin-bottom:6px">📦</div>'
+    +'<div style="font-size:20px;margin-bottom:5px">📦</div>'
     +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
-    +'<div style="font-size:22px;font-weight:900;margin-top:4px">0 unid.</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdProdutos+' unid.</div>'
     +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.produtos||0)+' unid.</div>'
-    +barraClara(0,'rgba(255,255,255,.9)')
-    +'<div style="font-size:10px;opacity:.7;margin-top:4px">0% atingido</div></div>'
+    +_metasBarraClara(pctP,'rgba(255,255,255,.9)')
+    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctP+'% atingido</div></div>'
+    +'</div></div>';
+}
+function renderMetasCards(){
+  var el=document.getElementById('metas-cards-vendas');
+  if(!el)return;
+  var mv=metasVendas;
+  var movs=caixaState.movimentos||[];
+  var totalRealizado=movs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+  var qtdServicos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Servico de cabelo';}).length;
+  var qtdProdutos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Produto vendido';}).length;
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)'&&c.cargo!=='Proprietario(a)';});
+  var opcoesColab=colabsAtivos.map(function(c){return '<option value="'+c.nome+'">'+c.nome+'</option>';}).join('');
+  var blocoIndividual='<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px">Meta Individual</div>'
+    +'<select id="meta-colab-seletor" onchange="renderMetasColabSelecionado()" style="font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;width:100%">'
+    +'<option value="">Selecione um colaborador...</option>'+opcoesColab+'</select>'
+    +'<div id="meta-colab-resultado"><div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div></div>'
     +'</div>';
-
-  el.style.cssText='display:flex;flex-direction:column;gap:12px';
-  el.innerHTML=cardGeral+cardColabs+rodape;
+  el.style.cssText='display:flex;flex-direction:column;gap:20px';
+  el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos)+blocoIndividual;
+}
+function renderMetasColabSelecionado(){
+  var nome=(document.getElementById('meta-colab-seletor')||{}).value||'';
+  var el=document.getElementById('meta-colab-resultado');
+  if(!el)return;
+  if(!nome){el.innerHTML='<div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div>';return;}
+  var mv=metasVendas;
+  var individuais=mv.individuais||{};
+  if(!mv.individuais&&mv.colab&&mv.individual)individuais[mv.colab]=mv.individual;
+  var metaC=individuais[nome]||0;
+  var lancComissoes=[];
+  try{lancComissoes=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');}catch(e){}
+  var hojeM=new Date();
+  var realC=lancComissoes.filter(function(l){
+    if(l.profissional!==nome)return false;
+    var d=new Date(l.data);
+    return d.getFullYear()===hojeM.getFullYear()&&d.getMonth()===hojeM.getMonth();
+  }).reduce(function(s,l){return s+(l.valor||0);},0);
+  var movs=caixaState.movimentos||[];
+  var svcC=movs.filter(function(m){return m.tipo==='entrada'&&m.profissional===nome&&m.categoria==='Servico de cabelo';}).length;
+  var prodC=movs.filter(function(m){return m.tipo==='entrada'&&m.profissional===nome&&m.categoria==='Produto vendido';}).length;
+  var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
+  var faltaC=Math.max(0,metaC-realC);
+  var pctSC=mv.servicos>0?Math.min(100,Math.round(svcC/mv.servicos*100)):0;
+  var pctPC=mv.produtos>0?Math.min(100,Math.round(prodC/mv.produtos*100)):0;
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div style="background:linear-gradient(135deg,#db2777,#9d174d);border-radius:16px;padding:20px 22px;color:#fff">'
+    +'<div style="font-size:10px;font-weight:800;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👤 '+nome+'</div>'
+    +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">'
+    +'<div><div style="font-size:28px;font-weight:900;line-height:1">'+fmtCaixa(realC)+'</div>'
+    +'<div style="font-size:13px;opacity:.8;margin-top:3px">de <b>'+fmtCaixa(metaC||0)+'</b> no mês</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:30px;font-weight:900;line-height:1">'+(pctC>=100?'✅':pctC+'%')+'</div>'
+    +'<div style="font-size:11px;opacity:.7">'+(pctC>=100?'Meta batida!':metaC?'atingido':'sem meta')+'</div></div>'
+    +'</div>'
+    +_metasBarraClara(pctC,'#fff')
+    +(faltaC>0&&metaC?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaC)+'</div>':'')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div style="background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:16px 18px;color:#fff">'
+    +'<div style="font-size:20px;margin-bottom:5px">✂️</div>'
+    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+svcC+' atend.</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta do salão: '+(mv.servicos||0)+' atend.</div>'
+    +_metasBarraClara(pctSC,'rgba(255,255,255,.9)')
+    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctSC+'% da meta</div></div>'
+    +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
+    +'<div style="font-size:20px;margin-bottom:5px">📦</div>'
+    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+prodC+' unid.</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta do salão: '+(mv.produtos||0)+' unid.</div>'
+    +_metasBarraClara(pctPC,'rgba(255,255,255,.9)')
+    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctPC+'% da meta</div></div>'
+    +'</div></div>';
 }
 function renderVendas(){
   const tb=document.getElementById('vendas-table');
