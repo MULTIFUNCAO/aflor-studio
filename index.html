@@ -7189,6 +7189,7 @@ function confirmarAgendamentoWpp(key){
   }
   var badge=document.getElementById('popup-confirmacao-badge');
   if(badge)badge.innerHTML='<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:5px">✅ Confirmado via WhatsApp</span>';
+  renderAgenda();
 }
 var pagamentoCtx=null;
 
@@ -8044,8 +8045,8 @@ function renderAgenda(){
             <div style="line-height:1.3">${a.cliente}</div>
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             ${a.sinal?`<div style="font-size:9px;opacity:.9;margin-top:2px">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</div>`:''}
+            ${!a.confirmado?`<button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="margin-top:3px;background:rgba(255,255,255,.92);color:#ea580c;border:none;border-radius:4px;padding:1px 6px;font-size:8px;font-weight:800;cursor:pointer;display:block;width:100%;text-align:left;line-height:14px">📲 Confirmar</button>`:''}
           </div>
-          ${!a.confirmado?'<div title="Confirmação pendente" style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#f59e0b;border:1.5px solid rgba(255,255,255,.85);z-index:2"></div>':''}
         </div>`;
       }).join('')}
     </div>
