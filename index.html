@@ -11657,10 +11657,15 @@ function renderCaixaDiaHistorico(reg){
   var elCnt = document.getElementById('caixa-mov-count');
   var elLst = document.getElementById('caixa-movimentos-lista');
 
+  var sinaisHist=(reg.movimentos||[]).filter(function(m){
+    return m.categoria==='Sinal/Reserva'||(m.descricao||'').startsWith('Sinal — ')||(m.descricao||'').startsWith('Sinal · ');
+  }).reduce(function(s,m){return s+m.valor;},0);
   if(elEnt) elEnt.textContent = fmtCaixa(reg.entradas);
   if(elSai) elSai.textContent = fmtCaixa(reg.saidas);
   if(elSal){ elSal.textContent = fmtCaixa(reg.saldo); elSal.style.color = reg.saldo >= 0 ? '' : '#ef4444'; }
-  if(elTro) elTro.textContent = fmtCaixa(reg.troco);
+  if(elTro) elTro.textContent = fmtCaixa(sinaisHist);
+  var elSinalCard=document.getElementById('card-sinal-valor');
+  if(elSinalCard) elSinalCard.textContent = fmtCaixa(sinaisHist);
   if(elCnt) elCnt.textContent = (reg.movimentos||[]).length + ' registros';
 
   if(elLst){
