@@ -8046,7 +8046,7 @@ function renderAgenda(){
             <div style="font-size:9px;opacity:.85">${a.servico}</div>
             <div style="font-size:9px;margin-top:3px;display:flex;flex-direction:column;gap:3px">
               ${a.sinal?`<span style="opacity:.9">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
-              ${!a.confirmado?`<button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:6px;padding:4px 8px;font-size:8px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button>`:''}
+              ${!a.confirmado?`<button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="align-self:flex-end;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:6px;padding:4px 8px;font-size:8px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button>`:''}
             </div>
           </div>
         </div>`;
