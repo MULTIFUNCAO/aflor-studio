@@ -2391,9 +2391,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option value="">Selecione...</option>
           </select>
         </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Individual do Colaborador (R$)</label>
-          <input type="number" id="meta-individual-valor" placeholder="Ex: 2000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <div id="meta-colab-campos" style="display:none;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Individual do Colaborador (R$)</label>
+            <input type="number" id="meta-individual-valor" placeholder="Ex: 2000" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços do Colaborador (quantidade)</label>
+            <input type="number" id="meta-ind-servicos-qtd" placeholder="Ex: 30" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Produtos do Colaborador (quantidade)</label>
+            <input type="number" id="meta-ind-produtos-qtd" placeholder="Ex: 15" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          </div>
         </div>
       </div>
     </div>
@@ -6142,7 +6152,13 @@ var metasVendas = JSON.parse(localStorage.getItem('aflor_metas_vendas')||'{}');
 function lerMetaIndividualColabModal(){
   var nome=document.getElementById('meta-colab-select-modal').value;
   var individuais=metasVendas.individuais||{};
+  var individuaisServicos=metasVendas.individuaisServicos||{};
+  var individuaisProdutos=metasVendas.individuaisProdutos||{};
+  var campos=document.getElementById('meta-colab-campos');
+  if(campos)campos.style.display=nome?'flex':'none';
   document.getElementById('meta-individual-valor').value=nome?(individuais[nome]||''):'';
+  document.getElementById('meta-ind-servicos-qtd').value=nome?(individuaisServicos[nome]||''):'';
+  document.getElementById('meta-ind-produtos-qtd').value=nome?(individuaisProdutos[nome]||''):'';
 }
 function abrirModalMetas(){
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
@@ -6156,19 +6172,33 @@ function abrirModalMetas(){
     selModal.value='';
   }
   document.getElementById('meta-individual-valor').value='';
+  document.getElementById('meta-ind-servicos-qtd').value='';
+  document.getElementById('meta-ind-produtos-qtd').value='';
+  var campos=document.getElementById('meta-colab-campos');
+  if(campos)campos.style.display='none';
   openModal('modal-metas-vendas');
 }
 
 function salvarMetasVendas(){
   var colabSel=document.getElementById('meta-colab-select-modal').value;
   var indVal=parseFloat(document.getElementById('meta-individual-valor').value)||0;
+  var indSvcVal=parseInt(document.getElementById('meta-ind-servicos-qtd').value)||0;
+  var indProdVal=parseInt(document.getElementById('meta-ind-produtos-qtd').value)||0;
   var individuais=Object.assign({},metasVendas.individuais||{});
-  if(colabSel)individuais[colabSel]=indVal;
+  var individuaisServicos=Object.assign({},metasVendas.individuaisServicos||{});
+  var individuaisProdutos=Object.assign({},metasVendas.individuaisProdutos||{});
+  if(colabSel){
+    individuais[colabSel]=indVal;
+    if(indSvcVal>0)individuaisServicos[colabSel]=indSvcVal;else delete individuaisServicos[colabSel];
+    if(indProdVal>0)individuaisProdutos[colabSel]=indProdVal;else delete individuaisProdutos[colabSel];
+  }
   metasVendas = {
     geral: parseFloat(document.getElementById('meta-geral-valor').value)||0,
     servicos: parseInt(document.getElementById('meta-servicos-qtd').value)||0,
     produtos: parseInt(document.getElementById('meta-produtos-qtd').value)||0,
-    individuais: individuais
+    individuais: individuais,
+    individuaisServicos: individuaisServicos,
+    individuaisProdutos: individuaisProdutos
   };
   localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
   closeModal('modal-metas-vendas');
@@ -6253,10 +6283,14 @@ function renderMetasColabSelecionado(){
   var prodC=movs.filter(function(m){return m.tipo==='entrada'&&m.profissional===nome&&m.categoria==='Produto vendido';}).length;
   var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
   var faltaC=Math.max(0,metaC-realC);
-  var pctSC=mv.servicos>0?Math.min(100,Math.round(svcC/mv.servicos*100)):0;
-  var pctPC=mv.produtos>0?Math.min(100,Math.round(prodC/mv.produtos*100)):0;
+  var individuaisServicos=mv.individuaisServicos||{};
+  var individuaisProdutos=mv.individuaisProdutos||{};
+  var metaSvcC=individuaisServicos[nome]>0?individuaisServicos[nome]:null;
+  var metaProdC=individuaisProdutos[nome]>0?individuaisProdutos[nome]:null;
+  var pctSC=metaSvcC>0?Math.min(100,Math.round(svcC/metaSvcC*100)):0;
+  var pctPC=metaProdC>0?Math.min(100,Math.round(prodC/metaProdC*100)):0;
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'
-    +'<div style="background:linear-gradient(135deg,#db2777,#9d174d);border-radius:16px;padding:20px 22px;color:#fff">'
+    +'<div style="background:linear-gradient(135deg,#64748b,#334155);border-radius:16px;padding:20px 22px;color:#fff">'
     +'<div style="font-size:10px;font-weight:800;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👤 '+nome+'</div>'
     +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px">'
     +'<div><div style="font-size:28px;font-weight:900;line-height:1">'+fmtCaixa(realC)+'</div>'
@@ -6272,16 +6306,16 @@ function renderMetasColabSelecionado(){
     +'<div style="font-size:20px;margin-bottom:5px">✂️</div>'
     +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
     +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+svcC+' atend.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta do salão: '+(mv.servicos||0)+' atend.</div>'
-    +_metasBarraClara(pctSC,'rgba(255,255,255,.9)')
-    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctSC+'% da meta</div></div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+(metaSvcC!==null?'meta: '+metaSvcC+' atend.':'meta não definida')+'</div>'
+    +(metaSvcC!==null?_metasBarraClara(pctSC,'rgba(255,255,255,.9)'):'')
+    +(metaSvcC!==null?'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctSC+'% da meta</div>':'')+'</div>'
     +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
     +'<div style="font-size:20px;margin-bottom:5px">📦</div>'
     +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
     +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+prodC+' unid.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta do salão: '+(mv.produtos||0)+' unid.</div>'
-    +_metasBarraClara(pctPC,'rgba(255,255,255,.9)')
-    +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctPC+'% da meta</div></div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">'+(metaProdC!==null?'meta: '+metaProdC+' unid.':'meta não definida')+'</div>'
+    +(metaProdC!==null?_metasBarraClara(pctPC,'rgba(255,255,255,.9)'):'')
+    +(metaProdC!==null?'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctPC+'% da meta</div>':'')+'</div>'
     +'</div></div>';
 }
 function renderVendas(){
