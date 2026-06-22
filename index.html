@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta name="build-ts" content="1781145300">
@@ -2387,8 +2387,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="meta-resultado-titulo" style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px"></div>
           <div id="meta-resultado-lista" style="display:flex;flex-direction:column;gap:2px"></div>
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e5e5;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:12px;font-weight:700;color:#555">Meta de atendimentos</span>
-            <span id="meta-resultado-total" style="font-size:16px;font-weight:900;color:#7c3aed">0 atend.</span>
+            <span style="font-size:12px;font-weight:700;color:#555">Meta de serviços</span>
+            <span id="meta-resultado-total" style="font-size:16px;font-weight:900;color:#7c3aed">0 serv.</span>
           </div>
         </div>
         <div>
@@ -4332,6 +4332,7 @@ var agendamentosPorData={};
 
 const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
+const ANTHROPIC_KEY='';
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nascimento:c.nascimento||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);}catch(e){}}
@@ -6215,6 +6216,9 @@ function salvarMetasVendas(){
   var idsSel=Array.from(checks).map(function(cb){return cb.value;});
   var somaP=idsSel.reduce(function(acc,id){var s=servicos.find(function(sv){return String(sv.id)===id;});return acc+(s?parseMoedaBR(s.preco):0);},0);
   var totalAtend=somaP>0&&metaVal>0?Math.ceil(metaVal/somaP)*idsSel.length:0;
+    var sug=window._metaSugestoesPorNome||{};
+  var totalAtendSug=Object.values(sug).reduce(function(a,v){return a+v;},0);
+  if(totalAtendSug>0)totalAtend=totalAtendSug;
   metasVendas = {
     geral: metaVal,
     servicos: totalAtend,
@@ -6222,7 +6226,8 @@ function salvarMetasVendas(){
     individuais: individuais,
     individuaisServicos: individuaisServicos,
     individuaisProdutos: individuaisProdutos,
-    servicosSelecionados: idsSel
+    servicosSelecionados: idsSel,
+    sugestoesPorNome: sug
   };
   localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
   closeModal('modal-metas-vendas');
@@ -6230,7 +6235,7 @@ function salvarMetasVendas(){
   showAlert('Metas salvas!');
 }
 
-function calcularSugestaoMeta(){
+async function calcularSugestaoMeta(){
   var metaVal=parseFloat(document.getElementById('meta-geral-valor').value)||0;
   var resultado=document.getElementById('meta-resultado-calc');
   if(!resultado)return;
@@ -6240,18 +6245,61 @@ function calcularSugestaoMeta(){
   var somaPrecos=selecionados.reduce(function(acc,s){return acc+parseMoedaBR(s.preco);},0);
   if(somaPrecos<=0){resultado.style.display='none';return;}
   resultado.style.display='block';
-  var qtdBase=Math.ceil(metaVal/somaPrecos);
-  var totalAtend=qtdBase*selecionados.length;
-  var metaFmt='R$ '+metaVal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  var metaFmt='R$ '+metaVal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('meta-resultado-titulo').textContent='Para atingir '+metaFmt+', venda aproximadamente:';
-  document.getElementById('meta-resultado-lista').innerHTML=selecionados.map(function(s){
-    var pct=Math.round(parseMoedaBR(s.preco)/somaPrecos*100);
+  document.getElementById('meta-resultado-lista').innerHTML='<div style="font-size:12px;color:#9ca3af;padding:6px 0">Calculando sugestao...</div>';
+  document.getElementById('meta-resultado-total').textContent='...';
+  var proporcoes={};var metodo='igual';
+  try{
+    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+      var hoje=new Date();var t3=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
+      var rh=await supa.from('agendamentos').select('servico,valor').eq('salao_id',window.SALAO_ID).gte('data',t3.toISOString().slice(0,10)).lte('data',hoje.toISOString().slice(0,10)).neq('status','Cancelado');
+      var rows=(rh&&rh.data)||[];
+      var recPorSvc={};var totalHist=0;var matchCount=0;
+      rows.forEach(function(row){
+        var nr=(row.servico||'').trim().toLowerCase();
+        var m=selecionados.find(function(s){return nr===s.nome.trim().toLowerCase();});
+        if(m){var val=parseMoedaBR(row.valor);if(val>0){recPorSvc[m.nome]=(recPorSvc[m.nome]||0)+val;totalHist+=val;matchCount++;}}
+      });
+      if(matchCount>=30&&totalHist>0){
+        var propTemp={};selecionados.forEach(function(s){propTemp[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
+        var maxProp=selecionados.reduce(function(mx,s){return Math.max(mx,propTemp[s.nome]||0);},0);
+        if(maxProp<=0.7){proporcoes=propTemp;metodo='historico';}
+      }
+    }
+  }catch(e){console.log('hist err',e);}
+  if(metodo==='igual'&&typeof ANTHROPIC_KEY!=='undefined'&&ANTHROPIC_KEY){
+    try{
+      var prompt='Voce e um assistente de gestao para saloes de beleza brasileiros.\nA empresaria selecionou os seguintes servicos para sua meta do mes:\n'
+        +selecionados.map(function(s){return '- '+s.nome+(s.cat?' ('+s.cat+')':'')+' - R$ '+parseMoedaBR(s.preco).toFixed(2).replace('.',',');}).join('\n')
+        +'\n\nDistribua percentuais de demanda realistas entre esses servicos, considerando que servicos mais frequentes (ex: design de sobrancelha, escova) naturalmente tem maior volume que servicos mais esporadicos (ex: alongamento, remocao).\nResponda SOMENTE em JSON, sem texto adicional, no formato:\n{"servico_nome": percentual_decimal, ...}\nonde a soma de todos os percentuais deve ser exatamente 1.0.';
+      var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:512,messages:[{role:'user',content:prompt}]})});
+      if(resp.ok){
+        var data=await resp.json();
+        var txt=(data.content&&data.content[0]&&data.content[0].text)||'{}';
+        var jm=txt.match(/\{[\s\S]*\}/);
+        var parsed=jm?JSON.parse(jm[0]):{};
+        var soma=0;for(var k in parsed){soma+=parsed[k]||0;}
+        if(soma>0){selecionados.forEach(function(s){proporcoes[s.nome]=(parsed[s.nome]||0)/soma;});metodo='ia';}
+      }
+    }catch(e){console.log('claude api err',e);}
+  }
+  if(metodo==='igual'){var pi=1/selecionados.length;selecionados.forEach(function(s){proporcoes[s.nome]=pi;});}
+  var sugestoes=selecionados.map(function(s){
+    var preco=parseMoedaBR(s.preco);
+    var qtd=Math.ceil(metaVal*(proporcoes[s.nome]||0)/preco);
+    return{nome:s.nome,qtd:qtd,pct:Math.round((proporcoes[s.nome]||0)*100)};
+  });
+  var totalSvc=sugestoes.reduce(function(a,s){return a+s.qtd;},0);
+  var metodoLabel=metodo==='historico'?'Baseado no historico dos ultimos 3 meses':metodo==='ia'?'Sugerido por IA com base no perfil do salao':'Dividido igualmente entre os servicos'+(typeof ANTHROPIC_KEY!=='undefined'&&ANTHROPIC_KEY?'':' - configure ANTHROPIC_KEY para sugestao por IA');
+  document.getElementById('meta-resultado-lista').innerHTML=sugestoes.map(function(s){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eee">'
       +'<span style="font-size:12px;color:#374151">'+s.nome+'</span>'
-      +'<span style="font-size:12px;color:#6b7280;white-space:nowrap">'+qtdBase+'× <span style="color:#9ca3af;font-size:11px">('+pct+'% da meta)</span></span>'
+      +'<span style="font-size:12px;color:#6b7280;white-space:nowrap">'+s.qtd+'x <span style="color:#9ca3af;font-size:11px">('+s.pct+'% da meta)</span></span>'
       +'</div>';
-  }).join('');
-  document.getElementById('meta-resultado-total').textContent=totalAtend+' atend.';
+  }).join('')+'<div style="font-size:10px;color:#bbb;margin-top:8px;padding-top:4px;border-top:1px solid #f0f0f0">'+metodoLabel+'</div>';
+  document.getElementById('meta-resultado-total').textContent=totalSvc+' serv.';
+  window._metaSugestoesPorNome={};sugestoes.forEach(function(s){window._metaSugestoesPorNome[s.nome]=s.qtd;});
 }
 
 async function renderizarCheckboxServicos(){
@@ -6293,7 +6341,7 @@ async function renderizarCheckboxServicos(){
 }
 
 function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
-function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos){
+function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPorNome){
   var pctG=mv.geral>0?Math.min(100,Math.round(totalRealizado/mv.geral*100)):0;
   var faltaG=Math.max(0,(mv.geral||0)-totalRealizado);
   var pctS=mv.servicos>0?Math.min(100,Math.round(qtdServicos/mv.servicos*100)):0;
@@ -6309,14 +6357,22 @@ function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos){
     +'<div style="font-size:11px;opacity:.7">'+(pctG>=100?'Meta batida!':'atingido')+'</div></div>'
     +'</div>'
     +_metasBarraClara(pctG,'#fff')
-    +(faltaG>0?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaG)+'</div>':'')
+    +(faltaG>0?'<div style="font-size:11px;opacity:.6;margin-top:6px">Falta '+fmtCaixa(faltaG)+'</div>':'')+(function(){
+      var sug=mv.sugestoesPorNome;
+      if(!sug||Object.keys(sug).length===0)return '';
+      var real=realizadoPorNome||{};
+      var pendentes=Object.keys(sug).filter(function(n){return (sug[n]||0)>(real[n]||0);});
+      if(pendentes.length===0)return '<div style="font-size:11px;opacity:.75;margin-top:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.2)">Voce realizou todos os servicos da meta!</div>';
+      var linhas=pendentes.map(function(n){return n+': '+((sug[n]||0)-(real[n]||0))+'x';}).join(' &nbsp;');
+      return '<div style="font-size:11px;opacity:.75;margin-top:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.2)">Ainda precisa: '+linhas+'</div>';
+    })()
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div style="background:linear-gradient(135deg,#0d9488,#0f766e);border-radius:14px;padding:16px 18px;color:#fff">'
     +'<div style="font-size:20px;margin-bottom:5px">✂️</div>'
     +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Serviços</div>'
-    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdServicos+' atend.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.servicos||0)+' atend.</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdServicos+' serv.</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.servicos||0)+' serv.</div>'
     +_metasBarraClara(pctS,'rgba(255,255,255,.9)')
     +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctS+'% atingido</div></div>'
     +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
@@ -6328,7 +6384,7 @@ function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos){
     +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctP+'% atingido</div></div>'
     +'</div></div>';
 }
-function renderMetasCards(){
+async function renderMetasCards(){
   var el=document.getElementById('metas-cards-vendas');
   if(!el)return;
   var mv=metasVendas;
@@ -6336,7 +6392,16 @@ function renderMetasCards(){
   var totalRealizado=movs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var qtdServicos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Servico de cabelo';}).length;
   var qtdProdutos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Produto vendido';}).length;
-  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)'&&c.cargo!=='Proprietario(a)';});
+  var realizadoPorNome={};
+  try{
+    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID&&mv.sugestoesPorNome&&Object.keys(mv.sugestoesPorNome).length>0){
+      var hoje=new Date();var d1=new Date(hoje.getFullYear(),hoje.getMonth(),1).toISOString().slice(0,10);var d2=hoje.toISOString().slice(0,10);
+      var rq=await supa.from('agendamentos').select('servico').eq('salao_id',window.SALAO_ID).gte('data',d1).lte('data',d2).eq('status','Concluido');
+      var rows2=(rq&&rq.data)||[];
+      rows2.forEach(function(row){var n=(row.servico||'').trim();if(n)realizadoPorNome[n]=(realizadoPorNome[n]||0)+1;});
+    }
+  }catch(e){console.log('metas supabase err',e);}
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietario(a)';});
   var opcoesColab=colabsAtivos.map(function(c){return '<option value="'+c.nome+'">'+c.nome+'</option>';}).join('');
   var blocoIndividual='<div style="display:flex;flex-direction:column;gap:10px">'
     +'<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px">Meta Individual</div>'
@@ -6345,9 +6410,8 @@ function renderMetasCards(){
     +'<div id="meta-colab-resultado"><div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div></div>'
     +'</div>';
   el.style.cssText='display:flex;flex-direction:column;gap:20px';
-  el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos)+blocoIndividual;
-}
-function renderMetasColabSelecionado(){
+  el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPorNome)+blocoIndividual;
+}function renderMetasColabSelecionado(){
   var nome=(document.getElementById('meta-colab-seletor')||{}).value||'';
   var el=document.getElementById('meta-colab-resultado');
   if(!el)return;
@@ -6387,8 +6451,8 @@ function renderMetasColabSelecionado(){
     +'<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e5e5e5;border-left:4px solid #0d9488">'
     +'<div style="font-size:18px;margin-bottom:5px">✂️</div>'
     +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Serviços</div>'
-    +'<div style="font-size:22px;font-weight:900;color:#0d9488">'+svcC+' atend.</div>'
-    +'<div style="font-size:11px;color:#888;margin-top:2px">'+(metaSvcC!==null?'meta: '+metaSvcC+' atend.':'meta não definida')+'</div>'
+    +'<div style="font-size:22px;font-weight:900;color:#0d9488">'+svcC+' serv.</div>'
+    +'<div style="font-size:11px;color:#888;margin-top:2px">'+(metaSvcC!==null?'meta: '+metaSvcC+' serv.':'meta não definida')+'</div>'
     +(metaSvcC!==null?'<div style="background:#f0f0f0;border-radius:20px;height:4px;overflow:hidden;margin-top:8px"><div style="background:#0d9488;height:4px;border-radius:20px;width:'+pctSC+'%;transition:width .5s ease"></div></div>':'')
     +(metaSvcC!==null?'<div style="font-size:10px;color:#888;margin-top:4px">'+pctSC+'% da meta</div>':'')
     +'</div>'
