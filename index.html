@@ -7077,7 +7077,7 @@ function atendimentoConcluido(dados){
   var st=(dados.status||'').toLowerCase();
   return st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
 }
-function agendaDataKeyAtual(){
+function agendaGetDataKey(){
   var d=agendaDataAtual;
   return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
 }
@@ -7100,7 +7100,7 @@ function cancelarComandaVinculada(cliente){
 }
 function excluirAgendamentoLocal(key){
   delete agendaDiaAtual[key];
-  var dataKey=agendaDataKeyAtual();
+  var dataKey=agendaGetDataKey();
   if(agendamentosPorData[dataKey])delete agendamentosPorData[dataKey][key];
 }
 function excluirAgendamentoSupa(supaId){
@@ -7127,7 +7127,7 @@ function executarCancelamentoAtendimento(key,estornarSinal){
   var a=agendaDiaAtual[key]||agendaAppts[key];
   if(!a){showAlert('Agendamento não encontrado.');return;}
   if(estornarSinal)estornarSinalAgendamento(a);
-  var dataKey=agendaDataKeyAtual();
+  var dataKey=agendaGetDataKey();
   if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]&&estornarSinal){
     estornarSinalAgendamento(agendamentosPorData[dataKey][key]);
   }
