@@ -6230,6 +6230,7 @@ async function calcularSugestaoMeta(){
   document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:11px;color:#9ca3af;padding:4px 0">Calculando...</div>';
   document.getElementById('meta-sugestao-msg').style.display='none';
   var usouHistorico=false;
+  var historicoPresenteMasInsuficiente=false;
   var proporcoes={};
   var semMatchRatio=0;
   try{
@@ -6248,8 +6249,12 @@ async function calcularSugestaoMeta(){
         });
         semMatchRatio=rows.length>0?semMatchCount/rows.length:0;
         if(Object.keys(recPorSvc).length>0&&totalHist>0){
-          servicosValidos.forEach(function(s){proporcoes[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
-          usouHistorico=true;
+          var matchCount=rows.length-semMatchCount;
+          var propTemp={};
+          servicosValidos.forEach(function(s){propTemp[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
+          var maxProp=servicosValidos.reduce(function(mx,s){return Math.max(mx,propTemp[s.nome]||0);},0);
+          if(matchCount>=30&&maxProp<=0.7){proporcoes=propTemp;usouHistorico=true;}
+          else{historicoPresenteMasInsuficiente=true;}
         }
       }
     }
@@ -6262,6 +6267,7 @@ async function calcularSugestaoMeta(){
   sugestoes.sort(function(a,b){return b.qtd-a.qtd;});
   var msgEl=document.getElementById('meta-sugestao-msg');
   if(usouHistorico){msgEl.textContent='Baseado nos seus serviços mais vendidos nos últimos 3 meses.';msgEl.style.display='block';}
+  else if(historicoPresenteMasInsuficiente){msgEl.textContent='Histórico ainda insuficiente para uma sugestão personalizada — dividindo a meta igualmente entre os serviços cadastrados.';msgEl.style.display='block';}
   else{msgEl.style.display='none';}
   if(sugestoes.length===0){
     document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:12px;color:#9ca3af">Cadastre serviços com valores para calcular a meta.</div>';
