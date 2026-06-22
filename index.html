@@ -2377,15 +2377,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta Geral da Empresa (R$)</label>
           <input type="number" id="meta-geral-valor" placeholder="Ex: 10000" oninput="calcularSugestaoMeta()" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
-        <div id="meta-sugestao-bloco" style="display:none;background:#f8f0ff;border:1px solid #e9d5ff;border-radius:10px;padding:14px">
-          <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:8px">💡 Sugestão de quantidade por serviço</div>
-          <div id="meta-sugestao-msg" style="display:none;font-size:11px;color:#7c3aed;opacity:.75;font-style:italic;margin-bottom:8px"></div>
-          <div id="meta-sugestao-lista"></div>
-          <div id="meta-sugestao-aviso" style="display:none;font-size:10px;color:#9ca3af;margin-top:8px;padding-top:8px;border-top:1px solid #f0e7ff">⚠️ Alguns atendimentos antigos não bateram com os nomes de serviço cadastrados hoje e foram ignorados nesse cálculo.</div>
-        </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Serviços (quantidade)</label>
-          <input type="number" id="meta-servicos-qtd" placeholder="Ex: 150" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Serviços que vai oferecer este mês</label>
+          <div id="meta-servicos-nota" style="display:none;font-size:11px;color:#7c3aed;background:#f8f0ff;border-radius:6px;padding:6px 10px;margin-bottom:8px"></div>
+          <div id="meta-servicos-lista-check" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding-right:2px"></div>
+          <div style="font-size:11px;color:#aaa;margin-top:6px">Selecione pelo menos 1 serviço para calcular.</div>
+        </div>
+        <div id="meta-resultado-calc" style="display:none;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:10px;padding:14px">
+          <div id="meta-resultado-titulo" style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px"></div>
+          <div id="meta-resultado-lista" style="display:flex;flex-direction:column;gap:2px"></div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e5e5;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;font-weight:700;color:#555">Meta de atendimentos</span>
+            <span id="meta-resultado-total" style="font-size:16px;font-weight:900;color:#7c3aed">0 atend.</span>
+          </div>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Produtos (quantidade)</label>
@@ -6173,9 +6177,8 @@ function lerMetaIndividualColabModal(){
   document.getElementById('meta-ind-servicos-qtd').value=nome?(individuaisServicos[nome]||''):'';
   document.getElementById('meta-ind-produtos-qtd').value=nome?(individuaisProdutos[nome]||''):'';
 }
-function abrirModalMetas(){
+async function abrirModalMetas(){
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
-  document.getElementById('meta-servicos-qtd').value = metasVendas.servicos||'';
   document.getElementById('meta-produtos-qtd').value = metasVendas.produtos||'';
   var selModal=document.getElementById('meta-colab-select-modal');
   if(selModal){
@@ -6190,6 +6193,7 @@ function abrirModalMetas(){
   var campos=document.getElementById('meta-colab-campos');
   if(campos)campos.style.display='none';
   openModal('modal-metas-vendas');
+  await renderizarCheckboxServicos();
   calcularSugestaoMeta();
 }
 
@@ -6206,13 +6210,19 @@ function salvarMetasVendas(){
     if(indSvcVal>0)individuaisServicos[colabSel]=indSvcVal;else delete individuaisServicos[colabSel];
     if(indProdVal>0)individuaisProdutos[colabSel]=indProdVal;else delete individuaisProdutos[colabSel];
   }
+  var metaVal=parseFloat(document.getElementById('meta-geral-valor').value)||0;
+  var checks=document.querySelectorAll('.meta-svc-check:checked');
+  var idsSel=Array.from(checks).map(function(cb){return cb.value;});
+  var somaP=idsSel.reduce(function(acc,id){var s=servicos.find(function(sv){return String(sv.id)===id;});return acc+(s?parseMoedaBR(s.preco):0);},0);
+  var totalAtend=somaP>0&&metaVal>0?Math.ceil(metaVal/somaP)*idsSel.length:0;
   metasVendas = {
-    geral: parseFloat(document.getElementById('meta-geral-valor').value)||0,
-    servicos: parseInt(document.getElementById('meta-servicos-qtd').value)||0,
+    geral: metaVal,
+    servicos: totalAtend,
     produtos: parseInt(document.getElementById('meta-produtos-qtd').value)||0,
     individuais: individuais,
     individuaisServicos: individuaisServicos,
-    individuaisProdutos: individuaisProdutos
+    individuaisProdutos: individuaisProdutos,
+    servicosSelecionados: idsSel
   };
   localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
   closeModal('modal-metas-vendas');
@@ -6220,67 +6230,66 @@ function salvarMetasVendas(){
   showAlert('Metas salvas!');
 }
 
-async function calcularSugestaoMeta(){
+function calcularSugestaoMeta(){
   var metaVal=parseFloat(document.getElementById('meta-geral-valor').value)||0;
-  var bloco=document.getElementById('meta-sugestao-bloco');
-  if(!bloco)return;
-  var servicosValidos=servicos.filter(function(s){return parseMoedaBR(s.preco)>0;});
-  if(metaVal<=0||servicosValidos.length===0){bloco.style.display='none';return;}
-  bloco.style.display='block';
-  document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:11px;color:#9ca3af;padding:4px 0">Calculando...</div>';
-  document.getElementById('meta-sugestao-msg').style.display='none';
-  var usouHistorico=false;
-  var historicoPresenteMasInsuficiente=false;
-  var proporcoes={};
-  var semMatchRatio=0;
-  try{
-    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
-      var hoje=new Date();
-      var tresMesesAtras=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
-      var r=await supa.from('agendamentos').select('servico,valor').eq('salao_id',window.SALAO_ID).gte('data',tresMesesAtras.toISOString().slice(0,10)).lte('data',hoje.toISOString().slice(0,10)).neq('status','Cancelado');
-      var rows=(r&&r.data)||[];
-      if(rows.length>0){
-        var recPorSvc={};var totalHist=0;var semMatchCount=0;
-        rows.forEach(function(row){
-          var nomeRow=(row.servico||'').trim().toLowerCase();
-          var match=servicosValidos.find(function(s){return nomeRow===s.nome.trim().toLowerCase();});
-          if(match){var val=parseMoedaBR(row.valor);if(val>0){recPorSvc[match.nome]=(recPorSvc[match.nome]||0)+val;totalHist+=val;}}
-          else{semMatchCount++;}
-        });
-        semMatchRatio=rows.length>0?semMatchCount/rows.length:0;
-        if(Object.keys(recPorSvc).length>0&&totalHist>0){
-          var matchCount=rows.length-semMatchCount;
-          var propTemp={};
-          servicosValidos.forEach(function(s){propTemp[s.nome]=(recPorSvc[s.nome]||0)/totalHist;});
-          var maxProp=servicosValidos.reduce(function(mx,s){return Math.max(mx,propTemp[s.nome]||0);},0);
-          if(matchCount>=30&&maxProp<=0.7){proporcoes=propTemp;usouHistorico=true;}
-          else{historicoPresenteMasInsuficiente=true;}
-        }
-      }
-    }
-  }catch(e){console.log('meta sugestao err',e);}
-  if(!usouHistorico){var pi=1/servicosValidos.length;servicosValidos.forEach(function(s){proporcoes[s.nome]=pi;});}
-  var sugestoes=servicosValidos.map(function(s){
-    var preco=parseMoedaBR(s.preco);
-    return{nome:s.nome,qtd:Math.ceil(metaVal*(proporcoes[s.nome]||0)/preco)};
-  }).filter(function(s){return s.qtd>0;});
-  sugestoes.sort(function(a,b){return b.qtd-a.qtd;});
-  var msgEl=document.getElementById('meta-sugestao-msg');
-  if(usouHistorico){msgEl.textContent='Baseado nos seus serviços mais vendidos nos últimos 3 meses.';msgEl.style.display='block';}
-  else if(historicoPresenteMasInsuficiente){msgEl.textContent='Histórico ainda insuficiente para uma sugestão personalizada — dividindo a meta igualmente entre os serviços cadastrados.';msgEl.style.display='block';}
-  else{msgEl.style.display='none';}
-  if(sugestoes.length===0){
-    document.getElementById('meta-sugestao-lista').innerHTML='<div style="font-size:12px;color:#9ca3af">Cadastre serviços com valores para calcular a meta.</div>';
-    return;
-  }
-  document.getElementById('meta-sugestao-lista').innerHTML=sugestoes.map(function(s){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0e7ff">'
+  var resultado=document.getElementById('meta-resultado-calc');
+  if(!resultado)return;
+  var checks=document.querySelectorAll('.meta-svc-check:checked');
+  var selecionados=Array.from(checks).map(function(cb){return servicos.find(function(s){return String(s.id)===cb.value;});}).filter(Boolean);
+  if(metaVal<=0||selecionados.length===0){resultado.style.display='none';return;}
+  var somaPrecos=selecionados.reduce(function(acc,s){return acc+parseMoedaBR(s.preco);},0);
+  if(somaPrecos<=0){resultado.style.display='none';return;}
+  resultado.style.display='block';
+  var qtdBase=Math.ceil(metaVal/somaPrecos);
+  var totalAtend=qtdBase*selecionados.length;
+  var metaFmt='R$ '+metaVal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  document.getElementById('meta-resultado-titulo').textContent='Para atingir '+metaFmt+', venda aproximadamente:';
+  document.getElementById('meta-resultado-lista').innerHTML=selecionados.map(function(s){
+    var pct=Math.round(parseMoedaBR(s.preco)/somaPrecos*100);
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eee">'
       +'<span style="font-size:12px;color:#374151">'+s.nome+'</span>'
-      +'<span style="font-size:13px;font-weight:800;color:#7c3aed">'+s.qtd+'×</span>'
+      +'<span style="font-size:12px;color:#6b7280;white-space:nowrap">'+qtdBase+'× <span style="color:#9ca3af;font-size:11px">('+pct+'% da meta)</span></span>'
       +'</div>';
   }).join('');
-  var avisoEl=document.getElementById('meta-sugestao-aviso');
-  if(avisoEl){avisoEl.style.display=semMatchRatio>0.2?'block':'none';}
+  document.getElementById('meta-resultado-total').textContent=totalAtend+' atend.';
+}
+
+async function renderizarCheckboxServicos(){
+  var container=document.getElementById('meta-servicos-lista-check');
+  var nota=document.getElementById('meta-servicos-nota');
+  if(!container)return;
+  container.innerHTML='<div style="font-size:11px;color:#aaa;padding:6px">Carregando...</div>';
+  var svcsValidos=servicos.filter(function(s){return parseMoedaBR(s.preco)>0;});
+  if(svcsValidos.length===0){container.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum serviço com preço cadastrado.</div>';if(nota)nota.style.display='none';return;}
+  var savedIds=metasVendas.servicosSelecionados||null;
+  var preselect=new Set();var usouHist=false;
+  try{
+    if(!savedIds&&typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+      var hoje=new Date();var t3=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
+      var r=await supa.from('agendamentos').select('servico').eq('salao_id',window.SALAO_ID).gte('data',t3.toISOString().slice(0,10)).lte('data',hoje.toISOString().slice(0,10)).neq('status','Cancelado');
+      var rows=(r&&r.data)||[];var matchCount=0;
+      rows.forEach(function(row){
+        var nr=(row.servico||'').trim().toLowerCase();
+        var m=svcsValidos.find(function(s){return nr===s.nome.trim().toLowerCase();});
+        if(m){preselect.add(String(m.id));matchCount++;}
+      });
+      if(matchCount>=30)usouHist=true;else preselect=new Set();
+    }
+  }catch(e){console.log('preselect err',e);}
+  if(nota){
+    if(usouHist){nota.textContent='Pré-selecionamos seus serviços mais vendidos. Ajuste como preferir.';nota.style.display='block';}
+    else{nota.style.display='none';}
+  }
+  container.innerHTML=svcsValidos.map(function(s){
+    var checked=savedIds?savedIds.includes(String(s.id)):usouHist?preselect.has(String(s.id)):false;
+    var precoFmt='R$ '+parseMoedaBR(s.preco).toFixed(2).replace('.',',');
+    return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:8px;background:#fff;border:1.5px solid '+(checked?'#c4b5fd':'#e5e5e5')+'">'
+      +'<input type="checkbox" class="meta-svc-check" value="'+s.id+'" '+(checked?'checked':'')
+      +' onchange="calcularSugestaoMeta()" style="width:15px;height:15px;accent-color:#7c3aed;flex-shrink:0">'
+      +'<span style="font-size:13px;color:#111;flex:1">'+s.nome+'</span>'
+      +'<span style="font-size:11px;color:#888">'+precoFmt+'</span>'
+      +'</label>';
+  }).join('');
 }
 
 function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
