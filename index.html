@@ -4332,7 +4332,7 @@ var agendamentosPorData={};
 
 const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
-const ANTHROPIC_KEY='';
+const BACKEND_URL='https://multi-backend-lfwp.onrender.com';
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nascimento:c.nascimento||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);}catch(e){}}
@@ -6268,21 +6268,18 @@ async function calcularSugestaoMeta(){
       }
     }
   }catch(e){console.log('hist err',e);}
-  if(metodo==='igual'&&typeof ANTHROPIC_KEY!=='undefined'&&ANTHROPIC_KEY){
+  if(metodo==='igual'&&typeof BACKEND_URL!=='undefined'&&BACKEND_URL){
     try{
-      var prompt='Voce e um assistente de gestao para saloes de beleza brasileiros.\nA empresaria selecionou os seguintes servicos para sua meta do mes:\n'
-        +selecionados.map(function(s){return '- '+s.nome+(s.cat?' ('+s.cat+')':'')+' - R$ '+parseMoedaBR(s.preco).toFixed(2).replace('.',',');}).join('\n')
-        +'\n\nDistribua percentuais de demanda realistas entre esses servicos, considerando que servicos mais frequentes (ex: design de sobrancelha, escova) naturalmente tem maior volume que servicos mais esporadicos (ex: alongamento, remocao).\nResponda SOMENTE em JSON, sem texto adicional, no formato:\n{"servico_nome": percentual_decimal, ...}\nonde a soma de todos os percentuais deve ser exatamente 1.0.';
-      var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:512,messages:[{role:'user',content:prompt}]})});
+      var bodyIA={servicos:selecionados.map(function(s){return{nome:s.nome,categoria:s.cat||'',preco:parseMoedaBR(s.preco)};}),meta:metaVal};
+      var resp=await fetch(BACKEND_URL+'/api/sugestao-meta',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(bodyIA)});
       if(resp.ok){
-        var data=await resp.json();
-        var txt=(data.content&&data.content[0]&&data.content[0].text)||'{}';
-        var jm=txt.match(/\{[\s\S]*\}/);
-        var parsed=jm?JSON.parse(jm[0]):{};
-        var soma=0;for(var k in parsed){soma+=parsed[k]||0;}
-        if(soma>0){selecionados.forEach(function(s){proporcoes[s.nome]=(parsed[s.nome]||0)/soma;});metodo='ia';}
+        var parsed=await resp.json();
+        if(parsed&&!parsed.erro){
+          var soma=0;for(var k in parsed){soma+=parsed[k]||0;}
+          if(soma>0){selecionados.forEach(function(s){proporcoes[s.nome]=(parsed[s.nome]||0)/soma;});metodo='ia';}
+        }
       }
-    }catch(e){console.log('claude api err',e);}
+    }catch(e){console.log('backend ia err',e);}
   }
   if(metodo==='igual'){var pi=1/selecionados.length;selecionados.forEach(function(s){proporcoes[s.nome]=pi;});}
   var sugestoes=selecionados.map(function(s){
@@ -6291,7 +6288,7 @@ async function calcularSugestaoMeta(){
     return{nome:s.nome,qtd:qtd,pct:Math.round((proporcoes[s.nome]||0)*100)};
   });
   var totalSvc=sugestoes.reduce(function(a,s){return a+s.qtd;},0);
-  var metodoLabel=metodo==='historico'?'Baseado no historico dos ultimos 3 meses':metodo==='ia'?'Sugerido por IA com base no perfil do salao':'Dividido igualmente entre os servicos'+(typeof ANTHROPIC_KEY!=='undefined'&&ANTHROPIC_KEY?'':' - configure ANTHROPIC_KEY para sugestao por IA');
+  var metodoLabel=metodo==='historico'?'Baseado no historico dos ultimos 3 meses':metodo==='ia'?'Sugerido por IA com base no perfil do salao':'Dividido igualmente entre os servicos'+(''  /* IA via backend */);
   document.getElementById('meta-resultado-lista').innerHTML=sugestoes.map(function(s){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eee">'
       +'<span style="font-size:12px;color:#374151">'+s.nome+'</span>'
