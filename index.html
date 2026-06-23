@@ -4744,7 +4744,29 @@ function openModal(id){
     if(wrap)renderPermissoesUI(wrap,getPermissoesDefault());
   }
 }
-function closeModal(id){document.getElementById(id).classList.remove('open')}
+function resetFormAgendar(){
+  var get=function(i){return document.getElementById(i);};
+  var el;
+  if((el=get('ag-cliente')))el.value='';
+  if((el=get('ag-cadastrar-btn-wrap')))el.style.display='none';
+  if((el=get('ag-hora')))el.value='09:00';
+  if((el=get('ag-obs')))el.value='';
+  if((el=get('ag-sinal-ativo'))){el.checked=false;var area=get('ag-sinal-area');if(area)area.style.display='none';}
+  if((el=get('ag-sinal-pct')))el.value='50';
+  if((el=get('ag-sinal-val')))el.value='';
+  document.querySelectorAll('input[name="ag-sinal-status"]').forEach(function(r){r.checked=r.value==='pendente';});
+  document.querySelectorAll('.ag-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';});
+  agFormaSinal='';
+  if((el=get('ag-servicos-extra-list')))el.innerHTML='';
+  if((el=get('ag-produtos-list')))el.innerHTML='';
+  if((el=get('ag-pacote-extra-list')))el.innerHTML='';
+  if((el=get('ag-pacote-info')))el.style.display='none';
+  if(typeof agSetTipo==='function')agSetTipo('servico');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='modal-agendar')resetFormAgendar();
+}
 function saveModal(id,msg){closeModal(id);showAlert(msg)}
 
 function showAlert(msg){
@@ -7342,7 +7364,7 @@ function abrirAgendaPopup(key,dados,event){
     <div style="flex-shrink:0;position:sticky;bottom:0;background:#fff;padding-top:12px;padding-bottom:20px;box-shadow:0 -6px 16px rgba(0,0,0,.06);z-index:1">
     <div style="display:flex;gap:6px">
       <button onclick="fecharAgendaPopup()" style="flex:1;padding:9px;background:#f5f5f5;color:#333;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">Fechar</button>
-      <button onclick="fecharAgendaPopup();showAlert('Agendamento editado!')" style="flex:1;padding:9px;background:#111;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">✏️ Editar</button>
+      <button onclick="fecharAgendaPopup();showAlert('Agendamento salvo!')" style="flex:1;padding:9px;background:#111;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer">💾 Salvar</button>
     </div>
     </div>
   `;
@@ -10540,6 +10562,7 @@ function normalizarHoraAgenda(hora){
 }
 function abrirModalAgendar(prof,hora){
   if(!caixaState||!caixaState.aberto){showAlert('⚠️ Abra o caixa do dia antes de realizar agendamentos.');return;}
+  resetFormAgendar();
   var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
   agFiltrarServicos();
   var d=agendaDataAtual;
