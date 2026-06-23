@@ -1117,7 +1117,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="fluxo-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #22c55e;cursor:pointer" onclick="switchFluxoTab('lancamentos',document.getElementById('fluxo-tab-lancamentos'))">
           <div style="font-size:10px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📥 Receitas do Mês</div>
-          <div style="font-size:26px;font-weight:900;color:#22c55e">R$ 0,00</div>
+          <div id="fluxo-kpi-receita-val" style="font-size:26px;font-weight:900;color:#22c55e">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
@@ -1125,7 +1125,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #ef4444;cursor:pointer" onclick="switchFluxoTab('lancamentos',document.getElementById('fluxo-tab-lancamentos'));var s=document.getElementById('fluxo-filtro-tipo');if(s){s.value='Despesa';renderFluxo();}">
           <div style="font-size:10px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📤 Despesas do Mês</div>
-          <div style="font-size:26px;font-weight:900;color:#ef4444">R$ 0,00</div>
+          <div id="fluxo-kpi-despesa-val" style="font-size:26px;font-weight:900;color:#ef4444">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <span style="background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
             <span style="font-size:10px;color:#aaa">vs mês anterior</span>
@@ -1133,14 +1133,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;border-left:4px solid #8b5cf6;cursor:pointer" onclick="switchFluxoTab('dre',document.getElementById('fluxo-tab-dre'))">
           <div style="font-size:10px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">💜 Lucro Líquido</div>
-          <div style="font-size:26px;font-weight:900;color:#111">R$ 0,00</div>
+          <div id="fluxo-kpi-lucro-val" style="font-size:26px;font-weight:900;color:#111">R$ 0,00</div>
           <div style="display:flex;align-items:center;gap:5px;margin-top:5px">
             <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">Margem 74%</span>
           </div>
         </div>
         <div style="background:#111;border-radius:14px;padding:18px;cursor:pointer" onclick="showPage('caixa')">
           <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏦 Saldo em Caixa</div>
-          <div style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
+          <div id="fluxo-kpi-saldo-val" style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
           <div id="dash-saldo-caixa-status" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
         </div>
       </div>
@@ -10459,6 +10459,26 @@ function renderFluxo(){
   var tipo=document.getElementById('fluxo-filtro-tipo')?.value||'';
   var cat=document.getElementById('fluxo-filtro-cat')?.value||'';
   var lancsMes=fluxoLancamentosDoMes();
+  var lancsMesConf=lancsMes.filter(function(l){return l.status==='confirmado';});
+  var kpiR=lancsMesConf.reduce(function(s,l){return l.tipo==='receita'?s+(l.val||0):s;},0);
+  var kpiD=lancsMesConf.reduce(function(s,l){return l.tipo==='despesa'?s+(l.val||0):s;},0);
+  var kpiL=kpiR-kpiD;
+  var elKpiR=document.getElementById('fluxo-kpi-receita-val');
+  var elKpiD=document.getElementById('fluxo-kpi-despesa-val');
+  var elKpiL=document.getElementById('fluxo-kpi-lucro-val');
+  var elKpiS=document.getElementById('fluxo-kpi-saldo-val');
+  if(elKpiR)elKpiR.textContent=fluxoFmtMoeda(kpiR);
+  if(elKpiD)elKpiD.textContent=fluxoFmtMoeda(kpiD);
+  if(elKpiL){elKpiL.textContent=fluxoFmtMoeda(kpiL);elKpiL.style.color=kpiL>=0?'#111':'#ef4444';}
+  if(elKpiS){
+    var cxSaldo=0;
+    if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto){
+      var cxEnt=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(m.valor||0);},0);
+      var cxSai=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(m.valor||0);},0);
+      cxSaldo=(caixaState.troco||0)+cxEnt-cxSai;
+    }
+    elKpiS.textContent=fluxoFmtMoeda(cxSaldo);
+  }
   var filtered=lancsMes.filter(function(l){
     return(!tipo||l.tipo===tipo)&&(!cat||l.cat===cat);
   });
