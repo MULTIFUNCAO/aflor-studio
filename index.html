@@ -8816,11 +8816,16 @@ const iaInsights=[
 const iaCores={alerta:'#fee2e2',insight:'#f0f0f0',sugestao:'#fef3c7'};
 const iaBordas={alerta:'#ef4444',insight:'#111',sugestao:'#f59e0b'};
 
-const IA_SYSTEM_PROMPT=`Você é a assistente estratégica pessoal da Ana Flor, dona do Aflor Beauty em Guarulhos.
+function iaGetNome(){return(window.SALAO_RESPONSAVEL||'').split(' ')[0]||'você';}
+function iaGetSalao(){return window.SALAO_NOME||'seu salão';}
+
+function iaGetSystemPrompt(){
+  const nome=iaGetNome(),salao=iaGetSalao();
+  return `Você é a assistente estratégica pessoal de ${nome}, dona do ${salao}.
 Você tem acesso aos dados reais do salão e responde de forma direta, calorosa e prática — como uma consultora de confiança, não como um relatório.
 
 REGRAS DE RESPOSTA:
-- Sempre chame a usuária de "Ana Flor" ou "Ana"
+- Sempre chame a usuária de "${nome}"
 - Nunca comece com dados frios ou porcentagens soltas
 - Primeiro valide o problema/dúvida dela, depois dê a solução prática
 - Use exemplos concretos: scripts de resposta, horários reais, nomes de serviços do salão
@@ -8831,14 +8836,18 @@ REGRAS DE RESPOSTA:
 
 EXEMPLO DE TOM:
 Pergunta: "Como responder clientes para arrumar mais clientes?"
-Resposta: "Ana Flor, a chave tá na velocidade e na oferta de horário logo de cara. Quando uma cliente perguntar sobre Coloração no WhatsApp, responde assim: 'Oi! Coloração aqui é R$ 40, tenho horário quinta às 14h ou sexta às 10h — qual fica melhor pra você?' Quem recebe um horário sugerido fecha muito mais do que quem recebe só o preço. Quer que eu monte um script assim pra cada serviço do Aflor?"`;
+Resposta: "${nome}, a chave tá na velocidade e na oferta de horário logo de cara. Quando uma cliente perguntar sobre Coloração no WhatsApp, responde assim: 'Oi! Coloração aqui é R$ 40, tenho horário quinta às 14h ou sexta às 10h — qual fica melhor pra você?' Quem recebe um horário sugerido fecha muito mais do que quem recebe só o preço. Quer que eu monte um script assim pra cada serviço do ${salao}?"`;
+}
 
-const iaRespostas={
-  'horários ociosos':'Ana Flor, essa é uma oportunidade de ouro! Terças e quartas entre 13h-15h ficam bem vazias — é o horário perfeito pra uma promoção relâmpago. Que tal mandar essa mensagem pras suas clientes hoje: "Oi! Tenho horário livre amanhã às 14h com desconto especial — quer aproveitar?" Simples assim, e já enche a agenda. Quer que eu monte um texto pronto pra WhatsApp pra cada serviço?',
-  'serviço mais lucrativo':'Ana, coloração e progressiva são suas campeãs — margem boa e as clientes adoram. A dica é: quando uma cliente agendar só manicure, você faz um comentário natural: "Sua raiz tá crescendo, posso encaixar uma coloração junto?" Isso aumenta o ticket sem forçar venda. Quer um script de abordagem pra sua equipe usar?',
-  'clientes sumidas':'Ana Flor, tem umas 7 clientes que sumiram faz mais de 30 dias — Mãe Ana, Julia Barrozo, Denilda e mais 4. A melhor forma de reativar é uma mensagem direta e pessoal, tipo: "Saudade de você aqui no Aflor! Que tal agendarmos algo essa semana? Tenho horário quinta e sexta 😊" Quer que eu monte essa mensagem pra mandar hoje?',
-  'aumentar faturamento':'Ana, três movimentos rápidos que podem trazer mais R$ 700 esse mês: reativar as clientes sumidas, criar um combo Manicure+Pedicure com preço especial, e colocar uma promoção nos horários vazios de terça/quarta. Qual dessas você quer atacar primeiro? Posso te ajudar a montar o plano de ação agora mesmo.',
-};
+function iaGetRespostas(){
+  const nome=iaGetNome(),salao=iaGetSalao();
+  return{
+    'horários ociosos':`${nome}, essa é uma oportunidade de ouro! Terças e quartas entre 13h-15h ficam bem vazias — é o horário perfeito pra uma promoção relâmpago. Que tal mandar essa mensagem pras suas clientes hoje: "Oi! Tenho horário livre amanhã às 14h com desconto especial — quer aproveitar?" Simples assim, e já enche a agenda. Quer que eu monte um texto pronto pra WhatsApp pra cada serviço?`,
+    'serviço mais lucrativo':`${nome}, coloração e progressiva são suas campeãs — margem boa e as clientes adoram. A dica é: quando uma cliente agendar só manicure, você faz um comentário natural: "Sua raiz tá crescendo, posso encaixar uma coloração junto?" Isso aumenta o ticket sem forçar venda. Quer um script de abordagem pra sua equipe usar?`,
+    'clientes sumidas':`${nome}, tem umas 7 clientes que sumiram faz mais de 30 dias. A melhor forma de reativar é uma mensagem direta e pessoal, tipo: "Saudade de você aqui no ${salao}! Que tal agendarmos algo essa semana? Tenho horário quinta e sexta 😊" Quer que eu monte essa mensagem pra mandar hoje?`,
+    'aumentar faturamento':`${nome}, três movimentos rápidos que podem trazer mais R$ 700 esse mês: reativar as clientes sumidas, criar um combo Manicure+Pedicure com preço especial, e colocar uma promoção nos horários vazios de terça/quarta. Qual dessas você quer atacar primeiro? Posso te ajudar a montar o plano de ação agora mesmo.`,
+  };
+}
 
 function renderIA(){
   const grid=document.getElementById('ia-insights-grid');
@@ -8857,7 +8866,7 @@ function renderIA(){
   // Inicializar chat com mensagem de boas-vindas
   const chat=document.getElementById('ia-chat-msgs');
   if(chat&&chat.children.length===0){
-    adicionarMsgIA('Olá! 🌷 Sou sua assistente estratégica da A Flor Business. Analisei seus dados e tenho 4 insights importantes para você hoje. Como posso ajudar?','ia');
+    adicionarMsgIA(`Olá, ${iaGetNome()}! 🌷 Sou sua assistente estratégica do ${iaGetSalao()}. Analisei seus dados e tenho insights importantes para você hoje. Como posso ajudar?`,'ia');
   }
 }
 
@@ -8874,14 +8883,15 @@ async function enviarIA(){
   if(chat)chat.appendChild(loadingEl);
   if(chat)chat.scrollTop=chat.scrollHeight;
   try{
-    const r=await fetch(BACKEND_URL+'/api/ia-chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({system:IA_SYSTEM_PROMPT,message:msg})});
+    const r=await fetch(BACKEND_URL+'/api/ia-chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({system:iaGetSystemPrompt(),message:msg})});
     if(loadingEl.parentNode)loadingEl.remove();
     if(r.ok){const d=await r.json();adicionarMsgIA(d.resposta||d.content||d.text||'Não entendi, pode reformular?','ia');}
     else throw new Error('backend err');
   }catch(e){
     if(loadingEl.parentNode)loadingEl.remove();
-    const key=Object.keys(iaRespostas).find(k=>msg.toLowerCase().includes(k.split(' ')[0].toLowerCase())||msg.toLowerCase().includes((k.split(' ')[1]||'').toLowerCase()));
-    adicionarMsgIA(key?iaRespostas[key]:'Ana Flor, entendi! Me dá mais um segundo — pode me contar melhor o que quer saber? Pode perguntar sobre agenda, clientes, faturamento ou qualquer coisa do salão 😊','ia');
+    const respostas=iaGetRespostas();
+    const key=Object.keys(respostas).find(k=>msg.toLowerCase().includes(k.split(' ')[0].toLowerCase())||msg.toLowerCase().includes((k.split(' ')[1]||'').toLowerCase()));
+    adicionarMsgIA(key?respostas[key]:`${iaGetNome()}, entendi! Me dá mais um segundo — pode me contar melhor o que quer saber? Pode perguntar sobre agenda, clientes, faturamento ou qualquer coisa do salão 😊`,'ia');
   }
 }
 
