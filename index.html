@@ -7192,6 +7192,8 @@ function abrirAgendaPopup(key,dados,event){
   var sinalInfoPg=lerSinalAgendamento(dados);
   var servicoValPg=lerValorServicoAgendamento(dados);
   var nomeSvcPg=nomeServicoAgendamento(dados);
+  var _svcCat=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===(dados.servico||'').split('+')[0].trim().split('(')[0].trim();});
+  var svcCatalogoPreco=_svcCat?parseMoedaBR(_svcCat.preco):servicoValPg;
   var sinalInputPg=sinalInfoPg.valor;
   var abatePg=sinalInfoPg.pago?sinalInputPg:0;
   // Inicializar estado de extras e desconto para este popup
@@ -7245,7 +7247,20 @@ function abrirAgendaPopup(key,dados,event){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">🕐</span>
-        <div><div style="font-size:12px;color:#888">Horário</div><div style="font-size:13px;font-weight:700">${dados.hora} — ${dados.duracao||'45 min'}</div></div>
+        <div style="flex:1">
+          <div style="font-size:12px;color:#888">Horário</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span id="popup-hora-display" style="font-size:13px;font-weight:700">${dados.hora} — ${dados.duracao||'45 min'}</span>
+            <button onclick="popupToggleEditarHora('${key}')" style="background:none;border:none;cursor:pointer;color:#6366f1;font-size:11px;padding:0;line-height:1" title="Editar horário">✏️</button>
+          </div>
+          <div id="popup-hora-edit-wrap" style="display:none;margin-top:4px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="time" id="popup-hora-input" value="${dados.hora}" style="padding:4px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;outline:none"/>
+              <button onclick="popupSalvarHora('${key}')" style="padding:4px 10px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">OK</button>
+              <button onclick="popupToggleEditarHora('${key}')" style="padding:4px 8px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">✕</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">💰</span>
@@ -7276,9 +7291,19 @@ function abrirAgendaPopup(key,dados,event){
         ${comandaBadgeHtml}
       </div>
       <div style="border-top:1px solid #f0f0f0;padding-top:8px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px">
           <span id="popup-servico-nome" style="color:#555">${nomeSvcPg}</span>
-          <span id="popup-servico-valor" style="font-weight:700">${formatMoedaBR(servicoValPg)}</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span id="popup-servico-valor" style="font-weight:700">${formatMoedaBR(servicoValPg)}</span>
+            <button onclick="popupToggleEditarValorPrincipal('${key}')" style="background:none;border:none;cursor:pointer;color:#6366f1;font-size:10px;padding:0;line-height:1" title="Editar valor">✏️</button>
+          </div>
+        </div>
+        <div id="popup-valor-principal-edit" style="display:none;margin-bottom:6px;background:#f0f4ff;border-radius:7px;padding:6px 8px">
+          <div style="font-size:10px;color:#888;margin-bottom:4px">Valor cobrado <span style="color:#aaa">— catálogo: ${formatMoedaBR(svcCatalogoPreco)}</span></div>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="popup-valor-principal-input" min="0" step="0.01" value="${servicoValPg.toFixed(2)}" style="flex:1;padding:5px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;text-align:right;outline:none"/>
+            <button onclick="popupSalvarValorPrincipal('${key}')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">OK</button>
+          </div>
         </div>
         <div id="popup-extras-lista">${popupExtrasToHtml(key)}</div>
         <button id="popup-btn-add-svc" onclick="popupAbrirFormExtra('${key}')" style="width:100%;margin:4px 0 4px;padding:6px;background:#f5f5f5;color:#555;border:1.5px dashed #ccc;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer">+ Adicionar Serviço</button><div id="popup-form-extra-wrap"></div>
@@ -7656,16 +7681,100 @@ function popupExtrasToHtml(key){
       return '<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;padding-left:10px">'
         +'<span>📦 '+p.nome+'</span><span>'+formatMoedaBR(p.valor)+'</span></div>';
     }).join('');
+    var _cat=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===e.nome;});
+    var _catPreco=_cat?parseMoedaBR(_cat.preco):e.valor;
+    var _catLabel=_catPreco!==e.valor?(' <span style="font-size:9px;color:#aaa;text-decoration:line-through">'+formatMoedaBR(_catPreco)+'</span>'):'';
     return '<div style="border:1px solid #e5e5e5;border-radius:7px;padding:6px 8px;margin-bottom:6px;background:#fafafa">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
       +'<div><span style="font-size:12px;color:#333;font-weight:600">+ '+e.nome+'</span>'+profLabel+'</div>'
-      +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-      +'<span style="font-size:12px;font-weight:700">'+formatMoedaBR(e.valor)+'</span>'
+      +'<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
+      +_catLabel
+      +'<input type="number" value="'+e.valor.toFixed(2)+'" min="0" step="0.01" oninput="popupEditarValorExtra(\''+key+'\','+i+',this.value)" title="Catálogo: '+formatMoedaBR(_catPreco)+'" style="width:72px;padding:3px 6px;border:1.5px solid #e5e5e5;border-radius:6px;font-size:12px;font-weight:700;text-align:right;outline:none;color:#111"/>'
       +'<button onclick="popupRemoverExtra(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>'
       +'</div></div>'
       +prodsHtml
       +'</div>';
   }).join('');
+}
+
+function popupToggleEditarHora(key){
+  var wrap=document.getElementById('popup-hora-edit-wrap');
+  if(!wrap)return;
+  wrap.style.display=wrap.style.display==='none'?'block':'none';
+}
+
+function popupSalvarHora(key){
+  var inp=document.getElementById('popup-hora-input');
+  if(!inp||!inp.value)return;
+  var novaHora=inp.value;
+  var a=agendaDiaAtual[key];
+  if(a)a.hora=novaHora;
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key])agendamentosPorData[dataKey][key].hora=novaHora;
+  var disp=document.getElementById('popup-hora-display');
+  if(disp)disp.textContent=novaHora+' — '+(a&&a.duracao?a.duracao:'45 min');
+  var wrap=document.getElementById('popup-hora-edit-wrap');
+  if(wrap)wrap.style.display='none';
+}
+
+function popupToggleEditarValorPrincipal(key){
+  var wrap=document.getElementById('popup-valor-principal-edit');
+  if(!wrap)return;
+  wrap.style.display=wrap.style.display==='none'?'block':'none';
+}
+
+function popupSalvarValorPrincipal(key){
+  var inp=document.getElementById('popup-valor-principal-input');
+  if(!inp)return;
+  var novoValor=parseFloat(inp.value)||0;
+  var a=agendaDiaAtual[key];
+  if(a)a.valor=novoValor;
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key])agendamentosPorData[dataKey][key].valor=novoValor;
+  var disp=document.getElementById('popup-servico-valor');
+  if(disp)disp.textContent=typeof formatMoedaBR==='function'?formatMoedaBR(novoValor):novoValor.toFixed(2);
+  var wrap=document.getElementById('popup-valor-principal-edit');
+  if(wrap)wrap.style.display='none';
+  popupAtualizarTotaisUI(key);
+}
+
+function popupEditarValorExtra(key,idx,val){
+  var novoValor=parseFloat(val)||0;
+  if(popupServicosExtras&&popupServicosExtras[idx]!=null)popupServicosExtras[idx].valor=novoValor;
+  sincronizarExtrasDesconto(key);
+  popupAtualizarTotaisUI(key);
+}
+
+function popupAtualizarTotaisUI(key){
+  var calc=calcComandaPopup(key);
+  var elServicoVal=document.getElementById('popup-servico-valor');
+  if(elServicoVal)elServicoVal.textContent=formatMoedaBR(calc.servicoVal);
+  var elValorHeader=document.getElementById('popup-valor-servico');
+  if(elValorHeader)elValorHeader.textContent=formatMoedaBR(calc.servicoVal);
+  var linhaAbate=document.getElementById('popup-linha-sinal-abate');
+  var elAbate=document.getElementById('popup-sinal-abate-valor');
+  if(linhaAbate){
+    if(calc.sinalPago&&calc.sinalInput>0){
+      linhaAbate.style.display='flex';
+      if(elAbate)elAbate.textContent='- '+formatMoedaBR(calc.sinalInput);
+    } else {
+      linhaAbate.style.display='none';
+    }
+  }
+  var linhaDesc=document.getElementById('popup-linha-desconto');
+  var elDescExib=document.getElementById('popup-desconto-exibir');
+  if(linhaDesc){
+    if(calc.descontoVal>0){
+      linhaDesc.style.display='flex';
+      if(elDescExib)elDescExib.textContent='- '+formatMoedaBR(calc.descontoVal);
+    } else {
+      linhaDesc.style.display='none';
+    }
+  }
+  var elTotal=document.getElementById('popup-total-pagar');
+  if(elTotal)elTotal.textContent=formatMoedaBR(calc.totalPagar);
 }
 
 function sincronizarExtrasDesconto(key){
@@ -7735,7 +7844,11 @@ function popupAbrirFormExtra(key){
     +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;margin-bottom:8px">NOVO SERVIÇO EXTRA</div>'
     +'<div style="margin-bottom:6px">'
     +'<label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Serviço</label>'
-    +'<select id="popup-add-svc-sel" onchange="popupFormExtraUpdateProf()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff">'+svcOpts+'</select>'
+    +'<select id="popup-add-svc-sel" onchange="popupFormExtraUpdateProf();popupFormExtraUpdateValor()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff">'+svcOpts+'</select>'
+    +'</div>'
+    +'<div style="margin-bottom:6px">'
+    +'<label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Valor cobrado <span id="popup-add-svc-cat-ref" style="color:#aaa;font-weight:400">(catálogo: R$ '+(lista[0]?lista[0].preco:'—')+')</span></label>'
+    +'<input type="number" id="popup-add-svc-valor" min="0" step="0.01" value="'+(lista[0]?parseMoedaBR(lista[0].preco).toFixed(2):'0.00')+'" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;font-weight:700;text-align:right;outline:none;box-sizing:border-box"/>'
     +'</div>'
     +'<div style="margin-bottom:8px">'
     +'<label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Profissional</label>'
@@ -7773,6 +7886,18 @@ function popupFormExtraUpdateProf(){
   profSel.innerHTML=profOpts;
 }
 
+function popupFormExtraUpdateValor(){
+  var sel=document.getElementById('popup-add-svc-sel');
+  if(!sel)return;
+  var nome=sel.options[sel.selectedIndex]?.getAttribute('data-nome')||'';
+  var svc=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nome;});
+  var catPreco=svc?(typeof parseMoedaBR==='function'?parseMoedaBR(svc.preco):parseFloat(svc.preco)||0):0;
+  var valInput=document.getElementById('popup-add-svc-valor');
+  if(valInput)valInput.value=catPreco.toFixed(2);
+  var refEl=document.getElementById('popup-add-svc-cat-ref');
+  if(refEl)refEl.textContent='(catálogo: R$ '+(svc?svc.preco:'—')+')';
+}
+
 function popupFormExtraAddProduto(){
   var list=document.getElementById('popup-add-svc-produtos');
   if(!list)return;
@@ -7790,7 +7915,8 @@ function popupConfirmarExtra(key){
   var selSvc=document.getElementById('popup-add-svc-sel');
   if(!selSvc||!selSvc.value){showAlert('Selecione um serviço.');return;}
   var nome=selSvc.options[selSvc.selectedIndex]?.getAttribute('data-nome')||selSvc.options[selSvc.selectedIndex]?.text.split(' — ')[0]||'';
-  var valor=parseFloat(selSvc.value)||0;
+  var _valorInput=document.getElementById('popup-add-svc-valor');
+  var valor=_valorInput?parseFloat(_valorInput.value)||0:parseFloat(selSvc.value)||0;
   var prof=(document.getElementById('popup-add-svc-prof')?.value||'').trim();
   var produtos=[];
   document.querySelectorAll('#popup-add-svc-produtos > div').forEach(function(row){
