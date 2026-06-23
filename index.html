@@ -1573,61 +1573,97 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
     <!-- METAS E TAREFAS -->
     <div class="page" id="page-metas">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;gap:6px">
-          <button class="tab active" id="tab-meta-admin" onclick="switchMetaView('admin',this)">🎯 Administrador</button>
-          <button class="tab" id="tab-meta-colab" onclick="switchMetaView('colab',this)">👤 Visão do colaborador</button>
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:19px;font-weight:900;color:#111;letter-spacing:-0.3px">Metas e Tarefas</div>
+          <div style="font-size:12px;color:#aaa;margin-top:2px">Acompanhamento do progresso da equipe</div>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-nova-meta" onclick="openModal('modal-nova-meta')">+ Nova Meta / Tarefa</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="background:#f5f5f5;border-radius:10px;padding:3px;display:flex;gap:2px">
+            <button class="tab active" id="tab-meta-admin" onclick="switchMetaView('admin',this)">Administrador</button>
+            <button class="tab" id="tab-meta-colab" onclick="switchMetaView('colab',this)">Colaborador</button>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-nova-meta" onclick="openModal('modal-nova-meta')">+ Nova Meta</button>
+        </div>
       </div>
+
+      <!-- Admin view -->
       <div id="metas-admin-view">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
-          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #111">
-            <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:4px">Total de Tarefas</div>
-            <div style="font-size:24px;font-weight:800" id="meta-stat-total">0</div>
+        <!-- KPI Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+          <div style="background:#fff;border-radius:14px;padding:16px 18px;border:1px solid #f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px">Total</span>
+              <span style="width:28px;height:28px;background:#f5f5f5;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </span>
+            </div>
+            <div style="font-size:30px;font-weight:900;color:#111;line-height:1" id="meta-stat-total">0</div>
+            <div style="font-size:11px;color:#ccc;margin-top:5px">metas e tarefas</div>
           </div>
-          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #22c55e">
-            <div style="font-size:10px;font-weight:700;color:#22c55e;text-transform:uppercase;margin-bottom:4px">Concluídas</div>
-            <div style="font-size:24px;font-weight:800;color:#22c55e" id="meta-stat-ok">0</div>
+          <div style="background:#fff;border-radius:14px;padding:16px 18px;border:1px solid #f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.8px">Concluídas</span>
+              <span style="width:28px;height:28px;background:#dcfce7;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </div>
+            <div style="font-size:30px;font-weight:900;color:#22c55e;line-height:1" id="meta-stat-ok">0</div>
+            <div style="font-size:11px;color:#ccc;margin-top:5px">finalizadas</div>
           </div>
-          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #f59e0b">
-            <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:4px">Em Andamento</div>
-            <div style="font-size:24px;font-weight:800;color:#f59e0b" id="meta-stat-and">0</div>
+          <div style="background:#fff;border-radius:14px;padding:16px 18px;border:1px solid #f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.8px">Andamento</span>
+              <span style="width:28px;height:28px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </span>
+            </div>
+            <div style="font-size:30px;font-weight:900;color:#f59e0b;line-height:1" id="meta-stat-and">0</div>
+            <div style="font-size:11px;color:#ccc;margin-top:5px">em progresso</div>
           </div>
-          <div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;border-left:4px solid #ef4444">
-            <div style="font-size:10px;font-weight:700;color:#ef4444;text-transform:uppercase;margin-bottom:4px">Atrasadas</div>
-            <div style="font-size:24px;font-weight:800;color:#ef4444" id="meta-stat-atr">0</div>
+          <div style="background:#fff;border-radius:14px;padding:16px 18px;border:1px solid #f0f0f0;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.8px">Atrasadas</span>
+              <span style="width:28px;height:28px;background:#fee2e2;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </span>
+            </div>
+            <div style="font-size:30px;font-weight:900;color:#ef4444;line-height:1" id="meta-stat-atr">0</div>
+            <div style="font-size:11px;color:#ccc;margin-top:5px">precisam de atenção</div>
           </div>
         </div>
 
-        <!-- Filtro por colaborador -->
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-          <select class="btn btn-outline btn-sm" id="meta-filtro-colab" onchange="renderMetas()">
-            <option value="">Todos os colaboradors</option>
+        <!-- Filter bar -->
+        <div style="background:#fff;border-radius:12px;border:1px solid #f0f0f0;padding:10px 14px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <select id="meta-filtro-colab" onchange="renderMetas()" style="font-size:12px;font-weight:600;color:#333;border:1.5px solid #ebebeb;border-radius:8px;padding:6px 10px;background:#fafafa;cursor:pointer;outline:none">
+            <option value="">Todos os colaboradores</option>
             <option>Ana Flor</option><option>Edu</option><option>Jenny</option>
             <option>Vi</option><option>Lara</option><option>Angélica</option>
           </select>
-          <select class="btn btn-outline btn-sm" id="meta-filtro-status" onchange="renderMetas()">
+          <select id="meta-filtro-status" onchange="renderMetas()" style="font-size:12px;font-weight:600;color:#333;border:1.5px solid #ebebeb;border-radius:8px;padding:6px 10px;background:#fafafa;cursor:pointer;outline:none">
             <option value="">Todos os status</option>
             <option value="pendente">Pendente</option>
             <option value="andamento">Em andamento</option>
             <option value="concluida">Concluída</option>
             <option value="atrasada">Atrasada</option>
           </select>
-          <select class="btn btn-outline btn-sm" id="meta-filtro-tipo" onchange="renderMetas()">
-            <option value="">Todos os tipos</option>
-            <option value="meta">Meta</option>
-            <option value="tarefa">Tarefa</option>
+          <select id="meta-filtro-tipo" onchange="renderMetas()" style="font-size:12px;font-weight:600;color:#333;border:1.5px solid #ebebeb;border-radius:8px;padding:6px 10px;background:#fafafa;cursor:pointer;outline:none">
+            <option value="">Metas e Tarefas</option>
+            <option value="meta">Somente Metas</option>
+            <option value="tarefa">Somente Tarefas</option>
           </select>
         </div>
 
         <div id="metas-lista"></div>
       </div>
 
-      <!-- FUNCIONÁRIO VIEW -->
+      <!-- Colaborador view -->
       <div id="metas-colab-view" style="display:none">
-        <div style="display:flex;gap:8px;margin-bottom:16px">
-          <select class="btn btn-outline btn-sm" id="meta-colab-select" onchange="renderMetasColab()">
+        <div style="background:#fff;border-radius:12px;border:1px solid #f0f0f0;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <select id="meta-colab-select" onchange="renderMetasColab()" style="font-size:13px;font-weight:600;color:#333;border:1.5px solid #ebebeb;border-radius:8px;padding:7px 12px;background:#fafafa;cursor:pointer;outline:none">
             <option>Ana Flor</option><option>Edu</option><option>Jenny</option>
             <option>Vi</option><option>Lara</option><option>Angélica</option>
           </select>
@@ -9733,48 +9769,59 @@ function renderMetas(){
     lista.innerHTML='<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:36px;margin-bottom:10px">🎯</div><p style="font-weight:600">Nenhuma meta encontrada</p></div>';
     return;
   }
+  const prioBgCor={baixa:'#dcfce7',media:'#fef3c7',alta:'#fee2e2'};
+  const prioTxtCor={baixa:'#16a34a',media:'#d97706',alta:'#dc2626'};
+  const prioLabel={baixa:'Baixa',media:'Média',alta:'Alta'};
   lista.innerHTML=filtered.map(m=>{
     const sl=metaStatusLabel[m.status];
     const pct=getPct(m);
     const dias=getDiasRestantes(m.prazo);
-    const diasTxt=dias<0?`<span style="color:#ef4444;font-weight:700">${Math.abs(dias)} dias atrasado</span>`:dias===0?`<span style="color:#ef4444;font-weight:700">Vence hoje!</span>`:`<span style="color:#888">${dias} dias restantes</span>`;
-    const funcBadges=m.colab.map(f=>`<span style="background:#f0f0f0;color:#333;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${f}</span>`).join('');
-    return `<div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px 20px;margin-bottom:10px;border-left:4px solid ${prioCor[m.prio]}">
-      <div style="display:flex;align-items:flex-start;gap:12px">
-        <div style="font-size:24px;flex-shrink:0">${m.tipo==='meta'?'🎯':'✅'}</div>
+    const diasTxt=dias<0
+      ?`<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px">${Math.abs(dias)}d atrasado</span>`
+      :dias===0
+      ?`<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px">Vence hoje</span>`
+      :`<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px">${dias}d restantes</span>`;
+    const funcBadges=m.colab.map(f=>`<span style="background:#f0f0f0;color:#444;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px">${f}</span>`).join('');
+    const tipoCorBg=m.tipo==='meta'?'#eff6ff':'#f0fdf4';
+    const tipoCorTxt=m.tipo==='meta'?'#2563eb':'#16a34a';
+    const tipoLabel=m.tipo==='meta'?'Meta':'Tarefa';
+    const barCor=pct>=100?'#22c55e':pct>=60?'#f59e0b':m.status==='atrasada'?'#ef4444':'#111';
+    return `<div style="background:#fff;border-radius:14px;border:1px solid #f0f0f0;padding:18px 20px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.04);border-left:3px solid ${prioCor[m.prio]};transition:box-shadow .15s;cursor:default" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow='0 1px 6px rgba(0,0,0,.04)'">
+      <div style="display:flex;align-items:flex-start;gap:16px">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
-            <span style="font-size:14px;font-weight:800;color:#111">${m.titulo}</span>
-            <span style="background:${sl.bg};color:${sl.cor};font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${sl.txt}</span>
-            <span style="font-size:10px;font-weight:700">${prioEmoji[m.prio]} ${m.prio.charAt(0).toUpperCase()+m.prio.slice(1)}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px">
+            <span style="background:${tipoCorBg};color:${tipoCorTxt};font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px">${tipoLabel}</span>
+            <span style="background:${sl.bg};color:${sl.cor};font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">${sl.txt}</span>
+            <span style="background:${prioBgCor[m.prio]};color:${prioTxtCor[m.prio]};font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">Prio. ${prioLabel[m.prio]}</span>
           </div>
-          ${m.desc?`<div style="font-size:12px;color:#666;margin-bottom:7px">${m.desc}</div>`:''}
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">${funcBadges}</div>
+          <div style="font-size:14px;font-weight:800;color:#111;margin-bottom:5px;line-height:1.3">${m.titulo}</div>
+          ${m.desc?`<div style="font-size:12px;color:#777;margin-bottom:10px;line-height:1.6">${m.desc}</div>`:''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">${funcBadges}</div>
           ${m.tipo==='meta'?`
-          <div style="margin-bottom:7px">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px">
-              <span>${m.atual} / ${m.alvo} ${m.unidade}</span>
-              <span style="font-weight:700;color:#111">${pct}%</span>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+              <span style="color:#888">${m.atual} / ${m.alvo} ${m.unidade}</span>
+              <span style="font-weight:800;color:#111">${pct}%</span>
             </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
-              <div style="height:100%;width:${pct}%;background:${pct>=100?'#22c55e':pct>=60?'#f59e0b':'#111'};border-radius:4px;transition:.3s"></div>
+            <div style="height:7px;background:#f0f0f0;border-radius:10px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barCor};border-radius:10px;transition:.4s ease"></div>
             </div>
           </div>`:''}
-          <div style="display:flex;align-items:center;gap:14px;font-size:11px;flex-wrap:wrap">
-            <span style="color:#888">📅 ${m.inicio} → ${m.prazo}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#bbb">${m.inicio} → ${m.prazo}</span>
             ${diasTxt}
-            ${m.recompensa?`<span style="color:#f59e0b;font-weight:600">🏆 ${m.recompensa}</span>`:''}
+            ${m.recompensa?`<span style="font-size:11px;font-weight:600;color:#d97706">${m.recompensa}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
-          ${m.tipo==='meta'?`<button class="btn btn-outline btn-sm" onclick="atualizarProgresso(${m.id})" style="font-size:11px">📊 Progresso</button>`:''}
-          <select onchange="mudarStatusMeta(${m.id},this.value)" style="font-size:11px;padding:5px 7px;border:1px solid #ddd;border-radius:7px;cursor:pointer">
-            <option value="pendente" ${m.status==='pendente'?'selected':''}>⏳ Pendente</option>
-            <option value="andamento" ${m.status==='andamento'?'selected':''}>🔄 Em andamento</option>
-            <option value="concluida" ${m.status==='concluida'?'selected':''}>✅ Concluída</option>
-            <option value="atrasada" ${m.status==='atrasada'?'selected':''}>⚠️ Atrasada</option>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;min-width:116px">
+          ${m.tipo==='meta'?`<button onclick="atualizarProgresso(${m.id})" style="background:#f5f5f5;color:#333;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">Atualizar</button>`:''}
+          <select onchange="mudarStatusMeta(${m.id},this.value)" style="font-size:11px;padding:7px 8px;border:1.5px solid #ebebeb;border-radius:8px;cursor:pointer;background:#fff;font-weight:600;outline:none;color:#333">
+            <option value="pendente" ${m.status==='pendente'?'selected':''}>Pendente</option>
+            <option value="andamento" ${m.status==='andamento'?'selected':''}>Em andamento</option>
+            <option value="concluida" ${m.status==='concluida'?'selected':''}>Concluída</option>
+            <option value="atrasada" ${m.status==='atrasada'?'selected':''}>Atrasada</option>
           </select>
-          <button onclick="deletarMeta(${m.id})" class="btn btn-outline btn-sm" style="color:#ef4444;border-color:#ef4444;font-size:11px">✕ Excluir</button>
+          <button onclick="deletarMeta(${m.id})" style="background:none;color:#ef4444;border:1.5px solid #fee2e2;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">Excluir</button>
         </div>
       </div>
     </div>`;
@@ -9786,54 +9833,68 @@ function renderMetasColab(){
   const colab=document.getElementById('meta-colab-select')?.value||'Ana Flor';
   const minhas=metasList.filter(m=>m.colab.includes(colab));
   if(!minhas.length){
-    lista.innerHTML=`<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:40px;margin-bottom:10px">🎯</div><p>Nenhuma meta atribuída para ${colab}</p></div>`;
+    lista.innerHTML=`<div style="text-align:center;padding:48px;color:#aaa"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" style="margin:0 auto 12px;display:block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p style="font-weight:600;font-size:13px">Nenhuma meta atribuída para ${colab}</p></div>`;
     return;
   }
   const concluidas=minhas.filter(m=>m.status==='concluida').length;
   const total=minhas.length;
+  const pctGeral=Math.round((concluidas/total)*100)||0;
   lista.innerHTML=`
-  <div style="background:#111;color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
-    <div style="width:50px;height:50px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800">${colab.split(' ').map(w=>w[0]).join('').toUpperCase()}</div>
-    <div>
-      <div style="font-size:15px;font-weight:800">${colab}</div>
-      <div style="font-size:12px;color:#aaa;margin-top:2px">${concluidas} de ${total} tarefas concluídas · ${Math.round((concluidas/total)*100)||0}% completo</div>
+  <div style="background:linear-gradient(135deg,#111 0%,#2a2a2a 100%);border-radius:16px;padding:22px 24px;margin-bottom:16px;display:flex;align-items:center;gap:18px">
+    <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;letter-spacing:-.5px;flex-shrink:0">${colab.split(' ').map(w=>w[0]).join('').toUpperCase()}</div>
+    <div style="flex:1">
+      <div style="font-size:16px;font-weight:900;color:#fff">${colab}</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:3px">${concluidas} de ${total} concluídas</div>
+      <div style="height:5px;background:rgba(255,255,255,.12);border-radius:10px;margin-top:12px;overflow:hidden">
+        <div style="height:100%;width:${pctGeral}%;background:#fff;border-radius:10px;transition:.5s ease"></div>
+      </div>
     </div>
-    <div style="margin-left:auto;text-align:right">
-      <div style="font-size:28px;font-weight:900">${Math.round((concluidas/total)*100)||0}%</div>
-      <div style="font-size:10px;color:#aaa">conclusão geral</div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:34px;font-weight:900;color:#fff;line-height:1">${pctGeral}%</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:3px">conclusão</div>
     </div>
   </div>
-  <div style="height:6px;background:#333;border-radius:3px;margin-bottom:16px;overflow:hidden"><div style="height:100%;width:${Math.round((concluidas/total)*100)||0}%;background:#fff;border-radius:3px"></div></div>
   `+minhas.map(m=>{
     const sl=metaStatusLabel[m.status];
     const pct=getPct(m);
     const dias=getDiasRestantes(m.prazo);
-    const diasTxt=dias<0?`⚠️ ${Math.abs(dias)} dias atrasado`:dias===0?'⚠️ Vence hoje!':` ${dias} dias restantes`;
-    return `<div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px 20px;margin-bottom:10px;${m.status==='atrasada'?'border-left:4px solid #ef4444;background:#fffbfb':m.status==='concluida'?'border-left:4px solid #22c55e;opacity:.85':'border-left:4px solid #111'}">
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="font-size:22px">${m.tipo==='meta'?'🎯':'✅'}</div>
+    const diasTxt=dias<0
+      ?`<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px">${Math.abs(dias)}d atrasado</span>`
+      :dias===0
+      ?`<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px">Vence hoje</span>`
+      :`<span style="background:#f5f5f5;color:#888;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px">${dias}d restantes</span>`;
+    const borderAcent=m.status==='atrasada'?'#ef4444':m.status==='concluida'?'#22c55e':'#d1d5db';
+    const barCor=pct>=100?'#22c55e':pct>=60?'#f59e0b':m.status==='atrasada'?'#ef4444':'#111';
+    const tipoCorBg=m.tipo==='meta'?'#eff6ff':'#f0fdf4';
+    const tipoCorTxt=m.tipo==='meta'?'#2563eb':'#16a34a';
+    return `<div style="background:#fff;border-radius:14px;border:1px solid #f0f0f0;border-left:3px solid ${borderAcent};padding:18px 20px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.04);transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow='0 1px 6px rgba(0,0,0,.04)'">
+      <div style="display:flex;align-items:flex-start;gap:12px">
         <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
-            <span style="font-size:13px;font-weight:800">${m.titulo}</span>
-            <span style="background:${sl.bg};color:${sl.cor};font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${sl.txt}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px">
+            <span style="background:${tipoCorBg};color:${tipoCorTxt};font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px">${m.tipo==='meta'?'Meta':'Tarefa'}</span>
+            <span style="background:${sl.bg};color:${sl.cor};font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">${sl.txt}</span>
           </div>
-          ${m.desc?`<div style="font-size:12px;color:#666;margin-bottom:7px">${m.desc}</div>`:''}
+          <div style="font-size:13px;font-weight:800;color:#111;margin-bottom:4px;line-height:1.3">${m.titulo}</div>
+          ${m.desc?`<div style="font-size:12px;color:#777;margin-bottom:10px;line-height:1.6">${m.desc}</div>`:''}
           ${m.tipo==='meta'?`
-          <div style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px">
-              <span>Progresso: ${m.atual} / ${m.alvo} ${m.unidade}</span>
-              <span style="font-weight:700;color:#111">${pct}%</span>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+              <span style="color:#888">Progresso: ${m.atual} / ${m.alvo} ${m.unidade}</span>
+              <span style="font-weight:800;color:#111">${pct}%</span>
             </div>
-            <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
-              <div style="height:100%;width:${pct}%;background:${pct>=100?'#22c55e':pct>=60?'#f59e0b':'#111'};border-radius:4px"></div>
+            <div style="height:7px;background:#f0f0f0;border-radius:10px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barCor};border-radius:10px;transition:.4s ease"></div>
             </div>
           </div>`:''}
-          <div style="font-size:11px;color:#888">📅 Prazo: ${m.prazo} · ${diasTxt}</div>
-          ${m.recompensa?`<div style="font-size:11px;color:#f59e0b;font-weight:600;margin-top:4px">🏆 Recompensa: ${m.recompensa}</div>`:''}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#bbb">Prazo: ${m.prazo}</span>
+            ${diasTxt}
+            ${m.recompensa?`<span style="font-size:11px;font-weight:600;color:#d97706">${m.recompensa}</span>`:''}
+          </div>
         </div>
         ${m.tipo==='tarefa'&&m.status!=='concluida'?`
-        <button onclick="marcarTarefaConcluida(${m.id})" style="background:#111;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">✓ Concluir</button>`:''}
-        ${m.status==='concluida'?`<span style="font-size:20px">🏅</span>`:''}
+        <button onclick="marcarTarefaConcluida(${m.id})" style="background:#111;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">Concluir</button>`:''}
+        ${m.status==='concluida'?`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg>`:''}
       </div>
     </div>`;
   }).join('');
