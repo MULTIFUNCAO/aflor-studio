@@ -7538,6 +7538,15 @@ function confirmarFechamentoPagamento(){
       baseComissao=Math.max(0,baseComissao);
       lancarComissaoServico(ctx.dados.prof,svcNomeComissao,ctx.dados.cliente,baseComissao);
     }
+    // Registrar receita no Fluxo de Caixa
+    if(ctx.total>0){
+      var _now=new Date();
+      var _dd=String(_now.getDate()).padStart(2,'0');
+      var _mm=String(_now.getMonth()+1).padStart(2,'0');
+      var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
+      var _svcFluxo=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico||'Serviço';
+      fluxoLancamentos.push({tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'});
+    }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
     // Abrir modal de confirmação
