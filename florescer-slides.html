@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Florescer com Autoridade — Apresentação de Vendas · Ana Flor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --rosa:   #C4848A;
+    --ouro:   #C9A96E;
+    --creme:  #FAF7F2;
+    --escuro: #2C2C2C;
+    --medio:  #5C5047;
+    --claro:  #9C8C80;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #1a0f0f;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  h1, h2, h3 {
+    font-family: 'Cormorant Garamond', serif;
+    line-height: 1.1;
+  }
+
+  /* ── Slide container ── */
+  .slides-wrap { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  .slide {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity .5s ease;
+  }
+  .slide.active { opacity: 1; pointer-events: all; }
+
+  /* ── Navigation ── */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    padding: 16px 24px;
+    background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 100%);
+  }
+  .nav-btn {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    color: #fff; width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .2s; font-size: 18px;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.22); }
+  .nav-counter {
+    font-size: 12px; font-weight: 500; letter-spacing: 1px;
+    color: rgba(255,255,255,.5); min-width: 60px; text-align: center;
+  }
+  .nav-dots {
+    display: flex; gap: 5px; align-items: center;
+  }
+  .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,.25); transition: all .3s;
+    cursor: pointer;
+  }
+  .dot.active { background: var(--ouro); width: 18px; border-radius: 3px; }
+
+  /* ── Utility ── */
+  .tag-slide {
+    font-size: 10px; font-weight: 600; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--ouro);
+    margin-bottom: 20px; display: block;
+  }
+  .gold-line {
+    width: 48px; height: 2px; background: var(--ouro);
+    margin-bottom: 28px;
+  }
+  .gold-line-center { margin: 0 auto 28px; }
+
+  /* ════════════════════════════════════════
+     SLIDE 1 — Quem é Ana Flor (CAPA)
+  ════════════════════════════════════════ */
+  #s1 {
+    background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 60%, #3a1e20 100%);
+    align-items: center; justify-content: center; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  #s1::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 60% 40%, rgba(196,132,138,.22) 0%, transparent 65%),
+                radial-gradient(ellipse at 10% 80%, rgba(201,169,110,.14) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  #s1 .s1-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--ouro); margin-bottom: 28px;
+  }
+  #s1 h1 {
+    font-size: clamp(42px, 6vw, 78px); font-weight: 600;
+    color: var(--creme); margin-bottom: 16px;
+  }
+  #s1 h1 em { color: var(--rosa); font-style: italic; }
+  #s1 .s1-sub {
+    font-size: 16px; color: rgba(250,247,242,.55);
+    max-width: 480px; margin: 0 auto 40px; line-height: 1.7;
+  }
+  #s1 .s1-badges {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px;
+  }
+  #s1 .badge {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.6); font-size: 12px; font-weight: 500;
+    padding: 8px 20px; border-radius: 40px; letter-spacing: .3px;
+  }
+
+  /* ════════════════════════════════════════
+     SLIDE GENÉRICO ESCURO (dark)
+  ════════════════════════════════════════ */
+  .s-dark {
+    background: #1a0f0f;
+    padding: 60px 80px;
+    justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .s-dark::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 85% 15%, rgba(196,132,138,.12) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .s-dark-inner { max-width: 820px; position: relative; z-index: 1; }
+  .s-dark h2 {
+    font-size: clamp(34px, 5vw, 58px); font-weight: 600;
+    color: var(--creme); margin-bottom: 20px;
+  }
+  .s-dark h2 em { color: var(--rosa); font-style: italic; }
+  .s-dark p { font-size: 16px; color: rgba(250,247,242,.6); line-height: 1.75; max-width: 580px; }
+
+  /* ════════════════════════════════════════
+     SLIDE GENÉRICO CLARO (light)
+  ════════════════════════════════════════ */
+  .s-light {
+    background: var(--creme);
+    padding: 60px 80px;
+    justify-content: center;
+  }
+  .s-light-inner { max-width: 820px; }
+  .s-light h2 {
+    font-size: clamp(32px, 4.5vw, 54px); font-weight: 600;
+    color: var(--escuro); margin-bottom: 20px;
+  }
+  .s-light h2 em { color: var(--rosa); font-style: italic; }
+  .s-light p { font-size: 15px; color: var(--medio); line-height: 1.75; max-width: 600px; }
+
+  /* ════════════════════════════════════════
+     SLIDE SPLIT (esquerda escura / direita lista)
+  ════════════════════════════════════════ */
+  .s-split {
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+  .s-split-left {
+    background: linear-gradient(160deg, #1a0f0f, #2C2C2C);
+    padding: 60px 52px;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .s-split-left::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, rgba(201,169,110,.12) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .s-split-left-inner { position: relative; z-index: 1; }
+  .s-split-left h2 {
+    font-size: clamp(28px, 3.5vw, 48px); font-weight: 600;
+    color: var(--creme); margin-bottom: 16px;
+  }
+  .s-split-left h2 em { color: var(--rosa); font-style: italic; }
+  .s-split-left p { font-size: 14px; color: rgba(250,247,242,.55); line-height: 1.7; }
+  .s-split-right {
+    background: #fff;
+    padding: 60px 52px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .list-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    margin-bottom: 18px; padding-bottom: 18px;
+    border-bottom: 1px solid #f0ece8;
+  }
+  .list-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .list-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; color: #e8e0d8;
+    line-height: 1; min-width: 28px; flex-shrink: 0;
+  }
+  .list-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--escuro); margin-bottom: 3px;
+  }
+  .list-desc { font-size: 12px; color: var(--claro); line-height: 1.6; }
+
+  /* ════════════════════════════════════════
+     SLIDE 6 — Método (destaque central)
+  ════════════════════════════════════════ */
+  #s6 {
+    background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 70%, #3a1e20 100%);
+    align-items: center; justify-content: center; text-align: center;
+    position: relative; overflow: hidden; padding: 60px 40px;
+  }
+  #s6::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(201,169,110,.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  #s6 .s6-inner { position: relative; z-index: 1; max-width: 780px; }
+  #s6 h2 {
+    font-size: clamp(36px, 5vw, 68px); font-weight: 600;
+    color: var(--creme); margin-bottom: 24px;
+  }
+  #s6 h2 em { color: var(--ouro); font-style: italic; }
+  #s6 p { font-size: 16px; color: rgba(250,247,242,.6); line-height: 1.75; max-width: 540px; margin: 0 auto 40px; }
+  .pilares-row {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .pilar-chip {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(201,169,110,.3);
+    color: rgba(250,247,242,.75); font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 40px;
+  }
+
+  /* ════════════════════════════════════════
+     SLIDE 9 — Assessoria
+  ════════════════════════════════════════ */
+  #s9 {
+    background: linear-gradient(135deg, var(--rosa) 0%, #9E5F65 100%);
+    align-items: center; justify-content: center; text-align: center;
+    padding: 60px 40px; position: relative; overflow: hidden;
+  }
+  #s9::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,.12) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  #s9 .s9-inner { position: relative; z-index: 1; max-width: 700px; }
+  #s9 h2 {
+    font-size: clamp(34px, 5vw, 64px); font-weight: 600;
+    color: #fff; margin-bottom: 20px;
+  }
+  #s9 p { font-size: 16px; color: rgba(255,255,255,.75); line-height: 1.75; margin-bottom: 40px; }
+  #s9 .features {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; text-align: left;
+  }
+  #s9 .feat {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px; padding: 20px;
+  }
+  #s9 .feat-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  #s9 .feat-desc { font-size: 12px; color: rgba(255,255,255,.65); line-height: 1.6; }
+
+  /* ════════════════════════════════════════
+     SLIDE 11 — Resultados
+  ════════════════════════════════════════ */
+  #s11 {
+    background: var(--creme);
+    padding: 60px 80px;
+    justify-content: center;
+  }
+  .resultados-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 36px;
+  }
+  .res-card {
+    background: #fff; border: 1px solid #EDE0CC;
+    border-radius: 16px; padding: 28px 24px;
+  }
+  .res-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 44px; font-weight: 600; color: var(--rosa); line-height: 1;
+    margin-bottom: 8px;
+  }
+  .res-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--escuro); margin-bottom: 6px;
+  }
+  .res-desc { font-size: 12px; color: var(--claro); line-height: 1.65; }
+
+  /* ════════════════════════════════════════
+     SLIDE 12 — Investimento
+  ════════════════════════════════════════ */
+  #s12 {
+    background: #fff;
+    padding: 60px 80px;
+    justify-content: center;
+  }
+  #s12 .inv-inner {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+  }
+  #s12 h2 {
+    font-size: clamp(30px, 4vw, 52px); font-weight: 600;
+    color: var(--escuro); margin-bottom: 16px;
+  }
+  #s12 h2 em { color: var(--rosa); font-style: italic; }
+  #s12 p { font-size: 14px; color: var(--medio); line-height: 1.7; }
+  .inv-box {
+    background: linear-gradient(160deg, #1a0f0f, #2C2C2C);
+    border-radius: 24px; padding: 44px 36px; text-align: center;
+  }
+  .inv-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--ouro); margin-bottom: 12px; }
+  .inv-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px; font-weight: 600; color: #fff; line-height: 1; margin-bottom: 6px;
+  }
+  .inv-price-sub { font-size: 13px; color: rgba(255,255,255,.4); margin-bottom: 28px; }
+  .inv-includes { text-align: left; }
+  .inv-inc-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 10px;
+  }
+  .inv-inc-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ouro); flex-shrink: 0; }
+
+  /* ════════════════════════════════════════
+     SLIDE 13 — CTA final
+  ════════════════════════════════════════ */
+  #s13 {
+    background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 50%, #3a1e20 100%);
+    align-items: center; justify-content: center; text-align: center;
+    position: relative; overflow: hidden; padding: 60px 40px;
+  }
+  #s13::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(196,132,138,.2) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  #s13 .s13-inner { position: relative; z-index: 1; max-width: 680px; }
+  #s13 .s13-deco {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 120px; font-weight: 300; color: rgba(201,169,110,.08);
+    line-height: 0.8; margin-bottom: -20px;
+  }
+  #s13 blockquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 3.5vw, 40px); font-weight: 400; font-style: italic;
+    color: rgba(250,247,242,.88); line-height: 1.4; margin-bottom: 44px;
+  }
+  #s13 .s13-sig {
+    font-size: 13px; color: rgba(250,247,242,.3);
+    letter-spacing: .5px; margin-top: 20px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 200;
+    background: rgba(255,255,255,.06);
+  }
+  .progress-fill {
+    height: 100%; background: var(--ouro);
+    transition: width .4s ease;
+  }
+
+  /* ── Slide number ── */
+  .slide-num {
+    position: absolute; top: 28px; right: 32px;
+    font-size: 11px; color: rgba(255,255,255,.2);
+    letter-spacing: 1px; z-index: 10;
+  }
+  .slide-num-dark { color: rgba(44,44,44,.25); }
+
+  /* ── Print ── */
+  @media print {
+    html, body { height: auto; overflow: visible; }
+    .nav-bar, .progress-bar { display: none !important; }
+    .slide { position: relative; opacity: 1 !important; pointer-events: all; break-after: page; height: 100vh; page-break-after: always; }
+    .slides-wrap { height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:7.69%"></div></div>
+
+<div class="slides-wrap">
+
+  <!-- ═══ SLIDE 1 — Quem é Ana Flor ═══ -->
+  <div class="slide active" id="s1">
+    <div class="slide-num">01 / 13</div>
+    <div class="s1-eyebrow">Imersão Florescer com Autoridade</div>
+    <h1>Ana Flor<br/><em>quem sou eu</em></h1>
+    <p class="s1-sub">Empreendedora, mentora e apaixonada por ajudar profissionais do setor de beleza e estética a construírem negócios que respeitam seu valor.</p>
+    <div class="s1-badges">
+      <div class="badge">+ de X anos de mercado</div>
+      <div class="badge">Gestora do Aflor Studio</div>
+      <div class="badge">Mentora de profissionais</div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 2 — Minha Trajetória ═══ -->
+  <div class="slide s-split" id="s2">
+    <div class="s-split-left">
+      <div class="s-split-left-inner">
+        <span class="tag-slide">02 · Trajetória</span>
+        <div class="gold-line"></div>
+        <h2>De executora<br/>a <em>referência</em></h2>
+        <p style="margin-top:16px">Comecei como muitas de vocês: talentosa, dedicada, mas sem ideia de como transformar habilidade em autoridade — e em faturamento real.</p>
+      </div>
+    </div>
+    <div class="s-split-right">
+      <div class="list-item">
+        <div class="list-num">—</div>
+        <div>
+          <div class="list-title">Os primeiros anos</div>
+          <div class="list-desc">Muito trabalho, pouco reconhecimento. Atendia muito, cobrava pouco e não sabia articular meu diferencial.</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-num">—</div>
+        <div>
+          <div class="list-title">A virada</div>
+          <div class="list-desc">Entendi que o problema não era minha técnica — era meu posicionamento. Mudei a comunicação e o negócio mudou junto.</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-num">—</div>
+        <div>
+          <div class="list-title">Hoje</div>
+          <div class="list-desc">Gerio o Aflor Studio e ensino outras profissionais a construírem negócios que respeitam seu tempo e seu valor.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num slide-num-dark">02 / 13</div>
+  </div>
+
+  <!-- ═══ SLIDE 3 — A Decisão que Mudou Minha Vida ═══ -->
+  <div class="slide s-dark" id="s3">
+    <div class="slide-num">03 / 13</div>
+    <div class="s-dark-inner">
+      <span class="tag-slide">03 · O ponto de virada</span>
+      <div class="gold-line"></div>
+      <h2>A decisão que<br/><em>mudou tudo</em></h2>
+      <p style="margin-top:16px">Houve um momento em que decidi parar de esperar ser reconhecida — e comecei a me posicionar ativamente como autoridade no que fazia.</p>
+      <p style="margin-top:16px">Não foi um curso. Não foi uma técnica nova. Foi uma mudança de mentalidade e de comunicação que transformou a percepção dos meus clientes — e o meu faturamento.</p>
+      <div style="margin-top:40px;padding:28px 32px;background:rgba(255,255,255,.05);border:1px solid rgba(201,169,110,.2);border-radius:16px;max-width:560px">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;font-style:italic;color:rgba(250,247,242,.8);line-height:1.5">"Quando me posicionei como autoridade, os clientes certos vieram — e os que pechinchavam foram embora sozinhos."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 4 — O Erro que Mantém Profissionais Presas ═══ -->
+  <div class="slide s-light" id="s4">
+    <div class="slide-num slide-num-dark">04 / 13</div>
+    <div class="s-light-inner">
+      <span class="tag-slide" style="color:var(--rosa)">04 · O grande erro</span>
+      <div class="gold-line"></div>
+      <h2>O erro que mantém<br/>profissionais <em>presas</em></h2>
+      <p style="margin-top:16px;margin-bottom:32px">Não é falta de talento. Não é falta de esforço. É acreditar que atender mais vai resolver o que só posicionamento pode resolver.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px">
+        <div style="background:#fdf5f5;border:1px solid #EDD5D7;border-radius:14px;padding:24px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--rosa);margin-bottom:12px">O que elas fazem</div>
+          <p style="font-size:13px;color:var(--medio);line-height:1.65">Buscam mais técnicas, mais clientes, mais horas trabalhadas — esperando que quantidade se transforme em qualidade.</p>
+        </div>
+        <div style="background:#faf5ec;border:1px solid #EDE0CC;border-radius:14px;padding:24px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px">O que precisam</div>
+          <p style="font-size:13px;color:var(--medio);line-height:1.65">Posicionamento claro, comunicação de valor e autoridade percebida — que fazem o mercado enxergar o que você já é.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 5 — O que Mudou Meu Negócio ═══ -->
+  <div class="slide s-split" id="s5">
+    <div class="s-split-left">
+      <div class="s-split-left-inner">
+        <span class="tag-slide">05 · O que funcionou</span>
+        <div class="gold-line"></div>
+        <h2>O que mudou<br/><em>meu negócio</em></h2>
+        <p style="margin-top:16px">Não foi uma ferramenta. Foi um método — construído a partir de testes reais, erros reais e resultados reais.</p>
+      </div>
+    </div>
+    <div class="s-split-right">
+      <div class="list-item">
+        <div class="list-num">01</div>
+        <div>
+          <div class="list-title">Identidade clara</div>
+          <div class="list-desc">Saber exatamente quem sou, para quem sirvo e qual transformação ofereço — em uma frase.</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-num">02</div>
+        <div>
+          <div class="list-title">Comunicação de valor</div>
+          <div class="list-desc">Aprender a falar e escrever de um jeito que o cliente certo se reconhece — e o errado se afasta.</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-num">03</div>
+        <div>
+          <div class="list-title">Precificação com firmeza</div>
+          <div class="list-desc">Cobrar o que eu valia — sem descontos, sem desculpas, sem medo da resposta do cliente.</div>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="list-num">04</div>
+        <div>
+          <div class="list-title">Presença consistente</div>
+          <div class="list-desc">Construir uma reputação que trabalha por mim — mesmo quando não estou atendendo.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num slide-num-dark">05 / 13</div>
+  </div>
+
+  <!-- ═══ SLIDE 6 — O Método Florescer com Autoridade ═══ -->
+  <div class="slide" id="s6">
+    <div class="slide-num">06 / 13</div>
+    <div class="s6-inner">
+      <span class="tag-slide">06 · O método</span>
+      <div class="gold-line gold-line-center"></div>
+      <h2>Florescer com<br/><em>Autoridade</em></h2>
+      <p>Um método completo para profissionais do setor de beleza e estética que querem ser reconhecidas, valorizadas e bem remuneradas.</p>
+      <div class="pilares-row" style="margin-top:36px">
+        <div class="pilar-chip">Identidade</div>
+        <div class="pilar-chip">Posicionamento</div>
+        <div class="pilar-chip">Comunicação</div>
+        <div class="pilar-chip">Precificação</div>
+        <div class="pilar-chip">Presença Digital</div>
+        <div class="pilar-chip">Vendas</div>
+        <div class="pilar-chip">Experiência</div>
+        <div class="pilar-chip">Escalada</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 7 — O Que Você Aprenderá ═══ -->
+  <div class="slide s-light" id="s7">
+    <div class="slide-num slide-num-dark">07 / 13</div>
+    <div class="s-light-inner">
+      <span class="tag-slide" style="color:var(--rosa)">07 · O que você aprende</span>
+      <div class="gold-line"></div>
+      <h2>O que você<br/><em>aprenderá</em></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px;max-width:740px">
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--ouro-lt,#EDE0CC);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como articular seu diferencial de forma clara e convincente</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:#EDE0CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como precificar com base em valor — não em custo ou medo</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:#EDE0CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como construir presença digital que gera autoridade orgânica</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:#EDE0CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como vender de forma natural, sem bajulação ou pressão</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:#EDE0CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como criar uma experiência que gera indicações espontâneas</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border:1px solid #EDE0CC;border-radius:12px">
+          <div style="width:24px;height:24px;border-radius:50%;background:#EDE0CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--ouro)" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:var(--medio);line-height:1.55">Como escalar sem depender exclusivamente da sua mão de obra</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 8 — Como Funciona a Imersão ═══ -->
+  <div class="slide s-split" id="s8">
+    <div class="s-split-left">
+      <div class="s-split-left-inner">
+        <span class="tag-slide">08 · A imersão</span>
+        <div class="gold-line"></div>
+        <h2>Como funciona<br/>a <em>imersão</em></h2>
+        <p style="margin-top:16px">Dois dias presenciais, intensos e transformadores. Cada módulo é uma peça de um quebra-cabeça que, ao final, forma sua nova identidade profissional.</p>
+        <div style="margin-top:28px;display:flex;gap:16px">
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:var(--ouro);line-height:1">2</div>
+            <div style="font-size:11px;color:rgba(250,247,242,.45);letter-spacing:.5px">dias</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:var(--ouro);line-height:1">8</div>
+            <div style="font-size:11px;color:rgba(250,247,242,.45);letter-spacing:.5px">módulos</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:var(--ouro);line-height:1">+</div>
+            <div style="font-size:11px;color:rgba(250,247,242,.45);letter-spacing:.5px">bônus</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="s-split-right">
+      <div style="margin-bottom:20px;padding:20px;background:var(--creme);border-radius:14px;border:1px solid #EDE0CC">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ouro);margin-bottom:14px">Dia 1</div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">01</div>
+          <div><div class="list-title" style="font-size:14px">Identidade de Autoridade</div></div>
+        </div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">02</div>
+          <div><div class="list-title" style="font-size:14px">Posicionamento Premium</div></div>
+        </div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">03</div>
+          <div><div class="list-title" style="font-size:14px">Comunicação que Comanda</div></div>
+        </div>
+        <div class="list-item" style="border:none;padding-bottom:0;margin-bottom:0">
+          <div class="list-num" style="font-size:18px">04</div>
+          <div><div class="list-title" style="font-size:14px">Precificação com Valor</div></div>
+        </div>
+      </div>
+      <div style="padding:20px;background:var(--creme);border-radius:14px;border:1px solid #EDE0CC">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--rosa);margin-bottom:14px">Dia 2</div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">05</div>
+          <div><div class="list-title" style="font-size:14px">Presença Digital de Autoridade</div></div>
+        </div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">06</div>
+          <div><div class="list-title" style="font-size:14px">Vendas sem Bajulação</div></div>
+        </div>
+        <div class="list-item" style="padding-bottom:10px;margin-bottom:10px">
+          <div class="list-num" style="font-size:18px">07</div>
+          <div><div class="list-title" style="font-size:14px">Experiência de Alta Performance</div></div>
+        </div>
+        <div class="list-item" style="border:none;padding-bottom:0;margin-bottom:0">
+          <div class="list-num" style="font-size:18px">08</div>
+          <div><div class="list-title" style="font-size:14px">Escalada do Negócio</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num slide-num-dark">08 / 13</div>
+  </div>
+
+  <!-- ═══ SLIDE 9 — Assessoria ═══ -->
+  <div class="slide" id="s9">
+    <div class="slide-num">09 / 13</div>
+    <div class="s9-inner">
+      <span class="tag-slide" style="color:rgba(255,255,255,.5)">09 · Suporte contínuo</span>
+      <div class="gold-line gold-line-center" style="background:rgba(255,255,255,.3)"></div>
+      <h2>2 meses de<br/>assessoria em grupo</h2>
+      <p>A imersão planta a semente. A assessoria garante que ela floresça no seu negócio — com acompanhamento real e personalizado.</p>
+      <div class="features">
+        <div class="feat">
+          <div class="feat-title">Sessões semanais</div>
+          <div class="feat-desc">Encontros online para dúvidas, ajustes e orientações específicas para o seu caso.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-title">Comunidade exclusiva</div>
+          <div class="feat-desc">Grupo seleto de profissionais na mesma jornada — troca real, parceria real.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-title">Feedback pessoal</div>
+          <div class="feat-desc">Ana Flor avalia sua comunicação e posicionamento — e te diz o que ajustar.</div>
+        </div>
+        <div class="feat">
+          <div class="feat-title">Material de apoio</div>
+          <div class="feat-desc">Templates e ferramentas para implementar o método a partir do dia seguinte.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 10 — Para Quem É ═══ -->
+  <div class="slide s-dark" id="s10">
+    <div class="slide-num">10 / 13</div>
+    <div class="s-dark-inner">
+      <span class="tag-slide">10 · Para quem é</span>
+      <div class="gold-line"></div>
+      <h2>Esta imersão é<br/><em>para você se...</em></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:32px;max-width:700px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Você é profissional do setor de beleza, estética ou bem-estar</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Sente que cobra menos do que seu trabalho vale</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Quer ser reconhecida como referência no que faz</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Está pronta para investir em si mesma e implementar</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Quer crescer sem trabalhar mais horas — e sim de forma mais inteligente</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:20px;height:20px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="var(--ouro)" stroke-width="2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg>
+          </div>
+          <span style="font-size:13px;color:rgba(250,247,242,.7);line-height:1.6">Sente que nasceu para mais do que apenas executar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 11 — Resultados Possíveis ═══ -->
+  <div class="slide" id="s11">
+    <div class="slide-num slide-num-dark">11 / 13</div>
+    <div style="max-width:860px">
+      <span class="tag-slide" style="color:var(--rosa)">11 · Transformação</span>
+      <div class="gold-line"></div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4vw,50px);font-weight:600;color:var(--escuro)">Resultados <em style="color:var(--rosa);font-style:italic">possíveis</em></h2>
+      <div class="resultados-grid">
+        <div class="res-card">
+          <div class="res-num">+40%</div>
+          <div class="res-title">No preço médio</div>
+          <div class="res-desc">Profissionais que passam pelo método conseguem reposicionar seus preços — com clientes que respeitam e aceitam.</div>
+        </div>
+        <div class="res-card">
+          <div class="res-num">-30%</div>
+          <div class="res-title">Menos horas trabalhadas</div>
+          <div class="res-desc">Com posicionamento certo, você atende menos mas fatura mais — e recupera tempo para viver.</div>
+        </div>
+        <div class="res-card">
+          <div class="res-num">×3</div>
+          <div class="res-title">Mais indicações</div>
+          <div class="res-desc">Uma experiência de autoridade gera clientes que te indicam ativamente — sem você precisar pedir.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 12 — Investimento ═══ -->
+  <div class="slide" id="s12">
+    <div class="slide-num slide-num-dark">12 / 13</div>
+    <div class="inv-inner">
+      <div>
+        <span class="tag-slide" style="color:var(--rosa)">12 · Investimento</span>
+        <div class="gold-line"></div>
+        <h2>O <em>investimento</em><br/>na sua autoridade</h2>
+        <p style="margin-top:16px;margin-bottom:24px">Não é um gasto. É a decisão que separa profissionais que executam das que lideram.</p>
+        <p style="font-size:13px;color:var(--claro)">O valor inclui os dois dias de imersão presencial, dois meses de assessoria em grupo, acesso à comunidade exclusiva, materiais e templates.</p>
+      </div>
+      <div class="inv-box">
+        <div class="inv-label">Investimento único</div>
+        <div class="inv-price">R$ X</div>
+        <div class="inv-price-sub">ou em até X× sem juros</div>
+        <div class="inv-includes">
+          <div class="inv-inc-item"><div class="inv-inc-dot"></div>2 dias de imersão presencial</div>
+          <div class="inv-inc-item"><div class="inv-inc-dot"></div>8 módulos com Ana Flor</div>
+          <div class="inv-inc-item"><div class="inv-inc-dot"></div>2 meses de assessoria em grupo</div>
+          <div class="inv-inc-item"><div class="inv-inc-dot"></div>Acesso à comunidade exclusiva</div>
+          <div class="inv-inc-item"><div class="inv-inc-dot"></div>Templates e materiais de apoio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 13 — CTA Final ═══ -->
+  <div class="slide" id="s13">
+    <div class="slide-num">13 / 13</div>
+    <div class="s13-inner">
+      <div class="s13-deco">"</div>
+      <blockquote>
+        Se você sente que nasceu para mais do que apenas executar, essa é sua próxima etapa.
+      </blockquote>
+      <a href="#" style="display:inline-block;background:linear-gradient(135deg,var(--ouro) 0%,#A8844C 100%);color:#1a0f0f;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;padding:18px 52px;border-radius:60px;text-decoration:none;box-shadow:0 8px 28px rgba(201,169,110,.3)">
+        Quero Florescer com Autoridade
+      </a>
+      <p class="s13-sig">Com amor e propósito — Ana Flor</p>
+    </div>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<!-- Navigation -->
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <div class="nav-dots" id="dots"></div>
+  <button class="nav-btn" id="btn-next" onclick="changeSlide(1)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const progress = document.getElementById('progress');
+  let cur = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    document.querySelectorAll('.dot')[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, slides.length - 1));
+    slides[cur].classList.add('active');
+    document.querySelectorAll('.dot')[cur].classList.add('active');
+    progress.style.width = ((cur + 1) / slides.length * 100) + '%';
+  }
+
+  function changeSlide(dir) { goTo(cur + dir); }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+  });
+
+  // Touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1);
+  });
+</script>
+</body>
+</html>
