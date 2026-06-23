@@ -8816,11 +8816,28 @@ const iaInsights=[
 const iaCores={alerta:'#fee2e2',insight:'#f0f0f0',sugestao:'#fef3c7'};
 const iaBordas={alerta:'#ef4444',insight:'#111',sugestao:'#f59e0b'};
 
+const IA_SYSTEM_PROMPT=`Você é a assistente estratégica pessoal da Ana Flor, dona do Aflor Beauty em Guarulhos.
+Você tem acesso aos dados reais do salão e responde de forma direta, calorosa e prática — como uma consultora de confiança, não como um relatório.
+
+REGRAS DE RESPOSTA:
+- Sempre chame a usuária de "Ana Flor" ou "Ana"
+- Nunca comece com dados frios ou porcentagens soltas
+- Primeiro valide o problema/dúvida dela, depois dê a solução prática
+- Use exemplos concretos: scripts de resposta, horários reais, nomes de serviços do salão
+- Quando sugerir algo, mostre COMO fazer (ex: texto pronto pra mandar no WhatsApp)
+- Termine com uma pergunta ou próximo passo para engajar
+- Linguagem informal, próxima, brasileira — sem termos técnicos
+- Máximo 4 parágrafos curtos
+
+EXEMPLO DE TOM:
+Pergunta: "Como responder clientes para arrumar mais clientes?"
+Resposta: "Ana Flor, a chave tá na velocidade e na oferta de horário logo de cara. Quando uma cliente perguntar sobre Coloração no WhatsApp, responde assim: 'Oi! Coloração aqui é R$ 40, tenho horário quinta às 14h ou sexta às 10h — qual fica melhor pra você?' Quem recebe um horário sugerido fecha muito mais do que quem recebe só o preço. Quer que eu monte um script assim pra cada serviço do Aflor?"`;
+
 const iaRespostas={
-  'horários ociosos':'📊 Análise da sua agenda: Terças e quartas entre 13h-15h têm apenas 23% de ocupação. Recomendo criar uma promoção "Happy Hour da Beleza" com 15% de desconto neste horário para atrair mais clientes.',
-  'serviço mais lucrativo':'💰 Com base nos seus dados: Coloração tem margem de 68% e gera R$ 1.680/mês. Progressiva vem em segundo com 71% de margem. Recomendo aumentar a divulgação desses dois serviços.',
-  'clientes sumidos':'👥 Identifiquei 7 clientes que não voltam há mais de 30 dias: Mãe Ana (45 dias), Julia Barrozo (48 dias), Denilda (32 dias) e mais 4. Posso gerar uma mensagem de reativação automática para enviar no WhatsApp?',
-  'aumentar faturamento':'📈 Para aumentar o faturamento este mês recomendo: 1) Ativar campanha de reativação (potencial +R$ 420), 2) Criar combo Manicure+Pedicure (ticket médio +R$ 25), 3) Ocupar horários ociosos com promoção (potencial +R$ 280). Total estimado: +R$ 720.',
+  'horários ociosos':'Ana Flor, essa é uma oportunidade de ouro! Terças e quartas entre 13h-15h ficam bem vazias — é o horário perfeito pra uma promoção relâmpago. Que tal mandar essa mensagem pras suas clientes hoje: "Oi! Tenho horário livre amanhã às 14h com desconto especial — quer aproveitar?" Simples assim, e já enche a agenda. Quer que eu monte um texto pronto pra WhatsApp pra cada serviço?',
+  'serviço mais lucrativo':'Ana, coloração e progressiva são suas campeãs — margem boa e as clientes adoram. A dica é: quando uma cliente agendar só manicure, você faz um comentário natural: "Sua raiz tá crescendo, posso encaixar uma coloração junto?" Isso aumenta o ticket sem forçar venda. Quer um script de abordagem pra sua equipe usar?',
+  'clientes sumidas':'Ana Flor, tem umas 7 clientes que sumiram faz mais de 30 dias — Mãe Ana, Julia Barrozo, Denilda e mais 4. A melhor forma de reativar é uma mensagem direta e pessoal, tipo: "Saudade de você aqui no Aflor! Que tal agendarmos algo essa semana? Tenho horário quinta e sexta 😊" Quer que eu monte essa mensagem pra mandar hoje?',
+  'aumentar faturamento':'Ana, três movimentos rápidos que podem trazer mais R$ 700 esse mês: reativar as clientes sumidas, criar um combo Manicure+Pedicure com preço especial, e colocar uma promoção nos horários vazios de terça/quarta. Qual dessas você quer atacar primeiro? Posso te ajudar a montar o plano de ação agora mesmo.',
 };
 
 function renderIA(){
@@ -8844,18 +8861,28 @@ function renderIA(){
   }
 }
 
-function enviarIA(){
+async function enviarIA(){
   const inp=document.getElementById('ia-pergunta');
   const msg=inp?.value?.trim();
   if(!msg)return;
   adicionarMsgIA(msg,'user');
   inp.value='';
-  setTimeout(()=>{
-    let resp='🤔 Analisando seus dados... ';
-    const key=Object.keys(iaRespostas).find(k=>msg.toLowerCase().includes(k.split(' ')[0].toLowerCase())||msg.toLowerCase().includes(k.split(' ')[1]?.toLowerCase()||''));
-    resp=key?iaRespostas[key]:'📊 Com base nos seus dados de '+new Date().toLocaleDateString('pt-BR')+': seu faturamento está R$ 4.820 no mês, 8 atendimentos hoje e ticket médio de R$ 85. Posso aprofundar qualquer indicador — é só perguntar!';
-    adicionarMsgIA(resp,'ia');
-  },800);
+  const chat=document.getElementById('ia-chat-msgs');
+  const loadingEl=document.createElement('div');
+  loadingEl.style.cssText='display:flex;gap:8px;align-items:flex-start';
+  loadingEl.innerHTML='<div style="width:30px;height:30px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;color:#fff">🧠</div><div style="background:#f5f5f5;color:#111;padding:10px 14px;border-radius:4px 12px 12px 12px;font-size:12px;line-height:1.6;max-width:80%">...</div>';
+  if(chat)chat.appendChild(loadingEl);
+  if(chat)chat.scrollTop=chat.scrollHeight;
+  try{
+    const r=await fetch(BACKEND_URL+'/api/ia-chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({system:IA_SYSTEM_PROMPT,message:msg})});
+    if(loadingEl.parentNode)loadingEl.remove();
+    if(r.ok){const d=await r.json();adicionarMsgIA(d.resposta||d.content||d.text||'Não entendi, pode reformular?','ia');}
+    else throw new Error('backend err');
+  }catch(e){
+    if(loadingEl.parentNode)loadingEl.remove();
+    const key=Object.keys(iaRespostas).find(k=>msg.toLowerCase().includes(k.split(' ')[0].toLowerCase())||msg.toLowerCase().includes((k.split(' ')[1]||'').toLowerCase()));
+    adicionarMsgIA(key?iaRespostas[key]:'Ana Flor, entendi! Me dá mais um segundo — pode me contar melhor o que quer saber? Pode perguntar sobre agenda, clientes, faturamento ou qualquer coisa do salão 😊','ia');
+  }
 }
 
 function perguntaRapidaIA(p){
