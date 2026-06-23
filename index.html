@@ -4921,6 +4921,24 @@ function agProfParaAgenda(profNome){
   var supa=mapaInv[profNome]||profNome;
   return mapa[supa]||profNome;
 }
+function durToMinutes(dur){
+  if(!dur)return 60;
+  var s=String(dur).toLowerCase().replace(/\s/g,'');
+  var mh=s.match(/(\d+)h(\d+)?/);
+  if(mh)return parseInt(mh[1])*60+(parseInt(mh[2])||0);
+  var mm=s.match(/(\d+)min/);
+  if(mm)return parseInt(mm[1]);
+  var mn=s.match(/^(\d+)$/);
+  if(mn)return parseInt(mn[1]);
+  return 60;
+}
+function durFromServico(nomeServico){
+  var svc=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===(nomeServico||'').trim();});
+  return svc?durToMinutes(svc.dur):60;
+}
+function minToHora(min){
+  return Math.floor(min/60).toString().padStart(2,'0')+':'+((min%60).toString().padStart(2,'0'));
+}
 function agColetarProfissionaisServico(){
   var profs=[];
   var main=document.getElementById('ag-servico-prof')?.value;
@@ -8092,7 +8110,7 @@ function renderAgenda(){
   if(!agendamentosPorData[dataKey]){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
-    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado',{
+    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
@@ -8113,7 +8131,24 @@ function renderAgenda(){
             if(mSvc)valNum=parseMoedaBR('R$ '+mSvc[1]);
           }
           var valFmt=valNum>0?formatMoedaBR(valNum):(a.valor||'R$ 0,00');
-          obj[k]={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:'60 min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado};
+          var svcPrimario=(a.servico||'').split('+')[0].trim().split('(')[0].trim();
+          var durMinPrimario=durFromServico(svcPrimario)||60;
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado};
+          obj[k]=apptRow;
+          // Multi-prof: criar entradas sequenciais para profissionais secundários
+          var detalhes=null;
+          try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
+          if(detalhes&&detalhes.length>1){
+            var seqMin=parseInt(horaSlot.split(':')[0])*60+parseInt(horaSlot.split(':')[1])+durMinPrimario;
+            detalhes.slice(1).forEach(function(sd){
+              if(!sd.profissional)return;
+              var pSd=agProfParaAgenda(sd.profissional);
+              var dmSd=sd.duracao_min||durFromServico(sd.nome)||60;
+              var hSd=minToHora(seqMin);
+              obj[pSd+':'+hSd]=Object.assign({},apptRow,{prof:pSd,hora:hSd,servico:sd.nome||a.servico,duracao:dmSd+' min'});
+              seqMin+=dmSd;
+            });
+          }
         });
       }
       agendamentosPorData[dataKey]=obj;
@@ -10570,29 +10605,40 @@ function salvarAgendamento(){
     var partes=data.split('-');
     var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
+    // Calcular duração real e horários sequenciais por profissional
+    var seqMin0=parseInt(hora.split(':')[0])*60+parseInt(hora.split(':')[1]);
+    if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
+      servicosDetalhe.forEach(function(sd){
+        var dm=durFromServico(sd.nome);
+        sd.duracao_min=dm;
+        sd.hora=minToHora(seqMin0);
+        seqMin0+=dm;
+      });
+    }
+    var duracaoPrincipal=(!ehPacote&&servicosDetalhe&&servicosDetalhe[0])?servicosDetalhe[0].duracao_min:durFromServico(servico);
     var apptBase={
       id:supaId,cliente:cliente,tel:'',servico:servico,hora:hora,
-      duracao:'60 min',valor:valorFmt,status:'Pendente',
+      duracao:duracaoPrincipal+' min',valor:valorFmt,status:'Pendente',
       sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,
       sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:'',
       ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs,
       sinalLancadoCaixa:!!(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0)
     };
-    var profsAgenda=[];
+    var primeiroProf=null;
     if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
       servicosDetalhe.forEach(function(sd){
         var pAg=agProfParaAgenda(sd.profissional);
-        if(pAg&&profsAgenda.indexOf(pAg)<0)profsAgenda.push(pAg);
+        if(!pAg)return;
+        if(!primeiroProf)primeiroProf=pAg;
+        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
       });
     }else{
-      profsAgenda=[agProfParaAgenda(prof)];
+      primeiroProf=agProfParaAgenda(prof);
+      agendamentosPorData[dataKey][primeiroProf+':'+hora]=Object.assign({},apptBase,{prof:primeiroProf});
     }
-    profsAgenda.forEach(function(pAg){
-      agendamentosPorData[dataKey][pAg+':'+hora]=Object.assign({},apptBase,{prof:pAg});
-    });
     agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
     if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
-      var chaveSinal=profsAgenda[0]+':'+hora;
+      var chaveSinal=primeiroProf+':'+hora;
       var apptSinal=agendamentosPorData[dataKey][chaveSinal];
       if(apptSinal)lancarSinalCaixaSeNecessario(apptSinal,sinalValNum,agFormaSinal||'Pix');
     }
