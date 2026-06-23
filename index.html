@@ -4757,6 +4757,8 @@ function resetFormAgendar(){
   document.querySelectorAll('input[name="ag-sinal-status"]').forEach(function(r){r.checked=r.value==='pendente';});
   document.querySelectorAll('.ag-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';});
   agFormaSinal='';
+  if((el=get('ag-servico')))el.selectedIndex=0;
+  if((el=get('ag-servico-prof')))el.selectedIndex=0;
   if((el=get('ag-servicos-extra-list')))el.innerHTML='';
   if((el=get('ag-produtos-list')))el.innerHTML='';
   if((el=get('ag-pacote-extra-list')))el.innerHTML='';
