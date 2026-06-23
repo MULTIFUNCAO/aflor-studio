@@ -12397,9 +12397,10 @@ function renderDashProximos(){
   var el=document.getElementById('dash-proximos-lista');
   if(!el||typeof agendamentosPorData==='undefined')return;
   var hoje=new Date();
+  var agoraMin=hoje.getHours()*60+hoje.getMinutes();
   var items=[];
-  // Pegar os próximos 7 dias
-  for(var d=1;d<=7;d++){
+  // Pegar hoje (somente horários futuros) + próximos 7 dias
+  for(var d=0;d<=7;d++){
     var dt=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+d);
     var dk=(dt.getDate())+'/'+(dt.getMonth()+1)+'/'+dt.getFullYear();
     var dayData=agendamentosPorData[dk];
@@ -12408,7 +12409,13 @@ function renderDashProximos(){
     slots.forEach(function(k){
       var a=dayData[k];
       if(!a||!a.cliente)return;
-      items.push({data:dt,dk:dk,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:a.servico||'',prof:a.prof||a.profissional||''});
+      var hora=a.hora||k.split(':')[1]||'';
+      if(d===0){
+        var parts=hora.split(':');
+        var slotMin=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);
+        if(slotMin<=agoraMin)return;
+      }
+      items.push({data:dt,dk:dk,hora:hora,cliente:a.cliente,servico:a.servico||'',prof:a.prof||a.profissional||''});
     });
   }
   if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
@@ -12422,7 +12429,7 @@ function renderDashProximos(){
     var lista=grupos[dk];
     var dt=lista[0].data;
     var diff=Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())-new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()))/(1000*60*60*24));
-    var label=diff===1?'Amanhã':diasNome[dt.getDay()]+', '+dt.getDate()+' '+mesesNome[dt.getMonth()];
+    var label=diff===0?'Hoje':diff===1?'Amanhã':diasNome[dt.getDay()]+', '+dt.getDate()+' '+mesesNome[dt.getMonth()];
     html+='<div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:4px">'+label+'</div>';
     lista.slice(0,3).forEach(function(a,i){
       html+='<div style="'+(i>0?'border-top:1px solid #f5f5f5;padding-top:8px;':'')+' display:flex;align-items:center;justify-content:space-between">'
