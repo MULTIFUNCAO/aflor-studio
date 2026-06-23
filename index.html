@@ -1176,7 +1176,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <button class="tab" id="fluxo-tab-mensal" onclick="switchFluxoTab('mensal',this)">📊 Semanal</button>
           <button class="tab" id="fluxo-tab-categorias" onclick="switchFluxoTab('categorias',this)">🏷 Categorias</button>
           <button class="tab" id="fluxo-tab-dre" onclick="switchFluxoTab('dre',this)">📑 DRE</button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-lancamento-caixa')">+ Lançamento</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-lancamento-caixa');(function(){var h=new Date();document.getElementById('lanc-data').value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');})()">+ Lançamento</button>
         </div>
       </div>
 
@@ -2728,7 +2728,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
       <div class="form-group full"><label>Descrição *</label><input id="lanc-desc" placeholder="Ex: Atendimento manicure — Cliente Ana"/></div>
-      <div class="form-group"><label>Data *</label><input type="date" id="lanc-data" value="2026-05-30"/></div>
+      <div class="form-group"><label>Data *</label><input type="date" id="lanc-data"/></div>
       <div class="form-group"><label>Valor (R$) *</label><input type="number" id="lanc-val" placeholder="0,00" min="0" step="0.01"/></div>
       <div class="form-group"><label>Categoria</label>
         <select id="lanc-cat">
@@ -7545,7 +7545,7 @@ function confirmarFechamentoPagamento(){
       var _mm=String(_now.getMonth()+1).padStart(2,'0');
       var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
       var _svcFluxo=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico||'Serviço';
-      fluxoLancamentos.push({tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'});
+      fluxoLancamentos.push({tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'});fluxoSalvarLocal();
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
@@ -10288,6 +10288,8 @@ function removerColab(idx){
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
+function fluxoSalvarLocal(){try{if(!window.SALAO_ID)return;localStorage.setItem('fluxo_lanc_'+window.SALAO_ID,JSON.stringify(fluxoLancamentos));}catch(e){}}
+function fluxoCarregarLocal(){try{if(!window.SALAO_ID)return;var raw=localStorage.getItem('fluxo_lanc_'+window.SALAO_ID);if(raw){fluxoLancamentos=JSON.parse(raw)||[];}}catch(e){}}
 function fluxoNavMes(dir){
   if(dir===0){
     fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
@@ -10525,7 +10527,7 @@ function salvarLancamento(){
   if(val<=0){showAlert('Informe um valor válido.');return;}
   var partes=dataVal.split('-');
   var dataFmt=partes[2]+'/'+partes[1]+'/'+partes[0];
-  fluxoLancamentos.push({tipo:_tipoLanc,data:dataFmt,desc:desc,cat:cat,forma:forma,val:val,status:status});
+  fluxoLancamentos.push({tipo:_tipoLanc,data:dataFmt,desc:desc,cat:cat,forma:forma,val:val,status:status});fluxoSalvarLocal();
   closeModal('modal-lancamento-caixa');
   document.getElementById('lanc-desc').value='';
   document.getElementById('lanc-val').value='';
@@ -11669,6 +11671,7 @@ function obFinish(){
 
 function carregarDadosDoSalao(){
   if(!window.SALAO_ID)return;
+  fluxoCarregarLocal();
   carregarRemuneracoesSupa();
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
