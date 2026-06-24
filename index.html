@@ -11726,8 +11726,8 @@ function obConfetti(){
 function obFinish(){
   var overlay=document.getElementById('aflor-overlay');
   if(overlay)overlay.classList.add('hidden');
-  // Salva que o usuário já fez login
-  try{localStorage.setItem('aflor_logado','1');}catch(e){}
+  try{localStorage.setItem('aflor_logado','admin');}catch(e){}
+  if(window.SALAO_ID&&typeof carregarDadosDoSalao==='function')carregarDadosDoSalao();
 }
 
 function carregarDadosDoSalao(){
