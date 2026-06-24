@@ -7,6 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/framer-motion@10/dist/framer-motion.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -28,49 +32,27 @@
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
-    font-family: 'Cormorant Garamond', serif;
-    line-height: 1.15;
-    color: var(--escuro);
-  }
+  h1, h2, h3, h4 { font-family: 'Cormorant Garamond', serif; line-height: 1.15; color: var(--escuro); }
   .serif-italic { font-style: italic; }
   img { max-width: 100%; display: block; }
   a { text-decoration: none; color: inherit; }
 
-  /* ── Layout ── */
   .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
   .container-wide { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
   section { padding: 80px 0; }
 
-  /* ── Linha decorativa ── */
-  .divider {
-    display: flex; align-items: center; gap: 16px;
-    margin: 0 auto 40px; max-width: 200px;
-  }
-  .divider::before, .divider::after {
-    content: ''; flex: 1; height: 1px; background: var(--ouro);
-  }
-  .divider-diamond {
-    width: 8px; height: 8px; background: var(--ouro);
-    transform: rotate(45deg); flex-shrink: 0;
-  }
+  .divider { display: flex; align-items: center; gap: 16px; margin: 0 auto 40px; max-width: 200px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--ouro); }
+  .divider-diamond { width: 8px; height: 8px; background: var(--ouro); transform: rotate(45deg); flex-shrink: 0; }
 
-  /* ── Botão CTA ── */
   .btn-cta {
     display: inline-block;
     background: linear-gradient(135deg, var(--rosa) 0%, #A8686E 100%);
-    color: #fff;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: .5px;
-    padding: 18px 48px;
-    border-radius: 60px;
-    border: none;
-    cursor: pointer;
+    color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600; letter-spacing: .5px;
+    padding: 18px 48px; border-radius: 60px; border: none; cursor: pointer;
     box-shadow: 0 8px 28px rgba(196,132,138,.35);
-    transition: transform .2s, box-shadow .2s;
-    text-align: center;
+    transition: transform .2s, box-shadow .2s; text-align: center;
   }
   .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(196,132,138,.45); }
   .btn-cta-ouro {
@@ -79,384 +61,140 @@
   }
   .btn-cta-ouro:hover { box-shadow: 0 12px 36px rgba(201,169,110,.45); }
 
-  /* ── Tag pequena ── */
   .tag {
-    display: inline-block;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--ouro);
-    border: 1px solid var(--ouro-lt);
-    padding: 5px 16px;
-    border-radius: 40px;
-    margin-bottom: 20px;
+    display: inline-block; font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ouro); border: 1px solid var(--ouro-lt);
+    padding: 5px 16px; border-radius: 40px; margin-bottom: 20px;
   }
 
-  /* ────────────────────────────────────────────
-     HERO
-  ──────────────────────────────────────────── */
+  /* HERO */
   #hero {
     background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 60%, #3a2525 100%);
-    min-height: 100vh;
-    display: flex; flex-direction: column;
-    position: relative;
-    overflow: hidden;
-    padding: 0;
+    min-height: 100vh; display: flex; flex-direction: column;
+    position: relative; overflow: hidden; padding: 0;
   }
   #hero::before {
-    content: '';
-    position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: radial-gradient(ellipse at 70% 40%, rgba(196,132,138,.18) 0%, transparent 65%),
                 radial-gradient(ellipse at 10% 80%, rgba(201,169,110,.12) 0%, transparent 55%);
     pointer-events: none;
   }
   .hero-nav {
-    position: relative; z-index: 10;
-    padding: 28px 32px;
+    position: relative; z-index: 10; padding: 28px 32px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .hero-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px; font-weight: 600;
-    color: var(--ouro);
-    letter-spacing: .5px;
-  }
-  .hero-body {
-    flex: 1; display: flex; align-items: center;
-    position: relative; z-index: 5;
-  }
-  .hero-content {
-    max-width: 760px; margin: 0 auto;
-    padding: 40px 32px 80px;
-    text-align: center;
-  }
-  .hero-tag {
-    display: inline-block;
-    font-size: 11px; font-weight: 600; letter-spacing: 2.5px;
-    text-transform: uppercase; color: var(--ouro);
-    margin-bottom: 28px;
-  }
-  .hero-headline {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(38px, 7vw, 72px);
-    font-weight: 600; color: #FAF7F2;
-    line-height: 1.08; margin-bottom: 24px;
-  }
+  .hero-logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--ouro); letter-spacing: .5px; }
+  .hero-body { flex: 1; display: flex; align-items: center; position: relative; z-index: 5; }
+  .hero-content { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; text-align: center; }
+  .hero-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--ouro); margin-bottom: 28px; }
+  .hero-headline { font-family: 'Cormorant Garamond', serif; font-size: clamp(38px, 7vw, 72px); font-weight: 600; color: #FAF7F2; line-height: 1.08; margin-bottom: 24px; }
   .hero-headline em { color: var(--rosa); font-style: italic; }
-  .hero-sub {
-    font-size: clamp(15px, 2.5vw, 18px);
-    color: rgba(250,247,242,.65);
-    max-width: 560px; margin: 0 auto 44px;
-    line-height: 1.7;
-  }
-  .hero-detalhe {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    margin-top: 32px;
-  }
-  .hero-detalhe span {
-    font-size: 12px; color: rgba(250,247,242,.4);
-    letter-spacing: .5px;
-  }
+  .hero-sub { font-size: clamp(15px, 2.5vw, 18px); color: rgba(250,247,242,.65); max-width: 560px; margin: 0 auto 44px; line-height: 1.7; }
+  .hero-detalhe { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 32px; }
+  .hero-detalhe span { font-size: 12px; color: rgba(250,247,242,.4); letter-spacing: .5px; }
   .hero-detalhe-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(250,247,242,.25); }
-  .hero-scroll {
-    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 10;
-    opacity: .4;
-  }
+  .hero-scroll { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 10; opacity: .4; }
   .hero-scroll span { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
-  .hero-arrow {
-    width: 20px; height: 20px; border-right: 1.5px solid #fff; border-bottom: 1.5px solid #fff;
-    transform: rotate(45deg); animation: bounce .8s ease infinite alternate;
-  }
+  .hero-arrow { width: 20px; height: 20px; border-right: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: rotate(45deg); animation: bounce .8s ease infinite alternate; }
   @keyframes bounce { from { transform: rotate(45deg) translate(-2px,-2px); } to { transform: rotate(45deg) translate(2px,2px); } }
 
-  /* ────────────────────────────────────────────
-     O QUE ELA ACHA vs O QUE REALMENTE COMPRA
-  ──────────────────────────────────────────── */
+  /* COMPRA */
   #compra { background: #fff; }
-  #compra .grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
-    border: 1px solid #EDE0CC; border-radius: 20px; overflow: hidden;
-    margin-top: 48px;
-  }
+  #compra .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #EDE0CC; border-radius: 20px; overflow: hidden; margin-top: 48px; }
   .compra-col { padding: 40px 36px; }
   .compra-col:first-child { border-right: 1px solid #EDE0CC; background: #fdf5f5; }
-  .compra-col-title {
-    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 24px;
-  }
+  .compra-col-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
   .compra-col:first-child .compra-col-title { color: #b09090; }
   .compra-col:last-child .compra-col-title { color: var(--ouro); }
-  .compra-item {
-    display: flex; align-items: flex-start; gap: 12px;
-    margin-bottom: 16px; font-size: 14px; color: var(--medio);
-    line-height: 1.55;
-  }
-  .compra-item-icon {
-    width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; margin-top: 1px;
-  }
+  .compra-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; font-size: 14px; color: var(--medio); line-height: 1.55; }
+  .compra-item-icon { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
   .icon-cross { background: #f0e0e0; }
   .icon-check { background: var(--ouro-lt); }
 
-  /* ────────────────────────────────────────────
-     DORES
-  ──────────────────────────────────────────── */
-  #dores {
-    background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 100%);
-    position: relative; overflow: hidden;
-  }
-  #dores::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 80% 20%, rgba(196,132,138,.15) 0%, transparent 55%);
-    pointer-events: none;
-  }
+  /* DORES */
+  #dores { background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 100%); position: relative; overflow: hidden; }
+  #dores::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(196,132,138,.15) 0%, transparent 55%); pointer-events: none; }
   #dores .section-title { color: var(--creme); }
   #dores .tag { border-color: rgba(201,169,110,.3); }
-  #dores p { color: rgba(250,247,242,.6); }
-  .dores-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
-    margin-top: 48px;
-  }
-  .dor-card {
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 16px; padding: 26px 24px;
-    display: flex; gap: 16px; align-items: flex-start;
-    transition: background .2s;
-  }
+  .dores-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 48px; }
+  .dor-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 26px 24px; display: flex; gap: 16px; align-items: flex-start; transition: background .2s; }
   .dor-card:hover { background: rgba(255,255,255,.07); }
-  .dor-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 36px; font-weight: 300; color: rgba(201,169,110,.3);
-    line-height: 1; flex-shrink: 0; min-width: 32px;
-  }
-  .dor-txt {
-    font-size: 14px; color: rgba(250,247,242,.75); line-height: 1.6; padding-top: 6px;
-  }
+  .dor-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: rgba(201,169,110,.3); line-height: 1; flex-shrink: 0; min-width: 32px; }
+  .dor-txt { font-size: 14px; color: rgba(250,247,242,.75); line-height: 1.6; padding-top: 6px; }
 
-  /* ────────────────────────────────────────────
-     GRANDE MECANISMO
-  ──────────────────────────────────────────── */
+  /* MECANISMO */
   #mecanismo { background: var(--creme); text-align: center; }
-  .mecanismo-quote {
-    max-width: 720px; margin: 0 auto 48px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(24px, 4vw, 40px);
-    font-weight: 400; line-height: 1.35; color: var(--escuro);
-    font-style: italic;
-  }
+  .mecanismo-quote { max-width: 720px; margin: 0 auto 48px; font-family: 'Cormorant Garamond', serif; font-size: clamp(24px, 4vw, 40px); font-weight: 400; line-height: 1.35; color: var(--escuro); font-style: italic; }
   .mecanismo-quote strong { font-style: normal; font-weight: 600; color: var(--rosa); }
-  .pilares-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 56px;
-  }
-  .pilar-card {
-    background: #fff;
-    border: 1px solid #EDE0CC;
-    border-radius: 16px; padding: 28px 20px; text-align: center;
-    transition: transform .2s, box-shadow .2s;
-    cursor: default;
-  }
-  .pilar-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(196,132,138,.12); }
-  .pilar-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px; font-weight: 300; color: var(--ouro-lt);
-    line-height: 1; margin-bottom: 10px;
-  }
-  .pilar-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px; font-weight: 600; color: var(--escuro); margin-bottom: 8px;
-  }
+  .pilares-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 56px; }
+  .pilar-card { background: #fff; border: 1px solid #EDE0CC; border-radius: 16px; padding: 28px 20px; text-align: center; cursor: default; }
+  .pilar-num { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; color: var(--ouro-lt); line-height: 1; margin-bottom: 10px; }
+  .pilar-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--escuro); margin-bottom: 8px; }
   .pilar-desc { font-size: 12px; color: var(--claro); line-height: 1.6; }
 
-  /* ────────────────────────────────────────────
-     MÓDULOS
-  ──────────────────────────────────────────── */
+  /* MÓDULOS */
   #modulos { background: #fff; }
-  .modulos-dias {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px;
-  }
-  .dia-bloco {
-    background: var(--creme);
-    border: 1px solid #EDE0CC;
-    border-radius: 20px; overflow: hidden;
-  }
-  .dia-header {
-    padding: 20px 28px;
-    border-bottom: 1px solid #EDE0CC;
-  }
-  .dia-header-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--ouro); margin-bottom: 4px;
-  }
-  .dia-header-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px; font-weight: 600; color: var(--escuro);
-  }
-  .modulo-item {
-    padding: 20px 28px;
-    border-bottom: 1px solid rgba(237,224,204,.5);
-    display: flex; gap: 16px; align-items: flex-start;
-  }
+  .modulos-dias { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; }
+  .dia-bloco { background: var(--creme); border: 1px solid #EDE0CC; border-radius: 20px; overflow: hidden; }
+  .dia-header { padding: 20px 28px; border-bottom: 1px solid #EDE0CC; }
+  .dia-header-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--ouro); margin-bottom: 4px; }
+  .dia-header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--escuro); }
+  .modulo-item { padding: 20px 28px; border-bottom: 1px solid rgba(237,224,204,.5); display: flex; gap: 16px; align-items: flex-start; }
   .modulo-item:last-child { border-bottom: none; }
-  .modulo-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 26px; font-weight: 300; color: var(--ouro-lt);
-    line-height: 1; flex-shrink: 0; min-width: 28px;
-  }
-  .modulo-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 17px; font-weight: 600; color: var(--escuro); margin-bottom: 4px;
-  }
+  .modulo-num { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--ouro-lt); line-height: 1; flex-shrink: 0; min-width: 28px; }
+  .modulo-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: var(--escuro); margin-bottom: 4px; }
   .modulo-desc { font-size: 12px; color: var(--claro); line-height: 1.6; }
 
-  /* ────────────────────────────────────────────
-     ASSESSORIA
-  ──────────────────────────────────────────── */
-  #assessoria {
-    background: linear-gradient(135deg, #F5EDE6 0%, var(--creme) 100%);
-  }
-  .assessoria-inner {
-    background: #fff; border-radius: 24px; overflow: hidden;
-    display: grid; grid-template-columns: 1fr 1fr;
-    border: 1px solid #EDE0CC;
-    margin-top: 48px;
-  }
-  .assessoria-visual {
-    background: linear-gradient(160deg, var(--rosa) 0%, #9E5F65 100%);
-    padding: 52px 40px;
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  .assessoria-visual-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 38px; font-weight: 600; color: #fff; line-height: 1.15;
-    margin-bottom: 16px;
-  }
+  /* ASSESSORIA */
+  #assessoria { background: linear-gradient(135deg, #F5EDE6 0%, var(--creme) 100%); }
+  .assessoria-inner { background: #fff; border-radius: 24px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #EDE0CC; margin-top: 48px; }
+  .assessoria-visual { background: linear-gradient(160deg, var(--rosa) 0%, #9E5F65 100%); padding: 52px 40px; display: flex; flex-direction: column; justify-content: center; }
+  .assessoria-visual-title { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 600; color: #fff; line-height: 1.15; margin-bottom: 16px; }
   .assessoria-visual-sub { font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.7; }
   .assessoria-lista { padding: 52px 44px; }
-  .assessoria-item {
-    display: flex; gap: 14px; align-items: flex-start; margin-bottom: 24px;
-  }
+  .assessoria-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 24px; }
   .assessoria-item:last-child { margin-bottom: 0; }
-  .assessoria-bullet {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--ouro-lt); display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .assessoria-bullet svg { color: var(--ouro); }
-  .assessoria-item-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px; font-weight: 600; color: var(--escuro); margin-bottom: 3px;
-  }
+  .assessoria-bullet { width: 32px; height: 32px; border-radius: 50%; background: var(--ouro-lt); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .assessoria-item-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--escuro); margin-bottom: 3px; }
   .assessoria-item-desc { font-size: 13px; color: var(--claro); line-height: 1.6; }
 
-  /* ────────────────────────────────────────────
-     PARA QUEM É (AUTORIDADE / PROVA / ESCASSEZ)
-  ──────────────────────────────────────────── */
+  /* GATILHOS */
   #gatilhos { background: #fff; }
-  .gatilhos-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px;
-  }
-  .gatilho-card {
-    border-radius: 20px; padding: 36px 28px; text-align: center;
-  }
+  .gatilhos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+  .gatilho-card { border-radius: 20px; padding: 36px 28px; text-align: center; }
   .g-autoridade { background: linear-gradient(135deg, #1a0f0f, #2C2C2C); }
   .g-prova { background: var(--creme); border: 1px solid #EDE0CC; }
   .g-escassez { background: linear-gradient(135deg, var(--rosa) 0%, #9E5F65 100%); }
-  .gatilho-icon {
-    width: 52px; height: 52px; border-radius: 14px;
-    margin: 0 auto 18px; display: flex; align-items: center; justify-content: center;
-  }
+  .gatilho-icon { width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; }
   .g-autoridade .gatilho-icon { background: rgba(255,255,255,.1); }
   .g-prova .gatilho-icon { background: var(--ouro-lt); }
   .g-escassez .gatilho-icon { background: rgba(255,255,255,.18); }
-  .gatilho-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 10px;
-  }
+  .gatilho-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
   .g-autoridade .gatilho-label { color: var(--ouro); }
   .g-prova .gatilho-label { color: var(--ouro); }
   .g-escassez .gatilho-label { color: rgba(255,255,255,.6); }
-  .gatilho-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px; font-weight: 600; margin-bottom: 12px; line-height: 1.2;
-  }
+  .gatilho-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; margin-bottom: 12px; line-height: 1.2; }
   .g-autoridade .gatilho-title, .g-escassez .gatilho-title { color: #fff; }
   .g-prova .gatilho-title { color: var(--escuro); }
   .gatilho-desc { font-size: 13px; line-height: 1.65; }
   .g-autoridade .gatilho-desc { color: rgba(255,255,255,.6); }
   .g-prova .gatilho-desc { color: var(--claro); }
   .g-escassez .gatilho-desc { color: rgba(255,255,255,.75); }
-  .vagas-badge {
-    display: inline-block;
-    background: rgba(255,255,255,.15);
-    color: #fff; font-size: 13px; font-weight: 600;
-    padding: 8px 20px; border-radius: 40px; margin-top: 16px;
-    border: 1px solid rgba(255,255,255,.2);
-  }
+  .vagas-badge { display: inline-block; background: rgba(255,255,255,.15); color: #fff; font-size: 13px; font-weight: 600; padding: 8px 20px; border-radius: 40px; margin-top: 16px; border: 1px solid rgba(255,255,255,.2); }
 
-  /* ────────────────────────────────────────────
-     CTA FINAL
-  ──────────────────────────────────────────── */
-  #cta-final {
-    background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 60%, #3a1e20 100%);
-    text-align: center; padding: 120px 0;
-    position: relative; overflow: hidden;
-  }
-  #cta-final::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 50%, rgba(196,132,138,.2) 0%, transparent 65%);
-    pointer-events: none;
-  }
-  .cta-final-quote {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(22px, 4vw, 40px);
-    font-weight: 400; font-style: italic;
-    color: rgba(250,247,242,.85);
-    max-width: 680px; margin: 0 auto 48px;
-    line-height: 1.4; position: relative;
-  }
-  .cta-final-quote::before {
-    content: '\201C';
-    font-size: 120px; line-height: 0; vertical-align: -0.45em;
-    color: rgba(201,169,110,.15);
-    font-style: normal;
-    position: absolute; left: -24px; top: 24px;
-  }
-  .cta-assinatura {
-    font-size: 13px; color: rgba(250,247,242,.35);
-    margin-top: 28px; letter-spacing: .5px;
-  }
+  /* CTA FINAL */
+  #cta-final { background: linear-gradient(160deg, #1a0f0f 0%, #2C2C2C 60%, #3a1e20 100%); text-align: center; padding: 120px 0; position: relative; overflow: hidden; }
+  #cta-final::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(196,132,138,.2) 0%, transparent 65%); pointer-events: none; }
+  .cta-final-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px, 4vw, 40px); font-weight: 400; font-style: italic; color: rgba(250,247,242,.85); max-width: 680px; margin: 0 auto 48px; line-height: 1.4; position: relative; }
+  .cta-final-quote::before { content: '\201C'; font-size: 120px; line-height: 0; vertical-align: -0.45em; color: rgba(201,169,110,.15); font-style: normal; position: absolute; left: -24px; top: 24px; }
+  .cta-assinatura { font-size: 13px; color: rgba(250,247,242,.35); margin-top: 28px; letter-spacing: .5px; }
 
-  /* ────────────────────────────────────────────
-     SECTION TITLES
-  ──────────────────────────────────────────── */
-  .section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(28px, 5vw, 48px);
-    font-weight: 600; text-align: center; margin-bottom: 12px;
-  }
-  .section-sub {
-    text-align: center; font-size: 15px; color: var(--claro);
-    max-width: 520px; margin: 0 auto; line-height: 1.7;
-  }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 5vw, 48px); font-weight: 600; text-align: center; margin-bottom: 12px; }
+  .section-sub { text-align: center; font-size: 15px; color: var(--claro); max-width: 520px; margin: 0 auto; line-height: 1.7; }
 
-  /* ── FOOTER ── */
-  footer {
-    background: #1a0f0f;
-    padding: 32px;
-    text-align: center;
-    font-size: 12px; color: rgba(255,255,255,.3);
-    letter-spacing: .5px;
-  }
+  footer { background: #1a0f0f; padding: 32px; text-align: center; font-size: 12px; color: rgba(255,255,255,.3); letter-spacing: .5px; }
 
-  /* ────────────────────────────────────────────
-     RESPONSIVE
-  ──────────────────────────────────────────── */
   @media (max-width: 768px) {
     section { padding: 60px 0; }
     #compra .grid { grid-template-columns: 1fr; }
@@ -479,378 +217,447 @@
 </style>
 </head>
 <body>
+<div id="root"></div>
 
-<!-- ══════════════════════════════════════════
-     HERO
-══════════════════════════════════════════ -->
-<section id="hero">
-  <nav class="hero-nav">
-    <div class="hero-logo">Ana Flor</div>
-    <a href="#cta-final" class="btn-cta" style="padding:12px 28px;font-size:13px">Quero participar</a>
-  </nav>
-  <div class="hero-body">
-    <div class="hero-content">
-      <div class="hero-tag">Imersão Presencial · Turma Exclusiva</div>
-      <h1 class="hero-headline">
-        Sua expertise merece ser<br/>
-        <em>reconhecida — e cobrada.</em>
-      </h1>
-      <p class="hero-sub">
-        Uma imersão de dois dias para profissionais que cansaram de atender muito e ser reconhecidas pouco. Aprenda a se posicionar como autoridade, comunicar seu valor e construir um negócio que respeita o seu tempo.
-      </p>
-      <a href="#cta-final" class="btn-cta">Quero Florescer com Autoridade</a>
-      <div class="hero-detalhe">
-        <span>8 Módulos</span>
-        <div class="hero-detalhe-dot"></div>
-        <span>2 Dias de Imersão</span>
-        <div class="hero-detalhe-dot"></div>
-        <span>2 Meses de Assessoria</span>
-      </div>
+<script type="text/babel">
+const { motion, useAnimation, useInView } = Motion;
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ── Counter hook ──
+function useCounter(target, inView, duration = 1300) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    setVal(0);
+    const t0 = performance.now();
+    let raf;
+    function tick(now) {
+      const p = Math.min((now - t0) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(eased * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target]);
+  return val;
+}
+
+// ── Floating gold particles ──
+function FloatingParticles() {
+  const pts = useMemo(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: `${4 + Math.random() * 92}%`,
+      top:  `${4 + Math.random() * 92}%`,
+      size: 2 + Math.random() * 4,
+      dur:  7 + Math.random() * 10,
+      del:  Math.random() * 6,
+      op:   0.08 + Math.random() * 0.38,
+    })), []);
+  return (
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none', zIndex:4 }}>
+      {pts.map(p => (
+        <motion.div key={p.id}
+          style={{ position:'absolute', left:p.left, top:p.top, width:p.size, height:p.size, borderRadius:'50%', background:`rgba(201,169,110,${p.op})`, boxShadow:`0 0 ${p.size*3}px rgba(201,169,110,0.25)` }}
+          animate={{ y:[0,-38,0], opacity:[p.op, Math.min(p.op*2.2,0.9), p.op], scale:[1,1.35,1] }}
+          transition={{ duration:p.dur, delay:p.del, repeat:Infinity, ease:'easeInOut' }}
+        />
+      ))}
     </div>
-  </div>
-  <div class="hero-scroll">
-    <span>role</span>
-    <div class="hero-arrow"></div>
-  </div>
-</section>
+  );
+}
 
-<!-- ══════════════════════════════════════════
-     O QUE ELA ACHA vs O QUE REALMENTE COMPRA
-══════════════════════════════════════════ -->
-<section id="compra">
-  <div class="container">
-    <div class="tag">A verdade sobre esta imersão</div>
-    <h2 class="section-title">O que você acha que vai comprar<br/><em class="serif-italic">vs. o que você realmente leva</em></h2>
-    <div class="grid">
-      <div class="compra-col">
-        <div class="compra-col-title">O que parece ser</div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-cross">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C4848A" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
-          </div>
-          <span>Mais técnicas e scripts prontos para vender</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-cross">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C4848A" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
-          </div>
-          <span>Dicas de redes sociais para postar mais conteúdo</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-cross">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C4848A" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
-          </div>
-          <span>Um curso sobre como atender mais clientes</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-cross">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C4848A" stroke-width="2.5" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
-          </div>
-          <span>Fórmulas mágicas e atalhos fáceis</span>
-        </div>
+// ── Section-level scroll reveal ──
+function SectionReveal({ children, id, className, style }) {
+  const ref = useRef();
+  const inView = useInView(ref, { once:true, margin:'-50px' });
+  return (
+    <motion.section id={id} className={className} style={style} ref={ref}
+      initial={{ opacity:0, y:44 }}
+      animate={inView ? { opacity:1, y:0 } : {}}
+      transition={{ duration:0.7, ease:[0.4,0,0.2,1] }}
+    >{children}</motion.section>
+  );
+}
+
+// ── Generic div reveal ──
+function Reveal({ children, delay=0, y=36, x=0, className, style }) {
+  const ref = useRef();
+  const inView = useInView(ref, { once:true, margin:'-40px' });
+  return (
+    <motion.div ref={ref} className={className} style={style}
+      initial={{ opacity:0, y, x }}
+      animate={inView ? { opacity:1, y:0, x:0 } : {}}
+      transition={{ duration:0.6, delay, ease:[0.4,0,0.2,1] }}
+    >{children}</motion.div>
+  );
+}
+
+// ── Dor card — fade + shake ──
+function DorCard({ num, text, index }) {
+  const ref = useRef();
+  const controls = useAnimation();
+  const inView = useInView(ref, { once:true, margin:'-20px' });
+  useEffect(() => {
+    if (!inView) return;
+    (async () => {
+      await controls.start({ opacity:1, y:0, transition:{ delay:index*0.1, duration:0.5, ease:[0.4,0,0.2,1] } });
+      await controls.start({ x:[0,-7,7,-5,5,-2,2,0], transition:{ duration:0.48, ease:'easeInOut' } });
+    })();
+  }, [inView]);
+  return (
+    <motion.div ref={ref} className="dor-card" initial={{ opacity:0, y:22 }} animate={controls}>
+      <div className="dor-num">{String(num).padStart(2,'0')}</div>
+      <div className="dor-txt">{text}</div>
+    </motion.div>
+  );
+}
+
+// ── Gatilho card with animated counter ──
+function GatilhoCard({ type, stat, suffix='', label, title, desc, badge }) {
+  const ref = useRef();
+  const inView = useInView(ref, { once:true, margin:'-30px' });
+  const count = useCounter(stat, inView);
+  const statColor = type === 'prova' ? 'var(--ouro)' : '#fff';
+  const icons = {
+    autoridade: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
+    prova:      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
+    escassez:   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  };
+  return (
+    <motion.div ref={ref} className={`gatilho-card g-${type}`}
+      initial={{ opacity:0, y:30 }}
+      animate={inView ? { opacity:1, y:0 } : {}}
+      transition={{ duration:0.6, ease:[0.4,0,0.2,1] }}
+    >
+      <div className="gatilho-icon">{icons[type]}</div>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'58px', fontWeight:600, color:statColor, lineHeight:1, marginBottom:'4px' }}>
+        {count}{suffix}
       </div>
-      <div class="compra-col">
-        <div class="compra-col-title">O que você realmente leva</div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-check">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C9A96E" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
-          </div>
-          <span>Um posicionamento claro que justifica seus preços premium</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-check">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C9A96E" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
-          </div>
-          <span>Uma comunicação que constrói autoridade e atrai clientes certos</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-check">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C9A96E" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
-          </div>
-          <span>Identidade de negócio que gera respeito e referência</span>
-        </div>
-        <div class="compra-item">
-          <div class="compra-item-icon icon-check">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C9A96E" stroke-width="2.5" stroke-linecap="round"><polyline points="2 7 6 11 12 3"/></svg>
-          </div>
-          <span>A mentalidade e as ferramentas para escalar sem se esgotar</span>
-        </div>
-      </div>
+      <div className="gatilho-label">{label}</div>
+      <div className="gatilho-title">{title}</div>
+      <div className="gatilho-desc">{desc}</div>
+      {badge && <div className="vagas-badge">{badge}</div>}
+    </motion.div>
+  );
+}
+
+// ── Pulsing CTA button ──
+function PulsingCTA({ href, children, className, style }) {
+  return (
+    <div style={{ position:'relative', display:'inline-block' }}>
+      <motion.div style={{ position:'absolute', inset:'-8px', borderRadius:'68px', border:'1.5px solid rgba(201,169,110,0.45)', pointerEvents:'none' }}
+        animate={{ scale:[1,1.12,1], opacity:[0.6,0,0.6] }}
+        transition={{ duration:2, repeat:Infinity, ease:'easeInOut' }}
+      />
+      <motion.a href={href} className={className} style={style}
+        whileHover={{ y:-3, scale:1.03 }}
+        transition={{ duration:0.2 }}
+      >{children}</motion.a>
     </div>
-  </div>
-</section>
+  );
+}
 
-<!-- ══════════════════════════════════════════
-     DORES
-══════════════════════════════════════════ -->
-<section id="dores">
-  <div class="container" style="position:relative;z-index:1">
-    <div class="tag">Isso ressoa com você?</div>
-    <h2 class="section-title" style="color:var(--creme)">Se você está aqui,<br/><em class="serif-italic">provavelmente reconhece isso</em></h2>
-    <p class="section-sub" style="color:rgba(250,247,242,.5);margin-top:12px">Não é falta de talento. É falta de posicionamento.</p>
-    <div class="dores-grid">
-      <div class="dor-card">
-        <div class="dor-num">01</div>
-        <div class="dor-txt">Você trabalha muito, entrega resultado, mas ainda sente que cobra menos do que merece — e não sabe exatamente por quê.</div>
-      </div>
-      <div class="dor-card">
-        <div class="dor-num">02</div>
-        <div class="dor-txt">Clientes que não valorizam sua expertise, que pechinchãm ou que simplesmente somem após o orçamento.</div>
-      </div>
-      <div class="dor-card">
-        <div class="dor-num">03</div>
-        <div class="dor-txt">Você sente que é boa no que faz, mas não consegue traduzir esse valor em palavras que convencem e convertem.</div>
-      </div>
-      <div class="dor-card">
-        <div class="dor-num">04</div>
-        <div class="dor-txt">Vê colegas com menos experiência sendo reconhecidas como referência, e não entende o que elas fazem diferente.</div>
-      </div>
-      <div class="dor-card">
-        <div class="dor-num">05</div>
-        <div class="dor-txt">Tem medo de aumentar os preços porque não sabe se os clientes vão aceitar — e acaba no ciclo de descontos.</div>
-      </div>
-      <div class="dor-card">
-        <div class="dor-num">06</div>
-        <div class="dor-txt">Sente que está sempre executando, mas nunca construindo algo que te coloque no próximo nível.</div>
-      </div>
-    </div>
-  </div>
-</section>
+// ─────────────────── SECTIONS ───────────────────
 
-<!-- ══════════════════════════════════════════
-     GRANDE MECANISMO + 5 PILARES
-══════════════════════════════════════════ -->
-<section id="mecanismo">
-  <div class="container">
-    <div class="tag">O grande mecanismo</div>
-    <blockquote class="mecanismo-quote">
-      O próximo nível não está em <strong>atender mais</strong> — está em ser reconhecida como <strong>autoridade</strong> no que você faz.
-    </blockquote>
-    <p class="section-sub" style="margin-bottom:0">A transformação acontece quando você domina os 5 pilares da comunicação de autoridade:</p>
-    <div class="pilares-grid">
-      <div class="pilar-card">
-        <div class="pilar-num">01</div>
-        <div class="pilar-title">Clareza</div>
-        <div class="pilar-desc">Saber exatamente quem você é, para quem serve e qual transformação entrega.</div>
+function HeroSection() {
+  return (
+    <section id="hero">
+      <FloatingParticles />
+      <nav className="hero-nav">
+        <motion.div className="hero-logo" initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.6 }}>Ana Flor</motion.div>
+        <motion.a href="#cta-final" className="btn-cta" style={{ padding:'12px 28px', fontSize:'13px' }} initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} transition={{ duration:0.6 }}>Quero participar</motion.a>
+      </nav>
+      <div className="hero-body">
+        <div className="hero-content">
+          <motion.div className="hero-tag" initial={{ opacity:0, y:-18 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15, duration:0.6 }}>
+            Imersão Presencial · Turma Exclusiva
+          </motion.div>
+          <motion.h1 className="hero-headline" initial={{ opacity:0, y:-28 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3, duration:0.7, ease:[0.4,0,0.2,1] }}>
+            Sua expertise merece ser<br/><em>reconhecida — e cobrada.</em>
+          </motion.h1>
+          <motion.p className="hero-sub" initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.6, duration:0.7 }}>
+            Uma imersão de dois dias para profissionais que cansaram de atender muito e ser reconhecidas pouco. Aprenda a se posicionar como autoridade, comunicar seu valor e construir um negócio que respeita o seu tempo.
+          </motion.p>
+          <motion.div initial={{ opacity:0, scale:0.88 }} animate={{ opacity:1, scale:1 }} transition={{ delay:0.9, duration:0.5 }}>
+            <a href="#cta-final" className="btn-cta">Quero Florescer com Autoridade</a>
+          </motion.div>
+          <motion.div className="hero-detalhe" initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.1, duration:0.6 }}>
+            <span>8 Módulos</span><div className="hero-detalhe-dot"></div>
+            <span>2 Dias de Imersão</span><div className="hero-detalhe-dot"></div>
+            <span>2 Meses de Assessoria</span>
+          </motion.div>
+        </div>
       </div>
-      <div class="pilar-card">
-        <div class="pilar-num">02</div>
-        <div class="pilar-title">Autoridade</div>
-        <div class="pilar-desc">Construir uma presença que inspira confiança antes mesmo de apresentar o preço.</div>
-      </div>
-      <div class="pilar-card">
-        <div class="pilar-num">03</div>
-        <div class="pilar-title">Conexão</div>
-        <div class="pilar-desc">Comunicar de forma que o cliente ideal se sinta visto, compreendido e atraído.</div>
-      </div>
-      <div class="pilar-card">
-        <div class="pilar-num">04</div>
-        <div class="pilar-title">Consistência</div>
-        <div class="pilar-desc">Manter uma mensagem coerente em todos os pontos de contato com o cliente.</div>
-      </div>
-      <div class="pilar-card">
-        <div class="pilar-num">05</div>
-        <div class="pilar-title">Conversão</div>
-        <div class="pilar-desc">Transformar sua autoridade em vendas de forma natural, sem bajulação nem pressão.</div>
-      </div>
-    </div>
-  </div>
-</section>
+      <div className="hero-scroll"><span>role</span><div className="hero-arrow"></div></div>
+    </section>
+  );
+}
 
-<!-- ══════════════════════════════════════════
-     MÓDULOS
-══════════════════════════════════════════ -->
-<section id="modulos">
-  <div class="container">
-    <div class="tag">Grade completa</div>
-    <h2 class="section-title">8 módulos · 2 dias de imersão</h2>
-    <p class="section-sub">Uma jornada estruturada do posicionamento à presença digital.</p>
-    <div class="modulos-dias">
-      <div class="dia-bloco">
-        <div class="dia-header">
-          <div class="dia-header-label">Dia 1</div>
-          <div class="dia-header-title">Identidade &amp; Posicionamento</div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">01</div>
-          <div>
-            <div class="modulo-title">Identidade de Autoridade</div>
-            <div class="modulo-desc">Quem você é como profissional, qual é o seu diferencial real e como articulá-lo com clareza.</div>
+function CompraSection() {
+  const ref = useRef(); const inView = useInView(ref, { once:true, margin:'-50px' });
+  const items_cross = ['Mais técnicas e scripts prontos para vender','Dicas de redes sociais para postar mais conteúdo','Um curso sobre como atender mais clientes','Fórmulas mágicas e atalhos fáceis'];
+  const items_check = ['Um posicionamento claro que justifica seus preços premium','Uma comunicação que constrói autoridade e atrai clientes certos','Identidade de negócio que gera respeito e referência','A mentalidade e as ferramentas para escalar sem se esgotar'];
+  return (
+    <SectionReveal id="compra">
+      <div className="container" ref={ref}>
+        <Reveal><div className="tag">A verdade sobre esta imersão</div></Reveal>
+        <Reveal delay={0.05}><h2 className="section-title">O que você acha que vai comprar<br/><em className="serif-italic">vs. o que você realmente leva</em></h2></Reveal>
+        <motion.div className="grid" initial={{ opacity:0, y:40 }} animate={inView?{opacity:1,y:0}:{}} transition={{ delay:0.2, duration:0.7 }}>
+          <div className="compra-col">
+            <div className="compra-col-title">O que parece ser</div>
+            {items_cross.map((t,i) => (
+              <div key={i} className="compra-item">
+                <div className="compra-item-icon icon-cross"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C4848A" strokeWidth="2.5" strokeLinecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg></div>
+                <span>{t}</span>
+              </div>
+            ))}
           </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">02</div>
-          <div>
-            <div class="modulo-title">Posicionamento Premium</div>
-            <div class="modulo-desc">Como se posicionar no mercado para atrair clientes que valorizam e pagam pelo que você entrega.</div>
+          <div className="compra-col">
+            <div className="compra-col-title">O que você realmente leva</div>
+            {items_check.map((t,i) => (
+              <div key={i} className="compra-item">
+                <div className="compra-item-icon icon-check"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#C9A96E" strokeWidth="2.5" strokeLinecap="round"><polyline points="2 7 6 11 12 3"/></svg></div>
+                <span>{t}</span>
+              </div>
+            ))}
           </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">03</div>
-          <div>
-            <div class="modulo-title">Comunicação que Comanda</div>
-            <div class="modulo-desc">Os 5 pilares na prática: como falar, escrever e se apresentar como referência.</div>
-          </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">04</div>
-          <div>
-            <div class="modulo-title">Precificação com Valor</div>
-            <div class="modulo-desc">Como definir preços baseados em valor percebido — e como comunicá-los sem desculpas.</div>
-          </div>
-        </div>
+        </motion.div>
       </div>
-      <div class="dia-bloco">
-        <div class="dia-header">
-          <div class="dia-header-label">Dia 2</div>
-          <div class="dia-header-title">Presença, Vendas &amp; Escalada</div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">05</div>
-          <div>
-            <div class="modulo-title">Presença Digital de Autoridade</div>
-            <div class="modulo-desc">Como construir uma presença online que trabalha por você 24h — sem precisar postar todo dia.</div>
-          </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">06</div>
-          <div>
-            <div class="modulo-title">Vendas sem Bajulação</div>
-            <div class="modulo-desc">O processo de venda natural de uma profissional reconhecida: atração, qualificação e conversão.</div>
-          </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">07</div>
-          <div>
-            <div class="modulo-title">Experiência de Alta Performance</div>
-            <div class="modulo-desc">Como criar uma experiência que gera indicações, fidelização e reputação espontânea.</div>
-          </div>
-        </div>
-        <div class="modulo-item">
-          <div class="modulo-num">08</div>
-          <div>
-            <div class="modulo-title">Escalada do Negócio</div>
-            <div class="modulo-desc">Como crescer de forma estruturada sem depender só da sua mão de obra — o caminho da autoridade.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </SectionReveal>
+  );
+}
 
-<!-- ══════════════════════════════════════════
-     ASSESSORIA
-══════════════════════════════════════════ -->
-<section id="assessoria">
-  <div class="container">
-    <div class="tag">Suporte pós-imersão</div>
-    <h2 class="section-title">2 meses de assessoria<br/><em class="serif-italic">em grupo com Ana Flor</em></h2>
-    <p class="section-sub">A imersão planta a semente. A assessoria garante que ela floresça.</p>
-    <div class="assessoria-inner">
-      <div class="assessoria-visual">
-        <div class="assessoria-visual-title">Você não estará sozinha depois dos dois dias.</div>
-        <p class="assessoria-visual-sub">A jornada continua com dois meses de acompanhamento próximo para você implementar, ajustar e colher os resultados.</p>
-      </div>
-      <div class="assessoria-lista">
-        <div class="assessoria-item">
-          <div class="assessoria-bullet">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div>
-            <div class="assessoria-item-title">Sessões semanais em grupo</div>
-            <div class="assessoria-item-desc">Encontros online para tirar dúvidas, compartilhar avanços e receber orientações específicas para o seu negócio.</div>
-          </div>
-        </div>
-        <div class="assessoria-item">
-          <div class="assessoria-bullet">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          </div>
-          <div>
-            <div class="assessoria-item-title">Comunidade exclusiva</div>
-            <div class="assessoria-item-desc">Acesso a um grupo seleto de profissionais que estão na mesma jornada — troca, apoio e parceria real.</div>
-          </div>
-        </div>
-        <div class="assessoria-item">
-          <div class="assessoria-bullet">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          </div>
-          <div>
-            <div class="assessoria-item-title">Feedback pessoal</div>
-            <div class="assessoria-item-desc">Ana Flor avalia sua comunicação, posicionamento e materiais — e te diz exatamente o que ajustar.</div>
-          </div>
-        </div>
-        <div class="assessoria-item">
-          <div class="assessoria-bullet">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <div>
-            <div class="assessoria-item-title">Material de apoio</div>
-            <div class="assessoria-item-desc">Templates, roteiros e ferramentas práticas para implementar o método no seu negócio a partir do dia seguinte.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+const DORES = [
+  'Você trabalha muito, entrega resultado, mas ainda sente que cobra menos do que merece — e não sabe exatamente por quê.',
+  'Clientes que não valorizam sua expertise, que pechinchãm ou que simplesmente somem após o orçamento.',
+  'Você sente que é boa no que faz, mas não consegue traduzir esse valor em palavras que convencem e convertem.',
+  'Vê colegas com menos experiência sendo reconhecidas como referência, e não entende o que elas fazem diferente.',
+  'Tem medo de aumentar os preços porque não sabe se os clientes vão aceitar — e acaba no ciclo de descontos.',
+  'Sente que está sempre executando, mas nunca construindo algo que te coloque no próximo nível.',
+];
 
-<!-- ══════════════════════════════════════════
-     GATILHOS: AUTORIDADE · PROVA · ESCASSEZ
-══════════════════════════════════════════ -->
-<section id="gatilhos">
-  <div class="container">
-    <div class="tag">Por que confiar nessa imersão</div>
-    <h2 class="section-title">Três razões para decidir agora</h2>
-    <div class="gatilhos-grid">
-      <div class="gatilho-card g-autoridade">
-        <div class="gatilho-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+function DoresSection() {
+  return (
+    <section id="dores">
+      <div className="container" style={{ position:'relative', zIndex:1 }}>
+        <Reveal><div className="tag">Isso ressoa com você?</div></Reveal>
+        <Reveal delay={0.05}><h2 className="section-title" style={{ color:'var(--creme)' }}>Se você está aqui,<br/><em className="serif-italic">provavelmente reconhece isso</em></h2></Reveal>
+        <Reveal delay={0.1}><p className="section-sub" style={{ color:'rgba(250,247,242,.5)', marginTop:'12px' }}>Não é falta de talento. É falta de posicionamento.</p></Reveal>
+        <div className="dores-grid">
+          {DORES.map((text, i) => <DorCard key={i} num={i+1} text={text} index={i} />)}
         </div>
-        <div class="gatilho-label">Autoridade</div>
-        <div class="gatilho-title">Método criado por quem viveu</div>
-        <div class="gatilho-desc">Ana Flor construiu um negócio de referência a partir do zero — sem fórmula alheia, sem atalho. O método Florescer com Autoridade é resultado de anos de experiência real no mercado de beleza e estética.</div>
       </div>
-      <div class="gatilho-card g-prova">
-        <div class="gatilho-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </section>
+  );
+}
+
+const PILARES = [
+  { num:'01', title:'Clareza',      desc:'Saber exatamente quem você é, para quem serve e qual transformação entrega.' },
+  { num:'02', title:'Autoridade',   desc:'Construir uma presença que inspira confiança antes mesmo de apresentar o preço.' },
+  { num:'03', title:'Conexão',      desc:'Comunicar de forma que o cliente ideal se sinta visto, compreendido e atraído.' },
+  { num:'04', title:'Consistência', desc:'Manter uma mensagem coerente em todos os pontos de contato com o cliente.' },
+  { num:'05', title:'Conversão',    desc:'Transformar sua autoridade em vendas de forma natural, sem bajulação nem pressão.' },
+];
+
+function MecanismoSection() {
+  const gridRef = useRef(); const gridInView = useInView(gridRef, { once:true, margin:'-30px' });
+  return (
+    <SectionReveal id="mecanismo">
+      <div className="container">
+        <Reveal><div className="tag">O grande mecanismo</div></Reveal>
+        <Reveal delay={0.05}>
+          <blockquote className="mecanismo-quote">
+            O próximo nível não está em <strong>atender mais</strong> — está em ser reconhecida como <strong>autoridade</strong> no que você faz.
+          </blockquote>
+        </Reveal>
+        <Reveal delay={0.1}><p className="section-sub" style={{ marginBottom:0 }}>A transformação acontece quando você domina os 5 pilares da comunicação de autoridade:</p></Reveal>
+        <div className="pilares-grid" ref={gridRef}>
+          {PILARES.map((p, i) => (
+            <motion.div key={i} className="pilar-card"
+              initial={{ opacity:0, y:28 }}
+              animate={gridInView ? { opacity:1, y:0 } : {}}
+              transition={{ delay:i*0.1, duration:0.55, ease:[0.4,0,0.2,1] }}
+              whileHover={{ y:-5, boxShadow:'0 14px 32px rgba(196,132,138,.13)' }}
+            >
+              <div className="pilar-num">{p.num}</div>
+              <div className="pilar-title">{p.title}</div>
+              <div className="pilar-desc">{p.desc}</div>
+            </motion.div>
+          ))}
         </div>
-        <div class="gatilho-label">Prova Social</div>
-        <div class="gatilho-title">Profissionais que já floresceram</div>
-        <div class="gatilho-desc">"Depois da imersão, aumentei meus preços em 40% e os clientes certos continuaram — os outros, deixei ir." As alunas não apenas aprendem. Elas transformam seus negócios em 60 dias.</div>
       </div>
-      <div class="gatilho-card g-escassez">
-        <div class="gatilho-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </SectionReveal>
+  );
+}
+
+const DIA1 = [
+  { num:'01', title:'Identidade de Autoridade',   desc:'Quem você é como profissional, qual é o seu diferencial real e como articulá-lo com clareza.' },
+  { num:'02', title:'Posicionamento Premium',      desc:'Como se posicionar no mercado para atrair clientes que valorizam e pagam pelo que você entrega.' },
+  { num:'03', title:'Comunicação que Comanda',     desc:'Os 5 pilares na prática: como falar, escrever e se apresentar como referência.' },
+  { num:'04', title:'Precificação com Valor',      desc:'Como definir preços baseados em valor percebido — e como comunicá-los sem desculpas.' },
+];
+const DIA2 = [
+  { num:'05', title:'Presença Digital de Autoridade', desc:'Como construir uma presença online que trabalha por você 24h — sem precisar postar todo dia.' },
+  { num:'06', title:'Vendas sem Bajulação',            desc:'O processo de venda natural de uma profissional reconhecida: atração, qualificação e conversão.' },
+  { num:'07', title:'Experiência de Alta Performance', desc:'Como criar uma experiência que gera indicações, fidelização e reputação espontânea.' },
+  { num:'08', title:'Escalada do Negócio',             desc:'Como crescer de forma estruturada sem depender só da sua mão de obra — o caminho da autoridade.' },
+];
+
+function ModulosSection() {
+  const d1ref = useRef(); const d1View = useInView(d1ref, { once:true, margin:'-20px' });
+  const d2ref = useRef(); const d2View = useInView(d2ref, { once:true, margin:'-20px' });
+  return (
+    <SectionReveal id="modulos">
+      <div className="container">
+        <Reveal><div className="tag">Grade completa</div></Reveal>
+        <Reveal delay={0.05}><h2 className="section-title">8 módulos · 2 dias de imersão</h2></Reveal>
+        <Reveal delay={0.1}><p className="section-sub">Uma jornada estruturada do posicionamento à presença digital.</p></Reveal>
+        <div className="modulos-dias">
+          <div className="dia-bloco" ref={d1ref}>
+            <div className="dia-header"><div className="dia-header-label">Dia 1</div><div className="dia-header-title">Identidade &amp; Posicionamento</div></div>
+            {DIA1.map((m,i) => (
+              <motion.div key={i} className="modulo-item"
+                initial={{ opacity:0, x:-22 }}
+                animate={d1View ? { opacity:1, x:0 } : {}}
+                transition={{ delay:i*0.1, duration:0.5 }}
+              >
+                <div className="modulo-num">{m.num}</div>
+                <div><div className="modulo-title">{m.title}</div><div className="modulo-desc">{m.desc}</div></div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="dia-bloco" ref={d2ref}>
+            <div className="dia-header"><div className="dia-header-label">Dia 2</div><div className="dia-header-title">Presença, Vendas &amp; Escalada</div></div>
+            {DIA2.map((m,i) => (
+              <motion.div key={i} className="modulo-item"
+                initial={{ opacity:0, x:-22 }}
+                animate={d2View ? { opacity:1, x:0 } : {}}
+                transition={{ delay:i*0.1, duration:0.5 }}
+              >
+                <div className="modulo-num">{m.num}</div>
+                <div><div className="modulo-title">{m.title}</div><div className="modulo-desc">{m.desc}</div></div>
+              </motion.div>
+            ))}
+          </div>
         </div>
-        <div class="gatilho-label">Escassez</div>
-        <div class="gatilho-title">Vagas intencionalmente limitadas</div>
-        <div class="gatilho-desc">A imersão é presencial e foi desenhada para grupos pequenos. Cada participante recebe atenção real. Por isso, o número de vagas é limitado — e quando fechar, fecha.</div>
-        <div class="vagas-badge">Vagas limitadas por turma</div>
       </div>
-    </div>
-  </div>
-</section>
+    </SectionReveal>
+  );
+}
 
-<!-- ══════════════════════════════════════════
-     CTA FINAL
-══════════════════════════════════════════ -->
-<section id="cta-final">
-  <div class="container" style="position:relative;z-index:1">
-    <div class="divider" style="max-width:160px">
-      <div class="divider-diamond"></div>
-    </div>
-    <blockquote class="cta-final-quote">
-      Se você sente que nasceu para mais do que apenas executar, essa é sua próxima etapa.
-    </blockquote>
-    <a href="#" class="btn-cta btn-cta-ouro" style="font-size:16px;padding:20px 56px">
-      Quero Florescer com Autoridade
-    </a>
-    <p class="cta-assinatura">Com amor e propósito — Ana Flor</p>
-  </div>
-</section>
+const ASSESSORIA_ITEMS = [
+  { icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, title:'Sessões semanais em grupo', desc:'Encontros online para tirar dúvidas, compartilhar avanços e receber orientações específicas para o seu negócio.' },
+  { icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>, title:'Comunidade exclusiva', desc:'Acesso a um grupo seleto de profissionais que estão na mesma jornada — troca, apoio e parceria real.' },
+  { icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>, title:'Feedback pessoal', desc:'Ana Flor avalia sua comunicação, posicionamento e materiais — e te diz exatamente o que ajustar.' },
+  { icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, title:'Material de apoio', desc:'Templates, roteiros e ferramentas práticas para implementar o método no seu negócio a partir do dia seguinte.' },
+];
 
-<footer>
-  © 2026 Ana Flor · Todos os direitos reservados
-</footer>
+function AssessoriaSection() {
+  const ref = useRef(); const inView = useInView(ref, { once:true, margin:'-40px' });
+  return (
+    <SectionReveal id="assessoria">
+      <div className="container" ref={ref}>
+        <Reveal><div className="tag">Suporte pós-imersão</div></Reveal>
+        <Reveal delay={0.05}><h2 className="section-title">2 meses de assessoria<br/><em className="serif-italic">em grupo com Ana Flor</em></h2></Reveal>
+        <Reveal delay={0.1}><p className="section-sub">A imersão planta a semente. A assessoria garante que ela floresça.</p></Reveal>
+        <motion.div className="assessoria-inner"
+          initial={{ opacity:0, y:40 }} animate={inView?{opacity:1,y:0}:{}} transition={{ delay:0.2, duration:0.7 }}
+        >
+          <div className="assessoria-visual">
+            <div className="assessoria-visual-title">Você não estará sozinha depois dos dois dias.</div>
+            <p className="assessoria-visual-sub">A jornada continua com dois meses de acompanhamento próximo para você implementar, ajustar e colher os resultados.</p>
+          </div>
+          <div className="assessoria-lista">
+            {ASSESSORIA_ITEMS.map((item,i) => (
+              <motion.div key={i} className="assessoria-item"
+                initial={{ opacity:0, x:22 }} animate={inView?{opacity:1,x:0}:{}} transition={{ delay:0.3+i*0.1, duration:0.5 }}
+              >
+                <div className="assessoria-bullet">{item.icon}</div>
+                <div><div className="assessoria-item-title">{item.title}</div><div className="assessoria-item-desc">{item.desc}</div></div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </SectionReveal>
+  );
+}
 
+function GatilhosSection() {
+  return (
+    <SectionReveal id="gatilhos">
+      <div className="container">
+        <Reveal><div className="tag">Por que confiar nessa imersão</div></Reveal>
+        <Reveal delay={0.05}><h2 className="section-title">Três razões para decidir agora</h2></Reveal>
+        <div className="gatilhos-grid">
+          <GatilhoCard type="autoridade" stat={8}   suffix="+" label="Autoridade"   title="Método criado por quem viveu"         desc="Ana Flor construiu um negócio de referência a partir do zero — sem fórmula alheia, sem atalho. O método Florescer com Autoridade é resultado de anos de experiência real no mercado de beleza e estética." />
+          <GatilhoCard type="prova"      stat={127}  suffix=""  label="Prova Social" title="Profissionais que já floresceram"      desc={`"Depois da imersão, aumentei meus preços em 40% e os clientes certos continuaram — os outros, deixei ir." As alunas não apenas aprendem. Elas transformam seus negócios em 60 dias.`} />
+          <GatilhoCard type="escassez"   stat={12}   suffix=""  label="Escassez"     title="Vagas intencionalmente limitadas"     desc="A imersão é presencial e foi desenhada para grupos pequenos. Cada participante recebe atenção real. Por isso, o número de vagas é limitado — e quando fechar, fecha." badge="Vagas limitadas por turma" />
+        </div>
+      </div>
+    </SectionReveal>
+  );
+}
+
+function CTAFinalSection() {
+  const ref = useRef(); const inView = useInView(ref, { once:true, margin:'-40px' });
+  return (
+    <section id="cta-final" ref={ref}>
+      <div className="container" style={{ position:'relative', zIndex:1 }}>
+        <motion.div className="divider" style={{ maxWidth:'160px' }}
+          initial={{ opacity:0, scaleX:0 }} animate={inView?{opacity:1,scaleX:1}:{}} transition={{ duration:0.6 }}
+        ><div className="divider-diamond"></div></motion.div>
+
+        <motion.blockquote className="cta-final-quote"
+          initial={{ opacity:0, y:28 }} animate={inView?{opacity:1,y:0}:{}} transition={{ delay:0.15, duration:0.7 }}
+        >
+          Se você sente que nasceu para mais do que apenas executar, essa é sua próxima etapa.
+        </motion.blockquote>
+
+        {/* Price */}
+        <motion.div initial={{ opacity:0, y:20 }} animate={inView?{opacity:1,y:0}:{}} transition={{ delay:0.35, duration:0.6 }} style={{ marginBottom:'36px' }}>
+          <div style={{ fontSize:'11px', fontWeight:600, letterSpacing:'2px', textTransform:'uppercase', color:'rgba(201,169,110,.55)', marginBottom:'12px' }}>Investimento</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(38px,6vw,72px)', fontWeight:600, background:'linear-gradient(135deg,#E8C98A,#C9A96E)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', lineHeight:1, marginBottom:'10px' }}>
+            10× de R$ 79,99
+          </div>
+          <div style={{ fontSize:'17px', color:'rgba(250,247,242,.48)' }}>
+            ou <strong style={{ color:'rgba(250,247,242,.75)', fontWeight:600 }}>R$ 797 à vista</strong>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity:0, scale:0.9 }} animate={inView?{opacity:1,scale:1}:{}} transition={{ delay:0.55, duration:0.5 }}>
+          <PulsingCTA href="#" className="btn-cta btn-cta-ouro" style={{ fontSize:'16px', padding:'20px 56px' }}>
+            Quero Florescer com Autoridade
+          </PulsingCTA>
+        </motion.div>
+
+        <motion.p className="cta-assinatura"
+          initial={{ opacity:0 }} animate={inView?{opacity:1}:{}} transition={{ delay:0.8, duration:0.5 }}
+        >Com amor e propósito — Ana Flor</motion.p>
+      </div>
+    </section>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <HeroSection />
+      <CompraSection />
+      <DoresSection />
+      <MecanismoSection />
+      <ModulosSection />
+      <AssessoriaSection />
+      <GatilhosSection />
+      <CTAFinalSection />
+      <footer>© 2026 Ana Flor · Todos os direitos reservados</footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
