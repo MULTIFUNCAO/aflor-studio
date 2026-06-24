@@ -66,15 +66,9 @@
 
   /* HERO */
   #hero {
-    background: linear-gradient(160deg, #0a0a0a 0%, #0a0a0a 60%, #0a0a0a 100%);
+    background: #000;
     min-height: 100vh; display: flex; flex-direction: column;
     position: relative; overflow: hidden; padding: 0;
-  }
-  #hero::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 70% 40%, rgba(196,132,138,.18) 0%, transparent 65%),
-                radial-gradient(ellipse at 10% 80%, rgba(201,169,110,.12) 0%, transparent 55%);
-    pointer-events: none;
   }
   .hero-nav {
     position: relative; z-index: 10; padding: 28px 32px;
@@ -116,8 +110,7 @@
   .icon-check { background: var(--ouro-lt); }
 
   /* DORES */
-  #dores { background: linear-gradient(160deg, #0a0a0a 0%, #0a0a0a 100%); position: relative; overflow: hidden; }
-  #dores::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(196,132,138,.15) 0%, transparent 55%); pointer-events: none; }
+  #dores { background: #000; position: relative; overflow: hidden; }
   #dores .section-title { color: var(--creme); }
   #dores .tag { border-color: rgba(201,169,110,.3); }
   .dores-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 48px; }
@@ -175,9 +168,9 @@
   #gatilhos { background: #fff; }
   .gatilhos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
   .gatilho-card { border-radius: 20px; padding: 36px 28px; text-align: center; }
-  .g-autoridade { background: linear-gradient(135deg, #0a0a0a, #0a0a0a); }
+  .g-autoridade { background: #000; }
   .g-prova { background: var(--creme); border: 1px solid #EDE0CC; }
-  .g-escassez { background: linear-gradient(135deg, var(--rosa) 0%, #9E5F65 100%); }
+  .g-escassez { background: #000; border: 1px solid rgba(196,132,138,.3); }
   .gatilho-icon { width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; }
   .g-autoridade .gatilho-icon { background: rgba(255,255,255,.1); }
   .g-prova .gatilho-icon { background: var(--ouro-lt); }
@@ -206,7 +199,6 @@
 
   /* CTA FINAL */
   #cta-final { background: linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.7)), url('ana1.jpg') center top / cover no-repeat; text-align: center; padding: 120px 0; position: relative; overflow: hidden; }
-  #cta-final::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(196,132,138,.2) 0%, transparent 65%); pointer-events: none; }
   .cta-final-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px, 4vw, 40px); font-weight: 400; font-style: italic; color: rgba(250,247,242,.85); max-width: 680px; margin: 0 auto 48px; line-height: 1.4; position: relative; }
   .cta-final-quote::before { content: '\201C'; font-size: 120px; line-height: 0; vertical-align: -0.45em; color: rgba(201,169,110,.15); font-style: normal; position: absolute; left: -24px; top: 24px; }
   .cta-assinatura { font-size: 13px; color: rgba(250,247,242,.35); margin-top: 28px; letter-spacing: .5px; }
@@ -546,7 +538,7 @@
     <div class="assessoria-inner reveal" data-delay="0.2">
       <div class="assessoria-visual" style="padding:0;position:relative;overflow:hidden;min-height:360px;">
         <img src="ana3.jpg" alt="Ana Flor" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;position:absolute;inset:0;"/>
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(110,35,45,.93) 0%,rgba(196,132,138,.5) 65%,transparent 100%);"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.4) 65%,transparent 100%);"></div>
         <div style="position:relative;z-index:1;padding:52px 40px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-height:360px;">
           <div class="assessoria-visual-title">Você não estará sozinha depois dos dois dias.</div>
           <p class="assessoria-visual-sub">A jornada continua com dois meses de acompanhamento próximo para você implementar, ajustar e colher os resultados.</p>
