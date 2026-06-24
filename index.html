@@ -4956,8 +4956,8 @@ function agAddProduto(){
   list.appendChild(row);
 }
 
-var AG_PROF_LISTA=['Ana Flor','Edu','Jenny','Vi'];
-var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Jenny':'Jenifer','Vi':'Vitoria'};
+var AG_PROF_LISTA=['Ana Flor','Edu','Flora','Jenny','Vi'];
+var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Flora':'Flora','Jenny':'Jenifer','Vi':'Vitoria'};
 function agCategoriaDoServico(nomeServico){
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
   return srv?srv.cat:null;
@@ -4976,8 +4976,8 @@ function agOpcoesProfPorServico(nomeServico){
   return agProfissionaisQueFazem(nomeServico).map(function(p){return '<option>'+p+'</option>';}).join('');
 }
 function agProfParaAgenda(profNome){
-  var mapaInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
-  var mapa={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var mapaInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Flora':'Flora','Lara':'Lara','Angélica':'Angélica'};
+  var mapa={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Ana Flor':'Ana Flor','Flora':'Flora','Lara':'Lara','Angélica':'Angélica'};
   var supa=mapaInv[profNome]||profNome;
   return mapa[supa]||profNome;
 }
