@@ -464,39 +464,106 @@ footer {
 .reveal-r { transform: translateX(20px); }
 .reveal.v, .reveal-l.v, .reveal-r.v { opacity: 1; transform: none; }
 
-/* ── RESPONSIVE ── */
+/* ── RESPONSIVE: tablet ── */
 @media (max-width: 1000px) {
-  .hero-inner     { grid-template-columns: 1fr; padding: 48px 24px 100px; gap: 48px; text-align: center; }
-  .hero-photo-col { max-width: 360px; margin: 0 auto; }
-  .hero-sub       { margin: 0 auto 44px; }
-  .hero-cta-wrap  { justify-content: center; }
-  .hero-stats     { grid-template-columns: repeat(2, 1fr); }
-  .hero-stat      { border-bottom: 1px solid rgba(201,168,76,.1); }
+  .hero-inner    { grid-template-columns: 1fr; padding: 48px 24px 100px; gap: 40px; text-align: center; }
+  .hero-photo-col{ max-width: 340px; margin: 0 auto; }
+  .hero-sub      { margin: 0 auto 40px; }
+  .hero-cta-wrap { justify-content: center; }
+  .hero-stats    { grid-template-columns: repeat(2, 1fr); }
+  .hero-stat     { border-bottom: 1px solid rgba(201,168,76,.1); }
   .hero-stat:nth-child(odd) { border-right: 1px solid rgba(201,168,76,.1); }
   .hero-stat:nth-child(3), .hero-stat:nth-child(4) { border-bottom: none; }
-  .apres-inner    { grid-template-columns: 1fr; gap: 48px; }
-  .apres-photo    { max-width: 400px; margin: 0 auto; }
-  .mentora-inner  { grid-template-columns: 1fr; gap: 48px; }
-  .mentora-photo  { max-width: 420px; margin: 0 auto; }
+  .apres-inner   { grid-template-columns: 1fr; gap: 40px; }
+  .apres-photo   { max-width: 400px; margin: 0 auto; }
+  .mentora-inner { grid-template-columns: 1fr; gap: 40px; }
+  .mentora-photo { max-width: 420px; margin: 0 auto; }
 }
+
+/* ── RESPONSIVE: mobile ── */
 @media (max-width: 768px) {
-  section { padding: 72px 0; }
-  .dor-grid   { grid-template-columns: 1fr; }
-  .agit-grid  { grid-template-columns: 1fr; }
-  .fvm-grid   { grid-template-columns: 1fr; }
-  .trans-grid { grid-template-columns: 1fr; }
-  .urg-grid   { grid-template-columns: 1fr; }
-  .qc-compare { grid-template-columns: 1fr; }
-  .qc-aut     { border-left: none; border-top: 1px solid rgba(201,168,76,.15); }
-  .dec-compare{ grid-template-columns: 1fr; }
-  .dec-depois { border-left: none; border-top: 1px solid rgba(201,168,76,.14); }
-  .urg-banner { flex-direction: column; text-align: center; padding: 28px 24px; }
-  .apres-badge { right: 0; bottom: 0; border-radius: 0 0 24px 0; }
-  .hero-nav   { padding: 20px; }
-}
-@media (max-width: 480px) {
-  .hero-stats { grid-template-columns: 1fr 1fr; }
-  .trans-grid { grid-template-columns: 1fr; }
+
+  /* Espaçamento geral */
+  section { padding: 64px 0; }
+  .container, .container-wide { padding: 0 20px; }
+
+  /* Títulos: máximo 2rem */
+  .section-title { font-size: 1.75rem !important; }
+  .hero-headline { font-size: 1.85rem !important; line-height: 1.2; }
+  .agit-quote    { font-size: 1.6rem  !important; line-height: 1.25; margin-bottom: 40px; }
+  .qc-headline   { font-size: 1.6rem  !important; line-height: 1.25; margin-bottom: 40px; }
+  .cta-quote     { font-size: 1.5rem  !important; margin-bottom: 36px; }
+  .cta-price     { font-size: 2.5rem  !important; }
+  .apres-title   { font-size: 1.6rem  !important; }
+  .mentora-title { font-size: 1.6rem  !important; }
+  .agit-block h3, .urg-card-title, .dec-col-title, .fvm-name { font-size: 1.2rem !important; }
+
+  /* Nav: compacta */
+  .hero-nav    { padding: 16px 20px; }
+  .hero-logo   { font-size: 18px; }
+  .btn.btn-sm  { padding: 10px 20px; font-size: 12px; }
+
+  /* Hero: foto full-width, CTA 100% */
+  .hero-inner     { padding: 32px 20px 80px; gap: 32px; }
+  .hero-photo-col { max-width: 100%; width: 100%; }
+  .hero-photo-col img { width: 100%; height: auto; }
+  .hero-photo-ring { display: none; }
+  .hero-sub       { font-size: 15px; }
+  .hero-cta-wrap  { flex-direction: column; width: 100%; }
+  .hero-cta-wrap .btn { width: 100%; padding: 18px 24px; font-size: 16px; }
+  .hero-stats     { grid-template-columns: repeat(2, 1fr); margin-top: 32px; }
+  .hero-stat      { padding: 16px 10px; }
+  .hero-stat-num  { font-size: 22px; }
+
+  /* Grids 2-col → 1-col */
+  .dor-grid    { grid-template-columns: 1fr; gap: 12px; margin-top: 36px; }
+  .agit-grid   { grid-template-columns: 1fr; gap: 16px; }
+  .fvm-grid    { grid-template-columns: 1fr; gap: 16px; margin-top: 36px; }
+  .trans-grid  { grid-template-columns: 1fr; gap: 12px; margin-top: 36px; }
+  .urg-grid    { grid-template-columns: 1fr; gap: 14px; margin-top: 36px; }
+
+  /* Cards: padding menor */
+  .dor-card     { padding: 22px 18px; }
+  .agit-block   { padding: 32px 24px; }
+  .fvm-card     { padding: 30px 24px; }
+  .trans-card   { padding: 28px 22px; }
+  .urg-card     { padding: 28px 24px; }
+  .dec-col      { padding: 32px 24px; }
+  .qc-col       { padding: 32px 24px; }
+
+  /* Comparativos: empilhar verticalmente */
+  .qc-compare   { grid-template-columns: 1fr; border-radius: 16px; }
+  .qc-aut       { border-left: none; border-top: 1px solid rgba(201,168,76,.18); }
+  .dec-compare  { grid-template-columns: 1fr; border-radius: 16px; margin-top: 36px; }
+  .dec-depois   { border-left: none; border-top: 1px solid rgba(201,168,76,.18); }
+
+  /* Apresentação: badge reposicionado */
+  .apres-inner  { gap: 48px; }
+  .apres-photo  { max-width: 100%; }
+  .apres-photo img { width: 100%; height: auto; }
+  .apres-badge  { right: 12px; bottom: 12px; padding: 14px 18px; }
+  .apres-badge-num { font-size: 26px; }
+  .apres-content { text-align: left; }
+
+  /* Mentora: foto em cima, texto embaixo */
+  .mentora-inner { grid-template-columns: 1fr; gap: 36px; }
+  .mentora-photo { max-width: 100%; order: -1; }
+  .mentora-photo img { width: 100%; height: auto; max-height: 420px; object-fit: cover; }
+
+  /* Banner de vagas */
+  .urg-banner { flex-direction: column; text-align: center; padding: 28px 20px; gap: 16px; }
+  .urg-banner-num { font-size: 44px; }
+  .urg-banner-text { font-size: 14px; }
+
+  /* Imagem depoimentos */
+  #depoimentos img { width: 100%; height: auto; border-radius: 14px; }
+
+  /* CTA Final */
+  #cta-final { padding: 80px 0; }
+  .pulse-wrap { width: 100%; }
+  .pulse-wrap .btn { width: 100%; padding: 20px 24px; font-size: 16px; }
+  .pulse-ring { border-radius: 60px; }
+  .cta-avista { margin-bottom: 40px; font-size: 14px; }
 }
 </style>
 </head>
