@@ -11759,17 +11759,16 @@ function carregarDadosDoSalao(){
           }else{
             try{localStorage.removeItem('aflor_logado');}catch(e){}
           }
+        }).catch(function(){
+          try{localStorage.removeItem('aflor_logado');}catch(e){}
         });
       }else{
-        if(overlay)overlay.classList.add('hidden');
-        aplicarPermissoesAdmin();
+        // SDK do Supabase não carregou — não conceder acesso sem auth
+        try{localStorage.removeItem('aflor_logado');}catch(e){}
       }
     } else if(saved&&saved.startsWith('colab_')){
-      var nome=saved.replace('colab_','');
-      colaboradorLogado=nome;
-      var overlay=document.getElementById('aflor-overlay');
-      if(overlay)overlay.classList.add('hidden');
-      setTimeout(function(){entrarComoColaborador(nome);},200);
+      // Sessão de colaborador sem verificação Supabase — remover e exibir login
+      try{localStorage.removeItem('aflor_logado');}catch(e){}
     }
   }catch(e){}
 })();
