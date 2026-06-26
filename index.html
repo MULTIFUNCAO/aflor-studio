@@ -11743,34 +11743,22 @@ function carregarDadosDoSalao(){
   carregarCaixaSupa();
 }
 
-// Ao carregar: verifica se já está logado
+// Ao carregar: SEMPRE verifica sessão Supabase antes de liberar o app
 (function(){
-  try{
-    var saved=localStorage.getItem('aflor_logado');
-    if(saved==='admin'){
+  if(!supa){return;}
+  supa.auth.getSession().then(function(sess){
+    var user=sess.data&&sess.data.session?sess.data.session.user:null;
+    if(user){
+      try{localStorage.setItem('aflor_logado','admin');}catch(e){}
       var overlay=document.getElementById('aflor-overlay');
-      // Verifica sessão real do Supabase Auth antes de liberar acesso
-      if(supa){
-        supa.auth.getSession().then(function(sess){
-          var user=sess.data&&sess.data.session?sess.data.session.user:null;
-          if(user){
-            if(overlay)overlay.classList.add('hidden');
-            carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
-          }else{
-            try{localStorage.removeItem('aflor_logado');}catch(e){}
-          }
-        }).catch(function(){
-          try{localStorage.removeItem('aflor_logado');}catch(e){}
-        });
-      }else{
-        // SDK do Supabase não carregou — não conceder acesso sem auth
-        try{localStorage.removeItem('aflor_logado');}catch(e){}
-      }
-    } else if(saved&&saved.startsWith('colab_')){
-      // Sessão de colaborador sem verificação Supabase — remover e exibir login
+      if(overlay)overlay.classList.add('hidden');
+      carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
+    }else{
       try{localStorage.removeItem('aflor_logado');}catch(e){}
     }
-  }catch(e){}
+  }).catch(function(){
+    try{localStorage.removeItem('aflor_logado');}catch(e){}
+  });
 })();
 // ===== FIM ONBOARDING =====
 
