@@ -7581,7 +7581,7 @@ function confirmarFechamentoPagamento(){
       var _mm=String(_now.getMonth()+1).padStart(2,'0');
       var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
       var _svcFluxo=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico||'Serviço';
-      fluxoLancamentos.push({tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'});fluxoSalvarLocal();
+      var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
@@ -10349,8 +10349,8 @@ function removerColab(idx){
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
-function fluxoSalvarLocal(){try{if(!window.SALAO_ID)return;localStorage.setItem('fluxo_lanc_'+window.SALAO_ID,JSON.stringify(fluxoLancamentos));}catch(e){}}
-function fluxoCarregarLocal(){try{if(!window.SALAO_ID)return;var raw=localStorage.getItem('fluxo_lanc_'+window.SALAO_ID);if(raw){fluxoLancamentos=JSON.parse(raw)||[];}}catch(e){}}
+async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:lanc.data,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
+async function carregarFluxoLancamentosSupa(){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').select('*').eq('salao_id',window.SALAO_ID).order('created_at',{ascending:false});if(r.error)throw r.error;fluxoLancamentos=(r.data||[]).map(function(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao,cat:row.categoria,forma:row.forma_pagamento,val:parseFloat(row.valor)||0,status:row.status};});renderFluxo();}catch(e){console.error('Erro ao carregar lançamentos:',e);}}
 function fluxoNavMes(dir){
   if(dir===0){
     fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
@@ -10588,7 +10588,7 @@ function salvarLancamento(){
   if(val<=0){showAlert('Informe um valor válido.');return;}
   var partes=dataVal.split('-');
   var dataFmt=partes[2]+'/'+partes[1]+'/'+partes[0];
-  fluxoLancamentos.push({tipo:_tipoLanc,data:dataFmt,desc:desc,cat:cat,forma:forma,val:val,status:status});fluxoSalvarLocal();
+  var _lanc={tipo:_tipoLanc,data:dataFmt,desc:desc,cat:cat,forma:forma,val:val,status:status};fluxoLancamentos.push(_lanc);fluxoInserirSupa(_lanc);
   closeModal('modal-lancamento-caixa');
   document.getElementById('lanc-desc').value='';
   document.getElementById('lanc-val').value='';
@@ -11732,7 +11732,7 @@ function obFinish(){
 
 function carregarDadosDoSalao(){
   if(!window.SALAO_ID)return;
-  fluxoCarregarLocal();
+  carregarFluxoLancamentosSupa();
   carregarRemuneracoesSupa();
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
