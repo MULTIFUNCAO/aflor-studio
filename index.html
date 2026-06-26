@@ -6486,23 +6486,87 @@ async function renderMetasCards(){
     +'</div>';
   el.style.cssText='display:flex;flex-direction:column;gap:20px';
   el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPorNome)+blocoIndividual;
-}function renderMetasColabSelecionado(){
+}
+var _cacheHistColab=null,_cacheHistTs=0;
+async function buscarHistoricoColaboradores(){
+  var agora=Date.now();
+  if(_cacheHistColab&&(agora-_cacheHistTs)<300000)return _cacheHistColab;
+  var res={totalPorColab:{},total:0,metodo:'igual'};
+  try{
+    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+      var hoje=new Date();
+      var t3=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
+      var rh=await supa.from('agendamentos').select('profissional,valor')
+        .eq('salao_id',window.SALAO_ID)
+        .gte('data',t3.toISOString().slice(0,10))
+        .lt('data',hoje.toISOString().slice(0,10))
+        .neq('status','Cancelado');
+      var rows=(rh&&rh.data)||[];
+      var mn={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+      rows.forEach(function(row){
+        if(!row.profissional)return;
+        var nome=mn[row.profissional]||row.profissional;
+        var val=parseMoedaBR(row.valor);
+        if(val>0){res.totalPorColab[nome]=(res.totalPorColab[nome]||0)+val;res.total+=val;}
+      });
+      if(res.total>0&&Object.keys(res.totalPorColab).length>0)res.metodo='historico';
+    }
+  }catch(e){console.log('hist colab err',e);}
+  _cacheHistColab=res;_cacheHistTs=agora;
+  return res;
+}
+function calcularRealizadoMesAtual(nomeColab){
+  var hoje=new Date();var mesA=hoje.getMonth();var anoA=hoje.getFullYear();
+  var total=0;
+  try{
+    Object.keys(agendamentosPorData||{}).forEach(function(dk){
+      var p=dk.split('/');
+      if(p.length!==3)return;
+      if(parseInt(p[1],10)-1!==mesA||parseInt(p[2],10)!==anoA)return;
+      var dia=agendamentosPorData[dk];
+      Object.keys(dia).forEach(function(k){
+        var ag=dia[k];
+        if(ag.prof!==nomeColab)return;
+        var st=(ag.status||'').toLowerCase();
+        if(st==='concluido'||st==='concluído'||st==='pago'||st==='finalizado')total+=(ag.valor_num||0);
+      });
+    });
+  }catch(e){}
+  return total;
+}
+async function renderMetasColabSelecionado(){
   var nome=(document.getElementById('meta-colab-seletor')||{}).value||'';
   var el=document.getElementById('meta-colab-resultado');
   if(!el)return;
   if(!nome){el.innerHTML='<div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div>';return;}
+  el.innerHTML='<div style="padding:20px;text-align:center;color:#bbb;font-size:12px">Calculando...</div>';
   var mv=metasVendas;
   var individuais=mv.individuais||{};
   if(!mv.individuais&&mv.colab&&mv.individual)individuais[mv.colab]=mv.individual;
-  var metaC=individuais[nome]||0;
-  var lancComissoes=[];
-  try{lancComissoes=JSON.parse(localStorage.getItem('flora_comissoes_pacote')||'[]');}catch(e){}
-  var hojeM=new Date();
-  var realC=lancComissoes.filter(function(l){
-    if(l.profissional!==nome)return false;
-    var d=new Date(l.data);
-    return d.getFullYear()===hojeM.getFullYear()&&d.getMonth()===hojeM.getMonth();
-  }).reduce(function(s,l){return s+(l.valor||0);},0);
+  var metaManual=individuais[nome]||0;
+  var metaGeral=mv.geral||0;
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietario(a)'&&c.cargo!=='Proprietário(a)';});
+  var hist=await buscarHistoricoColaboradores();
+  var metaCalculada=0;var metodo=hist.metodo;var pctContrib=0;
+  var histValor=hist.totalPorColab[nome]||0;
+  if(hist.metodo==='historico'&&hist.total>0){
+    pctContrib=Math.round(histValor/hist.total*100);
+    metaCalculada=Math.round(metaGeral*(histValor/hist.total));
+  }else{
+    var nAt=colabsAtivos.length||1;
+    metaCalculada=Math.round(metaGeral/nAt);
+    metodo='igual';pctContrib=Math.round(100/nAt);
+  }
+  var metaC=metaManual>0?metaManual:metaCalculada;
+  var usandoManual=metaManual>0;
+  var idsSel=mv.servicosSelecionados||[];
+  var precoMedio=0;
+  if(idsSel.length>0){
+    var svcs=idsSel.map(function(id){return servicos.find(function(s){return String(s.id)===id;});}).filter(Boolean);
+    if(svcs.length>0)precoMedio=svcs.reduce(function(acc,s){return acc+parseMoedaBR(s.preco);},0)/svcs.length;
+  }
+  var metaQtd=(precoMedio>0&&metaC>0)?Math.ceil(metaC/precoMedio):0;
+  var realC=calcularRealizadoMesAtual(nome);
   var movs=caixaState.movimentos||[];
   var svcC=movs.filter(function(m){return m.tipo==='entrada'&&m.profissional===nome&&m.categoria==='Servico de cabelo';}).length;
   var prodC=movs.filter(function(m){return m.tipo==='entrada'&&m.profissional===nome&&m.categoria==='Produto vendido';}).length;
@@ -6510,18 +6574,29 @@ async function renderMetasCards(){
   var faltaC=Math.max(0,metaC-realC);
   var individuaisServicos=mv.individuaisServicos||{};
   var individuaisProdutos=mv.individuaisProdutos||{};
-  var metaSvcC=individuaisServicos[nome]>0?individuaisServicos[nome]:null;
+  var metaSvcC=individuaisServicos[nome]>0?individuaisServicos[nome]:metaQtd>0?metaQtd:null;
   var metaProdC=individuaisProdutos[nome]>0?individuaisProdutos[nome]:null;
   var pctSC=metaSvcC>0?Math.min(100,Math.round(svcC/metaSvcC*100)):0;
   var pctPC=metaProdC>0?Math.min(100,Math.round(prodC/metaProdC*100)):0;
+  var metodoLabel=usandoManual
+    ?'✏️ Meta definida manualmente'
+    :metodo==='historico'
+      ?'📊 Histórico 3 meses ('+pctContrib+'% do total gerado pela equipe)'
+      :'➗ Divisão igual entre '+colabsAtivos.length+' colaboradores ativos';
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'
     +'<div style="background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e5e5e5;border-left:4px solid #6366f1">'
     +'<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">👤 '+nome+'</div>'
     +'<div style="font-size:28px;font-weight:900;color:#6366f1;line-height:1">'+fmtCaixa(realC)+'</div>'
-    +'<div style="font-size:12px;color:#888;margin-top:4px">de <b style="color:#333">'+fmtCaixa(metaC||0)+'</b> no mês · '+(pctC>=100?'<span style="color:#22c55e;font-weight:700">Meta batida! ✅</span>':metaC?pctC+'% atingido':'sem meta definida')+'</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:4px">de <b style="color:#333">'+fmtCaixa(metaC||0)+'</b> no mês · '+(pctC>=100?'<span style="color:#22c55e;font-weight:700">Meta batida! ✅</span>':metaC?pctC+'% atingido':'sem meta geral definida')+'</div>'
     +(metaC>0?'<div style="background:#f0f0f0;border-radius:20px;height:5px;overflow:hidden;margin-top:10px"><div style="background:#6366f1;height:5px;border-radius:20px;width:'+pctC+'%;transition:width .5s ease"></div></div>':'')
-    +(faltaC>0&&metaC?'<div style="font-size:11px;color:#888;margin-top:5px">Falta '+fmtCaixa(faltaC)+'</div>':'')
+    +(faltaC>0&&metaC>0?'<div style="font-size:11px;color:#888;margin-top:5px">Falta '+fmtCaixa(faltaC)+'</div>':'')
+    +(metaQtd>0&&precoMedio>0?'<div style="font-size:11px;color:#6366f1;margin-top:4px">≈ '+metaQtd+' atend. (preço médio serv. '+fmtCaixa(precoMedio)+')</div>':'')
+    +'<div style="font-size:10px;color:#aaa;margin-top:8px;padding-top:6px;border-top:1px solid #f0f0f0">'+metodoLabel+'</div>'
     +'</div>'
+    +(metodo==='historico'&&!usandoManual&&histValor>0
+      ?'<div style="background:#f0f7ff;border-radius:10px;padding:10px 14px;border:1px solid #dbeafe;font-size:11px;color:#3b82f6">'
+        +'📈 '+nome+' gerou '+fmtCaixa(histValor)+' nos últimos 3 meses ('+pctContrib+'% do total da equipe)</div>'
+      :'')
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div style="background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e5e5e5;border-left:4px solid #0d9488">'
     +'<div style="font-size:18px;margin-bottom:5px">✂️</div>'
