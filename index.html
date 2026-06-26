@@ -6549,7 +6549,7 @@ async function renderMetasColabSelecionado(){
   var hist=await buscarHistoricoColaboradores();
   var metaCalculada=0;var metodo=hist.metodo;var pctContrib=0;
   var histValor=hist.totalPorColab[nome]||0;
-  if(hist.metodo==='historico'&&hist.total>0){
+  if(hist.metodo==='historico'&&hist.total>0&&histValor>0){
     pctContrib=Math.round(histValor/hist.total*100);
     metaCalculada=Math.round(metaGeral*(histValor/hist.total));
   }else{
