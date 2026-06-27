@@ -1469,29 +1469,31 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <!-- PACOTES -->
     <div class="page" id="page-pacotes">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;flex:1;max-width:400px">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input placeholder="Procurar por nome..." style="background:none;border:none;outline:none;font-size:13.5px;width:100%"/>
+        <div style="font-size:16px;font-weight:800;color:#111">📦 Pacotes</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-pacote')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Pacote
+        </button>
+      </div>
+      <div id="pkg-kpi-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px"></div>
+      <div id="pkg-lista-clientes" style="margin-bottom:16px"></div>
+      <div id="pkg-catalogo-wrap">
+        <div onclick="pkgToggleCatalogo()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8f8f8;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;margin-bottom:8px;user-select:none">
+          <span style="font-size:12px;font-weight:800;color:#555;letter-spacing:.5px">📋 CATÁLOGO DE PACOTES</span>
+          <span id="pkg-catalogo-toggle-icon" style="font-size:12px;color:#aaa">▼</span>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-icon" title="Exportar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-pacote')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Novo Pacote
-          </button>
+        <div id="pkg-catalogo-body" style="display:none">
+          <div class="table-card">
+            <table>
+              <thead><tr><th>Pacote</th><th>Serviços</th><th>Validade</th><th>Status</th><th>Valor</th><th></th></tr></thead>
+              <tbody id="pacotes-table"></tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <div class="table-card">
-        <table>
-          <thead><tr><th>Pacote</th><th>Serviços</th><th>Validade</th><th>Status</th><th>Valor</th><th></th></tr></thead>
-          <tbody id="pacotes-table"></tbody>
-        </table>
-      </div>
-      <div id="pacotes-alerta-renovacao" style="margin-top:16px"></div>
-      <div id="pacotes-ativos-section" style="margin-top:16px"></div>
-      <div id="pacotes-encerrados-section" style="margin-top:16px"></div>
+      <div id="pacotes-alerta-renovacao" style="display:none"></div>
+      <div id="pacotes-ativos-section" style="display:none"></div>
+      <div id="pacotes-encerrados-section" style="display:none"></div>
     </div>
 
     <!-- CLIENTES -->
@@ -8827,148 +8829,96 @@ function renderPacotes(){
     ?catalogoLinhas.join('')
     :'<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray-400)">Nenhum pacote no catálogo</td></tr>';
 
+  // Esconde seções legadas
+  ['pacotes-alerta-renovacao','pacotes-ativos-section','pacotes-encerrados-section'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+
   // ── 2. AGRUPAR pacotesClientes por grupo_id ───────────────────
-  var gruposMap={};
-  var gruposOrdem=[];
+  var gruposMap={};var gruposOrdem=[];
   pacotesClientes.forEach(function(pc){
     var key=pc.grupo_id||('legacy_'+pc.pacote_nome+'_'+pc.cliente_nome+'_'+pc.data_compra);
-    if(!gruposMap[key]){
-      gruposMap[key]={key:key,pacote_nome:pc.pacote_nome,cliente_nome:pc.cliente_nome,valor_pago:pc.valor_pago,data_compra:pc.data_compra,itens:[]};
-      gruposOrdem.push(gruposMap[key]);
-    }
+    if(!gruposMap[key]){gruposMap[key]={key:key,pacote_nome:pc.pacote_nome,cliente_nome:pc.cliente_nome,valor_pago:pc.valor_pago,data_compra:pc.data_compra,grupo_id:pc.grupo_id||null,itens:[]};gruposOrdem.push(gruposMap[key]);}
     gruposMap[key].itens.push(pc);
   });
 
-  // Calcula restante por grupo (usa mínimo de total e máximo de usado)
   gruposOrdem.forEach(function(g){
     g.minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
     g.maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
     g.restante=g.minTotal-g.maxUsado;
   });
-
+  window._pkgGruposAll=gruposOrdem;
   var ativos=gruposOrdem.filter(function(g){return g.restante>0;});
   var encerrados=gruposOrdem.filter(function(g){return g.restante<=0;});
-  // Alerta: última sessão (restante === 1) ou esgotado recém (restante <= 0, não vazio)
   var alertas=ativos.filter(function(g){return g.restante<=1;});
 
-  var PKG_CORES=['#8b5cf6','#6366f1','#ec4899','#f97316','#14b8a6','#f59e0b','#3b82f6'];
-  function pkgCor(restante){return restante<=0?'#ef4444':restante===1?'#f59e0b':'#22c55e';}
-  function pkgAvCor(nome){return PKG_CORES[(nome||' ').charCodeAt(0)%PKG_CORES.length];}
-  function pkgInicial(nome){return(nome||'?').trim()[0].toUpperCase();}
-  function pkgEscNome(nome){return nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+  var _PCORES=['#8b5cf6','#6366f1','#ec4899','#f97316','#14b8a6','#f59e0b','#3b82f6'];
+  function _pCor(r){return r<=0?'#ef4444':r===1?'#f59e0b':'#22c55e';}
+  function _pAv(n){return _PCORES[(n||' ').charCodeAt(0)%_PCORES.length];}
+  function _pIni(n){return(n||'?').trim()[0].toUpperCase();}
+  function _pEsc(n){return n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 
-  function cardAtivo(g){
-    var cor=pkgCor(g.restante);
-    var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
-    var avc=pkgAvCor(g.cliente_nome);
-    var ini=pkgInicial(g.cliente_nome);
-    var tags=g.itens.map(function(it){
-      return '<span style="display:inline-block;font-size:10px;background:#f0f0ff;color:#4338ca;padding:2px 7px;border-radius:20px;font-weight:600;margin:2px 2px 0 0">'+it.nome_servico+'</span>';
-    }).join('');
-    var badge=g.restante<=0
-      ?'<span style="font-size:10px;background:#fee2e2;color:#dc2626;font-weight:700;padding:3px 9px;border-radius:20px">🔴 Esgotado</span>'
-      :g.restante===1
-        ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:3px 9px;border-radius:20px">⚠️ Renovar</span>'
-        :'<span style="font-size:10px;background:#dcfce7;color:#15803d;font-weight:700;padding:3px 9px;border-radius:20px">✅ Ativo</span>';
-    var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
-    var btnRen=g.restante<=1
-      ?'<button onclick="pkgRenovar(\''+pkgEscNome(g.cliente_nome)+'\')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Renovar</button>'
-      :'';
-    return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:12px">'
-      +'<div style="display:flex;align-items:flex-start;gap:12px">'
-      +'<div style="width:40px;height:40px;border-radius:50%;background:'+avc+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0">'+ini+'</div>'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:14px;font-weight:800;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</div>'
-      +'<div style="font-size:11px;color:#888;margin-top:1px">'+g.pacote_nome+'</div>'
-      +'<div style="margin-top:6px">'+tags+'</div>'
-      +'</div>'
-      +'<div style="flex-shrink:0">'+badge+'</div>'
-      +'</div>'
-      +'<div>'
-      +'<div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:5px">'
-      +'<span>'+g.maxUsado+' de '+g.minTotal+' sessões usadas</span>'
-      +'<span style="font-weight:700;color:'+cor+'">'+Math.max(0,g.restante)+' restantes</span>'
-      +'</div>'
-      +'<div style="height:8px;background:#f0f0f0;border-radius:99px;overflow:hidden">'
-      +'<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.4s"></div>'
-      +'</div>'
-      +'</div>'
-      +'<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">'
-      +btnRen
-      +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:14px;padding:4px" title="Remover">🗑</button>'
-      +'</div>'
-      +'</div>';
+  // ── 3. KPI CARDS ─────────────────────────────────────────────
+  var elKpi=document.getElementById('pkg-kpi-cards');
+  if(elKpi){
+    var f=window._pkgFiltro||'ativos';
+    function kc(label,count,icon,cor,filtro){
+      var sel=f===filtro;
+      return '<div onclick="pkgFiltrar(\''+filtro+'\')" style="background:'+(sel?cor:'#fff')+';border:2px solid '+(sel?cor:'#e5e5e5')+';border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;transition:.2s">'
+        +'<div style="font-size:22px;margin-bottom:2px">'+icon+'</div>'
+        +'<div style="font-size:24px;font-weight:900;color:'+(sel?'#fff':'#111')+'">'+count+'</div>'
+        +'<div style="font-size:11px;font-weight:700;color:'+(sel?'rgba(255,255,255,.8)':'#888')+'">'+label+'</div>'
+        +'</div>';
+    }
+    elKpi.innerHTML=kc('Ativos',ativos.length,'📦','#6366f1','ativos')+kc('Renovar',alertas.length,'⚠️','#f59e0b','renovar')+kc('Encerrados',encerrados.length,'🔒','#6b7280','encerrados');
   }
 
-  // ── 3. ALERTA DE RENOVAÇÃO ────────────────────────────────────
-  var elAlerta=document.getElementById('pacotes-alerta-renovacao');
-  if(elAlerta){
-    if(alertas.length){
-      var alertaItems=alertas.map(function(g){
-        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #fde68a">'
-          +'<div style="width:28px;height:28px;border-radius:50%;background:'+pkgAvCor(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">'+pkgInicial(g.cliente_nome)+'</div>'
-          +'<div style="flex:1;font-size:12px;color:#78350f">'
-          +'<strong>'+g.cliente_nome+'</strong> — '+g.pacote_nome
-          +(g.restante<=0?' <strong style="color:#dc2626">sem sessões!</strong>':' <strong style="color:#d97706">última sessão!</strong>')
-          +' Renovar na próxima visita.'
-          +'</div>'
-          +'<button onclick="pkgRenovar(\''+pkgEscNome(g.cliente_nome)+'\')" style="padding:5px 12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">Renovar</button>'
+  // ── 4. LISTA DE CLIENTES ──────────────────────────────────────
+  var elLista=document.getElementById('pkg-lista-clientes');
+  if(elLista){
+    var filtro=window._pkgFiltro||'ativos';
+    var base=filtro==='encerrados'?encerrados:filtro==='renovar'?alertas:ativos;
+    if(!base.length){
+      elLista.innerHTML='<div style="text-align:center;padding:32px;color:#aaa;font-size:12px">Nenhum pacote nesta categoria</div>';
+    } else {
+      var rowsHtml=base.map(function(g){
+        var cor=_pCor(g.restante);
+        var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
+        var badge=g.restante<=0
+          ?'<span style="font-size:10px;background:#fee2e2;color:#dc2626;font-weight:700;padding:2px 8px;border-radius:20px">🔴 Esgotado</span>'
+          :g.restante===1
+            ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:2px 8px;border-radius:20px">⚠️ Renovar</span>'
+            :'<span style="font-size:10px;background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:20px">✅ Ativo</span>';
+        var tags=g.itens.map(function(it){
+          return '<span style="display:inline-block;font-size:10px;background:#f0f0ff;color:#4338ca;padding:1px 6px;border-radius:20px;font-weight:600;margin:1px 2px 0 0">'+it.nome_servico+'</span>';
+        }).join('');
+        return '<div onclick="pkgAbrirDetalhe(\''+_pEsc(g.key)+'\')" style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s" onmouseover="this.style.background=\'#f8f8ff\'" onmouseout="this.style.background=\'#fff\'">'
+          +'<div style="width:40px;height:40px;border-radius:50%;background:'+_pAv(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0">'+_pIni(g.cliente_nome)+'</div>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">'
+          +'<span style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</span>'
+          +badge+'</div>'
+          +'<div style="font-size:11px;color:#888;margin-bottom:4px">'+g.pacote_nome+'</div>'
+          +'<div style="margin-bottom:6px">'+tags+'</div>'
+          +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="flex:1;height:6px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px"></div></div>'
+          +'<span style="font-size:11px;color:#888;white-space:nowrap;flex-shrink:0">'+g.maxUsado+'/'+g.minTotal+' sess.</span>'
+          +'</div></div>'
+          +'<div style="color:#d1d5db;font-size:20px;flex-shrink:0">›</div>'
           +'</div>';
       }).join('');
-      elAlerta.innerHTML='<div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;overflow:hidden;margin-bottom:4px">'
-        +'<div style="background:linear-gradient(90deg,#fef3c7,#fde68a);padding:10px 16px;display:flex;align-items:center;gap:8px">'
-        +'<span style="font-size:16px">🔔</span>'
-        +'<span style="font-size:12px;font-weight:800;color:#92400e">PACOTES PRECISANDO RENOVAÇÃO</span>'
-        +'<span style="font-size:11px;background:#f59e0b;color:#fff;font-weight:700;padding:1px 8px;border-radius:20px;margin-left:auto">'+alertas.length+'</span>'
-        +'</div>'
-        +alertaItems
-        +'</div>';
-    } else {
-      elAlerta.innerHTML='';
+      elLista.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+rowsHtml+'</div>';
     }
   }
+}
 
-  // ── 4. SEÇÃO ATIVOS ───────────────────────────────────────────
-  var elAtivos=document.getElementById('pacotes-ativos-section');
-  if(elAtivos){
-    var ativosHtml=ativos.length
-      ?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">'+ativos.map(cardAtivo).join('')+'</div>'
-      :'<div style="text-align:center;padding:32px;color:#aaa;font-size:12px">Nenhum pacote ativo</div>';
-    elAtivos.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
-      +'<span style="font-size:13px;font-weight:800;color:#111">📦 PACOTES ATIVOS</span>'
-      +'<span style="font-size:11px;background:#e0e7ff;color:#4338ca;font-weight:700;padding:1px 8px;border-radius:20px">'+ativos.length+'</span>'
-      +'</div>'+ativosHtml;
-  }
+function pkgFiltrar(filtro){window._pkgFiltro=filtro;renderPacotes();}
 
-  // ── 5. SEÇÃO ENCERRADOS ───────────────────────────────────────
-  var elEnc=document.getElementById('pacotes-encerrados-section');
-  if(elEnc){
-    if(encerrados.length){
-      var encHtml='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">'
-        +encerrados.map(function(g){
-          var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
-          var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
-          return '<div style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:.75">'
-            +'<div style="width:34px;height:34px;border-radius:50%;background:'+pkgAvCor(g.cliente_nome)+';opacity:.45;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">'+pkgInicial(g.cliente_nome)+'</div>'
-            +'<div style="flex:1;min-width:0">'
-            +'<div style="font-size:12px;font-weight:700;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</div>'
-            +'<div style="font-size:10px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.pacote_nome+' · '+srvNomes+'</div>'
-            +'<div style="font-size:10px;color:#9ca3af;margin-top:1px">'+g.minTotal+'/'+g.minTotal+' sessões usadas</div>'
-            +'</div>'
-            +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-            +'<span style="font-size:10px;background:#f3f4f6;color:#9ca3af;font-weight:700;padding:2px 8px;border-radius:20px">🔒 Encerrado</span>'
-            +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:13px;padding:2px" title="Remover">🗑</button>'
-            +'</div>'
-            +'</div>';
-        }).join('')+'</div>';
-      elEnc.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-        +'<span style="font-size:13px;font-weight:800;color:#6b7280">🔒 ENCERRADOS</span>'
-        +'<span style="font-size:11px;background:#f3f4f6;color:#9ca3af;font-weight:700;padding:1px 8px;border-radius:20px">'+encerrados.length+'</span>'
-        +'</div>'+encHtml;
-    } else {
-      elEnc.innerHTML='';
-    }
-  }
+function pkgToggleCatalogo(){
+  var body=document.getElementById('pkg-catalogo-body');
+  var icon=document.getElementById('pkg-catalogo-toggle-icon');
+  if(!body)return;
+  var vis=body.style.display!=='none';
+  body.style.display=vis?'none':'block';
+  if(icon)icon.textContent=vis?'▼':'▲';
 }
 
 function pkgRenovar(clienteNome){
@@ -8976,6 +8926,85 @@ function pkgRenovar(clienteNome){
   if(ci>=0)abrirVenderPacoteParaCliente(ci);
   else showAlert('Cliente não encontrada. Abra o perfil para renovar.');
 }
+
+async function pkgAbrirDetalhe(gKey){
+  var g=(window._pkgGruposAll||[]).find(function(x){return x.key===gKey;});
+  if(!g)return;
+  var m=document.getElementById('modal-pkg-detalhe');
+  if(!m){m=document.createElement('div');m.id='modal-pkg-detalhe';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  var _PCORES2=['#8b5cf6','#6366f1','#ec4899','#f97316','#14b8a6','#f59e0b','#3b82f6'];
+  var avc=_PCORES2[(g.cliente_nome||' ').charCodeAt(0)%_PCORES2.length];
+  var ini=(g.cliente_nome||'?').trim()[0].toUpperCase();
+  var cor=g.restante<=0?'#ef4444':g.restante===1?'#f59e0b':'#22c55e';
+  var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
+  var dataFmt=g.data_compra?new Date(g.data_compra+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+  var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+  var valorFmt=g.valor_pago?'R$ '+parseFloat(g.valor_pago).toFixed(2).replace('.',','):'—';
+  var nomeEsc=g.cliente_nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  m.innerHTML='<div class="modal-box" style="max-width:500px;border-radius:20px;overflow:hidden;padding:0">'
+    +'<div style="background:linear-gradient(135deg,'+avc+','+avc+'bb);padding:22px 24px;display:flex;align-items:center;gap:14px">'
+    +'<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">'+ini+'</div>'
+    +'<div style="flex:1"><div style="font-size:18px;font-weight:800;color:#fff">'+g.cliente_nome+'</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px">'+g.pacote_nome+'</div></div>'
+    +'<button onclick="document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;flex-shrink:0">✕</button>'
+    +'</div>'
+    +'<div style="padding:20px 24px;background:#fff;max-height:70vh;overflow-y:auto">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">'
+    +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">VALOR PAGO</div><div style="font-size:14px;font-weight:800;color:#111">'+valorFmt+'</div></div>'
+    +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">COMPRA</div><div style="font-size:13px;font-weight:700;color:#111">'+dataFmt+'</div></div>'
+    +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">SERVIÇOS</div><div style="font-size:10px;font-weight:600;color:#555">'+srvNomes+'</div></div>'
+    +'</div>'
+    +'<div style="margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px">'
+    +'<span>'+g.maxUsado+' de '+g.minTotal+' sessões usadas</span>'
+    +'<span style="font-weight:800;color:'+cor+'">'+Math.max(0,g.restante)+' restantes</span>'
+    +'</div>'
+    +'<div style="height:10px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.4s"></div></div>'
+    +'</div>'
+    +'<div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px">📋 HISTÓRICO DE SESSÕES</div>'
+    +'<div id="pkg-historico-body" style="margin-bottom:16px"><div style="text-align:center;padding:16px;color:#aaa;font-size:12px">Carregando...</div></div>'
+    +'<button onclick="pkgRenovar(\''+nomeEsc+'\');document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="width:100%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">🔄 Renovar Pacote</button>'
+    +'</div></div>';
+  m.classList.add('open');
+  pkgCarregarHistorico(g);
+}
+
+async function pkgCarregarHistorico(g){
+  var el=document.getElementById('pkg-historico-body');
+  if(!el)return;
+  var sessoes=[];
+  try{
+    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+      var r=await supa.from('pacotes_sessoes').select('*').eq('salao_id',window.SALAO_ID).eq('grupo_id',g.grupo_id||g.key).order('data',{ascending:false});
+      if(r.data&&r.data.length)sessoes=r.data;
+    }
+  }catch(e){console.log('err historico sessoes',e);}
+  var el2=document.getElementById('pkg-historico-body');
+  if(!el2)return;
+  if(!sessoes.length){
+    el2.innerHTML='<div style="text-align:center;padding:16px;background:#f9f9f9;border-radius:10px;color:#aaa;font-size:12px">Nenhuma sessão registrada ainda</div>';
+    return;
+  }
+  var rows=sessoes.map(function(s,i){
+    var df=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    return '<tr style="border-bottom:1px solid #f0f0f0">'
+      +'<td style="padding:8px 10px;font-size:12px;color:#555;white-space:nowrap">'+df+'</td>'
+      +'<td style="padding:8px 10px;font-size:12px;color:#111;font-weight:600">'+(s.servicos_realizados||'—')+'</td>'
+      +'<td style="padding:8px 10px;font-size:11px;color:#888">'+(s.profissional||'—')+'</td>'
+      +'<td style="padding:8px 10px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">'+(sessoes.length-i)+'ª</td>'
+      +'</tr>';
+  }).join('');
+  el2.innerHTML='<div style="border:1px solid #e5e5e5;border-radius:10px;overflow:hidden">'
+    +'<table style="width:100%;border-collapse:collapse">'
+    +'<thead><tr style="background:#f8f8f8">'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">DATA</th>'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">SERVIÇOS</th>'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">PROFISSIONAL</th>'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:center">SESSÃO</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+// keep old card functions below (now unused but referenced nowhere, safe to leave)
 
 function editarPacote(i){
   var p=pacotes[i];
