@@ -9036,27 +9036,40 @@ async function pkgCarregarHistorico(g){
   if(!el)return;
   var todas=[];
   try{
-    if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
-      // Fonte 1: pacotes_sessoes (sistema novo)
-      var r1=await supa.from('pacotes_sessoes').select('*')
-        .eq('salao_id',window.SALAO_ID).eq('grupo_id',g.grupo_id||g.key)
-        .order('data',{ascending:false});
-      if(r1.data&&r1.data.length){
-        r1.data.forEach(function(s){
-          todas.push({data:s.data,servicos:s.servicos_realizados||'—',profissional:s.profissional||'—',origem:'sessao'});
-        });
-      }
-      // Fonte 2: agendamentos WHERE tipo='pacote' (fallback para registros antigos)
+    if(typeof supa!=='undefined'&&supa){
+      // Fonte 1: pacotes_sessoes — por grupo_id (se existir) ou pacote_cliente_id
       try{
-        var r2=await supa.from('agendamentos').select('id,data,servico,profissional,status,hora')
-          .eq('salao_id',window.SALAO_ID).eq('cliente',g.cliente_nome).eq('tipo','pacote')
-          .neq('status','Cancelado').order('data',{ascending:false});
+        var q1=supa.from('pacotes_sessoes').select('*').order('data',{ascending:false});
+        if(g.grupo_id){
+          q1=q1.eq('grupo_id',g.grupo_id);
+        } else {
+          var firstId=g.itens&&g.itens[0]&&g.itens[0].id;
+          if(firstId)q1=q1.eq('pacote_cliente_id',String(firstId));
+          else q1=null;
+        }
+        if(q1){
+          var r1=await q1;
+          if(r1.data&&r1.data.length){
+            r1.data.forEach(function(s){
+              todas.push({data:s.data,servicos:s.servicos_realizados||'—',profissional:s.profissional||'—',origem:'sessao'});
+            });
+          }
+        }
+      }catch(e1){console.log('err pacotes_sessoes historico',e1);}
+      // Fonte 2: agendamentos — filtro por cliente (ilike) + servico contendo nome do pacote
+      // Sem filtro de salao_id para incluir registros históricos com salao_id NULL
+      try{
+        var r2=await supa.from('agendamentos')
+          .select('id,data,servico,profissional,status,hora')
+          .ilike('cliente',g.cliente_nome)
+          .ilike('servico','%pacote%')
+          .order('data',{ascending:false});
         if(r2.data&&r2.data.length){
-          r2.data.forEach(function(a){
+          r2.data.filter(function(a){return a.status!=='Cancelado';}).forEach(function(a){
             todas.push({data:a.data,servicos:a.servico||'—',profissional:a.profissional||'—',origem:'agendamento',hora:a.hora});
           });
         }
-      }catch(e2){console.log('agendamentos tipo pacote n/a',e2);}
+      }catch(e2){console.log('err agendamentos historico',e2);}
     }
   }catch(e){console.log('err historico sessoes',e);}
   // Deduplica por data+servico e ordena
