@@ -11492,6 +11492,7 @@ function fazerLogin(){
       if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
       if(colabObj.senha!==senhaDigitada){showAlert('Senha incorreta');return;}
     }
+    if(!window.SALAO_ID){showAlertOb('Sessão do salão não encontrada. O administrador precisa fazer login primeiro.');return;}
     colaboradorLogado=sel;
     try{localStorage.setItem('aflor_logado','colab_'+sel);}catch(e){}
     obFinish();
