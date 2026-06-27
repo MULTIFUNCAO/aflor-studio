@@ -7596,29 +7596,124 @@ function popupAbrirSeletorPacote(key){
   var pkgWrap=document.getElementById('popup-pkg-wrap');
   if(!pkgWrap)return;
   if(pkgWrap.innerHTML){pkgWrap.innerHTML='';return;}
-  var lista=(typeof pacotes!=='undefined'?pacotes:[]).filter(function(p){return p.ativo!==false;});
-  if(!lista.length){showAlert('Nenhum pacote cadastrado.');return;}
-  var optsHtml=lista.map(function(p,i){
-    var preco=typeof parsePrecoPacote==='function'?parsePrecoPacote(p.preco):parseFloat(p.preco)||0;
-    var srvTxt=p.servicos||'';
-    return '<div onclick="popupAplicarPacote(\''+key+'\','+i+')" style="padding:10px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;background:#fff" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'">'
-      +'<div style="font-size:12px;font-weight:700;color:#111">'+p.nome+'</div>'
-      +(srvTxt?'<div style="font-size:10px;color:#888;margin-top:2px">'+srvTxt+'</div>':'')
-      +'<div style="font-size:12px;color:#3b5bdb;font-weight:700;margin-top:2px">'+formatMoedaBR(preco)+'</div>'
+  var dados=agendaDiaAtual[key];
+  if(!dados){showAlert('Agendamento não encontrado.');return;}
+  var clienteNome=dados.cliente||'';
+
+  // Agrupa pacotesClientes por grupo_id filtrando só os da cliente com sessões restantes
+  var gruposMap={};
+  (pacotesClientes||[]).forEach(function(pc){
+    if(pc.cliente_nome!==clienteNome)return;
+    var gkey=pc.grupo_id||('legacy_'+pc.pacote_nome+'_'+pc.data_compra);
+    if(!gruposMap[gkey])gruposMap[gkey]={grupo_id:gkey,pacote_nome:pc.pacote_nome,itens:[]};
+    gruposMap[gkey].itens.push(pc);
+  });
+  // Filtra grupos que ainda tenham ao menos um serviço com sessão restante
+  var grupos=Object.keys(gruposMap).map(function(k){return gruposMap[k];}).filter(function(g){
+    return g.itens.some(function(it){return(it.quantidade_total||1)-(it.quantidade_usada||0)>0;});
+  });
+
+  if(!grupos.length){showAlert('Nenhum pacote ativo para '+clienteNome+'.');return;}
+
+  var gruposHtml=grupos.map(function(g,gi){
+    var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
+    var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+    var sessaoAtual=maxUsado+1;
+    var restam=minTotal-maxUsado;
+    var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' + ');
+    return '<div onclick="popupSelecionarGrupoPacote(\''+key+'\','+gi+')" style="padding:10px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;background:#fff" onmouseover="this.style.background=\'#f0f4ff\'" onmouseout="this.style.background=\'#fff\'">'
+      +'<div style="font-size:12px;font-weight:700;color:#111">'+g.pacote_nome+'</div>'
+      +'<div style="font-size:10px;color:#3b5bdb;font-weight:600;margin-top:2px">Sessão '+sessaoAtual+' de '+minTotal+' · restam '+restam+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-top:2px">'+srvNomes+'</div>'
       +'</div>';
   }).join('');
+
+  window._pkgGruposPopup=grupos;
+
   pkgWrap.innerHTML='<div style="border:1.5px solid #c7d7ff;border-radius:9px;overflow:hidden;background:#fff;margin-bottom:8px">'
-    +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;padding:8px 12px;background:#f0f4ff;border-bottom:1px solid #c7d7ff">APLICAR PACOTE</div>'
-    +optsHtml
+    +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;padding:8px 12px;background:#f0f4ff;border-bottom:1px solid #c7d7ff">PACOTES DA CLIENTE</div>'
+    +gruposHtml
     +'<div style="padding:6px 8px;background:#f9f9f9"><button type="button" onclick="document.getElementById(\'popup-pkg-wrap\').innerHTML=\'\'" style="width:100%;padding:6px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">Cancelar</button></div>'
     +'</div>';
 }
 
-function popupAplicarPacote(key,idx){
-  var p=(typeof pacotes!=='undefined'?pacotes:[])[idx];
-  if(!p)return;
-  var preco=typeof parsePrecoPacote==='function'?parsePrecoPacote(p.preco):parseFloat(p.preco)||0;
-  popupAdicionarExtra(key,{nome:'📦 Pacote: '+p.nome,valor:preco,profissional:'',produtos:[]});
+function popupSelecionarGrupoPacote(key,gi){
+  var g=(window._pkgGruposPopup||[])[gi];
+  if(!g)return;
+  var pkgWrap=document.getElementById('popup-pkg-wrap');
+  if(!pkgWrap)return;
+  var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
+  var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+  var sessaoAtual=maxUsado+1;
+
+  var checkboxesHtml=g.itens.map(function(it,ii){
+    var restante=(it.quantidade_total||1)-(it.quantidade_usada||0);
+    var disabled=restante<=0?' disabled':'';
+    var checked=restante>0?' checked':'';
+    var cor=restante<=0?'#bbb':'#111';
+    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f0f0f0;cursor:'+(restante>0?'pointer':'default')+'">'
+      +'<input type="checkbox" id="pkg-srv-check-'+ii+'"'+checked+disabled+' style="width:16px;height:16px;accent-color:#3b5bdb;flex-shrink:0"/>'
+      +'<div>'
+      +'<div style="font-size:12px;font-weight:600;color:'+cor+'">'+it.nome_servico+'</div>'
+      +'<div style="font-size:10px;color:#888">'+restante+' sessão(ões) restante(s)</div>'
+      +'</div></label>';
+  }).join('');
+
+  pkgWrap.innerHTML='<div style="border:1.5px solid #c7d7ff;border-radius:9px;overflow:hidden;background:#fff;margin-bottom:8px">'
+    +'<div style="padding:8px 12px;background:#f0f4ff;border-bottom:1px solid #c7d7ff">'
+    +'<div style="font-size:11px;font-weight:800;color:#3b5bdb">'+g.pacote_nome+'</div>'
+    +'<div style="font-size:10px;color:#555;margin-top:2px">Sessão '+sessaoAtual+' de '+minTotal+' · marque os serviços realizados hoje</div>'
+    +'</div>'
+    +checkboxesHtml
+    +'<div style="padding:8px;display:flex;gap:6px;background:#f9f9f9">'
+    +'<button type="button" onclick="document.getElementById(\'popup-pkg-wrap\').innerHTML=\'\'" style="flex:1;padding:6px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">Cancelar</button>'
+    +'<button type="button" onclick="popupConfirmarSessaoPacote(\''+key+'\','+gi+')" style="flex:2;padding:6px;background:#3b5bdb;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">✓ Confirmar Sessão</button>'
+    +'</div></div>';
+}
+
+async function popupConfirmarSessaoPacote(key,gi){
+  var g=(window._pkgGruposPopup||[])[gi];
+  if(!g)return;
+
+  var marcados=[];
+  g.itens.forEach(function(it,ii){
+    var cb=document.getElementById('pkg-srv-check-'+ii);
+    if(cb&&cb.checked)marcados.push(it);
+  });
+  if(!marcados.length){showAlert('Marque ao menos um serviço.');return;}
+
+  var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
+  var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+  var sessaoAtual=maxUsado+1;
+  var nomesSrv=marcados.map(function(it){return it.nome_servico;}).join(' + ');
+  var label='📦 Pacote '+g.pacote_nome+' · Sessão '+sessaoAtual+'/'+minTotal+' · '+nomesSrv;
+
+  // Adiciona na comanda como valor 0 (pacote já foi pago)
+  popupAdicionarExtra(key,{nome:label,valor:0,profissional:'',produtos:[]});
+
+  // Desconta sessão de cada serviço marcado
+  marcados.forEach(function(it){
+    it.quantidade_usada=(it.quantidade_usada||0)+1;
+    var pc=(pacotesClientes||[]).find(function(p){return p.id===it.id;});
+    if(pc){pc.quantidade_usada=it.quantidade_usada;atualizarUsoPacoteClienteSupa(pc.id,pc.quantidade_usada);}
+  });
+  salvarPacotesClientesLocal();
+
+  // Registra sessão no Supabase
+  var hoje=new Date().toISOString().split('T')[0];
+  if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
+    try{
+      await supa.from('pacotes_sessoes').insert([{
+        salao_id:window.SALAO_ID,
+        grupo_id:g.grupo_id,
+        pacote_cliente_id:marcados[0].id,
+        data:hoje,
+        servicos_realizados:nomesSrv,
+        comanda_ref:key
+      }]);
+    }catch(e){console.log('err salvar pacote_sessao',e);}
+  }
+
   var pkgWrap=document.getElementById('popup-pkg-wrap');
   if(pkgWrap)pkgWrap.innerHTML='';
 }
