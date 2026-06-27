@@ -9118,15 +9118,20 @@ function pkgEditarSessao(i){
     +'<td style="padding:4px 6px"><input type="date" id="phe-data-'+i+'" value="'+dataIso+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
     +(function(){
       var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
-      var opts=pkgItens.map(function(it){
+      var marcados=(s.servicos||'').split(/\s*\+\s*/).map(function(x){return x.trim();});
+      if(!pkgItens.length){
+        return '<td style="padding:4px 6px"><input type="text" id="phe-svc-text-'+i+'" value="'+(s.servicos||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>';
+      }
+      var cbs=pkgItens.map(function(it,j){
         var n=it.nome_servico||'';
-        return '<option value="'+n.replace(/"/g,'&quot;')+'"'+(n===s.servicos?' selected':'')+'>'+n+'</option>';
+        var qtd=it.quantidade_total||1;
+        var chk=marcados.indexOf(n)>=0;
+        return '<label style="display:flex;align-items:center;gap:5px;font-size:10px;color:#333;cursor:pointer;padding:1px 0">'
+          +'<input type="checkbox" id="phe-svc-cb-'+i+'-'+j+'" value="'+n.replace(/"/g,'&quot;')+'"'+(chk?' checked':'')
+          +' style="accent-color:#6366f1;width:13px;height:13px;flex-shrink:0"/>'
+          +'<span>'+n+' <span style="color:#aaa">('+qtd+'x)</span></span></label>';
       }).join('');
-      // fallback: se pacote não tem itens, usa catálogo completo
-      if(!opts)(typeof servicos!=='undefined'?servicos:[]).forEach(function(sv){
-        opts+='<option value="'+sv.nome.replace(/"/g,'&quot;')+'"'+(sv.nome===s.servicos?' selected':'')+'>'+sv.nome+'</option>';
-      });
-      return '<td style="padding:4px 6px"><select id="phe-svc-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">— Serviço —</option>'+opts+'</select></td>';
+      return '<td style="padding:4px 6px;vertical-align:top">'+cbs+'</td>';
     })()
     +'<td style="padding:4px 6px"><select id="phe-prof-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">—</option>'+profOpts+'</select></td>'
     +'<td style="padding:4px 6px;white-space:nowrap">'
@@ -9141,7 +9146,18 @@ async function pkgSalvarSessao(i){
   var s=(window._pkgHistoricoDedup||[])[i];
   if(!s)return;
   var novaData=document.getElementById('phe-data-'+i)?.value||s.data;
-  var novoSvc=(document.getElementById('phe-svc-'+i)?.value||'').trim()||s.servicos;
+  var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+  var novoSvc;
+  if(pkgItens.length){
+    var marcados=[];
+    pkgItens.forEach(function(it,j){
+      var cb=document.getElementById('phe-svc-cb-'+i+'-'+j);
+      if(cb&&cb.checked)marcados.push(it.nome_servico||'');
+    });
+    novoSvc=marcados.length?marcados.join(' + '):s.servicos;
+  } else {
+    novoSvc=(document.getElementById('phe-svc-text-'+i)?.value||'').trim()||s.servicos;
+  }
   var novoProf=document.getElementById('phe-prof-'+i)?.value||s.profissional;
   s.data=novaData;s.servicos=novoSvc;s.profissional=novoProf;
   if(typeof supa!=='undefined'&&supa&&s.id){
