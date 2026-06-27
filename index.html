@@ -6565,15 +6565,7 @@ function abrirRetornoRapido(i){
 }
 
 // RETORNOS DATA
-let retornos=[
-  {cliente:'Alessandra Say',proc:'Coloração',prof:'Ana Flor',dataProc:'26/04/2026',dataRetorno:'2026-05-26',obs:'Manter tom 7.1',status:'hoje',notif:'3 dias antes'},
-  {cliente:'Mãe Ana',proc:'Manicure',prof:'Ana Flor',dataProc:'05/05/2026',dataRetorno:'2026-05-26',obs:'',status:'hoje',notif:'3 dias antes'},
-  {cliente:'Julia Barrozo',proc:'Progressiva',prof:'Edu',dataProc:'13/02/2026',dataRetorno:'2026-05-14',obs:'',status:'vencido',notif:'7 dias antes'},
-  {cliente:'Denilda',proc:'Corte',prof:'Edu',dataProc:'10/04/2026',dataRetorno:'2026-05-25',obs:'Franja mais curta',status:'vencido',notif:'3 dias antes'},
-  {cliente:'Adriana - Casa Devi',proc:'Botox',prof:'Ana Flor',dataProc:'26/03/2026',dataRetorno:'2026-06-05',obs:'',status:'pendente',notif:'7 dias antes'},
-  {cliente:'Laura Dentista',proc:'Pedicure',prof:'Jenny',dataProc:'19/05/2026',dataRetorno:'2026-06-09',obs:'',status:'pendente',notif:'3 dias antes'},
-  {cliente:'Janaine Brito',proc:'Design de Sobrancelhas',prof:'Jenny',dataProc:'26/05/2026',dataRetorno:'2026-06-16',obs:'',status:'pendente',notif:'1 dia antes'},
-];
+let retornos=[];
 
 // Sync retornos into clientes
 function syncRetornosToClientes(){
@@ -7817,13 +7809,7 @@ document.addEventListener('click',function(e){
   if(p&&!p.contains(e.target)&&document.contains(e.target))fecharAgendaPopup();
 });
 
-var agendaAppts={
-  'Ana Flor:09:00':{cliente:'Mãe Ana',tel:'(11) 91234-5678',servico:'Manicure Pedicure',prof:'Ana Flor',hora:'09:00',duracao:'1h',valor:'R$ 80,00',cls:'#22c55e',sinal:true,sinalPago:true,sinalValor:'R$ 40,00'},
-  'Edu:11:00':{cliente:'Denilda',tel:'(11) 92345-6789',servico:'Corte de Cabelo',prof:'Edu',hora:'11:00',duracao:'45 min',valor:'R$ 100,00',cls:'#555',sinal:true,sinalPago:false,sinalValor:'R$ 30,00'},
-  'Jeny:12:30':{cliente:'Adriana - Casa Devi',tel:'(11) 93456-7890',servico:'Hidratação',prof:'Jenny',hora:'12:30',duracao:'1h',valor:'R$ 40,00',cls:'#FF5722',sinal:false,sinalPago:false,sinalValor:null},
-  'Ana Flor:14:30':{cliente:'Laura Dentista',tel:'(11) 94567-8901',servico:'Pedicure',prof:'Ana Flor',hora:'14:30',duracao:'45 min',valor:'R$ 50,00',cls:'#333',sinal:true,sinalPago:true,sinalValor:'R$ 25,00'},
-  'Vi:16:00':{cliente:'Alessandra Say',tel:'(11) 95678-9012',servico:'Manicure',prof:'Vi',hora:'16:00',duracao:'45 min',valor:'R$ 40,00',cls:'#8b5cf6',sinal:true,sinalPago:false,sinalValor:'R$ 20,00'},
-};
+var agendaAppts={};
 
 function corBlocoAgenda(a){
   if(!a) return '#111111';
@@ -8085,9 +8071,6 @@ function renderAgenda(){
     agendamentosPorData[dataKey]={};
   }
   var apptsDiaFull=agendamentosPorData[dataKey]||{};
-  if(!Object.keys(apptsDiaFull).length&&dataKey==='26/5/2026'&&typeof agendaAppts!=='undefined'){
-    apptsDiaFull=Object.assign({},agendaAppts);
-  }
   agendaDiaAtual=apptsDiaFull;agendaDataKeyAtual=dataKey;
   var temAgendamentos=filtro
     ?Object.keys(apptsDiaFull).some(function(k){var a=apptsDiaFull[k];return a&&profAgendaIgual(a.prof||k.split(':')[0],filtro);})
@@ -11428,6 +11411,7 @@ function fazerLogout(){
   if(typeof fluxoLancamentos!=='undefined')fluxoLancamentos=[];
   if(typeof servicos!=='undefined')servicos=[];
   if(typeof produtos!=='undefined')produtos=[];
+  if(typeof retornos!=='undefined')retornos=[];
   if(supa)supa.auth.signOut().catch(function(){});
   var overlay=document.getElementById('aflor-overlay');
   if(overlay)overlay.classList.remove('hidden');
