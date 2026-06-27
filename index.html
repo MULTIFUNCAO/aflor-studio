@@ -4732,7 +4732,7 @@ function showPage(id){
     }
     if(id==='ia')renderIA();
     if(id==='marketing')renderMarketing();
-    if(id==='fluxo')setTimeout(renderFluxo,50);
+    if(id==='fluxo'){carregarFluxoLancamentosSupa();setTimeout(renderFluxo,50);}
     if(id==='treinamentos')renderTreinamentos();
     if(id==='influenciadoras')renderInfluenciadoras();
     if(id==='florescimento')renderFlorescimento();
