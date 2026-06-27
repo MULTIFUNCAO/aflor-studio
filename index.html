@@ -10426,7 +10426,7 @@ function removerColab(idx){
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
 async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:lanc.data,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
-async function carregarFluxoLancamentosSupa(){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').select('*').eq('salao_id',window.SALAO_ID).order('created_at',{ascending:false});if(r.error)throw r.error;fluxoLancamentos=(r.data||[]).map(function(row){return{id:row.id,tipo:row.tipo,data:row.data,desc:row.descricao,cat:row.categoria,forma:row.forma_pagamento,val:parseFloat(row.valor)||0,status:row.status};});renderFluxo();}catch(e){console.error('Erro ao carregar lançamentos:',e);}}
+async function carregarFluxoLancamentosSupa(){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').select('*').eq('salao_id',window.SALAO_ID).order('created_at',{ascending:false});if(r.error)throw r.error;fluxoLancamentos=(r.data||[]).map(function(row){var d=row.data||'';var iso=d.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)d=iso[3]+'/'+iso[2]+'/'+iso[1];return{id:row.id,tipo:row.tipo,data:d,desc:row.descricao,cat:row.categoria,forma:row.forma_pagamento,val:parseFloat(row.valor)||0,status:row.status};});renderFluxo();}catch(e){console.error('Erro ao carregar lançamentos:',e);}}
 function fluxoNavMes(dir){
   if(dir===0){
     fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
