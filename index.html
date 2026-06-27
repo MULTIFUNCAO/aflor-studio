@@ -10438,7 +10438,7 @@ async function carregarFluxoLancamentosSupa(){
       var isoM=ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
       var d=isoM?isoM[3]+'/'+isoM[2]+'/'+isoM[1]:(ts.match(/^\d{2}\/\d{2}\/\d{4}/)?ts:hjFmt);
       var tipo=(row.tipo==='entrada')?'receita':'despesa';
-      return{id:row.id,tipo:tipo,data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma||'',val:parseFloat(row.valor)||0,status:'confirmado'};
+      return{id:row.id,tipo:tipo,data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma||'',val:parseFloat(row.valor)||0,status:'confirmado',prof:row.profissional||''};
     });
     renderFluxo();
   }catch(e){console.error('Erro ao carregar lançamentos:',e);}
@@ -10562,7 +10562,8 @@ function renderFluxoDRE(){
   var despesas=fluxoAgruparPorCat(lancs,'despesa');
   var totalR=receitas.reduce(function(s,r){return s+r.val;},0);
   var totalD=despesas.reduce(function(s,r){return s+r.val;},0);
-  var lucro=totalR-totalD;
+  var totalComissoes=calcularComissoesMes(lancs);
+  var lucro=totalR-totalComissoes-totalD;
   var margem=totalR>0?((lucro/totalR)*100).toFixed(1):'0';
   var html='<tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">RECEITAS</td></tr>';
   if(!receitas.length){
@@ -10581,7 +10582,8 @@ function renderFluxoDRE(){
       html+='<tr style="border-bottom:1px solid #f5f5f5"><td style="padding:10px 18px;font-size:13px;padding-left:28px">'+r.cat+'</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:#ef4444">('+fluxoFmtMoeda(r.val)+')</td></tr>';
     });
   }
-  html+='<tr style="border-bottom:2px solid #111;background:#fff5f5"><td style="padding:12px 18px;font-size:13px;font-weight:800">TOTAL DESPESAS</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#ef4444">('+fluxoFmtMoeda(totalD)+')</td></tr>';
+  html+='<tr style="border-bottom:1px solid #fecaca;background:#fff5f5"><td style="padding:12px 18px;font-size:13px;font-weight:800">TOTAL DESPESAS</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#ef4444">('+fluxoFmtMoeda(totalD)+')</td></tr>';
+  html+='<tr style="border-bottom:2px solid #111;background:#fef9ec"><td style="padding:12px 18px;font-size:13px;font-weight:800">(-) Comissões Colaboradores</td><td style="padding:12px 18px;text-align:left;font-size:11px;color:#888">estimado pela % de cada profissional</td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#f59e0b">('+fluxoFmtMoeda(totalComissoes)+')</td></tr>';
   html+='<tr style="background:#111"><td style="padding:14px 18px;font-size:15px;font-weight:900;color:#fff">LUCRO LÍQUIDO</td><td></td><td style="padding:14px 18px;text-align:right;font-size:18px;font-weight:900;color:#4ade80">'+fluxoFmtMoeda(lucro)+'</td></tr>';
   html+='<tr style="background:#1a1a1a"><td style="padding:10px 18px;font-size:12px;color:rgba(255,255,255,.5)">Margem de lucro</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)">'+margem+'%</td></tr>';
   var tb=document.getElementById('fluxo-dre-tbody');
@@ -10607,6 +10609,17 @@ function fluxoRenderAbaAtiva(){
   var vD=document.getElementById('fluxo-view-dre');
   if(vD&&vD.style.display!=='none')renderFluxoDRE();
 }
+function calcularComissoesMes(lancsMes){
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo';});
+  var mediaPct=colabsAtivos.length>0
+    ?colabsAtivos.reduce(function(s,c){return s+(parseFloat(String(c.comissao||'0').replace('%',''))||0);},0)/colabsAtivos.length
+    :50;
+  return lancsMes.filter(function(l){return l.tipo==='receita'&&l.status==='confirmado';}).reduce(function(total,l){
+    var colab=l.prof?colaboradores.find(function(c){return c.nome===l.prof;}):null;
+    var pct=colab?(parseFloat(String(colab.comissao||'0').replace('%',''))||0):mediaPct;
+    return total+(l.val*pct/100);
+  },0);
+}
 function renderFluxo(){
   fluxoAtualizarMesUI();
   var tbody=document.getElementById('fluxo-tbody');
@@ -10617,7 +10630,8 @@ function renderFluxo(){
   var lancsMesConf=lancsMes.filter(function(l){return l.status==='confirmado';});
   var kpiR=lancsMesConf.reduce(function(s,l){return l.tipo==='receita'?s+(l.val||0):s;},0);
   var kpiD=lancsMesConf.reduce(function(s,l){return l.tipo==='despesa'?s+(l.val||0):s;},0);
-  var kpiL=kpiR-kpiD;
+  var kpiComissoes=calcularComissoesMes(lancsMesConf);
+  var kpiL=kpiR-kpiComissoes-kpiD;
   var elKpiR=document.getElementById('fluxo-kpi-receita-val');
   var elKpiD=document.getElementById('fluxo-kpi-despesa-val');
   var elKpiL=document.getElementById('fluxo-kpi-lucro-val');
