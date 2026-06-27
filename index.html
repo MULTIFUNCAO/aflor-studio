@@ -4382,6 +4382,7 @@ async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamento
 async function carregarAgendamentosSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
+    agendamentosPorData={};
     var hoje=new Date();
     var dInicio=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
     var dFim=new Date(hoje.getFullYear(),hoje.getMonth()+2,0);
