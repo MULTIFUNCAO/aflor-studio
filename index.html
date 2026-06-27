@@ -4664,6 +4664,11 @@ async function carregarPacotesClientesSupa(){
       });
       salvarPacotesClientesLocal();
       syncPacotesLegacyStorage();
+      // Re-renderiza a tela Pacotes com dados frescos do Supabase
+      if(typeof renderPacotes==='function'){
+        var pg=document.getElementById('page-pacotes');
+        if(pg&&pg.style.display!=='none')renderPacotes();
+      }
     }
   }catch(e){console.log('err carregar pacotes clientes',e);}
 }
@@ -8939,7 +8944,16 @@ async function pkgAbrirDetalhe(gKey){
   var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
   var dataFmt=g.data_compra?new Date(g.data_compra+'T12:00:00').toLocaleDateString('pt-BR'):'—';
   var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
-  var valorFmt='R$ '+parseFloat(g.valor_pago||0).toFixed(2).replace('.',',');
+  // g.valor_pago pode ser stale se renderPacotes rodou antes do Supabase retornar
+  // Fallback: busca valor_pago direto de pacotesClientes (atualizado pelo Supabase)
+  var _vp=g.valor_pago;
+  if(!_vp&&pacotesClientes){
+    var _pcFresh=pacotesClientes.find(function(pc){
+      return pc.grupo_id?pc.grupo_id===g.grupo_id:pc.cliente_nome===g.cliente_nome&&pc.pacote_nome===g.pacote_nome;
+    });
+    if(_pcFresh)_vp=_pcFresh.valor_pago;
+  }
+  var valorFmt='R$ '+parseFloat(_vp||0).toFixed(2).replace('.',',');
   var nomeEsc=g.cliente_nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   var gKeyEsc=gKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   m.setAttribute('data-gkey',gKey);
