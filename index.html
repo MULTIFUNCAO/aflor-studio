@@ -9113,33 +9113,44 @@ function pkgEditarSessao(i){
     return '<option value="'+n+'"'+(n===(s.profissional||'')?'  selected':'')+'>'+n+'</option>';
   }).join('');
   var dataIso=s.data||'';
-  var svcVal=(s.servicos||'').replace(/"/g,'&quot;');
+  // Remove linha de serviços anterior se existir
+  var oldSvc=document.getElementById('pkg-hist-svc-row-'+i);
+  if(oldSvc)oldSvc.remove();
+
+  // Linha 1: Nº | Data | (vazio) | Profissional | Salvar/Cancelar
   tr.innerHTML='<td style="padding:4px 6px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">✏️</td>'
     +'<td style="padding:4px 6px"><input type="date" id="phe-data-'+i+'" value="'+dataIso+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
-    +(function(){
-      var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
-      var marcados=(s.servicos||'').split(/\s*\+\s*/).map(function(x){return x.trim();});
-      if(!pkgItens.length){
-        return '<td style="padding:4px 6px"><input type="text" id="phe-svc-text-'+i+'" value="'+(s.servicos||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>';
-      }
-      var cbs=pkgItens.map(function(it,j){
-        var n=it.nome_servico||'';
-        var qtd=it.quantidade_total||1;
-        var chk=marcados.indexOf(n)>=0;
-        return '<div style="margin-bottom:5px">'
-          +'<label style="display:block;font-size:11px;color:#333;cursor:pointer;white-space:nowrap">'
-          +'<input type="checkbox" id="phe-svc-cb-'+i+'-'+j+'" value="'+n.replace(/"/g,'&quot;')+'"'+(chk?' checked':'')
-          +' style="accent-color:#6366f1;margin-right:5px"/>'
-          +n+' <span style="color:#aaa;font-size:10px">('+qtd+'x)</span>'
-          +'</label></div>';
-      }).join('');
-      return '<td style="padding:4px 6px;vertical-align:top;white-space:normal">'+cbs+'</td>';
-    })()
+    +'<td></td>'
     +'<td style="padding:4px 6px"><select id="phe-prof-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">—</option>'+profOpts+'</select></td>'
     +'<td style="padding:4px 6px;white-space:nowrap">'
     +'<button onclick="pkgSalvarSessao('+i+')" style="padding:3px 7px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;margin-bottom:2px;display:block;width:100%">✅</button>'
     +'<button onclick="pkgCancelarEdicaoSessao()" style="padding:3px 7px;background:#e5e5e5;color:#555;border:none;border-radius:6px;font-size:11px;cursor:pointer;display:block;width:100%">❌</button>'
     +'</td>';
+
+  // Linha 2: colspan=5 com checkboxes — completamente fora da grade de colunas
+  var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+  var marcados=(s.servicos||'').split(/\s*\+\s*/).map(function(x){return x.trim();});
+  var cbsHtml;
+  if(pkgItens.length){
+    cbsHtml='<div style="font-size:10px;font-weight:700;color:#6366f1;margin-bottom:6px;letter-spacing:.3px">SERVIÇOS REALIZADOS</div>'
+      +pkgItens.map(function(it,j){
+        var n=it.nome_servico||'';
+        var qtd=it.quantidade_total||1;
+        var chk=marcados.indexOf(n)>=0;
+        return '<label style="font-size:12px;color:#333;cursor:pointer;display:block;margin-bottom:6px">'
+          +'<input type="checkbox" id="phe-svc-cb-'+i+'-'+j+'" value="'+n.replace(/"/g,'&quot;')+'"'+(chk?' checked':'')
+          +' style="accent-color:#6366f1;width:14px;height:14px;margin-right:7px;vertical-align:middle"/>'
+          +n+' <span style="color:#aaa;font-size:11px">('+qtd+'x)</span>'
+          +'</label>';
+      }).join('');
+  } else {
+    cbsHtml='<div style="font-size:10px;font-weight:700;color:#6366f1;margin-bottom:6px">SERVIÇO</div>'
+      +'<input type="text" id="phe-svc-text-'+i+'" value="'+(s.servicos||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:5px 8px;border:1.5px solid #6366f1;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box"/>';
+  }
+  var svcRow=document.createElement('tr');
+  svcRow.id='pkg-hist-svc-row-'+i;
+  svcRow.innerHTML='<td colspan="5" style="padding:10px 14px;background:#f0f4ff;border-bottom:1px solid #c7d7ff">'+cbsHtml+'</td>';
+  tr.insertAdjacentElement('afterend',svcRow);
 }
 
 function pkgCancelarEdicaoSessao(){pkgRenderHistoricoRows();}
@@ -9160,6 +9171,9 @@ async function pkgSalvarSessao(i){
   } else {
     novoSvc=(document.getElementById('phe-svc-text-'+i)?.value||'').trim()||s.servicos;
   }
+  // Remove linha de serviços extra criada em pkgEditarSessao
+  var svcRow=document.getElementById('pkg-hist-svc-row-'+i);
+  if(svcRow)svcRow.remove();
   var novoProf=document.getElementById('phe-prof-'+i)?.value||s.profissional;
   s.data=novaData;s.servicos=novoSvc;s.profissional=novoProf;
   if(typeof supa!=='undefined'&&supa&&s.id){
