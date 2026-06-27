@@ -8939,7 +8939,7 @@ async function pkgAbrirDetalhe(gKey){
   var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
   var dataFmt=g.data_compra?new Date(g.data_compra+'T12:00:00').toLocaleDateString('pt-BR'):'—';
   var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
-  var valorFmt=g.valor_pago?'R$ '+parseFloat(g.valor_pago).toFixed(2).replace('.',','):'—';
+  var valorFmt='R$ '+parseFloat(g.valor_pago||0).toFixed(2).replace('.',',');
   var nomeEsc=g.cliente_nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   var gKeyEsc=gKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   m.setAttribute('data-gkey',gKey);
@@ -9129,14 +9129,29 @@ function pkgEditarSessao(i){
 
   // Linha 2: colspan=5 com checkboxes — completamente fora da grade de colunas
   var _rawItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
-  // Expande itens cujo nome_servico é "A + B + C" numa string única
   var pkgItens=[];
-  _rawItens.forEach(function(it){
-    var partes=(it.nome_servico||'').split(/\s*\+\s*/).filter(Boolean);
-    partes.forEach(function(n){pkgItens.push({nome_servico:n.trim(),quantidade_total:it.quantidade_total||1});});
-  });
+  // 1ª opção: buscar servicosItens do catálogo (tem quantidade por serviço)
+  var _primeiroItem=_rawItens[0];
+  var _catalogoEntry=_primeiroItem&&typeof pacotes!=='undefined'
+    ?pacotes.find(function(p){return String(p.id)===String(_primeiroItem.pacote_id);})
+    :null;
+  if(_catalogoEntry&&_catalogoEntry.servicosItens&&_catalogoEntry.servicosItens.length){
+    pkgItens=_catalogoEntry.servicosItens.map(function(it){
+      return {nome_servico:(it.servico||'').trim(),quantidade_total:parseInt(it.qtd,10)||1};
+    });
+  } else {
+    // 2ª opção: expandir string "A + B + C" com quantidade 1 por parte
+    _rawItens.forEach(function(it){
+      var partes=(it.nome_servico||'').split(/\s*\+\s*/).filter(Boolean);
+      if(partes.length>1){
+        partes.forEach(function(n){pkgItens.push({nome_servico:n.trim(),quantidade_total:1});});
+      } else {
+        pkgItens.push(it);
+      }
+    });
+  }
   if(!pkgItens.length)pkgItens=_rawItens;
-  window._pkgItensEdit=pkgItens; // compartilha com pkgSalvarSessao
+  window._pkgItensEdit=pkgItens;
 
   var marcados=(s.servicos||'').split(/\s*\+\s*/).map(function(x){return x.trim();});
   var cbsHtml;
