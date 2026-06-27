@@ -171,8 +171,6 @@ tr:hover td{background:#fafafa}
             <th>Salão</th>
             <th>Status</th>
             <th>Plano</th>
-            <th>Cadastro</th>
-            <th>Dias</th>
             <th>Agend.</th>
             <th>Clientes</th>
             <th>Colabs</th>
@@ -228,11 +226,10 @@ function sair(){
 }
 
 function planoStatus(s){
-  var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
   var p=(s.plano||'trial').toLowerCase();
+  if(p==='bloqueado')return 'inativo';
   if(p!=='trial'&&p!=='')return 'pago';
-  if(dias<=14)return 'trial';
-  return 'nopagou';
+  return 'trial';
 }
 
 function statusBadge(st){
@@ -263,7 +260,7 @@ async function loadData(){
 
   try{
     // 1. Buscar todos os salões
-    var rs=await supa.from('saloes').select('*').order('created_at',{ascending:false});
+    var rs=await supa.from('saloes').select('*').order('nome_salao',{ascending:true});
     if(rs.error)throw rs.error;
     saloes=rs.data||[];
 
@@ -295,14 +292,14 @@ async function loadData(){
 function renderCards(){
   var pagos=saloes.filter(function(s){return planoStatus(s)==='pago';});
   var trial=saloes.filter(function(s){return planoStatus(s)==='trial';});
-  var nopagou=saloes.filter(function(s){return planoStatus(s)==='nopagou';});
+  var inativos=saloes.filter(function(s){return planoStatus(s)==='inativo';});
   var mrr=pagos.reduce(function(sum,s){return sum+(PLANO_PRECO[(s.plano||'').toLowerCase()]||0);},0);
 
   document.getElementById('cards-area').innerHTML=
     card('Total de Salões',saloes.length,'','')
     +card('Plano Pago',pagos.length,'green','ativos na plataforma')
-    +card('Em Trial',trial.length,'yellow','≤ 14 dias')
-    +card('Não Pagaram',nopagou.length,'red','> 14 dias sem plano')
+    +card('Em Trial',trial.length,'yellow','sem plano pago')
+    +card('Bloqueados',inativos.length,'red','sem acesso')
     +card('Atendimentos Hoje',counts.hoje,'blue','em toda a plataforma')
     +card('MRR Estimado',fmtMoeda(mrr),'purple','receita mensal recorrente');
 }
@@ -328,14 +325,14 @@ function renderTable(){
     var st=planoStatus(s);
     if(filtroAtual==='pagos'&&st!=='pago')return false;
     if(filtroAtual==='trial'&&st!=='trial')return false;
-    if(filtroAtual==='nopagou'&&st!=='nopagou')return false;
-    if(filtroAtual==='inativos'&&counts.agend[s.id]>0)return false;
+    if(filtroAtual==='nopagou'&&st!=='trial')return false;
+    if(filtroAtual==='inativos'&&st!=='inativo')return false;
     if(busca&&!(s.nome_salao||'').toLowerCase().includes(busca)&&!(s.email||'').toLowerCase().includes(busca))return false;
     return true;
   });
 
   if(!lista.length){
-    document.getElementById('saloes-tbody').innerHTML='<tr><td colspan="9" class="empty">Nenhum salão encontrado</td></tr>';
+    document.getElementById('saloes-tbody').innerHTML='<tr><td colspan="7" class="empty">Nenhum salão encontrado</td></tr>';
     return;
   }
 
@@ -343,14 +340,11 @@ function renderTable(){
     var st=planoStatus(s);
     var plano=(s.plano||'trial').toLowerCase();
     var planoLbl=PLANO_LABEL[plano]||plano||'Trial';
-    var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
     return '<tr>'
       +'<td><div style="font-weight:700;font-size:13px">'+escHtml(s.nome_salao||'—')+'</div>'
       +'<div style="font-size:11px;color:#888">'+escHtml(s.email||s.id||'')+'</div></td>'
       +'<td>'+statusBadge(st)+'</td>'
       +'<td><span style="font-size:12px;font-weight:700;color:#555">'+planoLbl+'</span></td>'
-      +'<td style="font-size:12px;color:#888">'+fmtDate(s.created_at)+'</td>'
-      +'<td style="font-size:12px;text-align:center">'+dias+'d</td>'
       +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.agend[s.id]||0)+'</td>'
       +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.clientes[s.id]||0)+'</td>'
       +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.colabs[s.id]||0)+'</td>'
@@ -367,7 +361,6 @@ async function verDetalhes(id){
   var s=saloes.find(function(x){return x.id===id;});
   if(!s)return;
   var st=planoStatus(s);
-  var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
   var plano=(s.plano||'trial').toLowerCase();
 
   document.getElementById('modal-title').textContent=s.nome_salao||'Salão';
@@ -406,7 +399,7 @@ async function verDetalhes(id){
     +'<div class="detail-item"><div class="dl">Responsável</div><div class="dv">'+escHtml(s.responsavel||'—')+'</div></div>'
     +'<div class="detail-item"><div class="dl">Status</div><div class="dv">'+statusBadge(st)+'</div></div>'
     +'<div class="detail-item"><div class="dl">Plano</div><div class="dv">'+(PLANO_LABEL[plano]||plano||'Trial')+'</div></div>'
-    +'<div class="detail-item"><div class="dl">Cadastro</div><div class="dv">'+fmtDate(s.created_at)+' ('+dias+'d atrás)</div></div>'
+    +'<div class="detail-item"><div class="dl">Responsável</div><div class="dv">'+escHtml(s.responsavel||'—')+'</div></div>'
     +'<div class="detail-item"><div class="dl">ID Supabase</div><div class="dv" style="font-size:10px;word-break:break-all">'+s.id+'</div></div>'
     +'</div>';
 
