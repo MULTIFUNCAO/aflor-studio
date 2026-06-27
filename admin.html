@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flora Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f4f4f4;color:#111;min-height:100vh}
+
+/* AUTH */
+#auth-screen{position:fixed;inset:0;background:#111;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:20px}
+#auth-screen .logo{width:64px;height:64px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+#auth-screen h1{color:#fff;font-size:22px;font-weight:900;letter-spacing:2px}
+#auth-screen p{color:#666;font-size:13px}
+#auth-screen input{background:#1a1a1a;border:1px solid #333;color:#fff;padding:12px 16px;border-radius:10px;font-size:15px;width:280px;text-align:center;outline:none}
+#auth-screen input:focus{border-color:#555}
+#auth-screen button{background:#fff;color:#111;border:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;width:280px}
+#auth-screen .err{color:#ef4444;font-size:12px;min-height:16px}
+
+/* LAYOUT */
+#app{display:none}
+.top-bar{background:#111;color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.top-bar h1{font-size:16px;font-weight:900;letter-spacing:2px;display:flex;align-items:center;gap:10px}
+.top-bar h1 svg{opacity:.8}
+.top-bar .badge{background:#22c55e;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+.top-bar button{background:#333;color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer}
+.top-bar button:hover{background:#444}
+
+.content{padding:24px;max-width:1400px;margin:0 auto}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.card{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid #e5e5e5}
+.card .label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.card .val{font-size:28px;font-weight:900;color:#111;line-height:1}
+.card .sub{font-size:11px;color:#aaa;margin-top:4px}
+.card.green{border-left:4px solid #22c55e}.card.green .val{color:#16a34a}
+.card.yellow{border-left:4px solid #f59e0b}.card.yellow .val{color:#d97706}
+.card.red{border-left:4px solid #ef4444}.card.red .val{color:#dc2626}
+.card.blue{border-left:4px solid #3b82f6}.card.blue .val{color:#2563eb}
+.card.purple{border-left:4px solid #8b5cf6}.card.purple .val{color:#7c3aed}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:7px 16px;border-radius:20px;border:1.5px solid #ddd;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#555;transition:.15s}
+.filter-btn.active{background:#111;color:#fff;border-color:#111}
+.search-box{margin-left:auto;padding:7px 12px;border:1.5px solid #ddd;border-radius:20px;font-size:12px;outline:none;width:200px}
+.search-box:focus{border-color:#999}
+
+/* TABLE */
+.table-wrap{background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0f0f0;background:#fafafa;white-space:nowrap}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+
+/* BADGES */
+.badge-status{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block}
+.badge-pago{background:#dcfce7;color:#16a34a}
+.badge-trial{background:#fef9c3;color:#a16207}
+.badge-nopago{background:#fee2e2;color:#dc2626}
+.badge-inativo{background:#f3f4f6;color:#6b7280}
+
+/* BUTTONS */
+.btn-sm{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:.15s}
+.btn-view{background:#f0f0f0;color:#333}.btn-view:hover{background:#e0e0e0}
+.btn-block{background:#fee2e2;color:#dc2626}.btn-block:hover{background:#fecaca}
+.btn-wpp{background:#dcfce7;color:#16a34a}.btn-wpp:hover{background:#bbf7d0}
+.btn-up{background:#eff6ff;color:#2563eb}.btn-up:hover{background:#dbeafe}
+.btn-actions{display:flex;gap:5px;flex-wrap:wrap}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-head h2{font-size:16px;font-weight:900}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1}
+.modal-body{padding:20px 24px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.detail-item .dl{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:3px}
+.detail-item .dv{font-size:14px;font-weight:600;color:#111}
+.section-title{font-size:12px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 10px}
+.usage-bar{background:#f0f0f0;border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
+.usage-bar-fill{height:100%;background:#22c55e;border-radius:4px;transition:.3s}
+.plan-select{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:10px;outline:none}
+.btn-primary{background:#111;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+.btn-primary:hover{background:#222}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:4px}
+.week-cell{text-align:center;font-size:10px}
+.week-cell .bar-wrap{height:40px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:2px}
+.week-cell .bar{width:18px;background:#e5e5e5;border-radius:3px 3px 0 0;min-height:2px}
+.week-cell .lbl{color:#aaa;font-size:9px}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:#aaa;font-size:13px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid #ddd;border-top-color:#111;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:#aaa;font-size:13px}
+
+@media(max-width:700px){
+  .detail-grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr 1fr}
+  th:nth-child(n+5),td:nth-child(n+5){display:none}
+  .search-box{width:140px}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="logo">
+    <svg width="32" height="38" viewBox="0 0 100 115" fill="none">
+      <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="#111" opacity="0.9"/>
+      <path d="M50 62 C50 62 36 49 36 30 C36 14 50 5 50 5 C50 5 64 14 64 30 C64 49 50 62 50 62Z" fill="#111" opacity="0.5"/>
+      <path d="M50 62 L50 102" stroke="#111" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M50 85 C50 85 28 80 24 66 C37 66 50 77 50 85Z" fill="#111"/>
+      <path d="M50 77 C50 77 72 72 76 58 C63 58 50 69 50 77Z" fill="#111"/>
+    </svg>
+  </div>
+  <h1>FLORA ADMIN</h1>
+  <p>Acesso restrito à equipe Flora</p>
+  <input type="password" id="auth-input" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')checkAuth()"/>
+  <div class="err" id="auth-err"></div>
+  <button onclick="checkAuth()">Entrar</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="top-bar">
+    <h1>
+      <svg width="18" height="18" viewBox="0 0 100 115" fill="none">
+        <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white"/>
+        <path d="M50 62 L50 102" stroke="white" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      FLORA ADMIN
+      <span class="badge" id="top-badge">—</span>
+    </h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:#666" id="top-updated"></span>
+      <button onclick="loadData()">↻ Atualizar</button>
+      <button onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- CARDS -->
+    <div class="cards" id="cards-area">
+      <div class="card"><div class="label">Carregando...</div><div class="val" style="font-size:16px;color:#aaa"><span class="spinner"></span></div></div>
+    </div>
+
+    <!-- FILTROS + BUSCA -->
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('todos',this)">Todos</button>
+      <button class="filter-btn" onclick="setFilter('pagos',this)">Pagos</button>
+      <button class="filter-btn" onclick="setFilter('trial',this)">Em Trial</button>
+      <button class="filter-btn" onclick="setFilter('nopagou',this)">Não Pagaram</button>
+      <button class="filter-btn" onclick="setFilter('inativos',this)">Inativos</button>
+      <input class="search-box" id="search-box" placeholder="🔍 Buscar salão..." oninput="renderTable()"/>
+    </div>
+
+    <!-- TABELA -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Salão</th>
+            <th>Status</th>
+            <th>Plano</th>
+            <th>Cadastro</th>
+            <th>Dias</th>
+            <th>Agend.</th>
+            <th>Clientes</th>
+            <th>Colabs</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="saloes-tbody">
+          <tr><td colspan="9" class="loading"><span class="spinner"></span>Carregando salões...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES -->
+<div class="modal-bg" id="modal-detalhe">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Detalhes do Salão</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
+const ADMIN_PASS='flora2026';
+const PLANO_PRECO={trial:0,inicial:97,profissional:197,'flora_total':397,'flora-total':397};
+const PLANO_LABEL={trial:'Trial',inicial:'Inicial',profissional:'Profissional','flora_total':'Flora Total','flora-total':'Flora Total'};
+
+let supa,saloes=[],counts={},filtroAtual='todos';
+
+function checkAuth(){
+  var v=document.getElementById('auth-input').value;
+  if(v===ADMIN_PASS){
+    try{supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){alert('Erro ao conectar Supabase');return;}
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadData();
+  }else{
+    document.getElementById('auth-err').textContent='Senha incorreta';
+    setTimeout(function(){document.getElementById('auth-err').textContent='';},2000);
+  }
+}
+
+function sair(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-input').value='';
+  saloes=[];counts={};
+}
+
+function planoStatus(s){
+  var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
+  var p=(s.plano||'trial').toLowerCase();
+  if(p!=='trial'&&p!=='')return 'pago';
+  if(dias<=14)return 'trial';
+  return 'nopagou';
+}
+
+function statusBadge(st){
+  if(st==='pago')return '<span class="badge-status badge-pago">Pago</span>';
+  if(st==='trial')return '<span class="badge-status badge-trial">Em Trial</span>';
+  if(st==='nopagou')return '<span class="badge-status badge-nopago">Não Pagou</span>';
+  return '<span class="badge-status badge-inativo">Inativo</span>';
+}
+
+function fmtDate(d){
+  if(!d)return '—';
+  var dt=new Date(d);
+  return dt.toLocaleDateString('pt-BR');
+}
+
+function fmtMoeda(v){
+  return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function diasDesde(d){
+  if(!d)return '—';
+  return Math.floor((Date.now()-new Date(d).getTime())/86400000)+'d';
+}
+
+async function loadData(){
+  document.getElementById('cards-area').innerHTML='<div class="card"><div class="label">Carregando...</div><div class="val" style="font-size:16px;color:#aaa"><span class="spinner"></span></div></div>';
+  document.getElementById('saloes-tbody').innerHTML='<tr><td colspan="9" class="loading"><span class="spinner"></span>Carregando salões...</td></tr>';
+
+  try{
+    // 1. Buscar todos os salões
+    var rs=await supa.from('saloes').select('*').order('created_at',{ascending:false});
+    if(rs.error)throw rs.error;
+    saloes=rs.data||[];
+
+    // 2. Contar agendamentos, clientes, colaboradores (queries paralelas)
+    var [ra,rc,rco,rhoje]=await Promise.all([
+      supa.from('agendamentos').select('salao_id'),
+      supa.from('clientes').select('salao_id'),
+      supa.from('colaboradores').select('salao_id'),
+      supa.from('agendamentos').select('salao_id').eq('data',new Date().toISOString().slice(0,10))
+    ]);
+
+    counts={agend:{},clientes:{},colabs:{},hoje:0};
+    (ra.data||[]).forEach(function(r){counts.agend[r.salao_id]=(counts.agend[r.salao_id]||0)+1;});
+    (rc.data||[]).forEach(function(r){counts.clientes[r.salao_id]=(counts.clientes[r.salao_id]||0)+1;});
+    (rco.data||[]).forEach(function(r){counts.colabs[r.salao_id]=(counts.colabs[r.salao_id]||0)+1;});
+    counts.hoje=(rhoje.data||[]).length;
+
+    renderCards();
+    renderTable();
+    document.getElementById('top-badge').textContent=saloes.length+' salões';
+    document.getElementById('top-updated').textContent='Atualizado '+new Date().toLocaleTimeString('pt-BR');
+
+  }catch(e){
+    console.error(e);
+    document.getElementById('saloes-tbody').innerHTML='<tr><td colspan="9" class="empty">Erro ao carregar dados: '+e.message+'</td></tr>';
+  }
+}
+
+function renderCards(){
+  var pagos=saloes.filter(function(s){return planoStatus(s)==='pago';});
+  var trial=saloes.filter(function(s){return planoStatus(s)==='trial';});
+  var nopagou=saloes.filter(function(s){return planoStatus(s)==='nopagou';});
+  var mrr=pagos.reduce(function(sum,s){return sum+(PLANO_PRECO[(s.plano||'').toLowerCase()]||0);},0);
+
+  document.getElementById('cards-area').innerHTML=
+    card('Total de Salões',saloes.length,'','')
+    +card('Plano Pago',pagos.length,'green','ativos na plataforma')
+    +card('Em Trial',trial.length,'yellow','≤ 14 dias')
+    +card('Não Pagaram',nopagou.length,'red','> 14 dias sem plano')
+    +card('Atendimentos Hoje',counts.hoje,'blue','em toda a plataforma')
+    +card('MRR Estimado',fmtMoeda(mrr),'purple','receita mensal recorrente');
+}
+
+function card(label,val,color,sub){
+  return '<div class="card'+(color?' '+color:'')+'">'
+    +'<div class="label">'+label+'</div>'
+    +'<div class="val">'+val+'</div>'
+    +(sub?'<div class="sub">'+sub+'</div>':'')
+    +'</div>';
+}
+
+function setFilter(f,el){
+  filtroAtual=f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  if(el)el.classList.add('active');
+  renderTable();
+}
+
+function renderTable(){
+  var busca=(document.getElementById('search-box').value||'').toLowerCase();
+  var lista=saloes.filter(function(s){
+    var st=planoStatus(s);
+    if(filtroAtual==='pagos'&&st!=='pago')return false;
+    if(filtroAtual==='trial'&&st!=='trial')return false;
+    if(filtroAtual==='nopagou'&&st!=='nopagou')return false;
+    if(filtroAtual==='inativos'&&counts.agend[s.id]>0)return false;
+    if(busca&&!(s.nome_salao||'').toLowerCase().includes(busca)&&!(s.email||'').toLowerCase().includes(busca))return false;
+    return true;
+  });
+
+  if(!lista.length){
+    document.getElementById('saloes-tbody').innerHTML='<tr><td colspan="9" class="empty">Nenhum salão encontrado</td></tr>';
+    return;
+  }
+
+  document.getElementById('saloes-tbody').innerHTML=lista.map(function(s){
+    var st=planoStatus(s);
+    var plano=(s.plano||'trial').toLowerCase();
+    var planoLbl=PLANO_LABEL[plano]||plano||'Trial';
+    var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
+    return '<tr>'
+      +'<td><div style="font-weight:700;font-size:13px">'+escHtml(s.nome_salao||'—')+'</div>'
+      +'<div style="font-size:11px;color:#888">'+escHtml(s.email||s.id||'')+'</div></td>'
+      +'<td>'+statusBadge(st)+'</td>'
+      +'<td><span style="font-size:12px;font-weight:700;color:#555">'+planoLbl+'</span></td>'
+      +'<td style="font-size:12px;color:#888">'+fmtDate(s.created_at)+'</td>'
+      +'<td style="font-size:12px;text-align:center">'+dias+'d</td>'
+      +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.agend[s.id]||0)+'</td>'
+      +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.clientes[s.id]||0)+'</td>'
+      +'<td style="font-size:13px;font-weight:700;text-align:center">'+(counts.colabs[s.id]||0)+'</td>'
+      +'<td><div class="btn-actions">'
+      +'<button class="btn-sm btn-view" onclick="verDetalhes(\''+s.id+'\')">Ver</button>'
+      +'<button class="btn-sm btn-wpp" onclick="enviarWpp(\''+escHtml(s.nome_salao||'')+'\',\''+escHtml(s.email||'')+'\')">WhatsApp</button>'
+      +'<button class="btn-sm btn-block" onclick="bloquearSalao(\''+s.id+'\',\''+escHtml(s.nome_salao||'')+'\')">Bloquear</button>'
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
+}
+
+async function verDetalhes(id){
+  var s=saloes.find(function(x){return x.id===id;});
+  if(!s)return;
+  var st=planoStatus(s);
+  var dias=Math.floor((Date.now()-new Date(s.created_at).getTime())/86400000);
+  var plano=(s.plano||'trial').toLowerCase();
+
+  document.getElementById('modal-title').textContent=s.nome_salao||'Salão';
+  document.getElementById('modal-body').innerHTML='<div class="loading"><span class="spinner"></span>Carregando detalhes...</div>';
+  document.getElementById('modal-detalhe').classList.add('open');
+
+  // Buscar histórico semanal (últimas 8 semanas)
+  var hoje=new Date();
+  var t8=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()-55);
+  var [rh,rfeat]=await Promise.all([
+    supa.from('agendamentos').select('data,status').eq('salao_id',id).gte('data',t8.toISOString().slice(0,10)),
+    supa.from('agendamentos').select('servico').eq('salao_id',id).order('data',{ascending:false}).limit(200)
+  ]);
+
+  // Semanas
+  var semanas=[];
+  for(var w=7;w>=0;w--){
+    var ini=new Date(hoje);ini.setDate(hoje.getDate()-w*7-6);
+    var fim=new Date(hoje);fim.setDate(hoje.getDate()-w*7);
+    var label=ini.getDate()+'/'+(ini.getMonth()+1);
+    var qtd=(rh.data||[]).filter(function(a){return a.data>=ini.toISOString().slice(0,10)&&a.data<=fim.toISOString().slice(0,10);}).length;
+    semanas.push({label:label,qtd:qtd});
+  }
+  var maxW=Math.max.apply(null,semanas.map(function(s){return s.qtd;}));
+
+  // Top serviços
+  var svcCount={};
+  (rfeat.data||[]).forEach(function(a){if(a.servico){svcCount[a.servico]=(svcCount[a.servico]||0)+1;}});
+  var topSvcs=Object.keys(svcCount).sort(function(a,b){return svcCount[b]-svcCount[a];}).slice(0,5);
+
+  var html='';
+
+  // Info grid
+  html+='<div class="detail-grid">'
+    +'<div class="detail-item"><div class="dl">Email</div><div class="dv">'+escHtml(s.email||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Responsável</div><div class="dv">'+escHtml(s.responsavel||'—')+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Status</div><div class="dv">'+statusBadge(st)+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Plano</div><div class="dv">'+(PLANO_LABEL[plano]||plano||'Trial')+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Cadastro</div><div class="dv">'+fmtDate(s.created_at)+' ('+dias+'d atrás)</div></div>'
+    +'<div class="detail-item"><div class="dl">ID Supabase</div><div class="dv" style="font-size:10px;word-break:break-all">'+s.id+'</div></div>'
+    +'</div>';
+
+  // Métricas
+  html+='<div class="detail-grid">'
+    +'<div class="detail-item"><div class="dl">Agendamentos</div><div class="dv" style="font-size:22px">'+(counts.agend[id]||0)+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Clientes</div><div class="dv" style="font-size:22px">'+(counts.clientes[id]||0)+'</div></div>'
+    +'<div class="detail-item"><div class="dl">Colaboradores</div><div class="dv" style="font-size:22px">'+(counts.colabs[id]||0)+'</div></div>'
+    +'<div class="detail-item"><div class="dl">MRR</div><div class="dv" style="font-size:22px">'+fmtMoeda(PLANO_PRECO[plano]||0)+'</div></div>'
+    +'</div>';
+
+  // Histórico semanal
+  html+='<div class="section-title">Atendimentos por semana (8 semanas)</div>';
+  html+='<div class="week-grid">';
+  semanas.forEach(function(w){
+    var pct=maxW>0?Math.round(w.qtd/maxW*100):0;
+    html+='<div class="week-cell">'
+      +'<div class="bar-wrap"><div class="bar" style="height:'+(pct?Math.max(4,pct*0.4)+'px':'4px')+';background:'+(w.qtd>0?'#111':'#e5e5e5')+'"></div></div>'
+      +'<div style="font-size:11px;font-weight:700;color:#555">'+w.qtd+'</div>'
+      +'<div class="lbl">'+w.label+'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+
+  // Top serviços
+  if(topSvcs.length){
+    html+='<div class="section-title">Serviços mais agendados</div>';
+    topSvcs.forEach(function(sv){
+      var pct=maxW>0?Math.round(svcCount[sv]/Math.max.apply(null,Object.values(svcCount))*100):0;
+      html+='<div style="margin-bottom:8px">'
+        +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+        +'<span>'+escHtml(sv)+'</span><span style="font-weight:700">'+svcCount[sv]+'</span></div>'
+        +'<div class="usage-bar"><div class="usage-bar-fill" style="width:'+pct+'%"></div></div>'
+        +'</div>';
+    });
+  }
+
+  // Alterar plano
+  html+='<div class="section-title">Alterar Plano</div>';
+  html+='<select class="plan-select" id="novo-plano">'
+    +'<option value="trial"'+(plano==='trial'?' selected':'')+'>Trial (R$ 0)</option>'
+    +'<option value="inicial"'+(plano==='inicial'?' selected':'')+'>Inicial (R$ 97/mês)</option>'
+    +'<option value="profissional"'+(plano==='profissional'?' selected':'')+'>Profissional (R$ 197/mês)</option>'
+    +'<option value="flora_total"'+(plano==='flora_total'||plano==='flora-total'?' selected':'')+'>Flora Total (R$ 397/mês)</option>'
+    +'</select>';
+  html+='<button class="btn-primary" onclick="salvarPlano(\''+id+'\')">Salvar Plano</button>';
+
+  document.getElementById('modal-body').innerHTML=html;
+}
+
+async function salvarPlano(id){
+  var novo=document.getElementById('novo-plano').value;
+  try{
+    var r=await supa.from('saloes').update({plano:novo}).eq('id',id);
+    if(r.error)throw r.error;
+    var s=saloes.find(function(x){return x.id===id;});
+    if(s)s.plano=novo;
+    alert('Plano atualizado para: '+(PLANO_LABEL[novo]||novo));
+    closeModal();
+    renderCards();
+    renderTable();
+  }catch(e){alert('Erro ao salvar: '+e.message);}
+}
+
+function enviarWpp(nome,email){
+  var msg=encodeURIComponent('Olá! Aqui é da equipe Flora Gestão. Estamos entrando em contato sobre o salão "'+nome+'". Como podemos ajudar?');
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function bloquearSalao(id,nome){
+  if(!confirm('Bloquear o salão "'+nome+'"?\nIsso marcará o plano como "bloqueado" e impedirá o acesso.'))return;
+  supa.from('saloes').update({plano:'bloqueado'}).eq('id',id).then(function(r){
+    if(r.error){alert('Erro: '+r.error.message);return;}
+    var s=saloes.find(function(x){return x.id===id;});
+    if(s)s.plano='bloqueado';
+    renderTable();
+    alert('Salão bloqueado.');
+  });
+}
+
+function closeModal(){
+  document.getElementById('modal-detalhe').classList.remove('open');
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('modal-detalhe').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>
