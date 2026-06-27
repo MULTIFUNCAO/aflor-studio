@@ -8851,36 +8851,52 @@ function renderPacotes(){
   // Alerta: última sessão (restante === 1) ou esgotado recém (restante <= 0, não vazio)
   var alertas=ativos.filter(function(g){return g.restante<=1;});
 
-  function corBarra(restante,total){
-    if(restante<=0)return '#ef4444';
-    if(restante===1)return '#f59e0b';
-    return '#22c55e';
-  }
-  function cardGrupo(g){
+  var PKG_CORES=['#8b5cf6','#6366f1','#ec4899','#f97316','#14b8a6','#f59e0b','#3b82f6'];
+  function pkgCor(restante){return restante<=0?'#ef4444':restante===1?'#f59e0b':'#22c55e';}
+  function pkgAvCor(nome){return PKG_CORES[(nome||' ').charCodeAt(0)%PKG_CORES.length];}
+  function pkgInicial(nome){return(nome||'?').trim()[0].toUpperCase();}
+  function pkgEscNome(nome){return nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+  function cardAtivo(g){
+    var cor=pkgCor(g.restante);
     var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
-    var cor=corBarra(g.restante,g.minTotal);
-    var badge=g.restante<=1
-      ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fbbf24">⚠️ Renovar</span>'
-      :'';
-    var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+    var avc=pkgAvCor(g.cliente_nome);
+    var ini=pkgInicial(g.cliente_nome);
+    var tags=g.itens.map(function(it){
+      return '<span style="display:inline-block;font-size:10px;background:#f0f0ff;color:#4338ca;padding:2px 7px;border-radius:20px;font-weight:600;margin:2px 2px 0 0">'+it.nome_servico+'</span>';
+    }).join('');
+    var badge=g.restante<=0
+      ?'<span style="font-size:10px;background:#fee2e2;color:#dc2626;font-weight:700;padding:3px 9px;border-radius:20px">🔴 Esgotado</span>'
+      :g.restante===1
+        ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:3px 9px;border-radius:20px">⚠️ Renovar</span>'
+        :'<span style="font-size:10px;background:#dcfce7;color:#15803d;font-weight:700;padding:3px 9px;border-radius:20px">✅ Ativo</span>';
     var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
-    return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px">'
+    var btnRen=g.restante<=1
+      ?'<button onclick="pkgRenovar(\''+pkgEscNome(g.cliente_nome)+'\')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Renovar</button>'
+      :'';
+    return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:12px">'
+      +'<div style="display:flex;align-items:flex-start;gap:12px">'
+      +'<div style="width:40px;height:40px;border-radius:50%;background:'+avc+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0">'+ini+'</div>'
       +'<div style="flex:1;min-width:0">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-      +'<span style="font-size:13px;font-weight:700;color:#111">'+g.cliente_nome+'</span>'
-      +'<span style="font-size:11px;color:#888">·</span>'
-      +'<span style="font-size:12px;color:#555;font-weight:600">'+g.pacote_nome+'</span>'
-      +badge
+      +'<div style="font-size:14px;font-weight:800;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</div>'
+      +'<div style="font-size:11px;color:#888;margin-top:1px">'+g.pacote_nome+'</div>'
+      +'<div style="margin-top:6px">'+tags+'</div>'
       +'</div>'
-      +'<div style="font-size:10px;color:#aaa;margin-bottom:8px">'+srvNomes+'</div>'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<div style="flex:1;height:7px;background:#f0f0f0;border-radius:99px;overflow:hidden">'
-      +'<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.3s"></div>'
+      +'<div style="flex-shrink:0">'+badge+'</div>'
       +'</div>'
-      +'<span style="font-size:11px;font-weight:700;color:'+cor+';white-space:nowrap">'+Math.max(0,g.restante)+'/'+g.minTotal+' restantes</span>'
+      +'<div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:5px">'
+      +'<span>'+g.maxUsado+' de '+g.minTotal+' sessões usadas</span>'
+      +'<span style="font-weight:700;color:'+cor+'">'+Math.max(0,g.restante)+' restantes</span>'
+      +'</div>'
+      +'<div style="height:8px;background:#f0f0f0;border-radius:99px;overflow:hidden">'
+      +'<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.4s"></div>'
       +'</div>'
       +'</div>'
-      +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:16px;padding:4px;flex-shrink:0" title="Remover">🗑</button>'
+      +'<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">'
+      +btnRen
+      +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:14px;padding:4px" title="Remover">🗑</button>'
+      +'</div>'
       +'</div>';
   }
 
@@ -8889,15 +8905,22 @@ function renderPacotes(){
   if(elAlerta){
     if(alertas.length){
       var alertaItems=alertas.map(function(g){
-        return '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #fde68a;last-child:border:none">'
-          +'<span style="font-size:16px">⚠️</span>'
-          +'<span style="font-size:13px;color:#78350f"><strong>'+g.cliente_nome+'</strong> — '+g.pacote_nome
-          +(g.restante<=0?': <strong>sem sessões restantes!</strong>':': <strong>última sessão!</strong>')
-          +' Lembrar de renovar na próxima visita.</span>'
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #fde68a">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:'+pkgAvCor(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">'+pkgInicial(g.cliente_nome)+'</div>'
+          +'<div style="flex:1;font-size:12px;color:#78350f">'
+          +'<strong>'+g.cliente_nome+'</strong> — '+g.pacote_nome
+          +(g.restante<=0?' <strong style="color:#dc2626">sem sessões!</strong>':' <strong style="color:#d97706">última sessão!</strong>')
+          +' Renovar na próxima visita.'
+          +'</div>'
+          +'<button onclick="pkgRenovar(\''+pkgEscNome(g.cliente_nome)+'\')" style="padding:5px 12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">Renovar</button>'
           +'</div>';
       }).join('');
-      elAlerta.innerHTML='<div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:12px;overflow:hidden">'
-        +'<div style="background:#fef3c7;padding:8px 14px;font-size:11px;font-weight:800;color:#92400e;letter-spacing:.5px">🔔 PACOTES QUE PRECISAM DE RENOVAÇÃO ('+alertas.length+')</div>'
+      elAlerta.innerHTML='<div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:14px;overflow:hidden;margin-bottom:4px">'
+        +'<div style="background:linear-gradient(90deg,#fef3c7,#fde68a);padding:10px 16px;display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:16px">🔔</span>'
+        +'<span style="font-size:12px;font-weight:800;color:#92400e">PACOTES PRECISANDO RENOVAÇÃO</span>'
+        +'<span style="font-size:11px;background:#f59e0b;color:#fff;font-weight:700;padding:1px 8px;border-radius:20px;margin-left:auto">'+alertas.length+'</span>'
+        +'</div>'
         +alertaItems
         +'</div>';
     } else {
@@ -8909,36 +8932,49 @@ function renderPacotes(){
   var elAtivos=document.getElementById('pacotes-ativos-section');
   if(elAtivos){
     var ativosHtml=ativos.length
-      ?ativos.map(cardGrupo).join('')
-      :'<div style="text-align:center;padding:24px;color:#aaa;font-size:12px">Nenhum pacote ativo</div>';
-    elAtivos.innerHTML='<div style="font-size:12px;font-weight:800;color:#111;letter-spacing:.5px;margin-bottom:10px">📦 PACOTES ATIVOS DOS CLIENTES ('+ativos.length+')</div>'
-      +'<div style="display:flex;flex-direction:column;gap:8px">'+ativosHtml+'</div>';
+      ?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">'+ativos.map(cardAtivo).join('')+'</div>'
+      :'<div style="text-align:center;padding:32px;color:#aaa;font-size:12px">Nenhum pacote ativo</div>';
+    elAtivos.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'
+      +'<span style="font-size:13px;font-weight:800;color:#111">📦 PACOTES ATIVOS</span>'
+      +'<span style="font-size:11px;background:#e0e7ff;color:#4338ca;font-weight:700;padding:1px 8px;border-radius:20px">'+ativos.length+'</span>'
+      +'</div>'+ativosHtml;
   }
 
   // ── 5. SEÇÃO ENCERRADOS ───────────────────────────────────────
   var elEnc=document.getElementById('pacotes-encerrados-section');
   if(elEnc){
     if(encerrados.length){
-      var encHtml=encerrados.map(function(g){
-        var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
-        var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
-        return '<div style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:.75">'
-          +'<div>'
-          +'<div style="font-size:12px;font-weight:700;color:#555">'+g.cliente_nome+' · '+g.pacote_nome+'</div>'
-          +'<div style="font-size:10px;color:#aaa;margin-top:2px">'+srvNomes+' · '+g.minTotal+'/'+g.minTotal+' sessões usadas</div>'
-          +'</div>'
-          +'<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
-          +'<span style="font-size:10px;background:#f3f4f6;color:#6b7280;font-weight:700;padding:2px 8px;border-radius:20px">Encerrado</span>'
-          +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:14px;padding:2px" title="Remover">🗑</button>'
-          +'</div>'
-          +'</div>';
-      }).join('');
-      elEnc.innerHTML='<div style="font-size:12px;font-weight:800;color:#6b7280;letter-spacing:.5px;margin-bottom:10px">🔒 PACOTES ENCERRADOS ('+encerrados.length+')</div>'
-        +'<div style="display:flex;flex-direction:column;gap:6px">'+encHtml+'</div>';
+      var encHtml='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">'
+        +encerrados.map(function(g){
+          var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
+          var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+          return '<div style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:.75">'
+            +'<div style="width:34px;height:34px;border-radius:50%;background:'+pkgAvCor(g.cliente_nome)+';opacity:.45;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">'+pkgInicial(g.cliente_nome)+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-size:12px;font-weight:700;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</div>'
+            +'<div style="font-size:10px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.pacote_nome+' · '+srvNomes+'</div>'
+            +'<div style="font-size:10px;color:#9ca3af;margin-top:1px">'+g.minTotal+'/'+g.minTotal+' sessões usadas</div>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+            +'<span style="font-size:10px;background:#f3f4f6;color:#9ca3af;font-weight:700;padding:2px 8px;border-radius:20px">🔒 Encerrado</span>'
+            +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:13px;padding:2px" title="Remover">🗑</button>'
+            +'</div>'
+            +'</div>';
+        }).join('')+'</div>';
+      elEnc.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+        +'<span style="font-size:13px;font-weight:800;color:#6b7280">🔒 ENCERRADOS</span>'
+        +'<span style="font-size:11px;background:#f3f4f6;color:#9ca3af;font-weight:700;padding:1px 8px;border-radius:20px">'+encerrados.length+'</span>'
+        +'</div>'+encHtml;
     } else {
       elEnc.innerHTML='';
     }
   }
+}
+
+function pkgRenovar(clienteNome){
+  var ci=clientes.findIndex(function(c){return c.nome===clienteNome;});
+  if(ci>=0)abrirVenderPacoteParaCliente(ci);
+  else showAlert('Cliente não encontrada. Abra o perfil para renovar.');
 }
 
 function editarPacote(i){
