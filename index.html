@@ -6973,7 +6973,7 @@ function agendaNavegar(dias){
 }
 
 function agendaHoje(){
-  agendaDataAtual=new Date(2026,4,26);
+  agendaDataAtual=new Date();
   agendaAtualizarLabel();
   renderAgenda();
 }
@@ -9143,7 +9143,7 @@ function adicionarMsgIA(msg,tipo){
 // ===== FIM IA =====
 
 // ===== MARKETING & CALENDÁRIO =====
-var mkMesAtual = new Date(2026, 5, 1);
+var mkMesAtual = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 function mkInicioSemana(d){var dt=new Date(d.getFullYear(),d.getMonth(),d.getDate());dt.setDate(dt.getDate()-dt.getDay());return dt;}
 var mkSemanaAtual = mkInicioSemana(new Date());
 function mkNavSemana(dir){mkSemanaAtual=new Date(mkSemanaAtual.getFullYear(),mkSemanaAtual.getMonth(),mkSemanaAtual.getDate()+7*dir);renderMarketing();}
@@ -9732,7 +9732,7 @@ function getPct(m){
 function getDiasRestantes(prazo){
   const [d,mes,a]=prazo.split('/');
   const dt=new Date(a,mes-1,d);
-  const hoje=new Date(2026,4,26);
+  const hoje=new Date();
   const diff=Math.ceil((dt-hoje)/(1000*60*60*24));
   return diff;
 }
