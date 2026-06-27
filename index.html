@@ -9128,7 +9128,16 @@ function pkgEditarSessao(i){
     +'</td>';
 
   // Linha 2: colspan=5 com checkboxes — completamente fora da grade de colunas
-  var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+  var _rawItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+  // Expande itens cujo nome_servico é "A + B + C" numa string única
+  var pkgItens=[];
+  _rawItens.forEach(function(it){
+    var partes=(it.nome_servico||'').split(/\s*\+\s*/).filter(Boolean);
+    partes.forEach(function(n){pkgItens.push({nome_servico:n.trim(),quantidade_total:it.quantidade_total||1});});
+  });
+  if(!pkgItens.length)pkgItens=_rawItens;
+  window._pkgItensEdit=pkgItens; // compartilha com pkgSalvarSessao
+
   var marcados=(s.servicos||'').split(/\s*\+\s*/).map(function(x){return x.trim();});
   var cbsHtml;
   if(pkgItens.length){
@@ -9159,7 +9168,8 @@ async function pkgSalvarSessao(i){
   var s=(window._pkgHistoricoDedup||[])[i];
   if(!s)return;
   var novaData=document.getElementById('phe-data-'+i)?.value||s.data;
-  var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+  // Usa itens expandidos gerados em pkgEditarSessao (split de " + " já feito)
+  var pkgItens=window._pkgItensEdit||(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
   var novoSvc;
   if(pkgItens.length){
     var marcados=[];
