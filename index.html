@@ -11821,13 +11821,25 @@ function carregarDadosDoSalao(){
 
 // Ao carregar: SEMPRE verifica sessão Supabase antes de liberar o app
 (function(){
+  // Garante overlay visível antes de qualquer check assíncrono
+  var overlay=document.getElementById('aflor-overlay');
+  if(overlay)overlay.classList.remove('hidden');
   if(!supa){return;}
+  // Reage a mudanças de sessão em tempo real (ex: expiração, logout em outra aba)
+  supa.auth.onAuthStateChange(function(event,session){
+    if(event==='SIGNED_OUT'||!session){
+      var ov=document.getElementById('aflor-overlay');
+      if(ov)ov.classList.remove('hidden');
+      try{localStorage.removeItem('aflor_logado');}catch(e){}
+      window.SALAO_ID=null;window.SALAO_NOME=null;
+    }
+  });
   supa.auth.getSession().then(function(sess){
     var user=sess.data&&sess.data.session?sess.data.session.user:null;
     if(user){
       try{localStorage.setItem('aflor_logado','admin');}catch(e){}
-      var overlay=document.getElementById('aflor-overlay');
-      if(overlay)overlay.classList.add('hidden');
+      var ov=document.getElementById('aflor-overlay');
+      if(ov)ov.classList.add('hidden');
       carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
     }else{
       try{localStorage.removeItem('aflor_logado');}catch(e){}
