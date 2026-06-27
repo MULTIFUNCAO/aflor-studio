@@ -149,10 +149,24 @@ tr:hover td{background:#fafafa}
     </svg>
   </div>
   <h1>FLORA ADMIN</h1>
-  <p>Acesso restrito à equipe Flora Gestão</p>
-  <input type="password" id="auth-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAuth()"/>
-  <div class="auth-err" id="auth-err"></div>
-  <button class="auth-btn" onclick="checkAuth()">Acessar Painel</button>
+
+  <!-- ETAPA 1: senha admin -->
+  <div id="step1">
+    <p style="margin-bottom:14px">Acesso restrito à equipe Flora Gestão</p>
+    <input type="password" id="auth-input" placeholder="Senha de administrador" onkeydown="if(event.key==='Enter')checkPass()"/>
+    <div class="auth-err" id="auth-err"></div>
+    <button class="auth-btn" onclick="checkPass()">Continuar →</button>
+  </div>
+
+  <!-- ETAPA 2: login Supabase -->
+  <div id="step2" style="display:none;flex-direction:column;align-items:center;gap:12px;width:300px">
+    <p style="color:#555;font-size:12px;text-align:center">Entre com sua conta Supabase para carregar os dados</p>
+    <input type="email" id="supa-email" placeholder="Email (ex: admin@flora.com)" style="background:#161616;border:1px solid #2a2a2a;color:#fff;padding:13px 18px;border-radius:10px;font-size:14px;width:300px;outline:none" onkeydown="if(event.key==='Enter')checkSupa()"/>
+    <input type="password" id="supa-senha" placeholder="Senha do Supabase" style="background:#161616;border:1px solid #2a2a2a;color:#fff;padding:13px 18px;border-radius:10px;font-size:14px;width:300px;outline:none" onkeydown="if(event.key==='Enter')checkSupa()"/>
+    <div class="auth-err" id="supa-err"></div>
+    <button class="auth-btn" id="supa-btn" onclick="checkSupa()">Entrar no Painel</button>
+    <button style="background:none;border:none;color:#555;font-size:11px;cursor:pointer" onclick="voltarStep1()">← Voltar</button>
+  </div>
 </div>
 
 <!-- APP -->
@@ -238,7 +252,7 @@ const PLANO_LABEL={'trial':'Trial','inicial':'Inicial','profissional':'Profissio
 let supa,saloes=[],counts={agend:{},clientes:{},colabs:{},hoje:0},filtro='todos';
 
 // ─── AUTH ───
-function checkAuth(){
+function checkPass(){
   var v=document.getElementById('auth-input').value;
   if(v!==PASS){
     document.getElementById('auth-err').textContent='Senha incorreta';
@@ -247,14 +261,40 @@ function checkAuth(){
   }
   try{supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);}
   catch(e){alert('Erro ao conectar com Supabase: '+e.message);return;}
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  loadData();
+  document.getElementById('step1').style.display='none';
+  document.getElementById('step2').style.display='flex';
+  setTimeout(function(){document.getElementById('supa-email').focus();},100);
 }
-function sair(){
+function voltarStep1(){
+  document.getElementById('step2').style.display='none';
+  document.getElementById('step1').style.display='block';
+}
+async function checkSupa(){
+  var email=document.getElementById('supa-email').value.trim();
+  var senha=document.getElementById('supa-senha').value;
+  if(!email||!senha){document.getElementById('supa-err').textContent='Preencha email e senha';return;}
+  var btn=document.getElementById('supa-btn');
+  btn.textContent='Entrando...';btn.disabled=true;
+  try{
+    var res=await supa.auth.signInWithPassword({email:email,password:senha});
+    if(res.error)throw res.error;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadData();
+  }catch(e){
+    document.getElementById('supa-err').textContent=e.message||'Erro ao entrar';
+    btn.textContent='Entrar no Painel';btn.disabled=false;
+  }
+}
+async function sair(){
+  if(supa)await supa.auth.signOut().catch(function(){});
   document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('step1').style.display='block';
+  document.getElementById('step2').style.display='none';
   document.getElementById('app').style.display='none';
   document.getElementById('auth-input').value='';
+  document.getElementById('supa-email').value='';
+  document.getElementById('supa-senha').value='';
   saloes=[];
 }
 
