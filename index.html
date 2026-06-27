@@ -6486,6 +6486,7 @@ function renderClientes(search=''){
   const cores=['','orange','purple','pink','teal','amber','blue'];
   tb.innerHTML=filtered.map((c,i)=>{
     const rs=c.retornoStatus||'';
+    const realIdx=clientes.indexOf(c);
     const rowCls=rs==='vencido'?'row-retorno-vencido':rs==='pendente'||rs==='hoje'?'row-retorno-pendente':rs==='retornou'?'row-retorno-retornou':'';
     const retBadge=rs==='vencido'?'<span class="badge badge-red">⚠️ Vencido</span>':rs==='hoje'?'<span class="badge badge-blue">📅 Hoje</span>':rs==='pendente'?'<span class="badge badge-yellow">🔔 Pendente</span>':rs==='retornou'?'<span class="badge badge-green">✅ Retornou</span>':'<span style="color:var(--gray-300);font-size:12px">—</span>';
     const procBadge=c.ultimoProc?`<div style="font-size:11px;color:var(--gray-400);margin-top:2px">${c.ultimoProc}</div>`:'';
@@ -6498,6 +6499,7 @@ function renderClientes(search=''){
       <td style="font-weight:700;color:var(--green)">${c.total}</td>
       <td style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
         ${c.tel?`<button class="btn btn-sm" onclick="enviarWhatsApp('${c.nome}','${c.tel}','ola')" title="Enviar WhatsApp" style="background:#22c55e;color:#fff;border:none;padding:5px 8px;font-size:12px">📱</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="abrirPerfilCliente(${realIdx})" title="Ver perfil" style="background:#f0f4ff;color:#6366f1;border-color:#c7d7ff">👁</button>
         <button class="btn btn-outline btn-sm" onclick="editarCliente(${i})" title="Editar cliente">✏️</button>
         <button class="btn btn-outline btn-sm" onclick="abrirRetornoRapido(${i})" title="Lembrete de retorno">🔔</button>
         ${rs&&rs!=='retornou'?`<button class="btn btn-outline btn-sm" onclick="marcarRetornou(${i})" title="Marcar como retornou" style="color:var(--green);border-color:var(--green)">✓</button>`:''}
@@ -6541,6 +6543,158 @@ function salvarEdicaoCliente(i){
   renderClientes();
   showAlert('✅ Cliente atualizado!');
 }
+
+function abrirPerfilCliente(ci){
+  var c=clientes[ci];
+  if(!c)return;
+  var m=document.getElementById('modal-perfil-cliente');
+  if(!m){m=document.createElement('div');m.id='modal-perfil-cliente';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  // Agrupa pacotes da cliente por grupo_id
+  var gruposMap={};
+  (pacotesClientes||[]).forEach(function(pc){
+    if(pc.cliente_nome!==c.nome)return;
+    var gkey=pc.grupo_id||('legacy_'+pc.pacote_nome+'_'+pc.data_compra);
+    if(!gruposMap[gkey])gruposMap[gkey]={grupo_id:gkey,pacote_nome:pc.pacote_nome,data_compra:pc.data_compra,valor_pago:pc.valor_pago,itens:[]};
+    gruposMap[gkey].itens.push(pc);
+  });
+  var grupos=Object.keys(gruposMap).map(function(k){return gruposMap[k];});
+  grupos.sort(function(a,b){return(b.data_compra||'').localeCompare(a.data_compra||'');});
+  var pacotesHtml='';
+  if(grupos.length){
+    pacotesHtml=grupos.map(function(g){
+      var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
+      var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+      var pct=Math.min(100,Math.round((maxUsado/minTotal)*100));
+      var ativo=maxUsado<minTotal;
+      var statusHtml=ativo
+        ?'<span style="font-size:10px;background:#dcfce7;color:#166534;font-weight:700;padding:2px 8px;border-radius:20px">Ativo</span>'
+        :'<span style="font-size:10px;background:#f3f4f6;color:#6b7280;font-weight:700;padding:2px 8px;border-radius:20px">Encerrado</span>';
+      var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+      var dataFmt=g.data_compra?new Date(g.data_compra+'T12:00:00').toLocaleDateString('pt-BR'):'';
+      return '<div style="border:1px solid #e5e5e5;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:'+(ativo?'#fafffe':'#fafafa')+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        +'<div style="font-size:13px;font-weight:700;color:#111">'+g.pacote_nome+'</div>'
+        +statusHtml
+        +'</div>'
+        +'<div style="font-size:10px;color:#888;margin-bottom:8px">'+srvNomes+(dataFmt?' · '+dataFmt:'')+'</div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:11px;color:#555;margin-bottom:5px">'
+        +'<span>'+maxUsado+'/'+minTotal+' sessões usadas</span>'
+        +'<span>'+Math.max(0,minTotal-maxUsado)+' restantes</span>'
+        +'</div>'
+        +'<div style="background:#e5e5e5;border-radius:99px;height:6px;overflow:hidden">'
+        +'<div style="background:'+(ativo?'#22c55e':'#9ca3af')+';height:100%;width:'+pct+'%;border-radius:99px"></div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  } else {
+    pacotesHtml='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Nenhum pacote cadastrado</div>';
+  }
+  m.innerHTML='<div class="modal-box" style="max-width:460px;border-radius:20px;overflow:hidden;padding:0">'
+    +'<div style="background:linear-gradient(135deg,#6366f1 0%,#4338ca 100%);padding:22px 26px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div>'
+    +'<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Perfil da Cliente</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#fff">'+c.nome+'</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:3px">'+(c.tel||'Sem telefone')+' · Total: '+(c.total||'R$ 0,00')+'</div>'
+    +'</div>'
+    +'<button onclick="document.getElementById(\'modal-perfil-cliente\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>'
+    +'</div>'
+    +'<div style="padding:20px 24px;background:#fff;max-height:65vh;overflow-y:auto">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    +'<div style="font-size:11px;font-weight:800;color:#111;letter-spacing:.5px">📦 PACOTES</div>'
+    +'<button onclick="abrirVenderPacoteParaCliente('+ci+')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">＋ Vender Pacote</button>'
+    +'</div>'
+    +pacotesHtml
+    +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0">'
+    +'<button onclick="editarCliente('+ci+');document.getElementById(\'modal-perfil-cliente\').classList.remove(\'open\')" style="width:100%;padding:10px;background:#f5f5f5;color:#333;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">✏️ Editar Dados da Cliente</button>'
+    +'</div>'
+    +'</div></div>';
+  m.classList.add('open');
+}
+
+function abrirVenderPacoteParaCliente(ci){
+  var c=clientes[ci];
+  if(!c)return;
+  var m=document.getElementById('modal-vender-pkg-cliente');
+  if(!m){m=document.createElement('div');m.id='modal-vender-pkg-cliente';m.className='modal-overlay';m.style.zIndex='10001';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
+  var pkgOpts=(pacotes||[]).map(function(p,pi){
+    var preco=typeof parsePrecoPacote==='function'?parsePrecoPacote(p.preco):parseFloat(p.preco)||0;
+    var totalSess=p.servicosItens&&p.servicosItens.length?(parseInt(p.servicosItens[0].qtd,10)||1):1;
+    return '<option value="'+pi+'" data-preco="'+preco+'" data-sess="'+totalSess+'">'+p.nome+'</option>';
+  }).join('');
+  m.innerHTML='<div class="modal-box" style="max-width:400px;border-radius:18px;overflow:hidden;padding:0">'
+    +'<div style="background:#6366f1;padding:18px 22px">'
+    +'<div style="font-size:15px;font-weight:800;color:#fff">＋ Vender Pacote</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">para '+c.nome+'</div>'
+    +'</div>'
+    +'<div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;background:#fff">'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">PACOTE</label>'
+    +'<select id="vpc-pacote" onchange="vpClienteAtualizarCampos()" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none">'
+    +'<option value="">— Selecione —</option>'+pkgOpts+'</select></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">SESSÕES</label>'
+    +'<input type="number" id="vpc-sessoes" min="1" placeholder="10" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box"/></div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">VALOR PAGO (R$)</label>'
+    +'<input type="number" id="vpc-valor" min="0" step="0.01" placeholder="0,00" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box"/></div>'
+    +'</div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">PAGAMENTO</label>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">'
+    +'<button type="button" onclick="vpClienteSetForma(this,\'Pix\')" class="vpc-forma-btn" style="padding:8px 2px;border:1.5px solid #ddd;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>'
+    +'<button type="button" onclick="vpClienteSetForma(this,\'Dinheiro\')" class="vpc-forma-btn" style="padding:8px 2px;border:1.5px solid #ddd;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>'
+    +'<button type="button" onclick="vpClienteSetForma(this,\'Cartão\')" class="vpc-forma-btn" style="padding:8px 2px;border:1.5px solid #ddd;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;background:#fff;color:#333">💳 Cartão</button>'
+    +'<button type="button" onclick="vpClienteSetForma(this,\'Link\')" class="vpc-forma-btn" style="padding:8px 2px;border:1.5px solid #ddd;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>'
+    +'</div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:4px">'
+    +'<button onclick="document.getElementById(\'modal-vender-pkg-cliente\').classList.remove(\'open\')" style="flex:1;padding:12px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>'
+    +'<button onclick="confirmarVendaPacoteParaCliente('+ci+')" style="flex:2;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Confirmar Venda</button>'
+    +'</div></div></div>';
+  window._vpcForma='';
+  m.classList.add('open');
+}
+
+function vpClienteAtualizarCampos(){
+  var sel=document.getElementById('vpc-pacote');
+  if(!sel||!sel.value)return;
+  var opt=sel.options[sel.selectedIndex];
+  var preco=parseFloat(opt.getAttribute('data-preco'))||0;
+  var sess=parseInt(opt.getAttribute('data-sess'))||1;
+  var valInput=document.getElementById('vpc-valor');
+  var sessInput=document.getElementById('vpc-sessoes');
+  if(valInput)valInput.value=preco.toFixed(2);
+  if(sessInput)sessInput.value=sess;
+}
+
+function vpClienteSetForma(btn,forma){
+  window._vpcForma=forma;
+  document.querySelectorAll('.vpc-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';});
+  btn.style.background='#6366f1';btn.style.color='#fff';btn.style.borderColor='#6366f1';
+}
+
+function confirmarVendaPacoteParaCliente(ci){
+  var c=clientes[ci];
+  if(!c)return;
+  var sel=document.getElementById('vpc-pacote');
+  if(!sel||sel.value===''){showAlert('Selecione um pacote.');return;}
+  var pkgIdx=parseInt(sel.value);
+  var p=pacotes[pkgIdx];
+  if(!p){showAlert('Pacote não encontrado.');return;}
+  var sessoes=parseInt(document.getElementById('vpc-sessoes')?.value)||1;
+  var valor=parseFloat(document.getElementById('vpc-valor')?.value)||0;
+  var forma=window._vpcForma||'';
+  if(!forma){showAlert('Selecione a forma de pagamento.');return;}
+  // Cria cópia do pacote com sessões e valor customizados para esta venda
+  var pacCopy=Object.assign({},p,{
+    servicosItens:p.servicosItens&&p.servicosItens.length
+      ?p.servicosItens.map(function(it){return Object.assign({},it,{qtd:sessoes});})
+      :[{servico:p.nome,qtd:sessoes}],
+    preco:valor
+  });
+  venderPacoteParaCliente(pacCopy,c.nome,forma,c.id||null);
+  document.getElementById('modal-vender-pkg-cliente').classList.remove('open');
+  document.getElementById('modal-perfil-cliente').classList.remove('open');
+  showAlert('✅ Pacote vendido para '+c.nome+'!');
+  setTimeout(function(){abrirPerfilCliente(ci);},400);
+}
+
 function filterClienteStatus(status,el){
   window._clienteStatusFilter=status;
   document.querySelectorAll('#page-clientes .tab').forEach(t=>{t.classList.remove('active')});
