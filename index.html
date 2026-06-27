@@ -8468,6 +8468,15 @@ async function salvarPacoteCatalogoSupa(p){
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote catalogo',e);return null;}
 }
+async function atualizarPacoteCatalogoSupa(p){
+  try{
+    if(!supa||!p.id||String(p.id).indexOf('loc_')===0)return;
+    await supa.from('pacotes_catalogo').update({
+      nome:p.nome,servicos:p.servicos,servicos_itens:p.servicosItens||[],
+      validade:p.validade,preco:p.preco
+    }).eq('id',p.id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err atualizar pacote catalogo',e);}
+}
 async function deletarPacoteCatalogoSupa(id){
   try{if(!supa||id==null||String(id).indexOf('loc_')===0)return;await supa.from('pacotes_catalogo').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}
 }
@@ -8926,6 +8935,8 @@ function salvarEdicaoPacote(i){
       p.servicos=novosItens.map(function(it){return it.servico;}).join(' + ');
     }
   }
+  salvarPacotesCatalogoLocal();
+  atualizarPacoteCatalogoSupa(p);
   document.getElementById('modal-editar-pacote').classList.remove('open');
   renderPacotes();
   showAlert('✅ Pacote atualizado!');
