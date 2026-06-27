@@ -11548,17 +11548,20 @@ async function carregarSalaoAtual(){
     var sess=await supa.auth.getSession();
     var user=sess.data&&sess.data.session?sess.data.session.user:null;
     if(!user)return;
+    // saloes.id === auth.user.id por design — fallback seguro sempre
+    window.SALAO_ID=user.id;
+    window.SALAO_NOME=user.email||'';
+    window.SALAO_RESPONSAVEL=user.email?user.email.split('@')[0].replace(/[._]/g,' '):null;
+    window.SALAO_PLANO='trial';
+    try{localStorage.setItem('aflor_ultimo_salao_id',user.id);}catch(e){}
     var r=await supa.from('saloes').select('*').eq('id',user.id).maybeSingle();
     if(r.data){
-      window.SALAO_ID=r.data.id;
-      window.SALAO_NOME=r.data.nome_salao;
-      window.SALAO_RESPONSAVEL=r.data.responsavel||(user.email?user.email.split("@")[0].replace(/[._]/g," "):null);
+      window.SALAO_NOME=r.data.nome_salao||window.SALAO_NOME;
+      window.SALAO_RESPONSAVEL=r.data.responsavel||window.SALAO_RESPONSAVEL;
       window.SALAO_PLANO=r.data.plano||'trial';
-      try{localStorage.setItem('aflor_ultimo_salao_id',r.data.id);}catch(e){}
     }else{
-      // Salão ainda não cadastrado (ex: criado fora do fluxo normal) — cria registro básico
-      var ins=await supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).select('*').maybeSingle();
-      if(ins.data){window.SALAO_ID=ins.data.id;window.SALAO_NOME=ins.data.nome_salao;window.SALAO_RESPONSAVEL=ins.data.responsavel||null;window.SALAO_PLANO=ins.data.plano||'trial';}
+      // Salão ainda não cadastrado — cria registro básico
+      supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).catch(function(){});
     }
     aplicarDadosSalaoNaUI();
   }catch(e){console.log('err carregar salao',e);}
@@ -11768,8 +11771,16 @@ function entrarComoColaborador(nome){
 
 function fazerLogout(){
   if(!confirm('Deseja sair da sua conta?'))return;
-  try{localStorage.removeItem('aflor_logado');}catch(e){}
-  window.SALAO_ID=null;window.SALAO_NOME=null;
+  try{localStorage.removeItem('aflor_logado');localStorage.removeItem('aflor_ultimo_salao_id');}catch(e){}
+  window.SALAO_ID=null;window.SALAO_NOME=null;window.SALAO_RESPONSAVEL=null;window.SALAO_PLANO=null;
+  // Limpa arrays globais para não vazar dados entre usuários
+  if(typeof colaboradores!=='undefined')colaboradores=[];
+  if(typeof clientes!=='undefined')clientes=[];
+  if(typeof agendamentosPorData!=='undefined')agendamentosPorData={};
+  if(typeof remuneracoes!=='undefined')remuneracoes=[];
+  if(typeof fluxoLancamentos!=='undefined')fluxoLancamentos=[];
+  if(typeof servicos!=='undefined')servicos=[];
+  if(typeof produtos!=='undefined')produtos=[];
   if(supa)supa.auth.signOut().catch(function(){});
   var overlay=document.getElementById('aflor-overlay');
   if(overlay)overlay.classList.remove('hidden');
