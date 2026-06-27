@@ -11596,15 +11596,30 @@ function criarContaSalao(){
       return;
     }
     var user=res.data&&res.data.user;
+    var session=res.data&&res.data.session;
     if(!user){showAlertOb('Verifique seu email para confirmar a conta.');return;}
+    // Se veio sessão imediata (confirmação de email desabilitada), define antes do insert
+    if(session){
+      supa.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token}).catch(function(){});
+    }
     supa.from('saloes').insert([{
       id:user.id,nome_salao:nomeSalao,email:email,
-      responsavel:nome+(sobrenome?(' '+sobrenome):''),telefone:tel,plano:'trial'
-    }]).then(function(){
+      responsavel:nome+(sobrenome?(' '+sobrenome):''),telefone:tel,plano:'trial',
+      created_at:new Date().toISOString()
+    }]).then(function(r){
+      if(r.error){
+        console.error('Erro ao criar registro do salão:',r.error);
+        // Tenta sem created_at caso a coluna não exista ainda
+        return supa.from('saloes').insert([{
+          id:user.id,nome_salao:nomeSalao,email:email,
+          responsavel:nome+(sobrenome?(' '+sobrenome):''),telefone:tel,plano:'trial'
+        }]);
+      }
+    }).then(function(){
       window.SALAO_ID=user.id;
       window.SALAO_NOME=nomeSalao;
       obGo('ob1');
-    });
+    }).catch(function(e){console.error('Falha ao salvar salão:',e);window.SALAO_ID=user.id;window.SALAO_NOME=nomeSalao;obGo('ob1');});
   }).catch(function(){showAlertOb('Erro ao criar conta. Tente novamente.');});
 }
 
