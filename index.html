@@ -1485,10 +1485,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Pacote</th><th>Serviços</th><th>Progresso</th><th>Status</th><th>Valor</th><th></th></tr></thead>
+          <thead><tr><th>Pacote</th><th>Serviços</th><th>Validade</th><th>Status</th><th>Valor</th><th></th></tr></thead>
           <tbody id="pacotes-table"></tbody>
         </table>
       </div>
+      <div id="pacotes-alerta-renovacao" style="margin-top:16px"></div>
+      <div id="pacotes-ativos-section" style="margin-top:16px"></div>
+      <div id="pacotes-encerrados-section" style="margin-top:16px"></div>
     </div>
 
     <!-- CLIENTES -->
@@ -8804,13 +8807,15 @@ function renderPacotes(){
   const tb=document.getElementById('pacotes-table');
   if(!tb) return;
   sincronizarUsadoDeLegacy();
-  var linhas=[];
+
+  // ── 1. CATÁLOGO ──────────────────────────────────────────────
+  var catalogoLinhas=[];
   pacotes.forEach(function(p,i){
-    linhas.push('<tr>'
-      +'<td style="font-weight:600;font-size:13px">'+p.nome+'<br><span style="font-size:10px;color:#aaa">Catálogo</span></td>'
+    catalogoLinhas.push('<tr>'
+      +'<td style="font-weight:600;font-size:13px">'+p.nome+'</td>'
       +'<td style="font-size:12px;color:#666">'+p.servicos+'</td>'
       +'<td><span class="badge badge-gray">'+p.validade+'</span></td>'
-      +'<td>—</td>'
+      +'<td><span class="badge badge-green">Ativo</span></td>'
       +'<td style="font-weight:700">'+p.preco+'</td>'
       +'<td style="white-space:nowrap">'
       +'<button class="btn btn-primary btn-sm" onclick="abrirVenderPacote('+i+')" style="margin-right:6px;font-size:11px;padding:5px 10px">💳 Vender</button>'
@@ -8818,42 +8823,122 @@ function renderPacotes(){
       +'<button onclick="deletePacote('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;padding:4px" title="Remover">🗑</button>'
       +'</td></tr>');
   });
-  // Agrupar pacotesClientes por grupo_id (ou fallback pacote_id+cliente+data para registros antigos)
-  var grupos=[];
+  tb.innerHTML=catalogoLinhas.length
+    ?catalogoLinhas.join('')
+    :'<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray-400)">Nenhum pacote no catálogo</td></tr>';
+
+  // ── 2. AGRUPAR pacotesClientes por grupo_id ───────────────────
   var gruposMap={};
-  pacotesClientes.forEach(function(p,i){
-    var key=p.grupo_id||('legacy_'+p.pacote_id+'_'+p.cliente_nome+'_'+p.data_compra);
+  var gruposOrdem=[];
+  pacotesClientes.forEach(function(pc){
+    var key=pc.grupo_id||('legacy_'+pc.pacote_nome+'_'+pc.cliente_nome+'_'+pc.data_compra);
     if(!gruposMap[key]){
-      gruposMap[key]={pacote_nome:p.pacote_nome,cliente_nome:p.cliente_nome,valor_pago:p.valor_pago,itens:[],idxs:[]};
-      grupos.push(gruposMap[key]);
+      gruposMap[key]={key:key,pacote_nome:pc.pacote_nome,cliente_nome:pc.cliente_nome,valor_pago:pc.valor_pago,data_compra:pc.data_compra,itens:[]};
+      gruposOrdem.push(gruposMap[key]);
     }
-    gruposMap[key].itens.push(p);
-    gruposMap[key].idxs.push(i);
+    gruposMap[key].itens.push(pc);
   });
-  grupos.forEach(function(g){
-    var servicosCol=g.itens.map(function(p){
-      var usado=p.quantidade_usada||0,total=p.quantidade_total||1,restante=total-usado;
-      return '<div style="margin-bottom:2px"><span style="font-weight:600">'+p.nome_servico+':</span> '+usado+'/'+total
-        +' <span style="font-size:10px;padding:2px 6px;border-radius:10px;background:'+(restante>0?'#dcfce7':'#fee2e2')+';color:'+(restante>0?'#15803d':'#dc2626')+';font-weight:700">'+restante+' rest.</span></div>';
-    }).join('');
-    var progressoCol=g.itens.map(function(p){
-      var usado=p.quantidade_usada||0,total=p.quantidade_total||1;
-      return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><div style="height:6px;width:60px;background:#f0f0f0;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round((usado/Math.max(total,1))*100)+'%;background:'+(usado<total?'#22c55e':'#ef4444')+'"></div></div><span style="font-size:11px;color:#666">'+p.nome_servico+'</span></div>';
-    }).join('');
-    linhas.push('<tr>'
-      +'<td style="font-weight:600;font-size:13px">'+g.pacote_nome+'<br><span style="font-size:10px;color:#888;font-weight:400">👤 '+g.cliente_nome+'</span></td>'
-      +'<td style="font-size:12px;color:#666">'+servicosCol+'</td>'
-      +'<td>'+progressoCol+'</td>'
-      +'<td>—</td>'
-      +'<td style="font-weight:700">'+fmtCaixa(g.valor_pago)+'</td>'
-      +'<td><button onclick="deletePacoteClienteGrupo([&quot;'+g.itens.map(function(p){return String(p.id);}).join('&quot;,&quot;')+'&quot;])" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:4px" title="Remover">🗑</button></td>'
-      +'</tr>');
+
+  // Calcula restante por grupo (usa mínimo de total e máximo de usado)
+  gruposOrdem.forEach(function(g){
+    g.minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
+    g.maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+    g.restante=g.minTotal-g.maxUsado;
   });
-  if(!linhas.length){
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400)">Nenhum pacote cadastrado</td></tr>';
-    return;
+
+  var ativos=gruposOrdem.filter(function(g){return g.restante>0;});
+  var encerrados=gruposOrdem.filter(function(g){return g.restante<=0;});
+  // Alerta: última sessão (restante === 1) ou esgotado recém (restante <= 0, não vazio)
+  var alertas=ativos.filter(function(g){return g.restante<=1;});
+
+  function corBarra(restante,total){
+    if(restante<=0)return '#ef4444';
+    if(restante===1)return '#f59e0b';
+    return '#22c55e';
   }
-  tb.innerHTML=linhas.join('');
+  function cardGrupo(g){
+    var pct=Math.min(100,Math.round((g.maxUsado/Math.max(g.minTotal,1))*100));
+    var cor=corBarra(g.restante,g.minTotal);
+    var badge=g.restante<=1
+      ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fbbf24">⚠️ Renovar</span>'
+      :'';
+    var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+    var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
+    return '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
+      +'<span style="font-size:13px;font-weight:700;color:#111">'+g.cliente_nome+'</span>'
+      +'<span style="font-size:11px;color:#888">·</span>'
+      +'<span style="font-size:12px;color:#555;font-weight:600">'+g.pacote_nome+'</span>'
+      +badge
+      +'</div>'
+      +'<div style="font-size:10px;color:#aaa;margin-bottom:8px">'+srvNomes+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="flex:1;height:7px;background:#f0f0f0;border-radius:99px;overflow:hidden">'
+      +'<div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.3s"></div>'
+      +'</div>'
+      +'<span style="font-size:11px;font-weight:700;color:'+cor+';white-space:nowrap">'+Math.max(0,g.restante)+'/'+g.minTotal+' restantes</span>'
+      +'</div>'
+      +'</div>'
+      +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:16px;padding:4px;flex-shrink:0" title="Remover">🗑</button>'
+      +'</div>';
+  }
+
+  // ── 3. ALERTA DE RENOVAÇÃO ────────────────────────────────────
+  var elAlerta=document.getElementById('pacotes-alerta-renovacao');
+  if(elAlerta){
+    if(alertas.length){
+      var alertaItems=alertas.map(function(g){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #fde68a;last-child:border:none">'
+          +'<span style="font-size:16px">⚠️</span>'
+          +'<span style="font-size:13px;color:#78350f"><strong>'+g.cliente_nome+'</strong> — '+g.pacote_nome
+          +(g.restante<=0?': <strong>sem sessões restantes!</strong>':': <strong>última sessão!</strong>')
+          +' Lembrar de renovar na próxima visita.</span>'
+          +'</div>';
+      }).join('');
+      elAlerta.innerHTML='<div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:12px;overflow:hidden">'
+        +'<div style="background:#fef3c7;padding:8px 14px;font-size:11px;font-weight:800;color:#92400e;letter-spacing:.5px">🔔 PACOTES QUE PRECISAM DE RENOVAÇÃO ('+alertas.length+')</div>'
+        +alertaItems
+        +'</div>';
+    } else {
+      elAlerta.innerHTML='';
+    }
+  }
+
+  // ── 4. SEÇÃO ATIVOS ───────────────────────────────────────────
+  var elAtivos=document.getElementById('pacotes-ativos-section');
+  if(elAtivos){
+    var ativosHtml=ativos.length
+      ?ativos.map(cardGrupo).join('')
+      :'<div style="text-align:center;padding:24px;color:#aaa;font-size:12px">Nenhum pacote ativo</div>';
+    elAtivos.innerHTML='<div style="font-size:12px;font-weight:800;color:#111;letter-spacing:.5px;margin-bottom:10px">📦 PACOTES ATIVOS DOS CLIENTES ('+ativos.length+')</div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px">'+ativosHtml+'</div>';
+  }
+
+  // ── 5. SEÇÃO ENCERRADOS ───────────────────────────────────────
+  var elEnc=document.getElementById('pacotes-encerrados-section');
+  if(elEnc){
+    if(encerrados.length){
+      var encHtml=encerrados.map(function(g){
+        var idsStr=g.itens.map(function(it){return String(it.id);}).join('","');
+        var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
+        return '<div style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:.75">'
+          +'<div>'
+          +'<div style="font-size:12px;font-weight:700;color:#555">'+g.cliente_nome+' · '+g.pacote_nome+'</div>'
+          +'<div style="font-size:10px;color:#aaa;margin-top:2px">'+srvNomes+' · '+g.minTotal+'/'+g.minTotal+' sessões usadas</div>'
+          +'</div>'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+          +'<span style="font-size:10px;background:#f3f4f6;color:#6b7280;font-weight:700;padding:2px 8px;border-radius:20px">Encerrado</span>'
+          +'<button onclick="deletePacoteClienteGrupo([&quot;'+idsStr+'&quot;])" style="background:none;border:none;cursor:pointer;color:#d1d5db;font-size:14px;padding:2px" title="Remover">🗑</button>'
+          +'</div>'
+          +'</div>';
+      }).join('');
+      elEnc.innerHTML='<div style="font-size:12px;font-weight:800;color:#6b7280;letter-spacing:.5px;margin-bottom:10px">🔒 PACOTES ENCERRADOS ('+encerrados.length+')</div>'
+        +'<div style="display:flex;flex-direction:column;gap:6px">'+encHtml+'</div>';
+    } else {
+      elEnc.innerHTML='';
+    }
+  }
 }
 
 function editarPacote(i){
