@@ -8941,26 +8941,51 @@ async function pkgAbrirDetalhe(gKey){
   var srvNomes=g.itens.map(function(it){return it.nome_servico;}).join(' · ');
   var valorFmt=g.valor_pago?'R$ '+parseFloat(g.valor_pago).toFixed(2).replace('.',','):'—';
   var nomeEsc=g.cliente_nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var gKeyEsc=gKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  m.setAttribute('data-gkey',gKey);
   m.innerHTML='<div class="modal-box" style="max-width:500px;border-radius:20px;overflow:hidden;padding:0">'
     +'<div style="background:linear-gradient(135deg,'+avc+','+avc+'bb);padding:22px 24px;display:flex;align-items:center;gap:14px">'
     +'<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0">'+ini+'</div>'
     +'<div style="flex:1"><div style="font-size:18px;font-weight:800;color:#fff">'+g.cliente_nome+'</div>'
     +'<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px">'+g.pacote_nome+'</div></div>'
-    +'<button onclick="document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px;flex-shrink:0">✕</button>'
+    +'<div style="display:flex;gap:6px;flex-shrink:0">'
+    +'<button onclick="pkgToggleEditar(\''+gKeyEsc+'\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:14px" title="Editar">✏️</button>'
+    +'<button onclick="document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px">✕</button>'
     +'</div>'
-    +'<div style="padding:20px 24px;background:#fff;max-height:70vh;overflow-y:auto">'
+    +'</div>'
+    +'<div style="padding:20px 24px;background:#fff;max-height:72vh;overflow-y:auto">'
+    // Painel edição (oculto)
+    +'<div id="pkg-edit-panel" style="display:none;background:#f0f4ff;border:1.5px solid #c7d7ff;border-radius:12px;padding:14px;margin-bottom:16px">'
+    +'<div style="font-size:11px;font-weight:800;color:#3b5bdb;margin-bottom:10px">✏️ EDITAR PACOTE</div>'
+    +'<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">NOME DO PACOTE</label>'
+    +'<input id="pkg-edit-nome" value="'+g.pacote_nome.replace(/"/g,'&quot;')+'" style="width:100%;padding:8px 10px;border:1.5px solid #c7d7ff;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"/></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
+    +'<div><label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">TOTAL SESSÕES</label>'
+    +'<input id="pkg-edit-total" type="number" min="1" value="'+g.minTotal+'" style="width:100%;padding:8px 10px;border:1.5px solid #c7d7ff;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"/></div>'
+    +'<div><label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">USADAS</label>'
+    +'<input id="pkg-edit-usadas" type="number" min="0" value="'+g.maxUsado+'" style="width:100%;padding:8px 10px;border:1.5px solid #c7d7ff;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"/></div>'
+    +'<div><label style="font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px">VALOR PAGO (R$)</label>'
+    +'<input id="pkg-edit-valor" type="number" min="0" step="0.01" value="'+(parseFloat(g.valor_pago)||0).toFixed(2)+'" style="width:100%;padding:8px 10px;border:1.5px solid #c7d7ff;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"/></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="pkgToggleEditar(\''+gKeyEsc+'\')" style="flex:1;padding:8px;background:#e5e5e5;color:#555;border:none;border-radius:8px;font-size:12px;cursor:pointer">Cancelar</button>'
+    +'<button onclick="pkgSalvarEdicao(\''+gKeyEsc+'\')" style="flex:2;padding:8px;background:#3b5bdb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar Alterações</button>'
+    +'</div></div>'
+    // Info grid
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">'
-    +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">VALOR PAGO</div><div style="font-size:14px;font-weight:800;color:#111">'+valorFmt+'</div></div>'
+    +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">VALOR PAGO</div><div id="pkg-det-valor" style="font-size:14px;font-weight:800;color:#111">'+valorFmt+'</div></div>'
     +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">COMPRA</div><div style="font-size:13px;font-weight:700;color:#111">'+dataFmt+'</div></div>'
     +'<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px"><div style="font-size:10px;color:#aaa;font-weight:700;margin-bottom:2px">SERVIÇOS</div><div style="font-size:10px;font-weight:600;color:#555">'+srvNomes+'</div></div>'
     +'</div>'
+    // Progresso
     +'<div style="margin-bottom:16px">'
     +'<div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px">'
-    +'<span>'+g.maxUsado+' de '+g.minTotal+' sessões usadas</span>'
-    +'<span style="font-weight:800;color:'+cor+'">'+Math.max(0,g.restante)+' restantes</span>'
+    +'<span id="pkg-det-prog-texto">'+g.maxUsado+' de '+g.minTotal+' sessões usadas</span>'
+    +'<span id="pkg-det-prog-rest" style="font-weight:800;color:'+cor+'">'+Math.max(0,g.restante)+' restantes</span>'
     +'</div>'
-    +'<div style="height:10px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.4s"></div></div>'
+    +'<div style="height:10px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div id="pkg-det-prog-bar" style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:.4s"></div></div>'
     +'</div>'
+    // Histórico
     +'<div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px">📋 HISTÓRICO DE SESSÕES</div>'
     +'<div id="pkg-historico-body" style="margin-bottom:16px"><div style="text-align:center;padding:16px;color:#aaa;font-size:12px">Carregando...</div></div>'
     +'<button onclick="pkgRenovar(\''+nomeEsc+'\');document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="width:100%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">🔄 Renovar Pacote</button>'
@@ -8969,38 +8994,104 @@ async function pkgAbrirDetalhe(gKey){
   pkgCarregarHistorico(g);
 }
 
+function pkgToggleEditar(gKey){
+  var panel=document.getElementById('pkg-edit-panel');
+  if(!panel)return;
+  panel.style.display=panel.style.display==='none'?'block':'none';
+}
+
+async function pkgSalvarEdicao(gKey){
+  var g=(window._pkgGruposAll||[]).find(function(x){return x.key===gKey;});
+  if(!g)return;
+  var novoNome=(document.getElementById('pkg-edit-nome')?.value||'').trim()||g.pacote_nome;
+  var novoTotal=Math.max(1,parseInt(document.getElementById('pkg-edit-total')?.value)||g.minTotal);
+  var novoUsado=Math.min(novoTotal,Math.max(0,parseInt(document.getElementById('pkg-edit-usadas')?.value)||0));
+  var novoValor=parseFloat(document.getElementById('pkg-edit-valor')?.value)||0;
+  // Atualiza cada item do grupo em memória e no Supabase
+  g.itens.forEach(function(it){
+    it.pacote_nome=novoNome;it.quantidade_total=novoTotal;it.quantidade_usada=novoUsado;it.valor_pago=novoValor;
+    var pc=pacotesClientes.find(function(p){return p.id===it.id;});
+    if(pc){pc.pacote_nome=novoNome;pc.quantidade_total=novoTotal;pc.quantidade_usada=novoUsado;pc.valor_pago=novoValor;}
+    if(typeof supa!=='undefined'&&supa&&it.id&&String(it.id).indexOf('loc_')!==0){
+      supa.from('pacotes_clientes').update({pacote_nome:novoNome,quantidade_total:novoTotal,quantidade_usada:novoUsado,valor_pago:novoValor})
+        .eq('id',it.id).eq('salao_id',window.SALAO_ID).catch(function(e){console.log('err edit pkg',e);});
+    }
+  });
+  g.pacote_nome=novoNome;g.minTotal=novoTotal;g.maxUsado=novoUsado;g.restante=novoTotal-novoUsado;g.valor_pago=novoValor;
+  salvarPacotesClientesLocal();
+  // Atualiza UI do modal sem fechar
+  var cor=g.restante<=0?'#ef4444':g.restante===1?'#f59e0b':'#22c55e';
+  var pct=Math.min(100,Math.round((novoUsado/Math.max(novoTotal,1))*100));
+  var et=document.getElementById('pkg-det-prog-texto');if(et)et.textContent=novoUsado+' de '+novoTotal+' sessões usadas';
+  var er=document.getElementById('pkg-det-prog-rest');if(er){er.textContent=Math.max(0,g.restante)+' restantes';er.style.color=cor;}
+  var eb=document.getElementById('pkg-det-prog-bar');if(eb){eb.style.width=pct+'%';eb.style.background=cor;}
+  var ev=document.getElementById('pkg-det-valor');if(ev)ev.textContent=novoValor?'R$ '+novoValor.toFixed(2).replace('.',','):'—';
+  var panel=document.getElementById('pkg-edit-panel');if(panel)panel.style.display='none';
+  showAlert('✅ Pacote atualizado!');
+  renderPacotes();
+}
+
 async function pkgCarregarHistorico(g){
   var el=document.getElementById('pkg-historico-body');
   if(!el)return;
-  var sessoes=[];
+  var todas=[];
   try{
     if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
-      var r=await supa.from('pacotes_sessoes').select('*').eq('salao_id',window.SALAO_ID).eq('grupo_id',g.grupo_id||g.key).order('data',{ascending:false});
-      if(r.data&&r.data.length)sessoes=r.data;
+      // Fonte 1: pacotes_sessoes (sistema novo)
+      var r1=await supa.from('pacotes_sessoes').select('*')
+        .eq('salao_id',window.SALAO_ID).eq('grupo_id',g.grupo_id||g.key)
+        .order('data',{ascending:false});
+      if(r1.data&&r1.data.length){
+        r1.data.forEach(function(s){
+          todas.push({data:s.data,servicos:s.servicos_realizados||'—',profissional:s.profissional||'—',origem:'sessao'});
+        });
+      }
+      // Fonte 2: agendamentos WHERE tipo='pacote' (fallback para registros antigos)
+      try{
+        var r2=await supa.from('agendamentos').select('id,data,servico,profissional,status,hora')
+          .eq('salao_id',window.SALAO_ID).eq('cliente',g.cliente_nome).eq('tipo','pacote')
+          .neq('status','Cancelado').order('data',{ascending:false});
+        if(r2.data&&r2.data.length){
+          r2.data.forEach(function(a){
+            todas.push({data:a.data,servicos:a.servico||'—',profissional:a.profissional||'—',origem:'agendamento',hora:a.hora});
+          });
+        }
+      }catch(e2){console.log('agendamentos tipo pacote n/a',e2);}
     }
   }catch(e){console.log('err historico sessoes',e);}
+  // Deduplica por data+servico e ordena
+  var vistas={};
+  var dedup=todas.filter(function(s){
+    var k=(s.data||'')+'|'+(s.servicos||'');
+    if(vistas[k])return false;
+    vistas[k]=true;return true;
+  });
+  dedup.sort(function(a,b){return(b.data||'').localeCompare(a.data||'');});
   var el2=document.getElementById('pkg-historico-body');
   if(!el2)return;
-  if(!sessoes.length){
+  if(!dedup.length){
     el2.innerHTML='<div style="text-align:center;padding:16px;background:#f9f9f9;border-radius:10px;color:#aaa;font-size:12px">Nenhuma sessão registrada ainda</div>';
     return;
   }
-  var rows=sessoes.map(function(s,i){
+  var rows=dedup.map(function(s,i){
     var df=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    var srcBadge=s.origem==='agendamento'
+      ?'<span style="font-size:9px;background:#f0f4ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px">Agenda</span>'
+      :'';
     return '<tr style="border-bottom:1px solid #f0f0f0">'
-      +'<td style="padding:8px 10px;font-size:12px;color:#555;white-space:nowrap">'+df+'</td>'
-      +'<td style="padding:8px 10px;font-size:12px;color:#111;font-weight:600">'+(s.servicos_realizados||'—')+'</td>'
+      +'<td style="padding:8px 10px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">'+(dedup.length-i)+'ª</td>'
+      +'<td style="padding:8px 10px;font-size:12px;color:#555;white-space:nowrap">'+df+(s.hora?' '+s.hora:'')+'</td>'
+      +'<td style="padding:8px 10px;font-size:12px;color:#111;font-weight:600">'+(s.servicos||'—')+srcBadge+'</td>'
       +'<td style="padding:8px 10px;font-size:11px;color:#888">'+(s.profissional||'—')+'</td>'
-      +'<td style="padding:8px 10px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">'+(sessoes.length-i)+'ª</td>'
       +'</tr>';
   }).join('');
   el2.innerHTML='<div style="border:1px solid #e5e5e5;border-radius:10px;overflow:hidden">'
     +'<table style="width:100%;border-collapse:collapse">'
     +'<thead><tr style="background:#f8f8f8">'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:center">Nº</th>'
     +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">DATA</th>'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">SERVIÇOS</th>'
+    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">SERVIÇO</th>'
     +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">PROFISSIONAL</th>'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:center">SESSÃO</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
