@@ -9115,7 +9115,10 @@ function pkgEditarSessao(i){
   var svcVal=(s.servicos||'').replace(/"/g,'&quot;');
   tr.innerHTML='<td style="padding:4px 6px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">✏️</td>'
     +'<td style="padding:4px 6px"><input type="date" id="phe-data-'+i+'" value="'+dataIso+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
-    +'<td style="padding:4px 6px"><input type="text" id="phe-svc-'+i+'" value="'+svcVal+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
+    +'<td style="padding:4px 6px"><select id="phe-svc-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none">'
+    +'<option value="">— Serviço —</option>'
+    +(typeof servicos!=='undefined'?servicos:[]).map(function(sv){return '<option value="'+sv.nome.replace(/"/g,'&quot;')+'"'+(sv.nome===s.servicos?' selected':'')+'>'+sv.nome+'</option>';}).join('')
+    +'</select></td>'
     +'<td style="padding:4px 6px"><select id="phe-prof-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">—</option>'+profOpts+'</select></td>'
     +'<td style="padding:4px 6px;white-space:nowrap">'
     +'<button onclick="pkgSalvarSessao('+i+')" style="padding:3px 7px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;margin-bottom:2px;display:block;width:100%">✅</button>'
