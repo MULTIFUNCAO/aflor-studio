@@ -8990,6 +8990,7 @@ async function pkgAbrirDetalhe(gKey){
     +'<div id="pkg-historico-body" style="margin-bottom:16px"><div style="text-align:center;padding:16px;color:#aaa;font-size:12px">Carregando...</div></div>'
     +'<button onclick="pkgRenovar(\''+nomeEsc+'\');document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="width:100%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">🔄 Renovar Pacote</button>'
     +'</div></div>';
+  window._pkgGrupoAtual=g;
   m.classList.add('open');
   pkgCarregarHistorico(g);
 }
@@ -9115,10 +9116,18 @@ function pkgEditarSessao(i){
   var svcVal=(s.servicos||'').replace(/"/g,'&quot;');
   tr.innerHTML='<td style="padding:4px 6px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">✏️</td>'
     +'<td style="padding:4px 6px"><input type="date" id="phe-data-'+i+'" value="'+dataIso+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
-    +'<td style="padding:4px 6px"><select id="phe-svc-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none">'
-    +'<option value="">— Serviço —</option>'
-    +(typeof servicos!=='undefined'?servicos:[]).map(function(sv){return '<option value="'+sv.nome.replace(/"/g,'&quot;')+'"'+(sv.nome===s.servicos?' selected':'')+'>'+sv.nome+'</option>';}).join('')
-    +'</select></td>'
+    +(function(){
+      var pkgItens=(window._pkgGrupoAtual&&window._pkgGrupoAtual.itens)||[];
+      var opts=pkgItens.map(function(it){
+        var n=it.nome_servico||'';
+        return '<option value="'+n.replace(/"/g,'&quot;')+'"'+(n===s.servicos?' selected':'')+'>'+n+'</option>';
+      }).join('');
+      // fallback: se pacote não tem itens, usa catálogo completo
+      if(!opts)(typeof servicos!=='undefined'?servicos:[]).forEach(function(sv){
+        opts+='<option value="'+sv.nome.replace(/"/g,'&quot;')+'"'+(sv.nome===s.servicos?' selected':'')+'>'+sv.nome+'</option>';
+      });
+      return '<td style="padding:4px 6px"><select id="phe-svc-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">— Serviço —</option>'+opts+'</select></td>';
+    })()
     +'<td style="padding:4px 6px"><select id="phe-prof-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">—</option>'+profOpts+'</select></td>'
     +'<td style="padding:4px 6px;white-space:nowrap">'
     +'<button onclick="pkgSalvarSessao('+i+')" style="padding:3px 7px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;margin-bottom:2px;display:block;width:100%">✅</button>'
