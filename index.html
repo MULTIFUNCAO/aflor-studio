@@ -9034,52 +9034,41 @@ async function pkgSalvarEdicao(gKey){
 async function pkgCarregarHistorico(g){
   var el=document.getElementById('pkg-historico-body');
   if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:16px;color:#aaa;font-size:12px">Carregando...</div>';
   var todas=[];
   try{
     if(typeof supa!=='undefined'&&supa){
-      // Fonte 1: pacotes_sessoes — por grupo_id (se existir) ou pacote_cliente_id
+      // Fonte 1: pacotes_sessoes
       try{
         var q1=supa.from('pacotes_sessoes').select('*').order('data',{ascending:false});
-        if(g.grupo_id){
-          q1=q1.eq('grupo_id',g.grupo_id);
-        } else {
-          var firstId=g.itens&&g.itens[0]&&g.itens[0].id;
-          if(firstId)q1=q1.eq('pacote_cliente_id',String(firstId));
-          else q1=null;
-        }
-        if(q1){
-          var r1=await q1;
-          if(r1.data&&r1.data.length){
-            r1.data.forEach(function(s){
-              todas.push({data:s.data,servicos:s.servicos_realizados||'—',profissional:s.profissional||'—',origem:'sessao'});
-            });
-          }
-        }
+        if(g.grupo_id){q1=q1.eq('grupo_id',g.grupo_id);}
+        else{var fid=g.itens&&g.itens[0]&&g.itens[0].id;if(fid)q1=q1.eq('pacote_cliente_id',String(fid));else q1=null;}
+        if(q1){var r1=await q1;if(r1.data&&r1.data.length)r1.data.forEach(function(s){
+          todas.push({id:s.id,data:s.data,servicos:s.servicos_realizados||'',profissional:s.profissional||'',origem:'sessao'});
+        });}
       }catch(e1){console.log('err pacotes_sessoes historico',e1);}
-      // Fonte 2: agendamentos — filtro por cliente (ilike) + servico contendo nome do pacote
-      // Sem filtro de salao_id para incluir registros históricos com salao_id NULL
+      // Fonte 2: agendamentos (sem filtro salao_id para incluir registros com salao_id NULL)
       try{
-        var r2=await supa.from('agendamentos')
-          .select('id,data,servico,profissional,status,hora')
-          .ilike('cliente',g.cliente_nome)
-          .ilike('servico','%pacote%')
-          .order('data',{ascending:false});
-        if(r2.data&&r2.data.length){
-          r2.data.filter(function(a){return a.status!=='Cancelado';}).forEach(function(a){
-            todas.push({data:a.data,servicos:a.servico||'—',profissional:a.profissional||'—',origem:'agendamento',hora:a.hora});
-          });
-        }
+        var r2=await supa.from('agendamentos').select('id,data,servico,profissional,status,hora')
+          .ilike('cliente',g.cliente_nome).ilike('servico','%pacote%').order('data',{ascending:false});
+        if(r2.data&&r2.data.length)r2.data.filter(function(a){return a.status!=='Cancelado';}).forEach(function(a){
+          todas.push({id:a.id,data:a.data,servicos:a.servico||'',profissional:a.profissional||'',origem:'agendamento',hora:a.hora});
+        });
       }catch(e2){console.log('err agendamentos historico',e2);}
     }
   }catch(e){console.log('err historico sessoes',e);}
-  // Deduplica por data+servico e ordena
   var vistas={};
   var dedup=todas.filter(function(s){
     var k=(s.data||'')+'|'+(s.servicos||'');
-    if(vistas[k])return false;
-    vistas[k]=true;return true;
+    if(vistas[k])return false;vistas[k]=true;return true;
   });
   dedup.sort(function(a,b){return(b.data||'').localeCompare(a.data||'');});
+  window._pkgHistoricoDedup=dedup;
+  pkgRenderHistoricoRows();
+}
+
+function pkgRenderHistoricoRows(){
+  var dedup=window._pkgHistoricoDedup||[];
   var el2=document.getElementById('pkg-historico-body');
   if(!el2)return;
   if(!dedup.length){
@@ -9091,21 +9080,69 @@ async function pkgCarregarHistorico(g){
     var srcBadge=s.origem==='agendamento'
       ?'<span style="font-size:9px;background:#f0f4ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px">Agenda</span>'
       :'';
-    return '<tr style="border-bottom:1px solid #f0f0f0">'
-      +'<td style="padding:8px 10px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">'+(dedup.length-i)+'ª</td>'
-      +'<td style="padding:8px 10px;font-size:12px;color:#555;white-space:nowrap">'+df+(s.hora?' '+s.hora:'')+'</td>'
-      +'<td style="padding:8px 10px;font-size:12px;color:#111;font-weight:600">'+(s.servicos||'—')+srcBadge+'</td>'
-      +'<td style="padding:8px 10px;font-size:11px;color:#888">'+(s.profissional||'—')+'</td>'
+    return '<tr id="pkg-hist-row-'+i+'" style="border-bottom:1px solid #f0f0f0">'
+      +'<td style="padding:8px 8px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">'+(dedup.length-i)+'ª</td>'
+      +'<td style="padding:8px 8px;font-size:12px;color:#555;white-space:nowrap">'+df+(s.hora?' '+s.hora:'')+'</td>'
+      +'<td style="padding:8px 8px;font-size:12px;color:#111;font-weight:600">'+(s.servicos||'—')+srcBadge+'</td>'
+      +'<td style="padding:8px 8px;font-size:11px;color:#888">'+(s.profissional||'—')+'</td>'
+      +'<td style="padding:4px 6px;text-align:center">'
+      +'<button onclick="pkgEditarSessao('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:13px;padding:2px" title="Editar sessão">✏️</button>'
+      +'</td>'
       +'</tr>';
   }).join('');
   el2.innerHTML='<div style="border:1px solid #e5e5e5;border-radius:10px;overflow:hidden">'
     +'<table style="width:100%;border-collapse:collapse">'
     +'<thead><tr style="background:#f8f8f8">'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:center">Nº</th>'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">DATA</th>'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">SERVIÇO</th>'
-    +'<th style="padding:8px 10px;font-size:10px;font-weight:800;color:#888;text-align:left">PROFISSIONAL</th>'
+    +'<th style="padding:8px 8px;font-size:10px;font-weight:800;color:#888;text-align:center">Nº</th>'
+    +'<th style="padding:8px 8px;font-size:10px;font-weight:800;color:#888;text-align:left">DATA</th>'
+    +'<th style="padding:8px 8px;font-size:10px;font-weight:800;color:#888;text-align:left">SERVIÇO</th>'
+    +'<th style="padding:8px 8px;font-size:10px;font-weight:800;color:#888;text-align:left">PROFISSIONAL</th>'
+    +'<th style="width:32px"></th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function pkgEditarSessao(i){
+  var s=(window._pkgHistoricoDedup||[])[i];
+  var tr=document.getElementById('pkg-hist-row-'+i);
+  if(!s||!tr)return;
+  var profLista=(typeof colaboradores!=='undefined'
+    ?colaboradores.filter(function(c){return c.status!=='Inativo';}).map(function(c){return c.nome;})
+    :(typeof AG_PROF_LISTA!=='undefined'?AG_PROF_LISTA:[]));
+  var profOpts=profLista.map(function(n){
+    return '<option value="'+n+'"'+(n===(s.profissional||'')?'  selected':'')+'>'+n+'</option>';
+  }).join('');
+  var dataIso=s.data||'';
+  var svcVal=(s.servicos||'').replace(/"/g,'&quot;');
+  tr.innerHTML='<td style="padding:4px 6px;font-size:11px;font-weight:700;color:#6366f1;text-align:center">✏️</td>'
+    +'<td style="padding:4px 6px"><input type="date" id="phe-data-'+i+'" value="'+dataIso+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
+    +'<td style="padding:4px 6px"><input type="text" id="phe-svc-'+i+'" value="'+svcVal+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"/></td>'
+    +'<td style="padding:4px 6px"><select id="phe-prof-'+i+'" style="width:100%;padding:4px 6px;border:1.5px solid #6366f1;border-radius:6px;font-size:11px;outline:none"><option value="">—</option>'+profOpts+'</select></td>'
+    +'<td style="padding:4px 6px;white-space:nowrap">'
+    +'<button onclick="pkgSalvarSessao('+i+')" style="padding:3px 7px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;margin-bottom:2px;display:block;width:100%">✅</button>'
+    +'<button onclick="pkgCancelarEdicaoSessao()" style="padding:3px 7px;background:#e5e5e5;color:#555;border:none;border-radius:6px;font-size:11px;cursor:pointer;display:block;width:100%">❌</button>'
+    +'</td>';
+}
+
+function pkgCancelarEdicaoSessao(){pkgRenderHistoricoRows();}
+
+async function pkgSalvarSessao(i){
+  var s=(window._pkgHistoricoDedup||[])[i];
+  if(!s)return;
+  var novaData=document.getElementById('phe-data-'+i)?.value||s.data;
+  var novoSvc=(document.getElementById('phe-svc-'+i)?.value||'').trim()||s.servicos;
+  var novoProf=document.getElementById('phe-prof-'+i)?.value||s.profissional;
+  s.data=novaData;s.servicos=novoSvc;s.profissional=novoProf;
+  if(typeof supa!=='undefined'&&supa&&s.id){
+    try{
+      if(s.origem==='sessao'){
+        await supa.from('pacotes_sessoes').update({data:novaData,servicos_realizados:novoSvc,profissional:novoProf}).eq('id',s.id);
+      }else if(s.origem==='agendamento'){
+        await supa.from('agendamentos').update({data:novaData,servico:novoSvc,profissional:novoProf}).eq('id',s.id);
+      }
+    }catch(e){console.log('err salvar sessao historico',e);}
+  }
+  pkgRenderHistoricoRows();
+  showAlert('✅ Sessão atualizada!');
 }
 
 // keep old card functions below (now unused but referenced nowhere, safe to leave)
