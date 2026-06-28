@@ -12441,6 +12441,8 @@ async function carregarCaixaSupa(){
       if(elFechamento)elFechamento.style.display='none';
     }
     atualizarTotaisCaixa();
+    // Fecha automaticamente se o caixa ficou aberto de um dia anterior
+    if(typeof verificarFechamentoAutomatico==='function')verificarFechamentoAutomatico();
   }catch(e){console.log('err carregar caixa supa',e);}
 }
 async function sincronizarAberturaCaixaSupa(troco,horaAbertura){
@@ -12768,6 +12770,50 @@ function fecharCaixaConfirmar(){
   document.getElementById('caixa-fechamento-view').style.display='block';
 }
 function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.display='block';document.getElementById('caixa-fechamento-view').style.display='none';}
+
+async function fecharCaixaAutomatico(){
+  if(!caixaState||!caixaState.aberto)return;
+  var hoje=new Date();
+  var hojeStr=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
+  // Guard: não fechar duas vezes no mesmo dia
+  if(localStorage.getItem('aflor_auto_fechamento_data')===hojeStr)return;
+  try{salvarHistoricoCaixa(caixaState.movimentos,caixaState.troco);}catch(e){console.log('err auto fechar historico',e);}
+  caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;caixaNavIdx=0;
+  localStorage.setItem('aflor_auto_fechamento_data',hojeStr);
+  var elFechado=document.getElementById('caixa-fechado-view');
+  var elAberto=document.getElementById('caixa-aberto-view');
+  var elFechamento=document.getElementById('caixa-fechamento-view');
+  if(elFechado)elFechado.style.display='block';
+  if(elAberto)elAberto.style.display='none';
+  if(elFechamento)elFechamento.style.display='none';
+  renderHistoricoCaixa();
+  if(typeof renderDashboardCards==='function')renderDashboardCards();
+  sincronizarFechamentoCaixaSupa().catch(function(e){console.log(e);});
+  console.log('[Caixa] Fechamento automático executado em',hojeStr);
+}
+
+function verificarFechamentoAutomatico(){
+  if(!caixaState||!caixaState.aberto)return;
+  var hoje=new Date();
+  var hojeStr=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
+  // Limpa guard de dia anterior para não bloquear novo fechamento automático hoje
+  var ultimoAuto=localStorage.getItem('aflor_auto_fechamento_data');
+  if(ultimoAuto&&ultimoAuto!==hojeStr)localStorage.removeItem('aflor_auto_fechamento_data');
+  // Se o caixa foi aberto em dia anterior, fecha agora
+  if(caixaState.horaAbertura){
+    var abStr=caixaState.horaAbertura.getDate()+'/'+(caixaState.horaAbertura.getMonth()+1)+'/'+caixaState.horaAbertura.getFullYear();
+    if(abStr!==hojeStr)fecharCaixaAutomatico();
+  }
+}
+
+// Verifica a cada minuto se virou meia-noite com caixa aberto
+setInterval(function(){
+  if(!caixaState||!caixaState.aberto||!caixaState.horaAbertura)return;
+  var agora=new Date();
+  var hojeStr=agora.getDate()+'/'+(agora.getMonth()+1)+'/'+agora.getFullYear();
+  var abStr=caixaState.horaAbertura.getDate()+'/'+(caixaState.horaAbertura.getMonth()+1)+'/'+caixaState.horaAbertura.getFullYear();
+  if(abStr!==hojeStr)fecharCaixaAutomatico();
+},60000);
 var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
 var historicoDetalheAberto=-1;
 var caixaNavIdx = -1; // -1 = hoje (caixa atual)
