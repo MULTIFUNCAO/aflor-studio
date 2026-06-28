@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta name="build-ts" content="1781145300">
@@ -6472,7 +6472,7 @@ function renderRemuneracoes(){
   var filtroProfValAtual=selFiltroProf?selFiltroProf.value:'Todos';
 
   // Usa colaboradores como fonte de verdade — aguarda Supabase carregar dados reais
-  var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
+  var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
   var tb=document.getElementById('remuneracoes-table');
   if(!window._colabsSupaCarregados){
     if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
