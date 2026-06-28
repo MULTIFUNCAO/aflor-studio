@@ -6409,25 +6409,39 @@ function renderRemuneracoes(){
   if(elRemunMesLbl)elRemunMesLbl.textContent=mesesRemunLbl[remunMesAtual]+'/'+remunAnoAtual;
   var selFiltroProf=document.getElementById('remun-filtro-prof');
   var filtroProfValAtual=selFiltroProf?selFiltroProf.value:'Todos';
+
+  // Usa colaboradores como fonte de verdade para nomes
+  var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
+  var colabsAtivos=(typeof colaboradores!=='undefined'&&colaboradores.length)
+    ?colaboradores.filter(function(c){return c.status!=='Inativo';})
+    :remuneracoes.map(function(r){return {nome:r.nome,cor:r.cor||''};});
+
   if(selFiltroProf){
-    var optsHtml='<option value="Todos">Todos</option>'+remuneracoes.map(function(r){return '<option value="'+r.nome+'">'+r.nome+'</option>';}).join('');
+    var optsHtml='<option value="Todos">Todos</option>'+colabsAtivos.map(function(c){return '<option value="'+c.nome+'">'+c.nome+'</option>';}).join('');
     if(selFiltroProf.innerHTML!==optsHtml)selFiltroProf.innerHTML=optsHtml;
-    var nomesValidos=remuneracoes.map(function(r){return r.nome;});
-    if(filtroProfValAtual!=='Todos'&&nomesValidos.indexOf(filtroProfValAtual)<0)filtroProfValAtual='Todos';
+    if(filtroProfValAtual!=='Todos'&&!colabsAtivos.find(function(c){return c.nome===filtroProfValAtual;}))filtroProfValAtual='Todos';
     selFiltroProf.value=filtroProfValAtual;
   }
+
   const tb=document.getElementById('remuneracoes-table');
   var hojeCheckRemun=new Date();
   var ehMesAtualRemun=(remunMesAtual===hojeCheckRemun.getMonth()&&remunAnoAtual===hojeCheckRemun.getFullYear());
-  if(!ehMesAtualRemun){
-    renderRemuneracoesHistorico(filtroProfValAtual);
-    return;
-  }
-  var linhasFiltradasRemun=remuneracoes.map(function(r,i){return {r:r,i:i};}).filter(function(o){return filtroProfValAtual==='Todos'||o.r.nome===filtroProfValAtual;});
-  tb.innerHTML=linhasFiltradasRemun.map(function(o){
-    var r=o.r,i=o.i;
+  if(!ehMesAtualRemun){renderRemuneracoesHistorico(filtroProfValAtual);return;}
+
+  // Para cada colaborador ativo, busca o entry de remuneração por nome fuzzy
+  var linhas=colabsAtivos
+    .filter(function(c){return filtroProfValAtual==='Todos'||c.nome===filtroProfValAtual;})
+    .map(function(c){
+      var nc=_norm(c.nome);
+      var r=remuneracoes.find(function(rem){var nr=_norm(rem.nome);return nc===nr||nc.startsWith(nr)||nr.startsWith(nc);});
+      if(!r){r={nome:c.nome,total:'0,00',pago:'0,00',pendente:'0,00',vales:'0,00',cor:''};remuneracoes.push(r);}
+      return {r:r,i:remuneracoes.indexOf(r),nome:c.nome,cor:c.cor||r.cor||''};
+    });
+
+  tb.innerHTML=linhas.map(function(o){
+    var r=o.r,i=o.i,nome=o.nome,cor=o.cor;
     return `<tr>
-    <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${r.cor}" style="width:28px;height:28px;font-size:10px">${initials(r.nome)}</div>${r.nome}</div></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${cor}" style="width:28px;height:28px;font-size:10px">${initials(nome)}</div>${nome}</div></td>
     <td>${r.total}</td><td>${r.pago}</td><td>${r.pendente}</td>
     <td style="font-weight:${r.vales!=='0,00'?'700':'400'};color:${r.vales!=='0,00'?'var(--orange)':'inherit'}">${r.vales}</td>
     <td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="marcarRemuneracaoPaga(${i})">💰 Marcar pago</button><button class="btn btn-outline btn-sm" onclick="lancarValeColaborador(${i})">📋 Lançar vale</button><button class="btn btn-outline btn-sm" onclick="abrirDetalheRemuneracao(${i})">🔍 Detalhes</button></td>
