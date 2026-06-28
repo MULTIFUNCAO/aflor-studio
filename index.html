@@ -4615,6 +4615,8 @@ async function abrirDetalheRemuneracao(i){
     });
     var vales=[];
     try{ vales=JSON.parse(localStorage.getItem('flora_vales_colaboradores')||'[]').filter(function(v){return v.profissional===r.nome;}); }catch(e){}
+    window._remunData={};
+    data.forEach(function(c){window._remunData[c.id]=c;});
     var html='';
     html+='<div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:8px">Comissões</div>';
     if(!data||data.length===0){
@@ -4624,9 +4626,14 @@ async function abrirDetalheRemuneracao(i){
         var d=new Date(c.data);
         var dataFmt=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
         var origemLabel=c.origem==='pacote'?'🎁 Pacote':'✂️ Serviço';
-        html+='<div style="border:1px solid #e5e5e5;border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+        html+='<div id="remun-card-'+c.id+'" style="border:1px solid #e5e5e5;border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+          +'<div style="flex:1">'
           +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>'+(c.servico||'-')+'</span><span style="color:#16a34a">R$ '+Number(c.valor||0).toFixed(2).replace('.',',')+'</span></div>'
           +'<div style="font-size:11.5px;color:#888;margin-top:2px">'+dataFmt+' · '+(c.cliente||'-')+' · '+origemLabel+' · '+(c.comissao_pct||0)+'%</div>'
+          +'</div>'
+          +'<button onclick="remunEditarCard('+c.id+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
+          +'</div>'
           +'</div>';
       });
     }
@@ -4647,6 +4654,58 @@ async function abrirDetalheRemuneracao(i){
     console.log('err abrirDetalheRemuneracao',e);
   }
 }
+function remunEditarCard(id){
+  var c=window._remunData&&window._remunData[id];
+  if(!c)return;
+  var div=document.getElementById('remun-card-'+id);
+  if(!div)return;
+  var d=new Date(c.data);
+  var dtLocal=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  div.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:160px"><div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px">DATA</div><input type="datetime-local" id="remun-edit-data-'+id+'" value="'+dtLocal+'" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:5px 8px;box-sizing:border-box"></div>'
+    +'<div style="flex:1;min-width:120px"><div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px">CLIENTE</div><input type="text" id="remun-edit-cliente-'+id+'" value="'+(c.cliente||'')+'" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:6px;padding:5px 8px;box-sizing:border-box"></div>'
+    +'</div>'
+    +'<div style="max-width:140px"><div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px">VALOR (R$)</div><input type="number" id="remun-edit-valor-'+id+'" value="'+Number(c.valor||0).toFixed(2)+'" step="0.01" min="0" style="width:100%;font-size:13px;font-weight:700;border:1px solid #ddd;border-radius:6px;padding:5px 8px;box-sizing:border-box"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:4px">'
+    +'<button onclick="remunSalvarCard('+id+')" style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar</button>'
+    +'<button onclick="remunCancelarCard('+id+')" style="flex:1;background:#f3f4f6;color:#555;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">❌ Cancelar</button>'
+    +'</div></div>';
+}
+async function remunSalvarCard(id){
+  var c=window._remunData&&window._remunData[id];
+  if(!c)return;
+  var dataVal=document.getElementById('remun-edit-data-'+id).value;
+  var clienteVal=document.getElementById('remun-edit-cliente-'+id).value.trim();
+  var valorVal=parseFloat(document.getElementById('remun-edit-valor-'+id).value)||0;
+  try{
+    var upd={cliente:clienteVal,valor:valorVal};
+    if(dataVal)upd.data=new Date(dataVal).toISOString();
+    await supa.from('comissoes_pacote').update(upd).eq('id',id).eq('salao_id',window.SALAO_ID);
+    if(dataVal)c.data=upd.data;
+    c.cliente=clienteVal;c.valor=valorVal;
+    window._remunData[id]=c;
+    remunCancelarCard(id);
+    showAlert('Lançamento atualizado!');
+  }catch(e){showAlert('Erro ao salvar.');console.log('err remunSalvarCard',e);}
+}
+function remunCancelarCard(id){
+  var c=window._remunData&&window._remunData[id];
+  if(!c)return;
+  var div=document.getElementById('remun-card-'+id);
+  if(!div)return;
+  var d=new Date(c.data);
+  var dataFmt=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  var origemLabel=c.origem==='pacote'?'🎁 Pacote':'✂️ Serviço';
+  div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+    +'<div style="flex:1">'
+    +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>'+(c.servico||'-')+'</span><span style="color:#16a34a">R$ '+Number(c.valor||0).toFixed(2).replace('.',',')+'</span></div>'
+    +'<div style="font-size:11.5px;color:#888;margin-top:2px">'+dataFmt+' · '+(c.cliente||'-')+' · '+origemLabel+' · '+(c.comissao_pct||0)+'%</div>'
+    +'</div>'
+    +'<button onclick="remunEditarCard('+id+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
+    +'</div>';
+}
+
 async function carregarPacotesClientesSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
