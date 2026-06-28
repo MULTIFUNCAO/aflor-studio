@@ -8892,20 +8892,22 @@ function renderPacotes(){
           :g.restante===1
             ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;font-weight:700;padding:2px 8px;border-radius:20px">⚠️ Renovar</span>'
             :'<span style="font-size:10px;background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:20px">✅ Ativo</span>';
+        var pkgLabel=(g.pacote_nome&&g.pacote_nome.trim().toLowerCase()!==g.cliente_nome.trim().toLowerCase())?g.pacote_nome:'Pacote Personalizado';
+        var pkgBadge='<span style="display:inline-block;font-size:10px;background:#ede9fe;color:#6d28d9;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:4px">'+pkgLabel+'</span>';
         var tags=g.itens.map(function(it){
-          return '<span style="display:inline-block;font-size:10px;background:#f0f0ff;color:#4338ca;padding:1px 6px;border-radius:20px;font-weight:600;margin:1px 2px 0 0">'+it.nome_servico+'</span>';
+          return '<span style="display:inline-block;font-size:10px;background:#f4f4f5;color:#3f3f46;padding:2px 7px;border-radius:6px;font-weight:600;margin:2px 2px 0 0;border:1px solid #e4e4e7">'+it.nome_servico+'</span>';
         }).join('');
-        return '<div onclick="pkgAbrirDetalhe(\''+_pEsc(g.key)+'\')" style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s" onmouseover="this.style.background=\'#f8f8ff\'" onmouseout="this.style.background=\'#fff\'">'
-          +'<div style="width:40px;height:40px;border-radius:50%;background:'+_pAv(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0">'+_pIni(g.cliente_nome)+'</div>'
+        return '<div onclick="pkgAbrirDetalhe(\''+_pEsc(g.key)+'\')" style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.background=\'#f8f8ff\';this.style.boxShadow=\'0 3px 12px rgba(99,102,241,.08)\'" onmouseout="this.style.background=\'#fff\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
+          +'<div style="width:44px;height:44px;border-radius:50%;background:'+_pAv(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">'+_pIni(g.cliente_nome)+'</div>'
           +'<div style="flex:1;min-width:0">'
           +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">'
-          +'<span style="font-size:13px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</span>'
+          +'<span style="font-size:15px;font-weight:800;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+g.cliente_nome+'</span>'
           +badge+'</div>'
-          +'<div style="font-size:11px;color:#888;margin-bottom:4px">'+g.pacote_nome+'</div>'
-          +'<div style="margin-bottom:6px">'+tags+'</div>'
+          +pkgBadge
+          +'<div style="margin-top:6px;margin-bottom:6px">'+tags+'</div>'
           +'<div style="display:flex;align-items:center;gap:8px">'
-          +'<div style="flex:1;height:6px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px"></div></div>'
-          +'<span style="font-size:11px;color:#888;white-space:nowrap;flex-shrink:0">'+g.maxUsado+'/'+g.minTotal+' sess.</span>'
+          +'<div style="flex:1;height:8px;background:#f0f0f0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cor+';border-radius:99px;transition:width .3s"></div></div>'
+          +'<span style="font-size:11px;font-weight:700;color:#555;white-space:nowrap;flex-shrink:0">'+g.maxUsado+'/'+g.minTotal+' sess.</span>'
           +'</div></div>'
           +'<div style="color:#d1d5db;font-size:20px;flex-shrink:0">›</div>'
           +'</div>';
