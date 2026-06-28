@@ -11909,10 +11909,8 @@ function fazerLogin(){
         colabObj=cached.find(function(c){return c.nome===sel;});
       }catch(e){}
     }
-    if(colabObj&&colabObj.senha){
-      if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
-      if(colabObj.senha!==senhaDigitada){showAlert('Senha incorreta');return;}
-    }
+    if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
+    if(!colabObj||!colabObj.senha||colabObj.senha!==senhaDigitada){showAlert('Senha incorreta');return;}
     if(!window.SALAO_ID){showAlertOb('Sessão do salão não encontrada. O administrador precisa fazer login primeiro.');return;}
     colaboradorLogado=sel;
     try{localStorage.setItem('aflor_logado','colab_'+sel);}catch(e){}
@@ -11975,8 +11973,13 @@ async function carregarSalaoAtual(){
       window.SALAO_RESPONSAVEL=r.data.responsavel||window.SALAO_RESPONSAVEL;
       window.SALAO_PLANO=r.data.plano||'trial';
     }else{
-      // Salão ainda não cadastrado — cria registro básico
-      supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).catch(function(){});
+      // Usuário auth mas sem salão cadastrado — leva para completar o cadastro
+      var ov=document.getElementById('aflor-overlay');
+      if(ov)ov.classList.remove('hidden');
+      obGo('login');
+      switchLogin('criar');
+      showAlertOb('Complete o cadastro do seu salão para continuar.');
+      return;
     }
     aplicarDadosSalaoNaUI();
   }catch(e){console.log('err carregar salao',e);}
@@ -12336,6 +12339,8 @@ async function carregarClientesSupa(){
     if(event==='SIGNED_OUT'||!session){
       var ov=document.getElementById('aflor-overlay');
       if(ov)ov.classList.remove('hidden');
+      obGo('login');
+      switchLogin('entrar');
       try{localStorage.removeItem('aflor_logado');}catch(e){}
       window.SALAO_ID=null;window.SALAO_NOME=null;
     }
