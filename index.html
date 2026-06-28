@@ -5887,9 +5887,11 @@ async function carregarColaboradoresSupa(){
           foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||'',
           permissoes:row.permissoes?normalizarPermissoes(row.permissoes):getPermissoesDefault()};
       });
+      window._colabsSupaCarregados=true;
       // Cache para uso no login (antes de ter SALAO_ID na próxima sessão)
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
       if(typeof renderColabs==='function')renderColabs();
+      if(typeof renderRemuneracoes==='function')renderRemuneracoes();
     }else if(r.data&&r.data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
       colaboradores=COLABORADORES_PADRAO.map(function(c){return Object.assign({},c);});
@@ -6410,11 +6412,13 @@ function renderRemuneracoes(){
   var selFiltroProf=document.getElementById('remun-filtro-prof');
   var filtroProfValAtual=selFiltroProf?selFiltroProf.value:'Todos';
 
-  // Usa colaboradores como fonte de verdade para nomes
+  // Usa colaboradores como fonte de verdade — aguarda Supabase carregar dados reais
   var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
-  var colabsAtivos=(typeof colaboradores!=='undefined'&&colaboradores.length)
-    ?colaboradores.filter(function(c){return c.status!=='Inativo';})
-    :remuneracoes.map(function(r){return {nome:r.nome,cor:r.cor||''};});
+  if(!window._colabsSupaCarregados){
+    if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
+    return;
+  }
+  var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo';});
 
   if(selFiltroProf){
     var optsHtml='<option value="Todos">Todos</option>'+colabsAtivos.map(function(c){return '<option value="'+c.nome+'">'+c.nome+'</option>';}).join('');
