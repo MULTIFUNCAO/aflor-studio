@@ -8896,7 +8896,7 @@ function renderPacotes(){
         var pkgBadge='<span style="display:inline-block;font-size:10px;background:#ede9fe;color:#6d28d9;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:4px">'+pkgLabel+'</span>';
         var _srvList=[];
         g.itens.forEach(function(it){
-          (it.nome_servico||'').split(' + ').forEach(function(s){
+          (it.nome_servico||'').split(/\s*\+\s*/).forEach(function(s){
             s=s.trim();
             if(s&&_srvList.indexOf(s)<0)_srvList.push(s);
           });
