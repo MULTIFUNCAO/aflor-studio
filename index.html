@@ -4380,6 +4380,11 @@ var agendamentosPorData={};
 const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
 const BACKEND_URL='https://multi-backend-lfwp.onrender.com';
+// Retorna headers HTTP com JWT do usuário autenticado (necessário para RLS)
+async function _authHeaders(extra){
+  try{var s=await supa.auth.getSession();var t=s.data&&s.data.session?s.data.session.access_token:SUPA_KEY;return Object.assign({'apikey':SUPA_KEY,'Authorization':'Bearer '+t},extra||{});}
+  catch(e){return Object.assign({'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},extra||{});}
+}
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
 async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nascimento:c.nascimento||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);}catch(e){}}
@@ -7179,9 +7184,8 @@ function excluirAgendamentoLocal(key){
 }
 function excluirAgendamentoSupa(supaId){
   if(!supaId)return Promise.resolve();
-  return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{
-    method:'DELETE',
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  return _authHeaders().then(function(h){
+    return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{method:'DELETE',headers:h});
   }).then(function(r){if(!r.ok)throw new Error('delete failed');});
 }
 function finalizarCancelamentoAtendimento(key,a){
@@ -7604,11 +7608,11 @@ function confirmarFechamentoPagamento(){
   finalizarLocal();
   // Tentar salvar no Supabase em paralelo (silencioso)
   if(ctx.supaId){
-    fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null})
-    }).catch(function(e){console.warn('Supabase sync:', e);});
+    _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{method:'PATCH',headers:h,
+        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null})
+      });
+    }).catch(function(e){console.warn('Supabase sync:',e);});
   }
 }
 
@@ -8188,10 +8192,8 @@ function toggleSinalPopup(key){
     patch.sinal_status='pendente';
   }
   if(a.id){
-    fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+a.id,{
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify(patch)
+    _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+a.id,{method:'PATCH',headers:h,body:JSON.stringify(patch)});
     }).then(function(r){
       if(!r.ok)return r.json().then(function(e){throw e;});
       finalizarSinal();
@@ -8421,8 +8423,8 @@ function renderAgenda(){
   if(!agendamentosPorData[dataKey]){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
-    fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+    _authHeaders().then(function(h){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
@@ -11367,7 +11369,9 @@ function salvarAgendamento(){
   var profSupa=mapaNomesInv[prof]||prof;
   var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs};
   if(!ehPacote&&typeof servicosDetalhe!=='undefined')obj.servicos_detalhe=servicosDetalhe;
-  fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(obj)}).then(function(r){
+  _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
+    return fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:h,body:JSON.stringify(obj)});
+  }).then(function(r){
     if(!r.ok)return r.json().then(function(err){throw err;});
     return r.json();
   }).then(function(rows){
@@ -12329,34 +12333,50 @@ async function carregarClientesSupa(){
   }catch(e){console.error('Erro ao carregar clientes:',e);}
 }
 
-// Ao carregar: SEMPRE verifica sessão Supabase antes de liberar o app
+// Ao carregar: onAuthStateChange como gatilho primário — NUNCA query antes de sessão ativa
 (function(){
-  // Garante overlay visível antes de qualquer check assíncrono
   var overlay=document.getElementById('aflor-overlay');
   if(overlay)overlay.classList.remove('hidden');
-  if(!supa){return;}
-  // Reage a mudanças de sessão em tempo real (ex: expiração, logout em outra aba)
+  if(!supa)return;
+
+  var _appAtivo=false;
+
+  function ativarApp(){
+    if(_appAtivo)return;
+    _appAtivo=true;
+    try{localStorage.setItem('aflor_logado','admin');}catch(e){}
+    var ov=document.getElementById('aflor-overlay');
+    if(ov)ov.classList.add('hidden');
+    carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
+  }
+
+  function desativarApp(){
+    try{localStorage.removeItem('aflor_logado');sessionStorage.removeItem('flora_salao_id');}catch(e){}
+    window.SALAO_ID=null;window.SALAO_NOME=null;
+    window.location.replace('login.html');
+  }
+
+  // onAuthStateChange: gatilho em tempo real para SIGNED_IN, TOKEN_REFRESHED e SIGNED_OUT
   supa.auth.onAuthStateChange(function(event,session){
-    if(event==='SIGNED_OUT'||!session){
-      try{localStorage.removeItem('aflor_logado');sessionStorage.removeItem('flora_salao_id');}catch(e){}
-      window.SALAO_ID=null;window.SALAO_NOME=null;
-      window.location.replace('login.html');
+    if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'){
+      ativarApp();
+    }else if(event==='SIGNED_OUT'){
+      desativarApp();
     }
+    // INITIAL_SESSION é tratado pelo getSession() abaixo para evitar
+    // falso-negativo durante refresh de token em andamento
   });
-  supa.auth.getSession().then(function(sess){
-    var user=sess.data&&sess.data.session?sess.data.session.user:null;
-    if(user){
-      try{localStorage.setItem('aflor_logado','admin');}catch(e){}
-      var ov=document.getElementById('aflor-overlay');
-      if(ov)ov.classList.add('hidden');
-      carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
-    }else{
-      try{localStorage.removeItem('aflor_logado');sessionStorage.removeItem('flora_salao_id');}catch(e){}
-      window.location.replace('login.html');
+
+  // getSession: estado inicial a partir do localStorage (síncrono na prática)
+  supa.auth.getSession().then(function(r){
+    var sess=r.data&&r.data.session;
+    if(sess&&sess.user){
+      ativarApp();
+    }else if(!_appAtivo){
+      desativarApp();
     }
   }).catch(function(){
-    try{localStorage.removeItem('aflor_logado');}catch(e){}
-    window.location.replace('login.html');
+    if(!_appAtivo)desativarApp();
   });
 })();
 // ===== FIM ONBOARDING =====
