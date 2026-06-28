@@ -12992,30 +12992,52 @@ function renderDashboardCards(){
 }
 setTimeout(function(){if(typeof renderDashboardCards==='function')renderDashboardCards();},2000);
 setTimeout(function(){if(typeof renderDashProximos==='function')renderDashProximos();},2500);
-function renderDashProximos(){
+async function renderDashProximos(){
   var el=document.getElementById('dash-proximos-lista');
-  if(!el||typeof agendamentosPorData==='undefined')return;
+  if(!el)return;
   var hoje=new Date();
   var agoraMin=hoje.getHours()*60+hoje.getMinutes();
   var items=[];
-  // Pegar hoje (somente horários futuros) + próximos 7 dias
-  for(var d=0;d<=7;d++){
-    var dt=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+d);
-    var dk=(dt.getDate())+'/'+(dt.getMonth()+1)+'/'+dt.getFullYear();
-    var dayData=agendamentosPorData[dk];
-    if(!dayData)continue;
-    var slots=Object.keys(dayData).sort();
-    slots.forEach(function(k){
-      var a=dayData[k];
-      if(!a||!a.cliente)return;
-      var hora=a.hora||k.split(':')[1]||'';
-      if(d===0){
-        var parts=hora.split(':');
-        var slotMin=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);
-        if(slotMin<=agoraMin)return;
+  // Tenta agendamentosPorData (carregados com salao_id filter)
+  if(typeof agendamentosPorData!=='undefined'){
+    for(var d=0;d<=7;d++){
+      (function(d){
+        var dt=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+d);
+        var dk=(dt.getDate())+'/'+(dt.getMonth()+1)+'/'+dt.getFullYear();
+        var dayData=agendamentosPorData[dk];
+        if(!dayData)return;
+        Object.keys(dayData).sort().forEach(function(k){
+          var a=dayData[k];
+          if(!a||!a.cliente)return;
+          var hora=a.hora||k.split(':')[1]||'';
+          if(d===0){var p=hora.split(':');if(parseInt(p[0]||0)*60+parseInt(p[1]||0)<=agoraMin)return;}
+          items.push({data:dt,dk:dk,hora:hora,cliente:a.cliente,servico:a.servico||'',prof:a.prof||a.profissional||''});
+        });
+      })(d);
+    }
+  }
+  // Fallback: query Supabase sem filtro salao_id (cobre agendamentos com salao_id NULL)
+  if(!items.length&&typeof supa!=='undefined'&&supa){
+    try{
+      function _fmtISO(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
+      var d0=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+      var d7=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()+7);
+      var r=await supa.from('agendamentos').select('data,hora,cliente,servico,profissional,status')
+        .gte('data',_fmtISO(d0)).lte('data',_fmtISO(d7)).neq('status','Cancelado')
+        .order('data').order('hora');
+      if(r.data){
+        r.data.forEach(function(row){
+          if(!row.cliente||!row.data)return;
+          var partes=row.data.split('-');
+          var dtRow=new Date(parseInt(partes[0]),parseInt(partes[1])-1,parseInt(partes[2]));
+          var dk=parseInt(partes[2])+'/'+(parseInt(partes[1]))+'/'+parseInt(partes[0]);
+          var hora=(row.hora||'').substring(0,5);
+          var diffD=Math.round((dtRow-d0)/(86400000));
+          if(diffD===0){var p=hora.split(':');if(parseInt(p[0]||0)*60+parseInt(p[1]||0)<=agoraMin)return;}
+          items.push({data:dtRow,dk:dk,hora:hora,cliente:row.cliente,servico:row.servico||'',prof:row.profissional||''});
+        });
       }
-      items.push({data:dt,dk:dk,hora:hora,cliente:a.cliente,servico:a.servico||'',prof:a.prof||a.profissional||''});
-    });
+    }catch(e){}
   }
   if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
   // Agrupar por dia
