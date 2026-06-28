@@ -8302,34 +8302,58 @@ function buscarAgendamentos(termo){
 }
 
 // ===== PAGAMENTO ASAAS =====
+// Links estáticos como fallback (usados quando ASAAS_API_KEY não está configurada)
 var FLORA_LINKS_ASAAS = {
   inicial:      'https://www.asaas.com/c/fajbuzh4yw2oc1kx',  // R$ 29,90
   profissional: 'https://www.asaas.com/c/eb9459mfmxfq3smr',  // R$ 49,00
-  total:        'https://www.asaas.com/c/zi98kys7r7b4zt4w'   // R$ 97,00
+  flora_total:  'https://www.asaas.com/c/zi98kys7r7b4zt4w'   // R$ 97,00
 };
 
-function abrirPagamento(plano) {
-  var link = FLORA_LINKS_ASAAS[plano];
-  if (!link || link.indexOf('COLE_AQUI') !== -1) {
-    // Modal de aviso enquanto os links não estão configurados
-    var nomes = { inicial: 'Inicial — R$ 29,90/mês', profissional: 'Profissional — R$ 49,00/mês', total: 'Flora Total — R$ 97,00/mês' };
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
-    overlay.innerHTML = '<div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center">'
-      + '<div style="font-size:36px;margin-bottom:12px">🔧</div>'
-      + '<div style="font-size:17px;font-weight:800;color:#111;margin-bottom:8px">Em breve!</div>'
-      + '<div style="font-size:13px;color:#666;margin-bottom:6px">Plano <b>' + nomes[plano] + '</b></div>'
-      + '<div style="font-size:12px;color:#999;margin-bottom:20px">O link de pagamento ainda está sendo configurado. Em breve você poderá assinar diretamente aqui.</div>'
-      + '<div style="display:flex;gap:10px">'
-      + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:11px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Entendido</button>'
-      + '<a href="https://wa.me/5511999999999?text=Quero+assinar+o+plano+' + nomes[plano].replace(/ /g,'+') + '+do+Flora" target="_blank" style="flex:1;padding:11px;background:#22c55e;color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">📱 WhatsApp</a>'
-      + '</div></div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-    return;
+var EDGE_URL = SUPA_URL + '/functions/v1';
+
+async function abrirPagamento(plano) {
+  var btn = event && event.currentTarget;
+  var textoOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
+
+  try {
+    var headers = await _authHeaders({'Content-Type':'application/json'});
+    var resp = await fetch(EDGE_URL + '/criar-pagamento', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        plano: plano,
+        salao_id: window.SALAO_ID,
+        email: window.SALAO_NOME,
+        nome: window.SALAO_RESPONSAVEL
+      })
+    });
+    var data = await resp.json();
+    if (data.paymentUrl) {
+      window.open(data.paymentUrl, '_blank');
+    } else {
+      throw new Error('URL não retornada');
+    }
+  } catch(e) {
+    console.warn('criar-pagamento edge falhou, usando link estático:', e);
+    var fallback = FLORA_LINKS_ASAAS[plano];
+    if (fallback) window.open(fallback, '_blank');
+    else showAlert('Erro ao abrir pagamento. Tente novamente.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = textoOriginal; }
   }
-  window.open(link, '_blank');
 }
+
+// Detectar retorno de pagamento bem-sucedido (?plano_ativado=1)
+(function(){
+  if (window.location.search.includes('plano_ativado=1')) {
+    history.replaceState(null, '', window.location.pathname);
+    showAlert('🎉 Plano ativado com sucesso! Obrigada por assinar o Flora Gestão.');
+    setTimeout(function(){
+      if (typeof carregarSalaoAtual === 'function') carregarSalaoAtual();
+    }, 2000);
+  }
+})();
 // ===========================
 
 function irParaAgendamento(dataKey, key){
