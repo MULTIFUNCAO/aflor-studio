@@ -10862,6 +10862,7 @@ async function carregarFluxoLancamentosSupa(){
       return{id:row.id,tipo:tipo,data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma||'',val:parseFloat(row.valor)||0,status:'confirmado',prof:row.profissional||''};
     });
     renderFluxo();
+    if(typeof renderDashboardCards==='function')renderDashboardCards();
   }catch(e){console.error('Erro ao carregar lançamentos:',e);}
 }
 function fluxoNavMes(dir){
@@ -13080,15 +13081,18 @@ async function renderDashboardCards(){
         }
       }catch(e){}
     }
-    // Fallback receitaMes: usa fluxoLancamentos (já em memória do Supabase) se historicoCaixas vazio
-    if(receitaMes===0&&typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos&&fluxoLancamentos.length){
+    // Fonte primária Supabase: fluxoLancamentos (caixa_movimentos filtrado por salao_id)
+    // Sobrescreve historicoCaixas (localStorage) pois é a fonte autoritativa multi-tenant
+    if(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos&&fluxoLancamentos.length){
+      var receitaSupa=0;
       fluxoLancamentos.forEach(function(l){
         var m=String(l.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
         if(m){
           var mesL=parseInt(m[2],10)-1,anoL=parseInt(m[3],10);
-          if(l.tipo==='receita'&&mesL===mesAtual&&anoL===anoAtual) receitaMes+=Number(l.val)||0;
+          if(l.tipo==='receita'&&mesL===mesAtual&&anoL===anoAtual) receitaSupa+=Number(l.val)||0;
         }
       });
+      if(receitaSupa>0) receitaMes=receitaSupa;
     }
     var clientesAtivos=0;
     if(typeof clientes!=='undefined'&&clientes){
