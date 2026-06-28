@@ -6913,11 +6913,20 @@ function renderEquipeHoje(){
     el.innerHTML='<div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0">Nenhum colaborador ativo</div>';
     return;
   }
+  var agora=new Date();
+  var diaKey=agora.getDate()+'/'+(agora.getMonth()+1)+'/'+agora.getFullYear();
+  var diaData=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData&&agendamentosPorData[diaKey])||{};
+  var contPorProf={};
+  Object.keys(diaData).forEach(function(k){
+    var a=diaData[k];
+    if(a&&a.cliente&&a.prof)contPorProf[a.prof]=(contPorProf[a.prof]||0)+1;
+  });
   el.innerHTML=ativos.map(function(c){
+    var cnt=contPorProf[c.nome]||0;
     return '<div style="display:flex;align-items:center;gap:9px">'
       +mkAvatar(c,32)
-      +'<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:#aaa">0 atend.</div></div>'
-      +'<span style="width:8px;height:8px;background:#22c55e;border-radius:50%;flex-shrink:0"></span>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:#aaa">'+cnt+' atend.</div></div>'
+      +'<span style="width:8px;height:8px;background:'+(cnt>0?'#22c55e':'#d1d5db')+';border-radius:50%;flex-shrink:0"></span>'
       +'</div>';
   }).join('');
 }
@@ -12951,6 +12960,7 @@ function renderDashboardCards(){
     }
     var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
     if(elSaldoSt)elSaldoSt.textContent=cxAberto?'● Caixa aberto · Atualizado agora':'● Caixa fechado';
+    if(typeof renderEquipeHoje==='function')renderEquipeHoje();
   }catch(e){
     console.log('erro renderDashboardCards',e);
   }
