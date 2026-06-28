@@ -11966,19 +11966,16 @@ async function carregarSalaoAtual(){
     window.SALAO_NOME=user.email||'';
     window.SALAO_RESPONSAVEL=user.email?user.email.split('@')[0].replace(/[._]/g,' '):null;
     window.SALAO_PLANO='trial';
-    try{localStorage.setItem('aflor_ultimo_salao_id',user.id);}catch(e){}
+    try{localStorage.setItem('aflor_ultimo_salao_id',user.id);sessionStorage.setItem('flora_salao_id',user.id);}catch(e){}
     var r=await supa.from('saloes').select('*').eq('id',user.id).maybeSingle();
     if(r.data){
       window.SALAO_NOME=r.data.nome_salao||window.SALAO_NOME;
       window.SALAO_RESPONSAVEL=r.data.responsavel||window.SALAO_RESPONSAVEL;
       window.SALAO_PLANO=r.data.plano||'trial';
     }else{
-      // Usuário auth mas sem salão cadastrado — leva para completar o cadastro
-      var ov=document.getElementById('aflor-overlay');
-      if(ov)ov.classList.remove('hidden');
-      obGo('login');
-      switchLogin('criar');
-      showAlertOb('Complete o cadastro do seu salão para continuar.');
+      // Usuário auth mas sem salão cadastrado — leva para cadastro.html
+      await supa.auth.signOut();
+      window.location.replace('cadastro.html');
       return;
     }
     aplicarDadosSalaoNaUI();
@@ -12200,12 +12197,9 @@ function fazerLogout(){
   if(typeof servicos!=='undefined')servicos=[];
   if(typeof produtos!=='undefined')produtos=[];
   if(typeof retornos!=='undefined')retornos=[];
-  if(supa)supa.auth.signOut().catch(function(){});
-  var overlay=document.getElementById('aflor-overlay');
-  if(overlay)overlay.classList.remove('hidden');
-  document.querySelectorAll('.ob-screen').forEach(function(s){s.classList.remove('active');});
-  var login=document.getElementById('obs-login');
-  if(login)login.classList.add('active');
+  try{sessionStorage.removeItem('flora_salao_id');}catch(e){}
+  if(supa)supa.auth.signOut().then(function(){window.location.replace('login.html');}).catch(function(){window.location.replace('login.html');});
+  else window.location.replace('login.html');
 }
 function sairColaborador(){
   colaboradorLogado=null;
@@ -12337,12 +12331,9 @@ async function carregarClientesSupa(){
   // Reage a mudanças de sessão em tempo real (ex: expiração, logout em outra aba)
   supa.auth.onAuthStateChange(function(event,session){
     if(event==='SIGNED_OUT'||!session){
-      var ov=document.getElementById('aflor-overlay');
-      if(ov)ov.classList.remove('hidden');
-      obGo('login');
-      switchLogin('entrar');
-      try{localStorage.removeItem('aflor_logado');}catch(e){}
+      try{localStorage.removeItem('aflor_logado');sessionStorage.removeItem('flora_salao_id');}catch(e){}
       window.SALAO_ID=null;window.SALAO_NOME=null;
+      window.location.replace('login.html');
     }
   });
   supa.auth.getSession().then(function(sess){
@@ -12353,10 +12344,12 @@ async function carregarClientesSupa(){
       if(ov)ov.classList.add('hidden');
       carregarSalaoAtual().then(function(){aplicarPermissoesAdmin();carregarDadosDoSalao();});
     }else{
-      try{localStorage.removeItem('aflor_logado');}catch(e){}
+      try{localStorage.removeItem('aflor_logado');sessionStorage.removeItem('flora_salao_id');}catch(e){}
+      window.location.replace('login.html');
     }
   }).catch(function(){
     try{localStorage.removeItem('aflor_logado');}catch(e){}
+    window.location.replace('login.html');
   });
 })();
 // ===== FIM ONBOARDING =====

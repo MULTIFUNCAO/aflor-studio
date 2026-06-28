@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — Flora Gestão</title>
+<meta name="theme-color" content="#7c3aed">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(135deg,#f5f3ff 0%,#ecfdf5 100%);display:flex;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+
+.card{background:#fff;border-radius:24px;padding:36px 32px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(124,58,237,.12),0 4px 16px rgba(0,0,0,.06)}
+
+/* Logo */
+.logo-wrap{text-align:center;margin-bottom:28px}
+.logo-icon{width:64px;height:64px;background:linear-gradient(135deg,#7c3aed,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.brand-name{font-size:26px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#7c3aed,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:12px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+
+.form-title{font-size:18px;font-weight:800;color:#111;text-align:center;margin-bottom:4px}
+.form-sub{font-size:12px;color:#888;text-align:center;margin-bottom:22px}
+
+/* Inputs */
+.field{position:relative;margin-bottom:13px}
+.field-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none;display:flex}
+.field-label{font-size:11px;font-weight:700;color:#555;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+.inp{width:100%;padding:12px 12px 12px 40px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:14px;color:#111;outline:none;transition:.2s;font-family:inherit;background:#fafafa}
+.inp:focus{border-color:#7c3aed;background:#fff;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.inp::placeholder{color:#bbb}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;padding:0;line-height:1}
+
+/* Botão */
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit;margin-top:4px;transition:.15s}
+.btn-main:hover{background:linear-gradient(135deg,#6d28d9,#5b21b6)}
+.btn-main:disabled{opacity:.6;cursor:not-allowed}
+
+/* Alert */
+.alert{border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;text-align:center}
+.alert.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.alert.ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.alert.show{display:block}
+
+.forgot{text-align:right;font-size:12px;margin-top:-6px;margin-bottom:14px}
+.forgot a{color:#7c3aed;text-decoration:none;font-weight:600}
+.forgot a:hover{text-decoration:underline}
+
+.divider{height:1px;background:#f0f0f0;margin:18px 0}
+
+.link-cadastro{text-align:center;font-size:13px;color:#888}
+.link-cadastro a{color:#7c3aed;font-weight:700;text-decoration:none}
+.link-cadastro a:hover{text-decoration:underline}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Modal recuperar senha */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:800;color:#111;margin-bottom:6px}
+.modal-sub{font-size:12px;color:#888;margin-bottom:18px}
+.modal-inp{width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:11px;font-size:14px;outline:none;transition:.2s;font-family:inherit;background:#fafafa}
+.modal-inp:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.modal-alert{font-size:12px;margin-top:10px;min-height:18px;font-weight:600}
+.modal-alert.err{color:#dc2626}
+.modal-alert.ok{color:#16a34a}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.btn-sec{flex:1;padding:11px;border:1.5px solid #e5e5e5;background:#fff;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#555}
+.btn-sec:hover{background:#f8f8f8}
+.btn-pri{flex:1;padding:11px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;font-family:inherit}
+.btn-pri:hover{opacity:.9}
+.btn-pri:disabled{opacity:.6;cursor:not-allowed}
+
+@media(max-width:480px){
+  body{padding:16px;align-items:flex-start;padding-top:24px}
+  .card{padding:28px 20px 24px}
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg width="34" height="40" viewBox="0 0 100 115" fill="none">
+        <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+        <path d="M50 62 C50 62 36 49 36 30 C36 14 50 5 50 5 C50 5 64 14 64 30 C64 49 50 62 50 62Z" fill="white" opacity="0.6"/>
+        <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M50 85 C50 85 28 80 24 66 C37 66 50 77 50 85Z" fill="white"/>
+        <path d="M50 77 C50 77 72 72 76 58 C63 58 50 69 50 77Z" fill="white"/>
+      </svg>
+    </div>
+    <div class="brand-name">FLORA</div>
+    <div class="brand-sub">Sistema para salões de beleza</div>
+  </div>
+
+  <div class="form-title">Bem-vindo de volta</div>
+  <div class="form-sub">Entre com sua conta Flora Gestão</div>
+
+  <div class="alert" id="alert"></div>
+
+  <form id="form-login" onsubmit="handleLogin(event)" novalidate>
+
+    <div class="field">
+      <label class="field-label" for="f-email">Email</label>
+      <span class="field-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      </span>
+      <input id="f-email" class="inp" type="email" placeholder="seu@email.com" autocomplete="email" required/>
+    </div>
+
+    <div class="field" style="margin-bottom:8px">
+      <label class="field-label" for="f-senha">Senha</label>
+      <span class="field-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </span>
+      <input id="f-senha" class="inp" type="password" placeholder="Sua senha" autocomplete="current-password" required/>
+      <button type="button" class="eye-btn" onclick="toggleVis()" tabindex="-1">👁</button>
+    </div>
+
+    <div class="forgot">
+      <a href="#" onclick="abrirRecuperar(event)">Esqueceu a senha?</a>
+    </div>
+
+    <button class="btn-main" type="submit" id="btn-entrar">Entrar na conta</button>
+
+  </form>
+
+  <div class="divider"></div>
+
+  <div class="link-cadastro">
+    Não tem conta? <a href="cadastro.html">Criar conta grátis →</a>
+  </div>
+
+</div>
+
+<!-- Modal recuperar senha -->
+<div class="modal-bg" id="modal-rec">
+  <div class="modal-box">
+    <div class="modal-title">Recuperar senha</div>
+    <div class="modal-sub">Informe seu email e enviaremos um link para redefinir sua senha.</div>
+    <input id="rec-email" class="modal-inp" type="email" placeholder="seu@email.com" autocomplete="email"/>
+    <div class="modal-alert" id="rec-alert"></div>
+    <div class="modal-btns">
+      <button class="btn-sec" type="button" onclick="fecharRecuperar()">Cancelar</button>
+      <button class="btn-pri" type="button" id="btn-rec" onclick="enviarRecuperar()">Enviar link</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// Se já tem sessão ativa, vai direto para o app
+supa.auth.getSession().then(function(r){
+  if(r.data&&r.data.session)window.location.replace('index.html');
+});
+
+function val(id){return(document.getElementById(id)||{}).value||'';}
+
+function showAlert(msg,type){
+  var el=document.getElementById('alert');
+  el.textContent=msg;el.className='alert '+type+' show';
+}
+function hideAlert(){document.getElementById('alert').className='alert';}
+
+function toggleVis(){
+  var inp=document.getElementById('f-senha');
+  var btn=document.querySelector('.eye-btn');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  hideAlert();
+  var email=val('f-email').trim();
+  var senha=val('f-senha');
+  if(!email){showAlert('Informe seu email.','err');document.getElementById('f-email').focus();return;}
+  if(!senha){showAlert('Informe sua senha.','err');document.getElementById('f-senha').focus();return;}
+
+  var btn=document.getElementById('btn-entrar');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Entrando…';
+
+  try{
+    var res=await supa.auth.signInWithPassword({email:email,password:senha});
+    if(res.error){
+      var em=(res.error.message||'').toLowerCase();
+      if(em.includes('invalid')||em.includes('credentials')||em.includes('password')){
+        showAlert('Email ou senha incorretos.','err');
+      }else if(em.includes('email not confirmed')){
+        showAlert('Confirme seu email antes de entrar. Verifique sua caixa de entrada.','err');
+      }else{
+        showAlert('Não foi possível entrar: '+(res.error.message||''),'err');
+      }
+      btn.disabled=false;btn.innerHTML='Entrar na conta';
+      return;
+    }
+    // Login ok — verificar se tem salão cadastrado
+    var user=res.data.user;
+    var r=await supa.from('saloes').select('id').eq('id',user.id).maybeSingle();
+    if(!r.data){
+      // Auth ok mas sem salão — completa cadastro
+      await supa.auth.signOut();
+      window.location.replace('cadastro.html');
+      return;
+    }
+    try{sessionStorage.setItem('flora_salao_id',user.id);}catch(e){}
+    window.location.replace('index.html');
+  }catch(err){
+    showAlert('Erro inesperado. Tente novamente.','err');
+    console.error('login error:',err);
+    btn.disabled=false;btn.innerHTML='Entrar na conta';
+  }
+}
+
+// Modal recuperar senha
+function abrirRecuperar(e){
+  e.preventDefault();
+  document.getElementById('rec-email').value=val('f-email');
+  document.getElementById('rec-alert').textContent='';
+  document.getElementById('rec-alert').className='modal-alert';
+  document.getElementById('modal-rec').classList.add('show');
+  setTimeout(function(){document.getElementById('rec-email').focus();},100);
+}
+function fecharRecuperar(){
+  document.getElementById('modal-rec').classList.remove('show');
+}
+document.getElementById('modal-rec').addEventListener('click',function(e){
+  if(e.target===this)fecharRecuperar();
+});
+
+async function enviarRecuperar(){
+  var email=document.getElementById('rec-email').value.trim();
+  var alertEl=document.getElementById('rec-alert');
+  if(!email){alertEl.textContent='Informe seu email.';alertEl.className='modal-alert err';return;}
+  var btn=document.getElementById('btn-rec');
+  btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    var res=await supa.auth.resetPasswordForEmail(email,{
+      redirectTo:window.location.origin+'/login.html'
+    });
+    if(res.error){
+      alertEl.textContent='Erro ao enviar: '+(res.error.message||'');
+      alertEl.className='modal-alert err';
+    }else{
+      alertEl.textContent='✅ Link enviado! Verifique seu email.';
+      alertEl.className='modal-alert ok';
+      setTimeout(fecharRecuperar,2500);
+    }
+  }catch(err){
+    alertEl.textContent='Erro inesperado.';alertEl.className='modal-alert err';
+  }
+  btn.disabled=false;btn.textContent='Enviar link';
+}
+</script>
+</body>
+</html>
