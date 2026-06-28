@@ -12903,7 +12903,7 @@ function removerMovimentoHistorico(histIdx,movIdx,ev){
   if(caixaNavIdx<0)renderCaixaNavData();
 }
 
-function renderDashboardCards(){
+async function renderDashboardCards(){
   try{
     var agora=new Date();
     var mesAtual=agora.getMonth(), anoAtual=agora.getFullYear();
@@ -12924,16 +12924,26 @@ function renderDashboardCards(){
       });
     }
     var atendimentosHoje=0, atendimentosMes=0;
+    var diaDataHoje=null;
     if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
       Object.keys(agendamentosPorData).forEach(function(dk){
         var partes=dk.split('/');
         if(partes.length===3){
           var mesDk=parseInt(partes[1],10)-1, anoDk=parseInt(partes[2],10);
-          var qtd=Object.keys(agendamentosPorData[dk]||{}).length;
+          var qtd=Object.keys(agendamentosPorData[dk]||{}).filter(function(k){return agendamentosPorData[dk][k]&&agendamentosPorData[dk][k].cliente;}).length;
           if(mesDk===mesAtual&&anoDk===anoAtual) atendimentosMes+=qtd;
-          if(dk===diaKeyHoje) atendimentosHoje=qtd;
+          if(dk===diaKeyHoje){atendimentosHoje=qtd;diaDataHoje=agendamentosPorData[dk];}
         }
       });
+    }
+    // Fallback: query Supabase sem filtro salao_id (cobre agendamentos com salao_id NULL)
+    var rowsHojeFallback=[];
+    if(atendimentosHoje===0&&typeof supa!=='undefined'&&supa){
+      try{
+        var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
+        var rh=await supa.from('agendamentos').select('cliente,servico,profissional,hora,status').eq('data',hojeISO).neq('status','Cancelado').order('hora');
+        if(rh.data&&rh.data.length){rowsHojeFallback=rh.data;atendimentosHoje=rowsHojeFallback.length;}
+      }catch(e){}
     }
     var clientesAtivos=0;
     if(typeof clientes!=='undefined'&&clientes){
@@ -12952,13 +12962,26 @@ function renderDashboardCards(){
     if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
     var tbodyAtend=document.getElementById('dash-atend-hoje-tbody');
     if(tbodyAtend){
-      var diaData=agendamentosPorData&&agendamentosPorData[diaKeyHoje];
-      var apptKeys=diaData?Object.keys(diaData).filter(function(k){return diaData[k]&&diaData[k].cliente;}).sort():[];
-      if(!apptKeys.length){
-        tbodyAtend.innerHTML='<tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr>';
-      } else {
-        tbodyAtend.innerHTML=apptKeys.map(function(k){
-          var a=diaData[k];
+      var linhasTabela=[];
+      if(rowsHojeFallback.length){
+        // dados do fallback Supabase (sem salao_id filter)
+        linhasTabela=rowsHojeFallback.map(function(row){
+          var st=row.status||'Em aberto';
+          var badgeColor=st==='Paga'?'#888':st==='Cancelado'?'#d97706':'#15803d';
+          var badgeBg=st==='Paga'?'#f3f4f6':st==='Cancelado'?'#fef3c7':'#dcfce7';
+          return '<tr style="border-top:1px solid #f5f5f5">'
+            +'<td style="padding:9px 16px;font-size:12px;font-weight:600">'+(row.cliente||'')+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+(row.servico||'')+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+(row.profissional||'')+'</td>'
+            +'<td style="padding:9px 16px;font-size:12px;color:#555">'+((row.hora||'').substring(0,5))+'</td>'
+            +'<td style="padding:9px 16px"><span style="font-size:10px;font-weight:700;color:'+badgeColor+';background:'+badgeBg+';padding:2px 8px;border-radius:20px">'+st+'</span></td>'
+            +'</tr>';
+        });
+      } else if(diaDataHoje){
+        // dados de agendamentosPorData (carregados com salao_id)
+        var apptKeys=Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;}).sort();
+        linhasTabela=apptKeys.map(function(k){
+          var a=diaDataHoje[k];
           var st=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
           var badgeColor=st==='Paga'?'#888':st==='Cancelada'?'#d97706':'#15803d';
           var badgeBg=st==='Paga'?'#f3f4f6':st==='Cancelada'?'#fef3c7':'#dcfce7';
@@ -12969,8 +12992,11 @@ function renderDashboardCards(){
             +'<td style="padding:9px 16px;font-size:12px;color:#555">'+a.hora+'</td>'
             +'<td style="padding:9px 16px"><span style="font-size:10px;font-weight:700;color:'+badgeColor+';background:'+badgeBg+';padding:2px 8px;border-radius:20px">'+st+'</span></td>'
             +'</tr>';
-        }).join('');
+        });
       }
+      tbodyAtend.innerHTML=linhasTabela.length
+        ?linhasTabela.join('')
+        :'<tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr>';
     }
     var cxAberto=typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto;
     var elBadge=document.getElementById('dash-badge-caixa');
