@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aflor-studio-v2';
+const CACHE_NAME = 'aflor-studio-v3';
 
 self.addEventListener('install', function(event) {
   self.skipWaiting();
