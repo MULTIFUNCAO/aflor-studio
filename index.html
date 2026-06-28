@@ -6473,6 +6473,7 @@ function renderRemuneracoes(){
 
   // Usa colaboradores como fonte de verdade — aguarda Supabase carregar dados reais
   var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();};
+  var tb=document.getElementById('remuneracoes-table');
   if(!window._colabsSupaCarregados){
     if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
     return;
@@ -6485,8 +6486,6 @@ function renderRemuneracoes(){
     if(filtroProfValAtual!=='Todos'&&!colabsAtivos.find(function(c){return c.nome===filtroProfValAtual;}))filtroProfValAtual='Todos';
     selFiltroProf.value=filtroProfValAtual;
   }
-
-  const tb=document.getElementById('remuneracoes-table');
   var hojeCheckRemun=new Date();
   var ehMesAtualRemun=(remunMesAtual===hojeCheckRemun.getMonth()&&remunAnoAtual===hojeCheckRemun.getFullYear());
   if(!ehMesAtualRemun){renderRemuneracoesHistorico(filtroProfValAtual);return;}
@@ -12612,6 +12611,7 @@ function calcularSinaisHoje(){
   return total;
 }
 function atualizarTotaisCaixa(){
+  if(!caixaState||!caixaState.movimentos)return;
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var saidas=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
   var saldo=caixaState.troco+entradas-saidas;
