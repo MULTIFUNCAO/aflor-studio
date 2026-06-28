@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta name="build-ts" content="1781150000">
+<meta name="build-ts" content="1781152000">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FLORA Studio — Sistema de Gestão</title>
@@ -4632,7 +4632,7 @@ async function abrirDetalheRemuneracao(i){
           +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>'+(c.servico||'-')+'</span><span style="color:#16a34a">R$ '+Number(c.valor||0).toFixed(2).replace('.',',')+'</span></div>'
           +'<div style="font-size:11.5px;color:#888;margin-top:2px">'+dataFmt+' · '+(c.cliente||'-')+' · '+origemLabel+' · '+(c.comissao_pct||0)+'%</div>'
           +'</div>'
-          +'<button onclick="remunEditarCard('+c.id+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
+          +'<button onclick="remunEditarCard(\''+c.id+'\')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
           +'</div>'
           +'</div>';
       });
@@ -4668,8 +4668,8 @@ function remunEditarCard(id){
     +'</div>'
     +'<div style="max-width:140px"><div style="font-size:10px;color:#888;font-weight:700;margin-bottom:3px">VALOR (R$)</div><input type="number" id="remun-edit-valor-'+id+'" value="'+Number(c.valor||0).toFixed(2)+'" step="0.01" min="0" style="width:100%;font-size:13px;font-weight:700;border:1px solid #ddd;border-radius:6px;padding:5px 8px;box-sizing:border-box"></div>'
     +'<div style="display:flex;gap:8px;margin-top:4px">'
-    +'<button onclick="remunSalvarCard('+id+')" style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar</button>'
-    +'<button onclick="remunCancelarCard('+id+')" style="flex:1;background:#f3f4f6;color:#555;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">❌ Cancelar</button>'
+    +'<button onclick="remunSalvarCard(\''+id+'\')" style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar</button>'
+    +'<button onclick="remunCancelarCard(\''+id+'\')" style="flex:1;background:#f3f4f6;color:#555;border:none;border-radius:8px;padding:8px 0;font-size:12px;font-weight:700;cursor:pointer">❌ Cancelar</button>'
     +'</div></div>';
 }
 async function remunSalvarCard(id){
@@ -4702,7 +4702,7 @@ function remunCancelarCard(id){
     +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>'+(c.servico||'-')+'</span><span style="color:#16a34a">R$ '+Number(c.valor||0).toFixed(2).replace('.',',')+'</span></div>'
     +'<div style="font-size:11.5px;color:#888;margin-top:2px">'+dataFmt+' · '+(c.cliente||'-')+' · '+origemLabel+' · '+(c.comissao_pct||0)+'%</div>'
     +'</div>'
-    +'<button onclick="remunEditarCard('+id+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
+    +'<button onclick="remunEditarCard(\''+id+'\')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:15px;padding:0 0 0 8px;flex-shrink:0" title="Editar">✏️</button>'
     +'</div>';
 }
 
