@@ -12936,14 +12936,32 @@ async function renderDashboardCards(){
         }
       });
     }
-    // Fallback: query Supabase sem filtro salao_id (cobre agendamentos com salao_id NULL)
+    // Fallback atendimentos: query Supabase sem filtro salao_id (cobre salao_id NULL)
     var rowsHojeFallback=[];
-    if(atendimentosHoje===0&&typeof supa!=='undefined'&&supa){
+    if((atendimentosHoje===0||atendimentosMes===0)&&typeof supa!=='undefined'&&supa){
       try{
         var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
-        var rh=await supa.from('agendamentos').select('cliente,servico,profissional,hora,status').eq('data',hojeISO).neq('status','Cancelado').order('hora');
-        if(rh.data&&rh.data.length){rowsHojeFallback=rh.data;atendimentosHoje=rowsHojeFallback.length;}
+        var mesISO1=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-01';
+        var mesISO2=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-31';
+        if(atendimentosHoje===0){
+          var rh=await supa.from('agendamentos').select('cliente,servico,profissional,hora,status').eq('data',hojeISO).neq('status','Cancelado').order('hora');
+          if(rh.data&&rh.data.length){rowsHojeFallback=rh.data;atendimentosHoje=rowsHojeFallback.length;}
+        }
+        if(atendimentosMes===0){
+          var rm=await supa.from('agendamentos').select('valor').gte('data',mesISO1).lte('data',mesISO2).neq('status','Cancelado');
+          if(rm.data&&rm.data.length) atendimentosMes=rm.data.length;
+        }
       }catch(e){}
+    }
+    // Fallback receitaMes: usa fluxoLancamentos (já em memória do Supabase) se historicoCaixas vazio
+    if(receitaMes===0&&typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos&&fluxoLancamentos.length){
+      fluxoLancamentos.forEach(function(l){
+        var m=String(l.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if(m){
+          var mesL=parseInt(m[2],10)-1,anoL=parseInt(m[3],10);
+          if(l.tipo==='receita'&&mesL===mesAtual&&anoL===anoAtual) receitaMes+=Number(l.val)||0;
+        }
+      });
     }
     var clientesAtivos=0;
     if(typeof clientes!=='undefined'&&clientes){
