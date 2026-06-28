@@ -6905,7 +6905,7 @@ function mkAvatar(c,size){
   }
   return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:'+(size<=28?9:11)+'px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.3)">'+ini+'</div>';
 }
-function renderEquipeHoje(){
+async function renderEquipeHoje(){
   var el=document.getElementById('dash-equipe-hoje');
   if(!el)return;
   var ativos=colaboradores.filter(function(c){return c.status!=='Inativo';});
@@ -6917,12 +6917,37 @@ function renderEquipeHoje(){
   var diaKey=agora.getDate()+'/'+(agora.getMonth()+1)+'/'+agora.getFullYear();
   var diaData=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData&&agendamentosPorData[diaKey])||{};
   var contPorProf={};
+  var localCount=0;
   Object.keys(diaData).forEach(function(k){
     var a=diaData[k];
-    if(a&&a.cliente&&a.prof)contPorProf[a.prof]=(contPorProf[a.prof]||0)+1;
+    if(a&&a.cliente&&a.prof){contPorProf[a.prof]=(contPorProf[a.prof]||0)+1;localCount++;}
   });
+  // Fallback: query direta sem filtro salao_id para pegar agendamentos com salao_id NULL (legados)
+  if(localCount===0&&typeof supa!=='undefined'&&supa){
+    try{
+      var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
+      var r=await supa.from('agendamentos').select('profissional,cliente').eq('data',hojeISO).neq('status','Cancelado');
+      if(r.data){
+        r.data.forEach(function(row){
+          if(!row.cliente||!row.profissional)return;
+          contPorProf[row.profissional]=(contPorProf[row.profissional]||0)+1;
+        });
+      }
+    }catch(e){}
+  }
+  // Matching flexível: exato → startsWith (trata Eduardo/Edu, Vitoria/Vi etc.)
+  function matchProf(nome){
+    if(contPorProf[nome])return contPorProf[nome];
+    var nl=nome.toLowerCase();
+    var keys=Object.keys(contPorProf);
+    for(var i=0;i<keys.length;i++){
+      var kl=keys[i].toLowerCase();
+      if(nl.startsWith(kl)||kl.startsWith(nl))return contPorProf[keys[i]];
+    }
+    return 0;
+  }
   el.innerHTML=ativos.map(function(c){
-    var cnt=contPorProf[c.nome]||0;
+    var cnt=matchProf(c.nome);
     return '<div style="display:flex;align-items:center;gap:9px">'
       +mkAvatar(c,32)
       +'<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:#aaa">'+cnt+' atend.</div></div>'
