@@ -11961,23 +11961,29 @@ async function carregarSalaoAtual(){
     var sess=await supa.auth.getSession();
     var user=sess.data&&sess.data.session?sess.data.session.user:null;
     if(!user)return;
-    // saloes.id === auth.user.id por design — fallback seguro sempre
-    window.SALAO_ID=user.id;
+    // Defaults provisórios com user.id
     window.SALAO_NOME=user.email||'';
     window.SALAO_RESPONSAVEL=user.email?user.email.split('@')[0].replace(/[._]/g,' '):null;
     window.SALAO_PLANO='trial';
-    try{localStorage.setItem('aflor_ultimo_salao_id',user.id);sessionStorage.setItem('flora_salao_id',user.id);}catch(e){}
+    // 1ª tentativa: busca por auth user.id
     var r=await supa.from('saloes').select('*').eq('id',user.id).maybeSingle();
-    if(r.data){
+    // 2ª tentativa: busca por email (corrige mismatch entre user.id e salao_id histórico)
+    if((!r||!r.data)&&user.email){
+      var re=await supa.from('saloes').select('*').eq('email',user.email).maybeSingle();
+      if(re&&re.data)r=re;
+    }
+    if(r&&r.data){
+      // Usa o id real da tabela saloes — pode ser diferente do user.id
+      window.SALAO_ID=r.data.id;
       window.SALAO_NOME=r.data.nome_salao||window.SALAO_NOME;
       window.SALAO_RESPONSAVEL=r.data.responsavel||window.SALAO_RESPONSAVEL;
       window.SALAO_PLANO=r.data.plano||'trial';
     }else{
-      // Usuário auth mas sem salão cadastrado — leva para cadastro.html
-      await supa.auth.signOut();
-      window.location.replace('cadastro.html');
-      return;
+      // Sem registro em saloes — cria entry básica e usa user.id
+      window.SALAO_ID=user.id;
+      supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).catch(function(){});
     }
+    try{localStorage.setItem('aflor_ultimo_salao_id',window.SALAO_ID);sessionStorage.setItem('flora_salao_id',window.SALAO_ID);}catch(e){}
     aplicarDadosSalaoNaUI();
   }catch(e){console.log('err carregar salao',e);}
 }

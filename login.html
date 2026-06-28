@@ -205,13 +205,17 @@ async function handleLogin(e){
     // Login ok — verificar se tem salão cadastrado
     var user=res.data.user;
     var r=await supa.from('saloes').select('id').eq('id',user.id).maybeSingle();
-    if(!r.data){
+    if((!r||!r.data)&&user.email){
+      var re=await supa.from('saloes').select('id').eq('email',user.email).maybeSingle();
+      if(re&&re.data)r=re;
+    }
+    if(!r||!r.data){
       // Auth ok mas sem salão — completa cadastro
       await supa.auth.signOut();
       window.location.replace('cadastro.html');
       return;
     }
-    try{sessionStorage.setItem('flora_salao_id',user.id);}catch(e){}
+    try{sessionStorage.setItem('flora_salao_id',r.data.id);}catch(e){}
     window.location.replace('index.html');
   }catch(err){
     showAlert('Erro inesperado. Tente novamente.','err');
