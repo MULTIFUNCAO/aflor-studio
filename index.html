@@ -8894,8 +8894,15 @@ function renderPacotes(){
             :'<span style="font-size:10px;background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:20px">✅ Ativo</span>';
         var pkgLabel=(g.pacote_nome&&g.pacote_nome.trim().toLowerCase()!==g.cliente_nome.trim().toLowerCase())?g.pacote_nome:'Pacote Personalizado';
         var pkgBadge='<span style="display:inline-block;font-size:10px;background:#ede9fe;color:#6d28d9;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:4px">'+pkgLabel+'</span>';
-        var tags=g.itens.map(function(it){
-          return '<span style="display:inline-block;font-size:10px;background:#f4f4f5;color:#3f3f46;padding:2px 7px;border-radius:6px;font-weight:600;margin:2px 2px 0 0;border:1px solid #e4e4e7">'+it.nome_servico+'</span>';
+        var _srvList=[];
+        g.itens.forEach(function(it){
+          (it.nome_servico||'').split(' + ').forEach(function(s){
+            s=s.trim();
+            if(s&&_srvList.indexOf(s)<0)_srvList.push(s);
+          });
+        });
+        var tags=_srvList.map(function(s){
+          return '<span style="display:inline-block;font-size:10px;background:#f4f4f5;color:#3f3f46;padding:2px 7px;border-radius:6px;font-weight:600;margin:2px 2px 0 0;border:1px solid #e4e4e7">'+s+'</span>';
         }).join('');
         return '<div onclick="pkgAbrirDetalhe(\''+_pEsc(g.key)+'\')" style="background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.background=\'#f8f8ff\';this.style.boxShadow=\'0 3px 12px rgba(99,102,241,.08)\'" onmouseout="this.style.background=\'#fff\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
           +'<div style="width:44px;height:44px;border-radius:50%;background:'+_pAv(g.cliente_nome)+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">'+_pIni(g.cliente_nome)+'</div>'
