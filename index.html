@@ -4739,7 +4739,7 @@ async function carregarPacotesClientesSupa(){
 async function salvarProdutoSupa(p){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('produtos').insert([{nome:p.nome,cat:p.cat,marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo',salao_id:window.SALAO_ID}]).select('id').single();if(r.data&&r.data.id)p.id=r.data.id;}catch(e){console.log('err supa produto insert',e);}}
 async function atualizarProdutoSupa(p){try{if(!supa||!p.id)return;await supa.from('produtos').update({nome:p.nome,cat:p.cat,marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,status:p.status}).eq('id',p.id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa produto update',e);}}
 async function deletarProdutoSupa(id){try{if(!supa||!id)return;await supa.from('produtos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
-async function carregarProdutosSupa(){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('produtos').select('*').eq('salao_id',window.SALAO_ID).order('cat').order('nome');if(r.data&&r.data.length>0){produtos=r.data.map(function(p){return{id:p.id,nome:p.nome,cat:p.cat||'Outros',marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo'};});renderProdutos();}}catch(e){console.log('err carregar produtos',e);}}
+async function carregarProdutosSupa(){try{if(!window.SALAO_ID)return;var h=await _authHeaders({'Accept':'application/json'});var resp=await fetch(SUPA_URL+'/rest/v1/produtos?salao_id=eq.'+window.SALAO_ID+'&order=cat,nome',{headers:h});if(!resp.ok)throw new Error('produtos fetch '+resp.status);var data=await resp.json();produtos=Array.isArray(data)?data.map(function(p){return{id:p.id,nome:p.nome,cat:p.cat||'Outros',marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo'};}):[];renderProdutos();}catch(e){console.log('err carregar produtos',e);}}
 async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID}]);}catch(e){console.log('err supa servico',e);}}
 async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
@@ -8579,18 +8579,7 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 });
 
 // PRODUTOS DATA
-let produtos=[
-  {nome:'Kit Promocional Creme de Silicone',cat:'Cremes',preco:'45,00',estoque:6,status:'Ativo'},
-  {nome:'Kit Promocional Creme de Silicone (P)',cat:'Cremes',preco:'32,00',estoque:3,status:'Ativo'},
-  {nome:'Tinta 0.66 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:1,status:'Ativo'},
-  {nome:'Tinta 1.0 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:2,status:'Ativo'},
-  {nome:'Tinta 10.21 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:2,status:'Ativo'},
-  {nome:'Tinta 3.0 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:2,status:'Ativo'},
-  {nome:'Tinta 4.0 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:2,status:'Ativo'},
-  {nome:'Tinta 5.0 (Aneethun)',cat:'Tonalizante',preco:'28,90',estoque:2,status:'Ativo'},
-  {nome:'Shampoo Hidratante 500ml',cat:'Shampoo',preco:'42,00',estoque:4,status:'Ativo'},
-  {nome:'Máscara Nutritiva 300g',cat:'Máscara',preco:'65,00',estoque:0,status:'Ativo'},
-];
+let produtos=[];
 
 // PACOTES DATA — catálogo (templates)
 let pacotes=[
