@@ -4752,12 +4752,8 @@ async function carregarServicosSupa(){
     var resp=await fetch(SUPA_URL+'/rest/v1/servicos_cadastro?salao_id=eq.'+window.SALAO_ID+'&order=cat,nome',{headers:h});
     if(!resp.ok)throw new Error('servicos fetch '+resp.status);
     var data=await resp.json();
-    if(Array.isArray(data)&&data.length>0){
-      servicos=data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
-      renderServicos();
-    }else{
-      await seedServicosPadraoSupa();
-    }
+    servicos=Array.isArray(data)?data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};}):[];
+    renderServicos();
   }catch(e){console.log('err carregar servicos',e);}
 }
 async function seedServicosPadraoSupa(){
@@ -9788,13 +9784,7 @@ function renderMarketing(){
 
 // ===== TREINAMENTOS =====
 var treinoAtivo='todos';
-var treinos=[
-  {id:1,cat:'tecnica',titulo:'Coloração Avançada — Técnicas e Tendências',desc:'Dominar técnicas de balayage, babylights e coloração fantasy',tipo:'video',duracao:'2h30',instructor:'Ana Flor',nivel:'Avançado',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jenny','Vi']},
-  {id:2,cat:'atendimento',titulo:'Protocolo de Atendimento ao Cliente',desc:'Padrões de atendimento, linguagem e experiência do cliente',tipo:'pdf',duracao:'45 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:true,concluidos:['Ana Flor','Edu','Jenny'],pendentes:['Vi','Lara','Angélica']},
-  {id:3,cat:'gestao',titulo:'Introdução ao Sistema A Flor Business',desc:'Onboarding completo da plataforma de gestão',tipo:'video',duracao:'1h',instructor:'Thiago dos Santos',nivel:'Iniciante',obrigatorio:true,concluidos:['Ana Flor'],pendentes:['Edu','Jenny','Vi','Lara','Angélica']},
-  {id:4,cat:'tecnica',titulo:'Botox Capilar — Passo a Passo',desc:'Técnica completa de botox capilar para diferentes tipos de cabelo',tipo:'video',duracao:'1h30',instructor:'Ana Flor',nivel:'Intermediário',obrigatorio:false,concluidos:['Vi'],pendentes:['Jenny']},
-  {id:5,cat:'atendimento',titulo:'Gestão de Conflitos e Reclamações',desc:'Como lidar com clientes difíceis e reverter situações',tipo:'ebook',duracao:'30 min',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jenny','Vi']},
-];
+var treinos=[];
 function filtroTreino(cat,el){
   treinoAtivo=cat;
   document.querySelectorAll('#page-treinamentos .tab').forEach(t=>t.classList.remove('active'));
@@ -9844,7 +9834,7 @@ function renderTreinamentos(){
 function salvarTreino(){
   var titulo=document.getElementById('treino-titulo')?.value;
   if(!titulo){showAlert('Preencha o título!');return;}
-  treinos.unshift({id:treinos.length+10,cat:'tecnica',titulo,desc:'',tipo:'video',duracao:'',instructor:'Thiago dos Santos',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:['Ana Flor','Edu','Jenny']});
+  treinos.unshift({id:treinos.length+10,cat:'tecnica',titulo,desc:'',tipo:'video',duracao:'',instructor:window.SALAO_RESPONSAVEL||'',nivel:'Básico',obrigatorio:false,concluidos:[],pendentes:[]});
   closeModal('modal-novo-treino');
   renderTreinamentos();
   showAlert('📚 Treinamento "'+titulo+'" criado!');
@@ -10229,14 +10219,7 @@ function renderFinPessoal(){
 // ===== FIM FIN PESSOAL =====
 
 // ===== FIM NOVOS MÓDULOS =====
-let metasList=[
-  {id:1,tipo:'meta',titulo:'30 atendimentos em maio',desc:'Realizar pelo menos 30 atendimentos no mês de maio',colab:['Ana Flor'],inicio:'01/05/2026',prazo:'31/05/2026',alvo:30,atual:24,unidade:'atendimentos',status:'andamento',prio:'alta',recompensa:'Bônus de R$ 100,00'},
-  {id:2,tipo:'tarefa',titulo:'Fazer curso de coloração avançada',desc:'Concluir o curso online de técnicas avançadas de coloração',colab:['Edu'],inicio:'01/05/2026',prazo:'15/06/2026',alvo:1,atual:0,unidade:'',status:'pendente',prio:'media',recompensa:'Certificado + folga extra'},
-  {id:3,tipo:'meta',titulo:'Faturar R$ 2.000 em junho',desc:'Meta de faturamento individual para junho',colab:['Jenny','Vi'],inicio:'01/06/2026',prazo:'30/06/2026',alvo:2000,atual:0,unidade:'R$ faturamento',status:'pendente',prio:'alta',recompensa:'Comissão extra 5%'},
-  {id:4,tipo:'tarefa',titulo:'Atualizar ficha de todos os clientes',desc:'Preencher o formulário de anamnese para cada cliente da carteira',colab:['Ana Flor','Jenny'],inicio:'20/05/2026',prazo:'26/05/2026',alvo:1,atual:0,unidade:'',status:'atrasada',prio:'alta',recompensa:''},
-  {id:5,tipo:'meta',titulo:'10 novos clientes em maio',desc:'Captar pelo menos 10 clientes novos no mês',colab:['Lara','Angélica'],inicio:'01/05/2026',prazo:'31/05/2026',alvo:10,atual:6,unidade:'clientes novos',status:'andamento',prio:'media',recompensa:'Vale presente R$ 50,00'},
-  {id:6,tipo:'tarefa',titulo:'Treinar técnica de Botox capilar',desc:'Assistir aos vídeos e praticar a técnica com cliente modelo',colab:['Vi'],inicio:'01/05/2026',prazo:'20/05/2026',alvo:1,atual:1,unidade:'',status:'concluida',prio:'baixa',recompensa:''},
-];
+let metasList=[];
 let metaIdCounter=7;
 
 const metaStatusLabel={
