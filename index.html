@@ -4391,7 +4391,7 @@ async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').inse
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function carregarAgendamentosSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
+    if(!window.SALAO_ID)return;
     agendamentosPorData={};
     var hoje=new Date();
     var dInicio=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
@@ -4401,12 +4401,11 @@ async function carregarAgendamentosSupa(){
     }
     var dataInicio=fmtISO(dInicio);
     var dataFim=fmtISO(dFim);
-    var r=await supa.from('agendamentos').select('*')
-      .eq('salao_id',window.SALAO_ID)
-      .gte('data',dataInicio)
-      .lte('data',dataFim);
-    if(r.error)throw r.error;
-    var rows=r.data||[];
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=gte.'+dataInicio+'&data=lte.'+dataFim,{headers:h});
+    if(!resp.ok)throw new Error('agendamentos fetch '+resp.status);
+    var rows=await resp.json();
+    if(!Array.isArray(rows))rows=[];
     var mapaNomes={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
     rows.forEach(function(row){
       if(!row.data)return;
@@ -4713,10 +4712,13 @@ function remunCancelarCard(id){
 
 async function carregarPacotesClientesSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('pacotes_clientes').select('*').eq('salao_id',window.SALAO_ID).order('data_compra',{ascending:false});
-    if(r.data&&r.data.length>0){
-      pacotesClientes=r.data.map(function(row){
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/pacotes_clientes?salao_id=eq.'+window.SALAO_ID+'&order=data_compra.desc',{headers:h});
+    if(!resp.ok)throw new Error('pacotes_clientes fetch '+resp.status);
+    var data=await resp.json();
+    if(Array.isArray(data)&&data.length>0){
+      pacotesClientes=data.map(function(row){
         return{
           id:row.id,cliente_id:row.cliente_id,cliente_nome:row.cliente_nome,
           pacote_id:row.pacote_id,pacote_nome:row.pacote_nome||'',
@@ -5725,16 +5727,19 @@ async function atualizarRemuneracaoSupa(r){
 }
 async function carregarRemuneracoesSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('remuneracoes').select('*').eq('salao_id',window.SALAO_ID).order('id');
-    if(r.data&&r.data.length>0){
-      remuneracoes=r.data.map(function(row){
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/remuneracoes?salao_id=eq.'+window.SALAO_ID+'&order=id',{headers:h});
+    if(!resp.ok)throw new Error('remuneracoes fetch '+resp.status);
+    var data=await resp.json();
+    if(Array.isArray(data)&&data.length>0){
+      remuneracoes=data.map(function(row){
         return{id:row.id,nome:row.nome,total:row.total||'0,00',pago:row.pago||'0,00',
           pendente:row.pendente||'0,00',vales:row.vales||'0,00',cor:row.cor||''};
       });
       await mesclarRemuneracoesDuplicadas();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
-    }else if(r.data&&r.data.length===0){
+    }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia os colaboradores padrão no Supabase
       for(var i=0;i<remuneracoes.length;i++){
         var newId=await salvarRemuneracaoSupa(remuneracoes[i]);
@@ -5945,10 +5950,13 @@ async function deletarColaboradorSupa(id){
 }
 async function carregarColaboradoresSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('colaboradores').select('*').eq('salao_id',window.SALAO_ID).order('id');
-    if(r.data&&r.data.length>0){
-      colaboradores=r.data.map(function(row){
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/colaboradores?salao_id=eq.'+window.SALAO_ID+'&order=id',{headers:h});
+    if(!resp.ok)throw new Error('colaboradores fetch '+resp.status);
+    var data=await resp.json();
+    if(Array.isArray(data)&&data.length>0){
+      colaboradores=data.map(function(row){
         return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
           comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
           foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||'',
@@ -5959,7 +5967,7 @@ async function carregarColaboradoresSupa(){
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
       if(typeof renderColabs==='function')renderColabs();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
-    }else if(r.data&&r.data.length===0){
+    }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
       colaboradores=COLABORADORES_PADRAO.map(function(c){
         var colab=Object.assign({},c);
@@ -8626,17 +8634,20 @@ async function deletarPacoteCatalogoSupa(id){
 }
 async function carregarPacotesCatalogoSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('pacotes_catalogo').select('*').eq('salao_id',window.SALAO_ID).order('id');
-    if(r.data&&r.data.length>0){
-      pacotes=r.data.map(function(row){
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/pacotes_catalogo?salao_id=eq.'+window.SALAO_ID+'&order=id',{headers:h});
+    if(!resp.ok)throw new Error('pacotes_catalogo fetch '+resp.status);
+    var data=await resp.json();
+    if(Array.isArray(data)&&data.length>0){
+      pacotes=data.map(function(row){
         return{id:row.id,nome:row.nome,servicos:row.servicos||'',
           servicosItens:row.servicos_itens||[],validade:row.validade||'Sem validade',
           preco:row.preco||'R$ 0,00'};
       });
       salvarPacotesCatalogoLocal();
       renderPacotes();
-    }else if(r.data&&r.data.length===0){
+    }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia o catálogo padrão no Supabase
       for(var i=0;i<pacotes.length;i++){
         var newId=await salvarPacoteCatalogoSupa(pacotes[i]);
@@ -10873,12 +10884,13 @@ var fluxoLancamentos=[];
 async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:lanc.data,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
 async function carregarFluxoLancamentosSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID).order('id',{ascending:false});
-    if(r.error)throw r.error;
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/caixa_movimentos?salao_id=eq.'+window.SALAO_ID+'&order=id.desc',{headers:h});
+    if(!resp.ok)throw new Error('caixa_movimentos fluxo fetch '+resp.status);
     var hj=new Date();
     var hjFmt=hj.getDate().toString().padStart(2,'0')+'/'+(hj.getMonth()+1).toString().padStart(2,'0')+'/'+hj.getFullYear();
-    fluxoLancamentos=(r.data||[]).map(function(row){
+    fluxoLancamentos=(await resp.json()||[]).map(function(row){
       var ts=row.created_at||row.data||'';
       var isoM=ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
       var d=isoM?isoM[3]+'/'+isoM[2]+'/'+isoM[1]:(ts.match(/^\d{2}\/\d{2}\/\d{4}/)?ts:hjFmt);
@@ -12353,10 +12365,12 @@ function carregarDadosDoSalao(){
 }
 async function carregarClientesSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('clientes').select('*').eq('salao_id',window.SALAO_ID).order('nome');
-    if(r.error)throw r.error;
-    clientes=(r.data||[]).map(function(row){
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/clientes?salao_id=eq.'+window.SALAO_ID+'&order=nome',{headers:h});
+    if(!resp.ok)throw new Error('clientes fetch '+resp.status);
+    var data=await resp.json();
+    clientes=(Array.isArray(data)?data:[]).map(function(row){
       return{id:row.id,nome:row.nome||'',tel:row.tel||'',email:row.email||'',
         ultima:row.ultima||'',total:row.total||'R$ 0,00',atend:row.atend||0,
         nascimento:row.nascimento||'',cep:row.cep||'',endereco:row.endereco||'',
@@ -12527,10 +12541,12 @@ function definirCategoriaMov(val){
 function fmtCaixa(v){var p=Number(v).toFixed(2).split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return 'R$ '+p[0]+','+p[1];}
 async function carregarCaixaSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('caixa_estado').select('*').eq('salao_id',window.SALAO_ID).maybeSingle();
-    if(r.error)throw r.error;
-    var row=r.data;
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var respE=await fetch(SUPA_URL+'/rest/v1/caixa_estado?salao_id=eq.'+window.SALAO_ID+'&limit=1',{headers:h});
+    if(!respE.ok)throw new Error('caixa_estado fetch '+respE.status);
+    var rowArr=await respE.json();
+    var row=(Array.isArray(rowArr)&&rowArr.length>0)?rowArr[0]:null;
     if(!row){
       caixaState.aberto=false;caixaState.troco=0;caixaState.horaAbertura=null;caixaState.movimentos=[];
     }else{
@@ -12539,10 +12555,11 @@ async function carregarCaixaSupa(){
       caixaState.horaAbertura=row.hora_abertura?new Date(row.hora_abertura):null;
       caixaState.movimentos=[];
       if(caixaState.aberto){
-        var rm=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID).order('id');
-        if(rm.error)throw rm.error;
+        var respM=await fetch(SUPA_URL+'/rest/v1/caixa_movimentos?salao_id=eq.'+window.SALAO_ID+'&order=id',{headers:h});
+        if(!respM.ok)throw new Error('caixa_movimentos fetch '+respM.status);
+        var rmData=await respM.json();
         var maxLocalId=0;
-        (rm.data||[]).forEach(function(mrow,idx){
+        (Array.isArray(rmData)?rmData:[]).forEach(function(mrow,idx){
           var localId=idx+1;
           if(localId>maxLocalId)maxLocalId=localId;
           caixaState.movimentos.push({
