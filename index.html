@@ -4745,12 +4745,15 @@ async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_
 async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function carregarServicosSupa(){
   try{
-    if(!supa||!window.SALAO_ID)return;
-    var r=await supa.from('servicos_cadastro').select('*').eq('salao_id',window.SALAO_ID).order('cat').order('nome');
-    if(r.data&&r.data.length>0){
-      servicos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/servicos_cadastro?salao_id=eq.'+window.SALAO_ID+'&order=cat,nome',{headers:h});
+    if(!resp.ok)throw new Error('servicos fetch '+resp.status);
+    var data=await resp.json();
+    if(Array.isArray(data)&&data.length>0){
+      servicos=data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};});
       renderServicos();
-    } else {
+    }else{
       await seedServicosPadraoSupa();
     }
   }catch(e){console.log('err carregar servicos',e);}
@@ -5888,7 +5891,7 @@ var SERVICOS_PADRAO=[
   {cat:'Massagem',nome:'Ventosaterapia',dur:'30min',preco:'90,00',cor:'#6366f1'},
   {cat:'Massagem',nome:'Quick Massage',dur:'30min',preco:'70,00',cor:'#6366f1'},
 ];
-let servicos=SERVICOS_PADRAO.slice();
+let servicos=[];
 
 
 var clientes=[];
