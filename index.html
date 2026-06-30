@@ -710,9 +710,9 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <button onclick="closeSidebar()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);font-size:20px;line-height:1;padding:0 2px" title="Fechar menu">✕</button>
   </div>
   <div class="sidebar-user">
-    <div class="user-avatar">TS</div>
+    <div class="user-avatar" id="sidebar-avatar">?</div>
     <div>
-      <div class="user-name">Thiago dos Santos</div>
+      <div class="user-name" id="sidebar-user-name">Carregando...</div>
       <div class="user-role">Administrador</div>
     </div>
   </div>
@@ -5958,7 +5958,13 @@ async function carregarColaboradoresSupa(){
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
     }else if(r.data&&r.data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
-      colaboradores=COLABORADORES_PADRAO.map(function(c){return Object.assign({},c);});
+      colaboradores=COLABORADORES_PADRAO.map(function(c){
+        var colab=Object.assign({},c);
+        if(colab.cargo==='Proprietário(a)'&&window.SALAO_RESPONSAVEL){
+          colab.nome=window.SALAO_RESPONSAVEL;
+        }
+        return colab;
+      });
       for(var i=0;i<colaboradores.length;i++){
         var newId=await salvarColaboradorSupa(colaboradores[i]);
         if(newId!=null)colaboradores[i].id=newId;
@@ -12018,15 +12024,27 @@ async function carregarSalaoAtual(){
 }
 function aplicarDadosSalaoNaUI(){
   try{
-    var primeiroNome=(window.SALAO_RESPONSAVEL||'').split(' ')[0]||'';
+    var nomeResp=window.SALAO_RESPONSAVEL||'';
+    var primeiroNome=nomeResp.split(' ')[0]||'';
     document.querySelectorAll('[data-saudacao]').forEach(function(el){
       var hora=new Date().getHours();
       var saud=hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
       el.textContent=saud+(primeiroNome?(', '+primeiroNome):'')+' 🌷';
     });
     document.querySelectorAll('[data-nome-salao]').forEach(function(el){
-      el.textContent=window.SALAO_RESPONSAVEL||window.SALAO_NOME||'';
+      el.textContent=nomeResp||window.SALAO_NOME||'';
     });
+    // Atualiza nome e iniciais no menu lateral
+    var sidebarNome=document.getElementById('sidebar-user-name');
+    if(sidebarNome)sidebarNome.textContent=nomeResp||window.SALAO_NOME||'';
+    var sidebarAvatar=document.getElementById('sidebar-avatar');
+    if(sidebarAvatar){
+      var partes=nomeResp.trim().split(/\s+/).filter(Boolean);
+      var iniciais=partes.length>=2
+        ?(partes[0][0]+partes[partes.length-1][0]).toUpperCase()
+        :(partes[0]?partes[0].substring(0,2).toUpperCase():'?');
+      sidebarAvatar.textContent=iniciais;
+    }
   }catch(e){}
 }
 
