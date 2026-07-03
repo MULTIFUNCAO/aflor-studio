@@ -4735,6 +4735,14 @@ async function carregarPacotesClientesSupa(){
         var pg=document.getElementById('page-pacotes');
         if(pg&&pg.style.display!=='none')renderPacotes();
       }
+    }else if(Array.isArray(data)&&data.length===0){
+      // Salão sem compras de pacote: limpa qualquer lixo de localStorage de outro salão
+      pacotesClientes=[];
+      salvarPacotesClientesLocal();
+      if(typeof renderPacotes==='function'){
+        var pg=document.getElementById('page-pacotes');
+        if(pg&&pg.style.display!=='none')renderPacotes();
+      }
     }
   }catch(e){console.log('err carregar pacotes clientes',e);}
 }
@@ -8589,11 +8597,12 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 let produtos=[];
 
 // PACOTES DATA — catálogo (templates)
-let pacotes=[
+const PACOTES_PADRAO=[
   {id:1,nome:'Pacote Clean',servicos:'Manicure + Pedicure',validade:'30 dias',preco:'R$ 279,99',servicosItens:[{servico:'Manicure',qtd:1},{servico:'Pedicure',qtd:1}]},
   {id:2,nome:'Pacote Noiva',servicos:'Escova + Manicure + Pedicure + Maquiagem',validade:'Sem validade',preco:'R$ 450,00',servicosItens:[{servico:'Escova',qtd:1},{servico:'Manicure',qtd:1},{servico:'Pedicure',qtd:1},{servico:'Maquiagem',qtd:1}]},
   {id:3,nome:'Pacote Manutenção',servicos:'Corte + Hidratação',validade:'60 dias',preco:'R$ 120,00',servicosItens:[{servico:'Corte',qtd:1},{servico:'Hidratação',qtd:1}]},
 ];
+let pacotes=PACOTES_PADRAO.map(function(p){return Object.assign({},p);});
 function salvarPacotesCatalogoLocal(){
   try{localStorage.setItem('aflor_pacotes_catalogo',JSON.stringify(pacotes));}catch(e){}
 }
@@ -8644,12 +8653,15 @@ async function carregarPacotesCatalogoSupa(){
       salvarPacotesCatalogoLocal();
       renderPacotes();
     }else if(Array.isArray(data)&&data.length===0){
-      // Primeira vez: semeia o catálogo padrão no Supabase
-      for(var i=0;i<pacotes.length;i++){
-        var newId=await salvarPacoteCatalogoSupa(pacotes[i]);
-        if(newId!=null)pacotes[i].id=newId;
+      // Primeira vez: semeia catálogo padrão neutro no Supabase (usa PACOTES_PADRAO, não pacotes que pode estar contaminado por localStorage de outro salão)
+      var paraSemar=PACOTES_PADRAO.map(function(p){return Object.assign({},p);});
+      for(var i=0;i<paraSemar.length;i++){
+        var newId=await salvarPacoteCatalogoSupa(paraSemar[i]);
+        if(newId!=null)paraSemar[i].id=newId;
       }
+      pacotes=paraSemar;
       salvarPacotesCatalogoLocal();
+      renderPacotes();
     }
   }catch(e){console.log('err carregar pacotes catalogo',e);}
 }
@@ -9857,18 +9869,16 @@ function concluirTreino(id){
 }
 
 // ===== INFLUENCIADORAS =====
-const influenciadoras=[
-  {nome:'@jenycacto',ig:'jenycacto',seguidores:'12.4K',tipo:'Micro',servico:'Manicure + Design',data:'15/05/2026',status:'ativa',stories:3,posts:1,alcance:'8.2K',roi:'+R$ 380',contrato:true},
-  {nome:'@tienafelix_nails',ig:'tienafelix_nails',seguidores:'28K',tipo:'Médio',servico:'Coloração Completa',data:'22/05/2026',status:'pendente',stories:0,posts:0,alcance:'—',roi:'—',contrato:false},
-  {nome:'@anaflor_client',ig:'anaflor_client',seguidores:'5.1K',tipo:'Nano',servico:'Pacote Noiva',data:'10/05/2026',status:'concluida',stories:5,posts:2,alcance:'4.3K',roi:'+R$ 210',contrato:false},
-];
+const influenciadoras=[];
 function renderInfluenciadoras(){
   const stats=document.getElementById('influ-stats');
   if(stats){
+    var alcanceTotal=influenciadoras.filter(function(i){return i.alcance&&i.alcance!=='—';}).length>0?influenciadoras.reduce(function(acc,i){return acc+(parseFloat((i.alcance||'0').replace(/[^0-9.]/g,''))||0);},0).toFixed(1)+'K':'—';
+    var roiTotal=influenciadoras.filter(function(i){return i.roi&&i.roi!=='—';}).length>0?'R$ '+influenciadoras.reduce(function(acc,i){return acc+(parseFloat((i.roi||'0').replace(/[^0-9.]/g,''))||0);},0):'—';
     stats.innerHTML=[
       {l:'Total de parcerias',v:influenciadoras.length,icon:'✨'},
-      {l:'Alcance total estimado',v:'12.5K',icon:'👁'},
-      {l:'ROI gerado',v:'R$ 590',icon:'💰'},
+      {l:'Alcance total estimado',v:alcanceTotal,icon:'👁'},
+      {l:'ROI gerado',v:roiTotal,icon:'💰'},
     ].map(s=>`<div style="background:#fff;border-radius:10px;padding:14px;border:1px solid #e5e5e5;text-align:center"><div style="font-size:24px;margin-bottom:6px">${s.icon}</div><div style="font-size:20px;font-weight:800">${s.v}</div><div style="font-size:11px;color:#888;margin-top:2px">${s.l}</div></div>`).join('');
   }
   const lista=document.getElementById('influ-lista');
