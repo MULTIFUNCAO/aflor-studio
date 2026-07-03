@@ -8442,6 +8442,11 @@ async function abrirPagamento(plano) {
   var textoOriginal = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
 
+  // Abre a janela AGORA (dentro do gesto do usuário) para não ser bloqueada pelo popup blocker.
+  // Depois navegamos ela para a URL real quando tiver.
+  var win = window.open('', '_blank');
+
+  var url = null;
   try {
     var headers = await _authHeaders({'Content-Type':'application/json'});
     var resp = await fetch(EDGE_URL + '/criar-pagamento', {
@@ -8455,19 +8460,23 @@ async function abrirPagamento(plano) {
       })
     });
     var data = await resp.json();
-    if (data.paymentUrl) {
-      window.open(data.paymentUrl, '_blank');
-    } else {
-      throw new Error('URL não retornada');
-    }
+    if (data.paymentUrl) url = data.paymentUrl;
   } catch(e) {
-    console.warn('criar-pagamento edge falhou, usando link estático:', e);
-    var fallback = FLORA_LINKS_ASAAS[plano];
-    if (fallback) window.open(fallback, '_blank');
-    else showAlert('Erro ao abrir pagamento. Tente novamente.');
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = textoOriginal; }
+    console.warn('[pagamento] criar-pagamento falhou:', e);
   }
+
+  // Fallback para link estático se Edge Function não retornou URL
+  if (!url) url = FLORA_LINKS_ASAAS[plano] || null;
+
+  if (url) {
+    if (win) win.location.href = url;
+    else window.location.href = url; // caso popup blocker tenha impedido até o open vazio
+  } else {
+    if (win) win.close();
+    showAlert('Erro ao abrir pagamento. Tente novamente.');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = textoOriginal; }
 }
 
 // Detectar retorno de pagamento bem-sucedido (?plano_ativado=1)
