@@ -710,13 +710,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:#bbb;margin-bottom:28px">FLORA GESTÃO</div>
       <div style="font-size:44px;margin-bottom:14px">🔒</div>
-      <h2 style="font-size:22px;font-weight:800;color:#111;margin:0 0 12px">Seu período gratuito acabou</h2>
-      <p style="font-size:14px;color:#666;line-height:1.65;margin:0 0 28px">Para continuar usando o Flora Gestão, ative sua assinatura. Todos os seus dados estão salvos e seguros.</p>
-      <button id="trial-btn-pagar" onclick="abrirPagamentoBloqueio()" style="width:100%;background:#111;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:opacity .2s">
-        ✨ Assinar agora — R$ 49/mês
-      </button>
-      <p style="font-size:11px;color:#bbb;margin:0 0 24px">Cartão, PIX ou boleto · Cancele quando quiser</p>
-      <button onclick="fazerLogout()" style="background:none;border:none;color:#bbb;font-size:12px;cursor:pointer;text-decoration:underline">Sair da conta</button>
+      <h2 style="font-size:22px;font-weight:800;color:#111;margin:0 0 10px">Seu período gratuito acabou</h2>
+      <p style="font-size:14px;color:#666;line-height:1.65;margin:0 0 24px">Escolha um plano para continuar. Seus dados estão salvos e seguros.</p>
+      <!-- Planos injetados dinamicamente de #page-plano -->
+      <div id="trial-planos-slot" style="text-align:left"></div>
+      <button onclick="fazerLogout()" style="background:none;border:none;color:#bbb;font-size:12px;cursor:pointer;text-decoration:underline;margin-top:8px">Sair da conta</button>
     </div>
   </div>
 </div>
@@ -12048,29 +12046,16 @@ function verificarStatusTrial(){
     // Trial expirado sem assinatura → bloquear tudo
     if(banner)banner.style.display='none';
     document.body.style.paddingTop='';
+    // Injeta os planos da tela existente no slot (sem duplicar HTML)
+    var slot=document.getElementById('trial-planos-slot');
+    var planPage=document.getElementById('page-plano');
+    if(slot&&planPage&&!slot.hasChildNodes()){
+      slot.innerHTML=planPage.innerHTML;
+    }
     if(overlay)overlay.style.display='block';
   }
 }
 
-async function abrirPagamentoBloqueio(){
-  var btn=document.getElementById('trial-btn-pagar');
-  if(btn){btn.disabled=true;btn.textContent='Abrindo pagamento...';}
-  try{
-    var h=await _authHeaders({'Content-Type':'application/json'});
-    var resp=await fetch(EDGE_URL+'/criar-pagamento',{
-      method:'POST',headers:h,
-      body:JSON.stringify({plano:'profissional',salao_id:window.SALAO_ID,email:window.SALAO_NOME,nome:window.SALAO_RESPONSAVEL})
-    });
-    var data=await resp.json();
-    if(data.paymentUrl){window.open(data.paymentUrl,'_blank');}
-    else throw new Error('URL não retornada');
-  }catch(e){
-    console.warn('[trial] criar-pagamento falhou, usando link estático:',e);
-    window.open('https://www.asaas.com/c/eb9459mfmxfq3smr','_blank');
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='✨ Assinar agora — R$ 49/mês';}
-  }
-}
 // ===== FIM TRIAL =====
 
 window.SALAO_ID=null;
