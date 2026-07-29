@@ -8349,8 +8349,10 @@ function corBlocoAgenda(a){
   if(concluido) return '#16a34a';
   // Amarelo vivo: sinal pago, atendimento pendente
   if(sinalPago) return '#facc15';
-  // Preto puro: agendado sem sinal
-  return '#111111';
+  // Agendado sem sinal: cor do colaborador (mesmo critério de match do header da agenda)
+  var profNomeBloco=(a.prof||'').split(' ')[0];
+  var colabBloco=typeof colaboradores!=='undefined'&&colaboradores?colaboradores.find(function(c){return c.nome.startsWith(profNomeBloco);}):null;
+  return (colabBloco&&colabBloco.cor)?colabBloco.cor:'#111111';
 }
 function corTextoBlocoAgenda(cor){
   // Amarelo precisa de texto escuro
