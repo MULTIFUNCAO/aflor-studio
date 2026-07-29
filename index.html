@@ -233,8 +233,8 @@ textarea{resize:vertical;min-height:80px}
 .search-bar input{background:none;border:none;font-size:13.5px;width:100%;outline:none}
 
 /* PROF COLS */
-.prof-headers{display:flex;gap:0;border-bottom:1px solid var(--gray-200);overflow-x:auto}
-.prof-col{min-width:120px;flex:1;text-align:center;padding:12px 8px;border-right:1px solid var(--gray-100)}
+.prof-headers{display:grid;border-bottom:1px solid var(--gray-200);background:#fff}
+.prof-col{text-align:center;padding:12px 8px;border-right:1px solid var(--gray-100);min-width:0}
 .prof-col:last-child{border-right:none}
 
 /* FINANCEIRO */
@@ -1074,16 +1074,16 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
       <div class="calendar-container">
-        <div class="prof-headers" id="agenda-prof-headers">
-          <div style="min-width:70px;border-right:1px solid var(--gray-100)"></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#007BFF">AF</div><div style="font-size:11px;font-weight:600">Ana Flor</div></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#FF5722">ED</div><div style="font-size:11px;font-weight:600">Edu</div></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#8b5cf6">JE</div><div style="font-size:11px;font-weight:600">Jenny</div></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#ec4899">VI</div><div style="font-size:11px;font-weight:600">Vi</div></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#94a3b8">LA</div><div style="font-size:11px;font-weight:600">Lara</div></div>
-          <div class="prof-col"><div class="pro-avatar" style="background:#14b8a6">AN</div><div style="font-size:11px;font-weight:600">Angélica</div></div>
-        </div>
-        <div style="overflow-y:auto;max-height:480px">
+        <div id="agenda-scroll" style="overflow:auto;max-height:480px">
+          <div class="prof-headers" id="agenda-prof-headers" style="position:sticky;top:0;z-index:2;grid-template-columns:70px repeat(6,minmax(120px,1fr))">
+            <div style="border-right:1px solid var(--gray-100)"></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#007BFF">AF</div><div style="font-size:11px;font-weight:600">Ana Flor</div></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#FF5722">ED</div><div style="font-size:11px;font-weight:600">Edu</div></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#8b5cf6">JE</div><div style="font-size:11px;font-weight:600">Jenny</div></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#ec4899">VI</div><div style="font-size:11px;font-weight:600">Vi</div></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#94a3b8">LA</div><div style="font-size:11px;font-weight:600">Lara</div></div>
+            <div class="prof-col"><div class="pro-avatar" style="background:#14b8a6">AN</div><div style="font-size:11px;font-weight:600">Angélica</div></div>
+          </div>
           <div id="agenda-grid"></div>
         </div>
       </div>
@@ -8559,7 +8559,8 @@ function renderAgenda(){
   if(filtro&&!profNames.length)profNames=[normalizeProfAgenda(filtro)];
   var headers=document.getElementById('agenda-prof-headers');
   if(headers){
-    headers.innerHTML='<div style="min-width:70px;border-right:1px solid #f0f0f0"></div>'+
+    headers.style.gridTemplateColumns='70px repeat('+profNames.length+',minmax(120px,1fr))';
+    headers.innerHTML='<div style="border-right:1px solid #f0f0f0"></div>'+
     profNames.map(function(nome){
       var colab=colaboradores.find(function(c){return c.nome.startsWith(nome.split(' ')[0]);});
       var cor=colab&&colab.cor&&colab.cor!==''?colab.cor:profCores[nome]||'#111';
@@ -8641,7 +8642,7 @@ function renderAgenda(){
     :Object.keys(apptsDiaFull).length>0;
 
   grid.innerHTML=hours.map(h=>`
-    <div style="display:grid;grid-template-columns:70px repeat(${profs.length},1fr)">
+    <div style="display:grid;grid-template-columns:70px repeat(${profs.length},minmax(120px,1fr))">
       <div class="time-label" style="${h==='12:00'?'border-top:1px dashed #e5e5e5':''}">${h}</div>
       ${profs.map(p=>{
         var slot=buscarApptAgenda(apptsDiaFull,p,h,filtro||null);
