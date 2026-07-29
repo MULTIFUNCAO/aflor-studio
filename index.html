@@ -4495,7 +4495,7 @@ async function _authHeaders(extra){
 }
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
-async function salvarClienteSupa(c){try{if(supa)await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nascimento:c.nascimento||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);}catch(e){}}
+async function salvarClienteSupa(c){try{if(supa){var r=await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nasc:c.nascimento||null,cpf:c.cpf||null,obs:c.obs||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);if(r.error)console.log('err supa cliente insert',r.error);}}catch(e){console.log('err supa cliente insert',e);}}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function carregarAgendamentosSupa(){
   try{
@@ -6750,7 +6750,7 @@ function editarCliente(i){
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">🪪 CPF</label>'
     +'<input id="ec-cpf" value="'+(c.cpf||'')+'" placeholder="000.000.000-00" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📝 Observações</label>'
-    +'<textarea id="ec-obs" rows="3" placeholder="Alergias, preferências..." style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'">'+(c.observacoes||'')+'</textarea></div>'
+    +'<textarea id="ec-obs" rows="3" placeholder="Alergias, preferências..." style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'">'+(c.obs||'')+'</textarea></div>'
     +'<button onclick="salvarEdicaoCliente('+i+')" style="width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px" onmouseover="this.style.background=\'#15803d\'" onmouseout="this.style.background=\'#22c55e\'">✅ Salvar Alterações</button>'
     +'</div></div>';
   m.classList.add('open');
@@ -6761,7 +6761,7 @@ function salvarEdicaoCliente(i){
   c.tel=document.getElementById('ec-tel')?.value?.trim()||c.tel;
   c.nascimento=document.getElementById('ec-nasc')?.value?.trim()||'';
   c.cpf=document.getElementById('ec-cpf')?.value?.trim()||'';
-  c.observacoes=document.getElementById('ec-obs')?.value?.trim()||'';
+  c.obs=document.getElementById('ec-obs')?.value?.trim()||'';
   document.getElementById('modal-editar-cliente').classList.remove('open');
   renderClientes();
   showAlert('✅ Cliente atualizado!');
@@ -11657,7 +11657,7 @@ function salvarAgendamento(){
   var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
   var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
   var profSupa=mapaNomesInv[prof]||prof;
-  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs};
+  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs,salao_id:window.SALAO_ID};
   if(!ehPacote&&typeof servicosDetalhe!=='undefined')obj.servicos_detalhe=servicosDetalhe;
   _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
     return fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:h,body:JSON.stringify(obj)});
@@ -12684,8 +12684,8 @@ async function carregarClientesSupa(){
     clientes=(Array.isArray(data)?data:[]).map(function(row){
       return{id:row.id,nome:row.nome||'',tel:row.tel||'',email:row.email||'',
         ultima:row.ultima||'',total:row.total||'R$ 0,00',atend:row.atend||0,
-        nascimento:row.nascimento||'',cep:row.cep||'',endereco:row.endereco||'',
-        como_conheceu:row.como_conheceu||'',cpf:row.cpf||'',observacoes:row.observacoes||'',
+        nascimento:row.nasc||'',cep:row.cep||'',endereco:row.endereco||'',
+        como_conheceu:row.como_conheceu||'',cpf:row.cpf||'',obs:row.obs||'',
         retornoStatus:'',retornoData:'',ultimoProc:''};
     });
     if(typeof renderClientes==='function')renderClientes();
