@@ -7420,11 +7420,17 @@ function abrirAgendaPopup(key,dados,event){
   var sinalInputPg=sinalInfoPg.valor;
   var abatePg=sinalInfoPg.pago?sinalInputPg:0;
   var todosServicosHtml='';
+  popupServicoSelecionadoIdx=0;
   if(dados.servicos_detalhe&&dados.servicos_detalhe.length>1){
+    var idxAtual=dados.servicos_detalhe.findIndex(function(sd){
+      return sd.nome===dados.servico&&agProfParaAgenda(sd.profissional)===agProfParaAgenda(dados.prof);
+    });
+    popupServicoSelecionadoIdx=idxAtual>=0?idxAtual:0;
     todosServicosHtml='<div style="background:#eef2ff;border:1px solid #c7d7ff;border-radius:9px;padding:9px 11px;margin-bottom:14px">'
-      +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;margin-bottom:6px">SERVIÇOS DESTE ATENDIMENTO</div>'
+      +'<div style="font-size:10px;font-weight:800;color:#3b5bdb;letter-spacing:.5px;margin-bottom:6px">SERVIÇOS DESTE ATENDIMENTO <span style="font-weight:400;color:#8896d6">(toque para editar)</span></div>'
       +dados.servicos_detalhe.map(function(sd,i){
-        return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0'+(i<dados.servicos_detalhe.length-1?';border-bottom:1px dashed #dde3fa':'')+'"><span>'+(i+1)+'. '+sd.nome+'</span><span style="color:#666">'+(sd.profissional||'')+'</span></div>';
+        var sel=i===popupServicoSelecionadoIdx;
+        return '<div class="popup-servico-item" data-idx="'+i+'" onclick="popupSelecionarServicoAtendimento(\''+key+'\','+i+')" style="cursor:pointer;display:flex;justify-content:space-between;font-size:12px;padding:5px 6px;border-radius:6px;margin:1px 0;background:'+(sel?'#dbe4ff':'transparent')+'"><span>'+(i+1)+'. '+sd.nome+'</span><span style="color:#666">'+(sd.profissional||'')+'</span></div>';
       }).join('')
       +'</div>';
   }
@@ -7473,11 +7479,11 @@ function abrirAgendaPopup(key,dados,event){
     <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">✂️</span>
-        <div><div style="font-size:12px;color:#888">Serviço</div><div style="font-size:13px;font-weight:700">${dados.servico}</div></div>
+        <div><div style="font-size:12px;color:#888">Serviço</div><div id="popup-svc-nome" style="font-size:13px;font-weight:700">${dados.servico}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">👤</span>
-        <div><div style="font-size:12px;color:#888">Profissional</div><div style="font-size:13px;font-weight:700">${dados.prof}</div></div>
+        <div><div style="font-size:12px;color:#888">Profissional</div><div id="popup-svc-prof" style="font-size:13px;font-weight:700">${dados.prof}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">🕐</span>
@@ -7902,6 +7908,31 @@ function agSetFormaSinal(btn, forma){
 var popupFormaSinal = null;
 var popupServicosExtras = [];
 var popupNovosServicos = []; // serviços novos ainda não salvos (com horário/duração/profissional) — "Adicionar outro serviço"
+var popupServicoSelecionadoIdx = 0; // qual item de servicos_detalhe está selecionado no bloco Serviço/Profissional/Horário
+
+function popupSelecionarServicoAtendimento(key,idx){
+  var dados=agendaDiaAtual[key];
+  if(!dados||!dados.servicos_detalhe||!dados.servicos_detalhe[idx])return;
+  popupServicoSelecionadoIdx=idx;
+  var sd=dados.servicos_detalhe[idx];
+  var hora=idx===0?dados.hora:(sd.hora||dados.hora);
+  var dur=idx===0?(dados.duracao||'60 min'):(sd.duracao_min+' min');
+  var nomeEl=document.getElementById('popup-svc-nome');
+  var profEl=document.getElementById('popup-svc-prof');
+  var horaDisp=document.getElementById('popup-hora-display');
+  var horaInput=document.getElementById('popup-hora-input');
+  var valorEl=document.getElementById('popup-valor-servico');
+  if(nomeEl)nomeEl.textContent=sd.nome;
+  if(profEl)profEl.textContent=sd.profissional;
+  if(horaDisp)horaDisp.textContent=hora+' — '+dur;
+  if(horaInput)horaInput.value=hora;
+  if(valorEl)valorEl.textContent=formatMoedaBR(sd.valor);
+  var horaEdit=document.getElementById('popup-hora-edit-wrap');
+  if(horaEdit)horaEdit.style.display='none';
+  document.querySelectorAll('.popup-servico-item').forEach(function(el){
+    el.style.background=(parseInt(el.getAttribute('data-idx'),10)===idx)?'#dbe4ff':'transparent';
+  });
+}
 var popupDescontoValor = 0;
 var popupDescontoTipo = 'salao';
 function popupSetFormaSinal(btn, forma){
@@ -7964,19 +7995,66 @@ function popupToggleEditarHora(key){
   wrap.style.display=wrap.style.display==='none'?'block':'none';
 }
 
-function popupSalvarHora(key){
+async function popupSalvarHora(key){
   var inp=document.getElementById('popup-hora-input');
   if(!inp||!inp.value)return;
-  var novaHora=inp.value;
-  var a=agendaDiaAtual[key];
-  if(a)a.hora=novaHora;
+  var novaHora=normalizarHoraAgenda(inp.value);
+  var dados=agendaDiaAtual[key];
+  if(!dados)return;
+  var idx=popupServicoSelecionadoIdx||0;
   var d=agendaDataAtual;
   var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
-  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key])agendamentosPorData[dataKey][key].hora=novaHora;
+  var apptsHoje=agendamentosPorData[dataKey]||{};
+
+  var profAlvo=idx===0?dados.prof:(dados.servicos_detalhe[idx].profissional);
+  var pAgAlvo=agProfParaAgenda(profAlvo);
+  var horaAntiga=idx===0?dados.hora:(dados.servicos_detalhe[idx].hora||dados.hora);
+  var chaveAntiga=pAgAlvo+':'+horaAntiga;
+
+  if(novaHora!==horaAntiga){
+    var ocupante=apptsHoje[pAgAlvo+':'+novaHora];
+    if(ocupante&&ocupante.id!==dados.id){
+      showAlert('⚠️ '+profAlvo+' já tem um atendimento às '+novaHora+'. Escolha outro horário.');
+      return;
+    }
+  }
+
+  var btn=document.querySelector('#popup-hora-edit-wrap button');
+  if(btn){btn.disabled=true;btn.textContent='...';}
+
+  try{
+    var h=await _authHeaders({'Content-Type':'application/json'});
+    if(idx===0){
+      var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+dados.id+'&salao_id=eq.'+window.SALAO_ID,{method:'PATCH',headers:h,body:JSON.stringify({hora:novaHora})});
+      if(!resp.ok)throw await resp.json().catch(function(){return{};});
+      dados.hora=novaHora;
+      delete apptsHoje[chaveAntiga];
+      apptsHoje[pAgAlvo+':'+novaHora]=Object.assign({},dados,{hora:novaHora});
+    }else{
+      var novosDetalhe=dados.servicos_detalhe.slice();
+      novosDetalhe[idx]=Object.assign({},novosDetalhe[idx],{hora:novaHora});
+      var resp2=await fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+dados.id+'&salao_id=eq.'+window.SALAO_ID,{method:'PATCH',headers:h,body:JSON.stringify({servicos_detalhe:novosDetalhe})});
+      if(!resp2.ok)throw await resp2.json().catch(function(){return{};});
+      dados.servicos_detalhe=novosDetalhe;
+      delete apptsHoje[chaveAntiga];
+      apptsHoje[pAgAlvo+':'+novaHora]=Object.assign({},dados,{prof:pAgAlvo,hora:novaHora,servico:novosDetalhe[idx].nome,duracao:(novosDetalhe[idx].duracao_min||60)+' min',servicos_detalhe:novosDetalhe});
+      // Mantém servicos_detalhe sincronizado em todos os slots deste mesmo atendimento
+      Object.keys(apptsHoje).forEach(function(kk){
+        if(apptsHoje[kk].id===dados.id)apptsHoje[kk].servicos_detalhe=novosDetalhe;
+      });
+    }
+  }catch(e){
+    console.log('err salvar horario',e);
+    showAlert('Erro ao salvar o horário. Tente novamente.');
+    if(btn){btn.disabled=false;btn.textContent='OK';}
+    return;
+  }
+
   var disp=document.getElementById('popup-hora-display');
-  if(disp)disp.textContent=novaHora+' — '+(a&&a.duracao?a.duracao:'45 min');
+  if(disp)disp.textContent=novaHora+' — '+(idx===0?(dados.duracao||'60 min'):((dados.servicos_detalhe[idx].duracao_min||60)+' min'));
   var wrap=document.getElementById('popup-hora-edit-wrap');
   if(wrap)wrap.style.display='none';
+  renderAgenda();
 }
 
 function popupToggleEditarValorPrincipal(key){
