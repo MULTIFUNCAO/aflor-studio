@@ -1534,7 +1534,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
             ⚠️ Retorno vencido
           </button>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="copiarLinkCadastroCliente()">🔗 Link de cadastro</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
+        </div>
       </div>
       <div class="table-card">
         <table>
@@ -6744,8 +6747,10 @@ function editarCliente(i){
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📅 Nascimento</label>'
     +'<input id="ec-nasc" value="'+(c.nascimento||'')+'" placeholder="dd/mm/aaaa" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
     +'</div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">🪪 CPF</label>'
+    +'<input id="ec-cpf" value="'+(c.cpf||'')+'" placeholder="000.000.000-00" style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'"/></div>'
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">📝 Observações</label>'
-    +'<textarea id="ec-obs" rows="3" placeholder="Alergias, preferências..." style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'">'+(c.obs||'')+'</textarea></div>'
+    +'<textarea id="ec-obs" rows="3" placeholder="Alergias, preferências..." style="width:100%;padding:12px 14px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical" onfocus="this.style.borderColor=\'#22c55e\'" onblur="this.style.borderColor=\'#e5e5e5\'">'+(c.observacoes||'')+'</textarea></div>'
     +'<button onclick="salvarEdicaoCliente('+i+')" style="width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px" onmouseover="this.style.background=\'#15803d\'" onmouseout="this.style.background=\'#22c55e\'">✅ Salvar Alterações</button>'
     +'</div></div>';
   m.classList.add('open');
@@ -6755,7 +6760,8 @@ function salvarEdicaoCliente(i){
   c.nome=document.getElementById('ec-nome')?.value?.trim()||c.nome;
   c.tel=document.getElementById('ec-tel')?.value?.trim()||c.tel;
   c.nascimento=document.getElementById('ec-nasc')?.value?.trim()||'';
-  c.obs=document.getElementById('ec-obs')?.value?.trim()||'';
+  c.cpf=document.getElementById('ec-cpf')?.value?.trim()||'';
+  c.observacoes=document.getElementById('ec-obs')?.value?.trim()||'';
   document.getElementById('modal-editar-cliente').classList.remove('open');
   renderClientes();
   showAlert('✅ Cliente atualizado!');
@@ -12679,11 +12685,25 @@ async function carregarClientesSupa(){
       return{id:row.id,nome:row.nome||'',tel:row.tel||'',email:row.email||'',
         ultima:row.ultima||'',total:row.total||'R$ 0,00',atend:row.atend||0,
         nascimento:row.nascimento||'',cep:row.cep||'',endereco:row.endereco||'',
-        como_conheceu:row.como_conheceu||'',retornoStatus:'',retornoData:'',ultimoProc:''};
+        como_conheceu:row.como_conheceu||'',cpf:row.cpf||'',observacoes:row.observacoes||'',
+        retornoStatus:'',retornoData:'',ultimoProc:''};
     });
     if(typeof renderClientes==='function')renderClientes();
     if(typeof renderRetornos==='function')renderRetornos();
   }catch(e){console.error('Erro ao carregar clientes:',e);}
+}
+function copiarLinkCadastroCliente(){
+  if(!window.SALAO_ID){showAlert('⚠️ Não foi possível gerar o link agora.');return;}
+  var link=location.origin+'/cadastro-cliente.html?s='+encodeURIComponent(window.SALAO_ID);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(function(){
+      showAlert('🔗 Link de cadastro copiado! Envie pelo WhatsApp para a cliente preencher.');
+    }).catch(function(){
+      prompt('Copie o link de cadastro:',link);
+    });
+  }else{
+    prompt('Copie o link de cadastro:',link);
+  }
 }
 
 // Ao carregar: onAuthStateChange como gatilho primário — NUNCA query antes de sessão ativa
