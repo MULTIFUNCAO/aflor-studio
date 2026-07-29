@@ -9896,6 +9896,14 @@ function mkSalvarTarefa(){
   mkTipoAtual='post';
   showAlert('📌 Tarefa adicionada!');
 }
+function ativarCampanhaData(nome){
+  var c=campanhasDatas.find(function(x){return x.nome===nome;});
+  if(!c)return;
+  if(campanhasAtivas.some(function(a){return a.nome===c.nome;})){showAlert('Campanha "'+c.nome+'" já está ativa!');return;}
+  campanhasAtivas.push({nome:c.nome,canal:'WhatsApp + Stories',status:'agendada',enviados:0,retorno:0,inicio:c.data,fim:c.data});
+  renderMarketing();
+  showAlert('🚀 Campanha "'+c.nome+'" ativada! Veja em Campanhas ativas.');
+}
 function renderMarketing(){
   var lbl=document.getElementById('mk-mes-label');if(lbl)lbl.textContent=mesesNome[mkMesAtual.getMonth()]+' '+mkMesAtual.getFullYear();
   var alertas=document.getElementById('marketing-alertas');
