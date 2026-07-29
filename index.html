@@ -4532,15 +4532,19 @@ async function carregarAgendamentosSupa(){
       var valFmt=valNum>0?('R$ '+valNum.toFixed(2).replace('.',',')):(row.valor||'R$ 0,00');
       var colab=typeof colaboradores!=='undefined'?colaboradores.find(function(c){return c.nome===profNome;}):null;
       var cls=colab&&colab.cor?colab.cor:'#111';
+      var svcPrimario=(row.servico||'').split('+')[0].trim().split('(')[0].trim();
+      var durMinPrimario=durFromServico(svcPrimario)||60;
+      var detalhes=null;
+      try{if(row.servicos_detalhe)detalhes=typeof row.servicos_detalhe==='string'?JSON.parse(row.servicos_detalhe):row.servicos_detalhe;}catch(e){}
       if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
-      agendamentosPorData[dataKey][k]={
+      var apptEntry={
         id:row.id||null,
         cliente:row.cliente||'',
         tel:row.tel||'',
         servico:row.servico||'',
         prof:profNome,
         hora:horaSlot,
-        duracao:row.duracao||'60 min',
+        duracao:durMinPrimario+' min',
         valor:valFmt,
         valor_num:valNum,
         cls:cls,
@@ -4551,8 +4555,19 @@ async function carregarAgendamentosSupa(){
         sinalValor:sinalFmt,
         status:row.status||'Pendente',
         obs:row.obs||'',
-        servicos_detalhe:row.servicos_detalhe||undefined
+        servicos_detalhe:detalhes||undefined
       };
+      agendamentosPorData[dataKey][k]=apptEntry;
+      // Mesma separação por profissional/horário usada na busca do dia em renderAgenda —
+      // sem isso, essa pré-carga (mais ampla, roda antes) "vencia a corrida" e escondia
+      // os serviços extras adicionados a um atendimento existente.
+      if(detalhes&&detalhes.length>1){
+        var timelineMes=construirTimelineAtendimento(horaSlot,durMinPrimario,row.servico||'',profNome,detalhes);
+        timelineMes.slice(1).forEach(function(item){
+          var pSdMes=agProfParaAgenda(item.prof);
+          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min'});
+        });
+      }
     });
     if(typeof renderAgenda==='function')renderAgenda();
     if(typeof renderComandas==='function')renderComandas();
