@@ -7292,6 +7292,30 @@ function lerValorServicoAgendamento(dados){
   return 0;
 }
 
+// Lista todos os serviços do atendimento (servicos_detalhe quando existir — inclui os
+// adicionados depois via "Adicionar outro serviço" — senão cai no serviço único da linha).
+function popupServicosDoAtendimento(dados){
+  if(!dados)return[];
+  if(dados.servicos_detalhe&&dados.servicos_detalhe.length){
+    return dados.servicos_detalhe.map(function(sd){return{nome:sd.nome,valor:parseFloat(sd.valor)||0,profissional:sd.profissional||''};});
+  }
+  return[{nome:nomeServicoAgendamento(dados),valor:lerValorServicoAgendamento(dados),profissional:dados.prof||''}];
+}
+// Soma de todos os serviços do atendimento — usar no lugar de lerValorServicoAgendamento()
+// sempre que o cálculo for o TOTAL a cobrar (comanda, pagamento), não o valor de 1 serviço só.
+function somaServicosAtendimento(dados){
+  return popupServicosDoAtendimento(dados).reduce(function(s,sd){return s+sd.valor;},0);
+}
+function popupServicosComandaToHtml(key){
+  var dados=agendaDiaAtual[key];
+  var lista=popupServicosDoAtendimento(dados);
+  return lista.map(function(sd){
+    return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+      +'<span style="color:#555">'+sd.nome+(sd.profissional?' <span style="color:#aaa;font-size:10px">— '+sd.profissional+'</span>':'')+'</span>'
+      +'<span style="font-weight:700">'+formatMoedaBR(sd.valor)+'</span></div>';
+  }).join('');
+}
+
 function calcComandaPopup(key){
   var dados=agendaDiaAtual[key];
   if(!dados)return {servicoVal:0,extrasTotal:0,sinalInput:0,abate:0,descontoVal:0,totalPagar:0,sinalPago:false,nome:''};
@@ -7299,7 +7323,7 @@ function calcComandaPopup(key){
   var sinalInput=elInput?parseFloat(elInput.value):NaN;
   if(isNaN(sinalInput))sinalInput=lerSinalAgendamento(dados).valor;
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
-  var servicoVal=lerValorServicoAgendamento(dados);
+  var servicoVal=somaServicosAtendimento(dados);
   var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
   var abate=sinalPago?sinalInput:0;
@@ -7413,7 +7437,8 @@ function abrirAgendaPopup(key,dados,event){
   popup.style.left=x+'px';
   popup.style.top=y+'px';
   var sinalInfoPg=lerSinalAgendamento(dados);
-  var servicoValPg=lerValorServicoAgendamento(dados);
+  var servicosComandaPg=popupServicosDoAtendimento(dados);
+  var servicoValPg=servicosComandaPg.reduce(function(s,sd){return s+sd.valor;},0);
   var nomeSvcPg=nomeServicoAgendamento(dados);
   var _svcCat=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===(dados.servico||'').split('+')[0].trim().split('(')[0].trim();});
   var svcCatalogoPreco=_svcCat?parseMoedaBR(_svcCat.preco):servicoValPg;
@@ -7531,10 +7556,11 @@ function abrirAgendaPopup(key,dados,event){
         ${comandaBadgeHtml}
       </div>
       <div style="border-top:1px solid #f0f0f0;padding-top:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px">
-          <span id="popup-servico-nome" style="color:#555">${nomeSvcPg}</span>
+        <div id="popup-servicos-comanda-lista">${popupServicosComandaToHtml(key)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin:${servicosComandaPg.length>1?'6px 0 5px;padding-top:6px;border-top:1px dashed #e5e5e5':'0 0 5px'}">
+          <span style="color:#888;font-weight:700">${servicosComandaPg.length>1?'Subtotal serviços ('+servicosComandaPg.length+')':'Valor'}</span>
           <div style="display:flex;align-items:center;gap:4px">
-            <span id="popup-servico-valor" style="font-weight:700">${formatMoedaBR(servicoValPg)}</span>
+            <span id="popup-servico-valor" style="font-weight:800">${formatMoedaBR(servicoValPg)}</span>
             <button onclick="popupToggleEditarValorPrincipal('${key}')" style="background:none;border:none;cursor:pointer;color:#6366f1;font-size:10px;padding:0;line-height:1" title="Editar valor">✏️</button>
           </div>
         </div>
@@ -7649,7 +7675,7 @@ function abrirConfirmarPagamento(key){
   fecharAgendaPopup();
   var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
-  var total=lerValorServicoAgendamento(dados)+extrasTotal-descontoVal;
+  var total=somaServicosAtendimento(dados)+extrasTotal-descontoVal;
   total=Math.max(0,total);
   var sinalInput=lerSinalAgendamento(dados).valor;
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
@@ -7864,8 +7890,8 @@ function atualizarPopupComandaUI(key){
   }
   var elBtn=document.getElementById('popup-sinal-btn');
   if(elBtn)elBtn.textContent=sinal.pago?'Reabrir':'✅ Confirmar sinal';
-  var elNome=document.getElementById('popup-servico-nome');
-  if(elNome)elNome.textContent=calc.nome;
+  var elServicosLista=document.getElementById('popup-servicos-comanda-lista');
+  if(elServicosLista)elServicosLista.innerHTML=popupServicosComandaToHtml(key);
   var elServicoVal=document.getElementById('popup-servico-valor');
   if(elServicoVal)elServicoVal.textContent=formatMoedaBR(calc.servicoVal);
   var elValorHeader=document.getElementById('popup-valor-servico');
