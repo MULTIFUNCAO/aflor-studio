@@ -8,6 +8,9 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c084fc">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
 /* ===== FLORA OVERLAY — PRETO & BRANCO ===== */
@@ -131,8 +134,21 @@
   --gray-800:#1e293b;
   --sidebar-w:230px;
   --header-h:56px;
+  /* ===== Premium visual tokens (redesign) ===== */
+  --ivory:#FAF8F4;
+  --paper:#FFFFFF;
+  --ink:#17160F;
+  --line:rgba(23,22,15,.07);
+  --line-soft:rgba(23,22,15,.045);
+  --shadow-xs:0 1px 2px rgba(23,22,15,.04);
+  --shadow-sm:0 4px 16px -8px rgba(23,22,15,.10);
+  --shadow-md:0 16px 40px -20px rgba(23,22,15,.18);
+  --radius-lg:18px;
+  --radius-md:14px;
+  --radius-sm:10px;
+  --font-flora:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f4f4f4;color:#111;display:flex;height:100vh;overflow:hidden}
+body{font-family:var(--font-flora);background:var(--ivory);color:var(--ink);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
 
 /* SIDEBAR — sempre visível, preta */
 .sidebar{width:var(--sidebar-w);background:#111;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0;position:relative;z-index:1}
@@ -154,19 +170,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.header{height:var(--header-h);background:#fff;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
-.header-title{font-size:17px;font-weight:700;color:#111}
+.header{height:64px;background:rgba(250,248,244,.92);backdrop-filter:saturate(180%) blur(10px);-webkit-backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.2px}
 .header-actions{display:flex;align-items:center;gap:10px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
-.btn-primary{background:#111;color:#fff}
-.btn-primary:hover{background:#333}
-.btn-outline{background:#fff;color:#333;border:1.5px solid #ddd}
-.btn-outline:hover{background:#f5f5f5}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-icon{padding:8px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 17px;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:var(--font-flora)}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:var(--shadow-xs)}
+.btn-primary:hover{background:#000;box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.btn-outline{background:var(--paper);color:#333;border:1.5px solid var(--line)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.btn-icon{padding:8px;border-radius:11px;background:var(--paper);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.btn-icon:hover{background:var(--gray-50)}
 
 /* CONTENT */
-.content{flex:1;overflow-y:auto;padding:24px;background:#f4f4f4}
+.content{flex:1;overflow-y:auto;padding:28px 28px 40px;background:var(--ivory)}
 
 /* PAGE */
 .page{display:none}
@@ -896,154 +913,220 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
   <div class="content">
 
+    <style>
+    /* ===== Dashboard redesign (premium) — escopado, não afeta outras páginas ===== */
+    #page-dashboard{font-family:var(--font-flora)}
+    .fdash-greeting{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+    .fdash-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gray-400);margin-bottom:8px}
+    .fdash-greeting h1{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin:0 0 4px}
+    .fdash-greeting p{font-size:13.5px;color:var(--gray-500);margin:0}
+    .fdash-meta{font-size:12px;color:var(--gray-400);margin-top:8px}
+    .fdash-caixa-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:20px}
+
+    .fdash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+    .fdash-kpi-card{background:var(--paper);border-radius:var(--radius-lg);padding:20px;border:1px solid var(--line-soft);cursor:pointer;transition:.2s;box-shadow:var(--shadow-xs)}
+    .fdash-kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--line)}
+    .fdash-kpi-label{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+    .fdash-kpi-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .fdash-kpi-value{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-.5px}
+    .fdash-kpi-sub{font-size:11px;color:var(--gray-400);margin-top:6px}
+
+    .fdash-main-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
+    .fdash-section{background:var(--paper);border-radius:var(--radius-lg);border:1px solid var(--line-soft);box-shadow:var(--shadow-xs);overflow:hidden}
+    .fdash-section-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line-soft)}
+    .fdash-section-title{font-size:14px;font-weight:700;color:var(--ink)}
+    .fdash-section-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px}
+
+    .fdash-appt-row{display:flex;align-items:center;gap:12px;padding:12px 20px;transition:.15s}
+    .fdash-appt-row+.fdash-appt-row{border-top:1px solid var(--line-soft)}
+    .fdash-appt-row:hover{background:var(--gray-50)}
+    .fdash-appt-time{width:48px;flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--ink)}
+    .fdash-appt-avatar{width:32px;height:32px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .fdash-appt-info{flex:1;min-width:0}
+    .fdash-appt-client{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fdash-appt-metaline{font-size:11.5px;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fdash-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+    .fdash-pill-green{background:#EAF7EE;color:#15803d}
+    .fdash-pill-amber{background:#FEF3E2;color:#9A5B13}
+    .fdash-pill-gray{background:var(--gray-100);color:var(--gray-500)}
+    .fdash-pill-day{padding:9px 20px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-400);background:var(--gray-50)}
+    .fdash-empty{padding:32px 20px;text-align:center;color:var(--gray-400);font-size:12.5px}
+
+    .fdash-side{display:flex;flex-direction:column;gap:16px}
+    .fdash-atencao-body{padding:16px 20px;display:flex;align-items:flex-start;gap:12px}
+    .fdash-atencao-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .fdash-fin-row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 20px;border-top:1px solid var(--line-soft)}
+    .fdash-fin-row:first-child{border-top:none}
+    .fdash-fin-label{font-size:12px;color:var(--gray-500);font-weight:600}
+    .fdash-fin-value{font-size:14.5px;font-weight:800;color:var(--ink)}
+
+    .fdash-secondary-grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:14px}
+    .fdash-destaque-row{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:.15s}
+    .fdash-destaque-row+.fdash-destaque-row{border-top:1px solid var(--line-soft)}
+    .fdash-destaque-row:hover{background:var(--gray-50)}
+    .fdash-destaque-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+    .fdash-acesso-btn{background:var(--gray-50);border:1px solid var(--line-soft);border-radius:11px;padding:11px 8px;cursor:pointer;text-align:center;font-size:10.5px;font-weight:600;color:#333;transition:.15s}
+    .fdash-acesso-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+    @media(max-width:1080px){
+      .fdash-kpi-grid{grid-template-columns:1fr 1fr}
+      .fdash-main-grid{grid-template-columns:1fr}
+      .fdash-secondary-grid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:640px){
+      .fdash-kpi-grid{grid-template-columns:1fr 1fr;gap:10px}
+      .fdash-secondary-grid{grid-template-columns:1fr}
+      .fdash-greeting h1{font-size:21px}
+      .fdash-kpi-card{padding:16px}
+      .fdash-section-head{flex-direction:column;align-items:flex-start;gap:10px}
+      .fdash-section-head .btn{width:100%;justify-content:center}
+    }
+    @media(max-width:480px){
+      .header-title{font-size:14px}
+    }
+    </style>
+
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
 
-      <!-- HERO BANNER -->
-      <div style="background:linear-gradient(135deg,#111 0%,#2d2d2d 100%);border-radius:18px;padding:24px 28px;margin-bottom:18px;position:relative;overflow:hidden">
-        <!-- Tulip decoration -->
-        <div style="position:absolute;right:24px;top:50%;transform:translateY(-50%);opacity:.08">
-          <svg width="120" height="140" viewBox="0 0 100 115" fill="none">
-            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white"/>
-            <path d="M50 62 L50 110" stroke="white" stroke-width="6" stroke-linecap="round"/>
-            <path d="M50 88 C50 88 28 83 24 68 C38 68 50 80 50 88Z" fill="white"/>
-            <path d="M50 80 C50 80 72 75 76 60 C62 60 50 72 50 80Z" fill="white"/>
-          </svg>
+      <!-- SAUDAÇÃO -->
+      <div class="fdash-greeting">
+        <div>
+          <div class="fdash-eyebrow" id="dashboard-data-hoje"></div>
+          <h1 data-saudacao>Bom dia! 🌷</h1>
+          <p>Veja como está o seu negócio hoje. <span data-nome-salao style="color:var(--gray-400)">FLORA / STUDIO</span></p>
+          <div class="fdash-meta"><span id="dash-clientes-ativos">0</span> clientes ativos · <span id="dash-header-atend-hoje">0 atendimentos hoje</span></div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-          <div>
-            <div style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="dashboard-data-hoje"></div>
-            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px" data-saudacao>Bom dia! 🌷</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.6)"><span data-nome-salao>FLORA / STUDIO</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-            <span id="dash-badge-caixa" style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
-              <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto
-            </span>
-            <div id="dash-header-atend-hoje" style="font-size:11px;color:rgba(255,255,255,.4)">0 atendimentos hoje</div>
-          </div>
-        </div>
+        <span id="dash-badge-caixa" class="fdash-caixa-pill" style="background:rgba(34,197,94,.14);color:#15803d">
+          <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block"></span>Caixa Aberto
+        </span>
       </div>
 
       <!-- KPI CARDS -->
-      <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#22c55e;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Receita do Mês</div>
-          <div id="dash-receita-mes" style="font-size:28px;font-weight:900;color:#22c55e;padding-left:6px">R$ 0,00</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
-            <span style="font-size:10px;color:#aaa">vs mês anterior</span>
-          </div>
+      <div class="fdash-kpi-grid">
+        <div class="fdash-kpi-card" onclick="showPage('fluxo')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-dot" style="background:#22c55e"></span>Faturamento Previsto</div>
+          <div class="fdash-kpi-value" id="dash-faturamento-previsto">R$ 0,00</div>
+          <div class="fdash-kpi-sub">hoje, todos os atendimentos</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('agenda')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#111;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Atendimentos Hoje</div>
-          <div id="dash-atendimentos-hoje" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px"></span>
-            <span style="font-size:10px;color:#aaa"></span>
-          </div>
+        <div class="fdash-kpi-card" onclick="showPage('agenda')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-dot" style="background:var(--ink)"></span>Atendimentos</div>
+          <div class="fdash-kpi-value" id="dash-atendimentos-hoje">0</div>
+          <div class="fdash-kpi-sub">agendados para hoje</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#8b5cf6;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Clientes Ativos</div>
-          <div id="dash-clientes-ativos" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
-          </div>
+        <div class="fdash-kpi-card" onclick="showPage('caixa')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-dot" style="background:#f59e0b"></span>A Receber</div>
+          <div class="fdash-kpi-value" id="dash-a-receber">R$ 0,00</div>
+          <div class="fdash-kpi-sub">hoje, ainda não pago</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('relatorios')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#f59e0b;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Ticket Médio</div>
-          <div id="dash-ticket-medio" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">R$ 0,00</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">↑ 5%</span>
-            <span style="font-size:10px;color:#aaa">vs mês anterior</span>
-          </div>
+        <div class="fdash-kpi-card" onclick="showPage('agenda')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-dot" style="background:#ef4444"></span>Pendências</div>
+          <div class="fdash-kpi-value" id="dash-pendencias">0</div>
+          <div class="fdash-kpi-sub">confirmações em aberto</div>
         </div>
       </div>
 
-      <!-- ALERTAS RÁPIDOS -->
-      <div class="dash-alerts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
-        <!-- Florescimento -->
-        <div style="background:linear-gradient(135deg,#111,#333);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showPage('florescimento')">
-          <div style="font-size:32px;flex-shrink:0">🌷</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:4px">Florescimento</div>
-            <div style="height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:62%;background:#fff;border-radius:3px"></div></div>
-            <div style="font-size:10px;color:rgba(255,255,255,.55)">🌿 62% · </div>
-          </div>
-        </div>
-        <!-- IA -->
-        <div style="background:#fff;border:1.5px solid #e5e5e5;border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showPage('ia')">
-          <div style="width:42px;height:42px;background:#111;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧠</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#111;margin-bottom:2px">IA Estratégica</div>
-            <div style="font-size:10px;color:#888;line-height:1.4">Sem dados ainda</div>
-          </div>
-          <div style="font-size:14px;color:#ccc">→</div>
-        </div>
-        <!-- Retornos -->
-        <div style="background:#fff;border:1.5px solid #f59e0b;border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;background:#fffbeb" onclick="showPage('retornos')">
-          <div style="width:42px;height:42px;background:#f59e0b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔔</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">Lembretes de Retorno</div>
-            <div style="font-size:10px;color:#b45309;line-height:1.4"><b>2 hoje</b> · 2 vencidos · 3 pendentes</div>
-          </div>
-          <div style="font-size:14px;color:#f59e0b">→</div>
-        </div>
-      </div>
-
-      <!-- GRID INFERIOR -->
-      <div class="dash-grid-inferior" style="display:grid;grid-template-columns:1fr 300px;gap:14px">
-        <!-- Tabela atendimentos -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
+      <!-- GRID PRINCIPAL -->
+      <div class="fdash-main-grid">
+        <!-- Próximos atendimentos -->
+        <div class="fdash-section">
+          <div class="fdash-section-head">
             <div>
-              <div style="font-size:14px;font-weight:800;color:#111">Atendimentos de Hoje</div>
-              <div id="dash-data-hoje" style="font-size:11px;color:#aaa;margin-top:1px">Carregando...</div>
+              <div class="fdash-section-title">Próximos atendimentos</div>
+              <div class="fdash-section-sub" id="dash-data-hoje">Carregando...</div>
 <script>
 (function(){var d=new Date();var dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];var el=document.getElementById('dash-data-hoje');if(el)el.textContent=dias[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'/'+(String(d.getMonth()+1).padStart(2,'0'))+'/'+d.getFullYear();})();
 </script>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="showPage('agenda')">Ver agenda →</button>
+            <button class="btn btn-outline btn-sm" onclick="showPage('agenda')">Ver agenda completa →</button>
           </div>
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:#fafafa">
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Cliente</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Serviço</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Prof.</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Hora</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Status</th>
-            </tr></thead>
-            <tbody id="dash-atend-hoje-tbody"><tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr></tbody>
-          </table>
+          <div id="dash-proximos-lista">
+            <div class="fdash-empty">Carregando...</div>
+          </div>
         </div>
 
-        <!-- Coluna lateral -->
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <!-- Colaboradores online -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-            <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Equipe Hoje</div>
-            <div id="dash-equipe-hoje" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px"></div>
-          </div>
-          <!-- Próximos agendamentos -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-            <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Próximos</div>
-            <div id="dash-proximos-lista" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
-              <div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Carregando...</div>
+        <!-- Coluna lateral: Atenção + Resumo financeiro -->
+        <div class="fdash-side">
+          <div class="fdash-section" id="dash-atencao-card">
+            <div class="fdash-section-head">
+              <div class="fdash-section-title">Atenção</div>
+            </div>
+            <div class="fdash-atencao-body">
+              <div class="fdash-atencao-icon" id="dash-atencao-icon" style="background:#FEF3E2;color:#9A5B13">🔔</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.4" id="dash-atencao-texto">Carregando...</div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="showPage('agenda')" id="dash-atencao-btn">Ver agenda</button>
+              </div>
             </div>
           </div>
-          <!-- Acesso rápido -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;padding:14px">
-            <div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px" class="dash-acesso-rapido-section">Acesso Rápido</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <button onclick="showPage('agenda')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📅<br>Agenda</button>
-              <button onclick="showPage('clientes')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">👤<br>Clientes</button>
-              <button onclick="showPage('comandas')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📋<br>Comandas</button>
-              <button onclick="showPage('marketing')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📣<br>Marketing</button>
+
+          <div class="fdash-section">
+            <div class="fdash-section-head">
+              <div class="fdash-section-title">Resumo financeiro</div>
             </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Faturamento previsto (hoje)</span>
+              <span class="fdash-fin-value" id="dash-fin-previsto">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Recebido (mês)</span>
+              <span class="fdash-fin-value" id="dash-receita-mes" style="color:#15803d">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">A receber (hoje)</span>
+              <span class="fdash-fin-value" id="dash-fin-areceber" style="color:#9A5B13">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Ticket médio (mês)</span>
+              <span class="fdash-fin-value" id="dash-ticket-medio">R$ 0,00</span>
+            </div>
+            <div style="padding:14px 20px;border-top:1px solid var(--line-soft)">
+              <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="showPage('fluxo')">Ver financeiro →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECUNDÁRIO: equipe, acesso rápido, destaques -->
+      <div class="fdash-secondary-grid">
+        <div class="fdash-section">
+          <div class="fdash-section-head"><div class="fdash-section-title">Equipe Hoje</div></div>
+          <div id="dash-equipe-hoje" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div class="fdash-section">
+          <div class="fdash-section-head"><div class="fdash-section-title">Acesso Rápido</div></div>
+          <div style="padding:14px 20px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="showPage('agenda')" class="fdash-acesso-btn">📅<br>Agenda</button>
+            <button onclick="showPage('clientes')" class="fdash-acesso-btn">👤<br>Clientes</button>
+            <button onclick="showPage('comandas')" class="fdash-acesso-btn">📋<br>Comandas</button>
+            <button onclick="showPage('marketing')" class="fdash-acesso-btn">📣<br>Marketing</button>
+          </div>
+        </div>
+        <div class="fdash-section">
+          <div class="fdash-section-head"><div class="fdash-section-title">Destaques</div></div>
+          <div class="fdash-destaque-row" onclick="showPage('florescimento')">
+            <div class="fdash-destaque-icon" style="background:var(--gray-100)">🌷</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:var(--ink)">Florescimento</div>
+              <div style="height:4px;background:var(--gray-100);border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;width:62%;background:var(--ink);border-radius:3px"></div></div>
+            </div>
+            <div style="font-size:11px;color:var(--gray-400)">62%</div>
+          </div>
+          <div class="fdash-destaque-row" onclick="showPage('ia')">
+            <div class="fdash-destaque-icon" style="background:var(--gray-100)">🧠</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:var(--ink)">IA Estratégica</div>
+              <div style="font-size:10.5px;color:var(--gray-400)">Sem dados ainda</div>
+            </div>
+            <div style="font-size:13px;color:var(--gray-300)">→</div>
+          </div>
+          <div class="fdash-destaque-row" onclick="showPage('retornos')">
+            <div class="fdash-destaque-icon" style="background:#FEF3E2;color:#9A5B13">🔔</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:var(--ink)">Lembretes de Retorno</div>
+              <div style="font-size:10.5px;color:var(--gray-400)">2 hoje · 2 vencidos · 3 pendentes</div>
+            </div>
+            <div style="font-size:13px;color:var(--gray-300)">→</div>
           </div>
         </div>
       </div>
@@ -13871,6 +13954,44 @@ async function renderDashboardCards(){
     if(elTicket)elTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
     var elHeaderAtend=document.getElementById('dash-header-atend-hoje');
     if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
+
+    // ===== Faturamento Previsto, A Receber e Pendências (dados reais de hoje) =====
+    var faturamentoPrevisto=0, aReceberHoje=0, pendenciasConfirmacao=0;
+    if(diaDataHoje){
+      Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;}).forEach(function(k){
+        var a=diaDataHoje[k];
+        var totalServ=typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0));
+        faturamentoPrevisto+=totalServ;
+        var stCalc=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
+        if(stCalc!=='Paga'){
+          var sinalInfoCalc=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{abate:0};
+          aReceberHoje+=Math.max(0,totalServ-(sinalInfoCalc.abate||0));
+        }
+        if(!a.confirmado) pendenciasConfirmacao++;
+      });
+    }
+    var elFatPrev=document.getElementById('dash-faturamento-previsto');
+    var elAReceber=document.getElementById('dash-a-receber');
+    var elPendencias=document.getElementById('dash-pendencias');
+    var elFinPrev=document.getElementById('dash-fin-previsto');
+    var elFinAReceber=document.getElementById('dash-fin-areceber');
+    if(elFatPrev)elFatPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
+    if(elAReceber)elAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
+    if(elPendencias)elPendencias.textContent=pendenciasConfirmacao;
+    if(elFinPrev)elFinPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
+    if(elFinAReceber)elFinAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
+    var elAtencaoTexto=document.getElementById('dash-atencao-texto');
+    var elAtencaoIcon=document.getElementById('dash-atencao-icon');
+    if(elAtencaoTexto){
+      if(pendenciasConfirmacao>0){
+        elAtencaoTexto.innerHTML='<b>'+pendenciasConfirmacao+'</b> cliente'+(pendenciasConfirmacao!==1?'s':'')+' ainda '+(pendenciasConfirmacao!==1?'não confirmaram':'não confirmou')+' o atendimento de hoje.';
+        if(elAtencaoIcon){elAtencaoIcon.style.background='#FEF3E2';elAtencaoIcon.style.color='#9A5B13';elAtencaoIcon.textContent='🔔';}
+      } else {
+        elAtencaoTexto.innerHTML='Tudo certo por aqui! Nenhuma pendência para hoje.';
+        if(elAtencaoIcon){elAtencaoIcon.style.background='#EAF7EE';elAtencaoIcon.style.color='#15803d';elAtencaoIcon.textContent='✅';}
+      }
+    }
+
     var tbodyAtend=document.getElementById('dash-atend-hoje-tbody');
     if(tbodyAtend){
       var linhasTabela=[];
@@ -13913,11 +14034,11 @@ async function renderDashboardCards(){
     var elBadge=document.getElementById('dash-badge-caixa');
     if(elBadge){
       if(cxAberto){
-        elBadge.style.background='rgba(34,197,94,.2)';elBadge.style.border='1px solid rgba(34,197,94,.4)';elBadge.style.color='#4ade80';
-        elBadge.innerHTML='<span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto';
+        elBadge.style.background='#EAF7EE';elBadge.style.border='none';elBadge.style.color='#15803d';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block"></span>Caixa Aberto';
       } else {
-        elBadge.style.background='rgba(239,68,68,.2)';elBadge.style.border='1px solid rgba(239,68,68,.4)';elBadge.style.color='#f87171';
-        elBadge.innerHTML='<span style="width:6px;height:6px;background:#f87171;border-radius:50%;display:inline-block"></span>Caixa Fechado';
+        elBadge.style.background='#FBEAEA';elBadge.style.border='none';elBadge.style.color='#b91c1c';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block"></span>Caixa Fechado';
       }
     }
     var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
@@ -13976,13 +14097,11 @@ async function renderDashProximos(){
       }
     }catch(e){}
   }
-  if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
+  if(!items.length){el.innerHTML='<div class="fdash-empty">Nenhum agendamento próximo. 🌿</div>';return;}
   // Agrupar por dia
-  var grupos={};
-  items.forEach(function(i){if(!grupos[i.dk])grupos[i.dk]=[];grupos[i.dk].push(i);});
   var diasNome=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   var mesesNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  var LIMITE=5;
+  var LIMITE=8;
   var totalItens=items.length;
   var itensMostrar=items.slice(0,LIMITE);
   // Reagrupar apenas os itens que serão exibidos
@@ -13994,15 +14113,17 @@ async function renderDashProximos(){
     var dt=lista[0].data;
     var diff=Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())-new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()))/(1000*60*60*24));
     var label=diff===0?'Hoje':diff===1?'Amanhã':diasNome[dt.getDay()]+', '+dt.getDate()+' '+mesesNome[dt.getMonth()];
-    html+='<div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:4px">'+label+'</div>';
-    lista.forEach(function(a,i){
-      html+='<div style="'+(i>0?'border-top:1px solid #f5f5f5;padding-top:8px;':'')+' display:flex;align-items:center;justify-content:space-between">'
-        +'<div><div style="font-size:12px;font-weight:700">'+a.cliente+'</div><div style="font-size:10px;color:#888">'+a.servico+(a.prof?' · '+a.prof:'')+'</div></div>'
-        +'<span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">'+a.hora+'</span>'
+    html+='<div class="fdash-pill-day">'+label+'</div>';
+    lista.forEach(function(a){
+      html+='<div class="fdash-appt-row">'
+        +'<div class="fdash-appt-time">'+a.hora+'</div>'
+        +'<div class="fdash-appt-avatar">'+(typeof initials==='function'?initials(a.cliente):a.cliente.slice(0,2).toUpperCase())+'</div>'
+        +'<div class="fdash-appt-info"><div class="fdash-appt-client">'+a.cliente+'</div><div class="fdash-appt-metaline">'+a.servico+(a.prof?' · '+a.prof:'')+'</div></div>'
+        +'<span class="fdash-pill fdash-pill-gray">'+(a.prof||'')+'</span>'
         +'</div>';
     });
   });
-  if(totalItens>LIMITE)html+='<div style="font-size:10px;color:#aaa;text-align:center;margin-top:6px">+'+(totalItens-LIMITE)+' mais agendamentos</div>';
+  if(totalItens>LIMITE)html+='<div style="font-size:11px;color:var(--gray-400);text-align:center;padding:10px 20px">+'+(totalItens-LIMITE)+' mais agendamentos — <a href="#" onclick="showPage(\'agenda\');return false" style="color:var(--ink);font-weight:700;text-decoration:none">ver agenda completa</a></div>';
   el.innerHTML=html;
 }
 function renderHistoricoCaixa(){
