@@ -8119,20 +8119,57 @@ async function popupSalvarHora(key){
 function popupToggleEditarValorPrincipal(key){
   var wrap=document.getElementById('popup-valor-principal-edit');
   if(!wrap)return;
-  wrap.style.display=wrap.style.display==='none'?'block':'none';
+  var abrindo=wrap.style.display==='none';
+  if(abrindo){
+    var dados=agendaDiaAtual[key];
+    var idx=popupServicoSelecionadoIdx||0;
+    var lista=popupServicosDoAtendimento(dados);
+    var atual=lista[idx]||lista[0];
+    var inp=document.getElementById('popup-valor-principal-input');
+    if(inp&&atual)inp.value=atual.valor.toFixed(2);
+  }
+  wrap.style.display=abrindo?'block':'none';
 }
 
-function popupSalvarValorPrincipal(key){
+// Grava o valor editado no item correspondente de servicos_detalhe (fonte real do total —
+// ver popupServicosDoAtendimento) e persiste no Supabase. Antes disso, o edit só mexia no
+// campo solto "dados.valor", que não é lido em lugar nenhum quando servicos_detalhe existe
+// (ou seja, praticamente todo atendimento) — a edição parecia salvar mas não tinha efeito.
+async function popupSalvarValorPrincipal(key){
   var inp=document.getElementById('popup-valor-principal-input');
   if(!inp)return;
   var novoValor=parseFloat(inp.value)||0;
-  var a=agendaDiaAtual[key];
-  if(a)a.valor=novoValor;
+  var dados=agendaDiaAtual[key];
+  if(!dados||!dados.id)return;
+  var idx=popupServicoSelecionadoIdx||0;
+  var baseDetalhe=(dados.servicos_detalhe&&dados.servicos_detalhe.length)?dados.servicos_detalhe.slice():
+    [{nome:nomeServicoAgendamento(dados),valor:lerValorServicoAgendamento(dados),profissional:dados.prof}];
+  if(!baseDetalhe[idx])idx=0;
+  var novosDetalhe=baseDetalhe.slice();
+  novosDetalhe[idx]=Object.assign({},novosDetalhe[idx],{valor:novoValor});
+
+  var btn=document.querySelector('#popup-valor-principal-edit button');
+  if(btn){btn.disabled=true;btn.textContent='...';}
+
+  try{
+    var h=await _authHeaders({'Content-Type':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+dados.id+'&salao_id=eq.'+window.SALAO_ID,{method:'PATCH',headers:h,body:JSON.stringify({servicos_detalhe:novosDetalhe})});
+    if(!resp.ok)throw await resp.json().catch(function(){return{};});
+  }catch(e){
+    console.log('err salvar valor principal',e);
+    showAlert('Erro ao salvar o valor. Tente novamente.');
+    if(btn){btn.disabled=false;btn.textContent='OK';}
+    return;
+  }
+
+  dados.servicos_detalhe=novosDetalhe;
   var d=agendaDataAtual;
   var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
-  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key])agendamentosPorData[dataKey][key].valor=novoValor;
-  var disp=document.getElementById('popup-servico-valor');
-  if(disp)disp.textContent=typeof formatMoedaBR==='function'?formatMoedaBR(novoValor):novoValor.toFixed(2);
+  Object.keys(agendamentosPorData[dataKey]||{}).forEach(function(kk){
+    if(agendamentosPorData[dataKey][kk].id===dados.id)agendamentosPorData[dataKey][kk].servicos_detalhe=novosDetalhe;
+  });
+
+  if(btn){btn.disabled=false;btn.textContent='OK';}
   var wrap=document.getElementById('popup-valor-principal-edit');
   if(wrap)wrap.style.display='none';
   popupAtualizarTotaisUI(key);
