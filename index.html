@@ -3731,7 +3731,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <button type="button" onclick="agAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
         </label>
         <div style="display:flex;gap:6px;align-items:center">
-          <select id="ag-servico" onchange="agCalcSinal()" style="flex:2">
+          <select id="ag-servico" onchange="agAtualizarValorServico();agCalcSinal()" style="flex:2">
             <option value="40">Manicure — R$ 40,00</option>
             <option value="45">Pedicure — R$ 45,00</option>
             <option value="80">Corte de Cabelo — R$ 80,00</option>
@@ -3744,6 +3744,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <select id="ag-servico-prof" style="flex:1" title="Profissional">
             <option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option>
           </select>
+        </div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+          <label style="font-size:11px;color:#555;white-space:nowrap">Valor cobrado <span id="ag-servico-valor-cat" style="color:#aaa;font-weight:400"></span></label>
+          <input type="number" id="ag-servico-valor" min="0" step="0.01" oninput="agCalcSinal()" style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;text-align:right;outline:none"/>
         </div>
         <div id="ag-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
 
@@ -5121,7 +5125,25 @@ function agFiltrarServicos(){
   var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
   sel.innerHTML=filtrados.map(function(s){return'<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';}).join('');
   if(!sel.innerHTML)sel.innerHTML='<option value="0">Nenhum serviço nessa categoria</option>';
+  agAtualizarValorServico();
   agCalcSinal();
+}
+// Preenche o campo "Valor cobrado" com o preço de cadastro do serviço escolhido,
+// mas deixa o valor editável — o que for digitado ali é o preço final lançado na comanda.
+function agAtualizarValorServico(){
+  var sel=document.getElementById('ag-servico');
+  var inp=document.getElementById('ag-servico-valor');
+  if(!sel||!inp)return;
+  var preco=parseFloat(sel.value)||0;
+  inp.value=preco.toFixed(2);
+  var catRef=document.getElementById('ag-servico-valor-cat');
+  if(catRef)catRef.textContent=preco>0?('(catálogo: R$ '+preco.toFixed(2).replace('.',',')+')'):'';
+}
+function agAtualizarValorExtra(selEl){
+  var row=selEl.closest('[data-extra-row]');
+  var inp=row&&row.querySelector('input[type="number"]');
+  if(!inp)return;
+  inp.value=(parseFloat(selEl.value)||0).toFixed(2);
 }
 
 function agAtualizarProfExtra(selServEl){
@@ -5136,21 +5158,32 @@ function agAtualizarProfExtra(selServEl){
 function agAddServicoExtra(){
   var list = document.getElementById('ag-servicos-extra-list');
   var row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  row.setAttribute('data-extra-row','1');
+  row.style.cssText = 'display:flex;flex-direction:column;gap:4px;padding:6px;background:#fafafa;border-radius:8px';
   var opts = (typeof servicos !== 'undefined' ? servicos : []).map(function(s){
     return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
   }).join('');
   var primeiroNome=(typeof servicos!=='undefined'&&servicos[0])?servicos[0].nome:'';
-  row.innerHTML = '<select onchange="agCalcSinal();agAtualizarProfExtra(this)" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+  var primeiroPreco=(typeof servicos!=='undefined'&&servicos[0])?parseFloat(String(servicos[0].preco).replace(',','.'))||0:0;
+  row.innerHTML = '<div style="display:flex;gap:6px;align-items:center">'
+    +'<select onchange="agCalcSinal();agAtualizarProfExtra(this);agAtualizarValorExtra(this)" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
     +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(primeiroNome)+'</select>'
-    +'<button onclick="this.closest(\'div\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+    +'<button onclick="this.closest(\'[data-extra-row]\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>'
+    +'</div>'
+    +'<div style="display:flex;align-items:center;gap:6px">'
+    +'<label style="font-size:10px;color:#888;white-space:nowrap">Valor (R$)</label>'
+    +'<input type="number" min="0" step="0.01" value="'+primeiroPreco.toFixed(2)+'" oninput="agCalcSinal()" style="flex:1;padding:5px 7px;border:1.5px solid #ddd;border-radius:7px;font-size:12px;font-weight:700;text-align:right;outline:none"/>'
+    +'</div>';
   list.appendChild(row);
   agCalcSinal();
 }
 function agSomaServicos(){
-  var total=parseFloat(document.getElementById('ag-servico')?.value)||0;
-  document.querySelectorAll('#ag-servicos-extra-list > div > select:first-child').forEach(function(sel){
-    total += parseFloat(sel.value)||0;
+  var valPrincipal=parseFloat(document.getElementById('ag-servico-valor')?.value);
+  var total=isNaN(valPrincipal)?(parseFloat(document.getElementById('ag-servico')?.value)||0):valPrincipal;
+  document.querySelectorAll('#ag-servicos-extra-list > [data-extra-row]').forEach(function(row){
+    var valExtra=parseFloat(row.querySelector('input[type="number"]')?.value);
+    if(isNaN(valExtra))valExtra=parseFloat(row.querySelector('select:first-child')?.value)||0;
+    total += valExtra;
   });
   return total;
 }
@@ -11912,18 +11945,22 @@ function salvarAgendamento(){
     var selServ=document.getElementById('ag-servico');
     var selServProf=document.getElementById('ag-servico-prof');
     var nomes=[(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0]];
+    var valorPrincipal=parseFloat(document.getElementById('ag-servico-valor')?.value);
+    if(isNaN(valorPrincipal))valorPrincipal=parseFloat(selServ?.value)||0;
     servicosDetalhe=[{
       nome:nomes[0],
-      valor:parseFloat(selServ?.value)||0,
+      valor:valorPrincipal,
       profissional:selServProf?.value||prof
     }];
-    document.querySelectorAll('#ag-servicos-extra-list > div').forEach(function(row){
+    document.querySelectorAll('#ag-servicos-extra-list > [data-extra-row]').forEach(function(row){
       var selExtra=row.querySelector('select:first-child');
       var profExtra=row.querySelectorAll('select')[1];
       var n=(selExtra?.options[selExtra?.selectedIndex]?.text||'').split(' — ')[0];
       if(n){
         nomes.push(n);
-        servicosDetalhe.push({nome:n,valor:parseFloat(selExtra.value)||0,profissional:profExtra?.value||prof});
+        var valorExtra=parseFloat(row.querySelector('input[type="number"]')?.value);
+        if(isNaN(valorExtra))valorExtra=parseFloat(selExtra.value)||0;
+        servicosDetalhe.push({nome:n,valor:valorExtra,profissional:profExtra?.value||prof});
       }
     });
     servico=nomes.join(' + ');
