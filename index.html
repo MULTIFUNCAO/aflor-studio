@@ -8,10 +8,13 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c084fc">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 /* ===== FLORA OVERLAY — PRETO & BRANCO ===== */
-#aflor-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#f4f4f4;padding:16px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
+#aflor-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#f4f4f4;padding:16px;font-family:var(--font-flora)}
 #aflor-overlay *{box-sizing:border-box}
 #aflor-overlay.hidden{display:none}
 .ob-card{background:#fff;border-radius:22px;padding:28px 32px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
@@ -26,16 +29,16 @@
 .ob-tab.active{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .ob-iw{position:relative;margin-bottom:11px}
 .ob-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa}
-.ob-inp{width:100%;padding:11px 12px 11px 38px;border:1.5px solid #ddd;border-radius:11px;font-size:13px;outline:none;transition:.2s;color:#111;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;box-sizing:border-box}
+.ob-inp{width:100%;padding:11px 12px 11px 38px;border:1.5px solid #ddd;border-radius:11px;font-size:13px;outline:none;transition:.2s;color:#111;font-family:var(--font-flora);box-sizing:border-box}
 .ob-inp:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
-.ob-inp-plain{width:100%;padding:10px 11px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;outline:none;transition:.2s;color:#111;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;box-sizing:border-box}
+.ob-inp-plain{width:100%;padding:10px 11px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;outline:none;transition:.2s;color:#111;font-family:var(--font-flora);box-sizing:border-box}
 .ob-inp-plain:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
-.btn-aflor{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;margin-top:4px;transition:.15s}
+.btn-aflor{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:var(--font-flora);margin-top:4px;transition:.15s}
 .btn-aflor:hover{background:#333}
-.btn-goog{width:100%;padding:11px;border:1.5px solid #ddd;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:#333;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
+.btn-goog{width:100%;padding:11px;border:1.5px solid #ddd;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:#333;margin-bottom:14px;font-family:var(--font-flora)}
 .btn-goog:hover{background:#f8f8f8}
-.btn-back2{flex:1;padding:11px;background:#fff;color:#333;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
-.btn-nxt{flex:2;padding:11px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;transition:.15s}
+.btn-back2{flex:1;padding:11px;background:#fff;color:#333;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-flora)}
+.btn-nxt{flex:2;padding:11px;background:#111;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-flora);transition:.15s}
 .btn-nxt:hover{background:#333}
 .or-div{display:flex;align-items:center;gap:10px;margin-bottom:14px;color:#aaa;font-size:12px}
 .or-div::before,.or-div::after{content:'';flex:1;height:1px;background:#e5e5e5}
@@ -69,7 +72,7 @@
 .hr-tog::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:19px;transition:.2s}
 .hr-tog.off{background:#ccc}
 .hr-tog.off::after{left:3px}
-.hr-ti{padding:4px 7px;border:1px solid #ddd;border-radius:6px;font-size:11px;width:66px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
+.hr-ti{padding:4px 7px;border:1px solid #ddd;border-radius:6px;font-size:11px;width:66px;font-family:var(--font-flora)}
 .av-up{width:76px;height:76px;border-radius:50%;background:#111;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;cursor:pointer;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .av-up::after{content:'📷';position:absolute;bottom:0;right:0;width:24px;height:24px;background:#fff;border-radius:50%;font-size:11px;border:2px solid #ddd;line-height:24px;text-align:center}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -77,7 +80,7 @@
 .fg2.full{grid-column:1/-1}
 .fl2{font-size:11px;font-weight:700;color:#333}
 .succ-ico{width:80px;height:80px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:36px;box-shadow:0 0 0 14px rgba(0,0,0,.08)}
-.btn-dark2{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;transition:.15s}
+.btn-dark2{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-flora);transition:.15s}
 .btn-dark2:hover{background:#333}
 .conf-piece{position:absolute;border-radius:2px;animation:cf 2s both}
 @keyframes cf{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(240px) rotate(360deg);opacity:0}}
@@ -98,7 +101,7 @@
 .plano-feat li{list-style:none;padding-left:0;display:flex;align-items:center;gap:4px}
 .plano-feat li::before{content:'✓';font-weight:800;color:#111;flex-shrink:0}
 .plano-card.destaque .plano-feat li::before{color:#fff}
-.btn-assinar{width:100%;padding:10px;background:#111;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;transition:.15s}
+.btn-assinar{width:100%;padding:10px;background:#111;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px;font-family:var(--font-flora);transition:.15s}
 .btn-assinar:hover{background:#333}
 .plano-card.destaque .btn-assinar{background:#fff;color:#111}
 .plano-card.destaque .btn-assinar:hover{background:#eee}
@@ -131,8 +134,21 @@
   --gray-800:#1e293b;
   --sidebar-w:230px;
   --header-h:56px;
+  /* ===== Premium visual tokens (redesign) ===== */
+  --ivory:#FAF8F4;
+  --paper:#FFFFFF;
+  --ink:#17160F;
+  --line:rgba(23,22,15,.07);
+  --line-soft:rgba(23,22,15,.045);
+  --shadow-xs:0 1px 2px rgba(23,22,15,.04);
+  --shadow-sm:0 4px 16px -8px rgba(23,22,15,.10);
+  --shadow-md:0 16px 40px -20px rgba(23,22,15,.18);
+  --radius-lg:18px;
+  --radius-md:14px;
+  --radius-sm:10px;
+  --font-flora:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f4f4f4;color:#111;display:flex;height:100vh;overflow:hidden}
+body{font-family:var(--font-flora);background:var(--ivory);color:var(--ink);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
 
 /* SIDEBAR — sempre visível, preta */
 .sidebar{width:var(--sidebar-w);background:#111;display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0;position:relative;z-index:1}
@@ -154,19 +170,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-ser
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.header{height:var(--header-h);background:#fff;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
-.header-title{font-size:17px;font-weight:700;color:#111}
+.header{height:64px;background:rgba(250,248,244,.92);backdrop-filter:saturate(180%) blur(10px);-webkit-backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.2px}
 .header-actions{display:flex;align-items:center;gap:10px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif}
-.btn-primary{background:#111;color:#fff}
-.btn-primary:hover{background:#333}
-.btn-outline{background:#fff;color:#333;border:1.5px solid #ddd}
-.btn-outline:hover{background:#f5f5f5}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-icon{padding:8px;border-radius:8px;background:#fff;border:1px solid #e5e5e5;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 17px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:var(--font-flora)}
+.btn-primary{background:#15803d;color:#fff;box-shadow:var(--shadow-xs)}
+.btn-primary:hover{background:#116830;box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+.btn-outline{background:var(--paper);color:#333;border:1.5px solid var(--line)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.btn-icon{padding:8px;border-radius:11px;background:var(--paper);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.btn-icon:hover{background:var(--gray-50)}
 
 /* CONTENT */
-.content{flex:1;overflow-y:auto;padding:24px;background:#f4f4f4}
+.content{flex:1;overflow-y:auto;padding:28px 28px 40px;background:var(--ivory)}
 
 /* PAGE */
 .page{display:none}
@@ -194,15 +211,15 @@ td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid #f5f5f5;color:#111
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafafa}
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge-green{background:#e8f5e9;color:#2e7d32}
-.badge-yellow{background:#fffde7;color:#f57f17}
-.badge-red{background:#ffebee;color:#c62828}
-.badge-blue{background:#f0f0f0;color:#111}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-yellow{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#b91c1c}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
 .badge-gray{background:#f5f5f5;color:#555}
 .badge-purple{background:#f3e8ff;color:#6d28d9}
 
 /* CALENDAR */
-.calendar-container{background:#fff;border-radius:12px;border:1px solid var(--gray-200);overflow:hidden}
+.calendar-container{background:transparent;overflow:visible}
 .calendar-header{padding:14px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
 .calendar-nav{display:flex;align-items:center;gap:12px}
 .cal-btn{background:none;border:1px solid var(--gray-200);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px;color:var(--gray-600)}
@@ -210,10 +227,12 @@ tr:hover td{background:#fafafa}
 .pro-col-header{padding:10px 8px;text-align:center;border-bottom:1px solid var(--gray-100);font-size:12px;font-weight:600}
 .pro-avatar{width:32px;height:32px;border-radius:50%;margin:0 auto 4px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .time-slots{display:contents}
-.time-label{padding:8px 12px;font-size:11px;color:var(--gray-400);text-align:right;border-right:1px solid var(--gray-100)}
-.slot{border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50);height:64px;position:relative;cursor:pointer}.slot.occupied{border-bottom:none}
-.slot:hover{background:var(--blue-light)}
-.slot.occupied{background:var(--blue-light)}
+.time-label{padding:8px 12px;font-size:11px;color:var(--gray-400);text-align:right;height:64px;box-sizing:border-box}
+.slot{border-bottom:1px dashed var(--gray-200);height:64px;position:relative;cursor:pointer}
+.slot.occupied{z-index:1}
+.slot:not(.occupied):not(.bloqueado):hover{background:var(--blue-light)}
+.agenda-card{box-shadow:0 1px 3px rgba(23,22,15,.10);transition:box-shadow .15s,transform .15s}
+.agenda-card:hover{box-shadow:0 5px 14px -4px rgba(23,22,15,.22);transform:translateY(-1px)}
 .appt{position:absolute;inset:2px;background:var(--blue);border-radius:6px;padding:4px 6px;font-size:10px;font-weight:700;color:#fff;overflow:hidden}
 .appt.green{background:var(--green)}
 .appt.orange{background:var(--orange)}
@@ -224,7 +243,7 @@ tr:hover td{background:#fafafa}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group.full{grid-column:1/-1}
 label{font-size:12px;font-weight:700;color:var(--gray-600)}
-input,select,textarea{padding:10px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:13.5px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;color:var(--gray-800);outline:none;transition:.15s}
+input,select,textarea{padding:10px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:13.5px;font-family:var(--font-flora);color:var(--gray-800);outline:none;transition:.15s}
 input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,123,255,0.12)}
 textarea{resize:vertical;min-height:80px}
 
@@ -233,9 +252,23 @@ textarea{resize:vertical;min-height:80px}
 .search-bar input{background:none;border:none;font-size:13.5px;width:100%;outline:none}
 
 /* PROF COLS */
-.prof-headers{display:grid;border-bottom:1px solid var(--gray-200);background:#fff}
-.prof-col{text-align:center;padding:12px 8px;border-right:1px solid var(--gray-100);min-width:0}
-.prof-col:last-child{border-right:none}
+.agenda-cols-wrap{display:flex;align-items:flex-start;gap:14px;padding-bottom:4px}
+.agenda-timeaxis{flex-shrink:0;width:56px}
+.agenda-timeaxis-spacer{height:74px;border-bottom:1px solid transparent;box-sizing:border-box}
+.agenda-prof-block{flex:1 1 170px;min-width:170px;background:#fff;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-xs)}
+.agenda-prof-header{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:center;gap:10px;padding:14px;min-height:74px;box-sizing:border-box;border-bottom:1px solid var(--gray-100)}
+.agenda-mobile-tabs{display:none}
+
+@media(max-width:860px){
+  .agenda-mobile-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;-webkit-overflow-scrolling:touch}
+  .agenda-mobile-tab{flex-shrink:0;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:700;color:var(--gray-600);cursor:pointer;font-family:var(--font-flora);white-space:nowrap;transition:.15s}
+  .agenda-mobile-tab.active{background:#15803d;border-color:#15803d;color:#fff}
+  .agenda-cols-wrap{gap:8px}
+  .agenda-timeaxis{width:46px}
+  .time-label{padding:8px 4px;font-size:10px}
+  .agenda-prof-block{display:none}
+  .agenda-prof-block.mobile-active{display:block;flex:1 1 auto;min-width:0}
+}
 
 /* FINANCEIRO */
 .finance-row{display:flex;gap:14px;margin-bottom:14px}
@@ -702,7 +735,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 </div>
 
 <!-- TRIAL: TELA DE BLOQUEIO (trial expirado sem assinatura) -->
-<div id="trial-expirado-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:#f9f9f9;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div id="trial-expirado-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:#f9f9f9;overflow-y:auto;font-family:var(--font-flora)">
   <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
     <div style="max-width:400px;width:100%;text-align:center">
       <div style="width:64px;height:64px;background:#111;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
@@ -896,153 +929,234 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
   <div class="content">
 
+    <style>
+    /* ===== Dashboard redesign (premium) — escopado, não afeta outras páginas ===== */
+    #page-dashboard{font-family:var(--font-flora)}
+    .fdash-greeting{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px;background:linear-gradient(120deg,#EFF8F1 0%,#F5F3EC 55%,#FBF5EC 100%);border:1px solid var(--line-soft);border-radius:var(--radius-lg);padding:22px 26px}
+    .fdash-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#4d9d68;margin-bottom:8px}
+    .fdash-greeting h1{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin:0 0 4px}
+    .fdash-greeting p{font-size:13.5px;color:var(--gray-500);margin:0}
+    .fdash-meta{font-size:12px;color:var(--gray-400);margin-top:8px}
+    .fdash-caixa-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:20px}
+
+    .fdash-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+    .fdash-kpi-card{background:var(--paper);border-radius:var(--radius-lg);padding:20px;border:1px solid var(--line-soft);border-left:4px solid var(--line-soft);cursor:pointer;transition:.2s;box-shadow:var(--shadow-xs)}
+    .fdash-kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--line)}
+    .fdash-kpi-card.kpi-green{border-left-color:#15803d}
+    .fdash-kpi-card.kpi-blue{border-left-color:#1d4ed8}
+    .fdash-kpi-card.kpi-amber{border-left-color:#b45309}
+    .fdash-kpi-card.kpi-red{border-left-color:#b91c1c}
+    .fdash-kpi-label{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;color:var(--gray-500);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+    .kpi-green .fdash-kpi-label{color:#15803d}
+    .kpi-blue .fdash-kpi-label{color:#1d4ed8}
+    .kpi-amber .fdash-kpi-label{color:#b45309}
+    .kpi-red .fdash-kpi-label{color:#b91c1c}
+    .fdash-kpi-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .kpi-green .fdash-kpi-icon{background:#15803d}
+    .kpi-blue .fdash-kpi-icon{background:#1d4ed8}
+    .kpi-amber .fdash-kpi-icon{background:#b45309}
+    .kpi-red .fdash-kpi-icon{background:#b91c1c}
+    .fdash-kpi-value{font-size:25px;font-weight:800;color:var(--ink);letter-spacing:-.5px}
+    .kpi-green .fdash-kpi-value{color:#15803d}
+    .kpi-blue .fdash-kpi-value{color:#1d4ed8}
+    .kpi-amber .fdash-kpi-value{color:#b45309}
+    .kpi-red .fdash-kpi-value{color:#b91c1c}
+    .fdash-kpi-sub{font-size:11px;color:var(--gray-400);margin-top:6px}
+
+    .fdash-main-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
+    .fdash-section{background:var(--paper);border-radius:var(--radius-lg);border:1px solid var(--line-soft);box-shadow:var(--shadow-xs);overflow:hidden}
+    .fdash-section-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line-soft)}
+    .fdash-section-title{font-size:14px;font-weight:700;color:var(--ink)}
+    .fdash-section-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px}
+
+    .fdash-appt-row{display:flex;align-items:center;gap:12px;padding:12px 20px;transition:.15s}
+    .fdash-appt-row+.fdash-appt-row{border-top:1px solid var(--line-soft)}
+    .fdash-appt-row:hover{background:var(--gray-50)}
+    .fdash-appt-time{width:48px;flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--ink)}
+    .fdash-appt-avatar{width:32px;height:32px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .fdash-appt-info{flex:1;min-width:0}
+    .fdash-appt-client{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fdash-appt-metaline{font-size:11.5px;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .fdash-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+    .fdash-pill-green{background:#EAF7EE;color:#15803d}
+    .fdash-pill-amber{background:#FEF3E2;color:#9A5B13}
+    .fdash-pill-gray{background:var(--gray-100);color:var(--gray-500)}
+    .fdash-pill-day{padding:9px 20px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-400);background:var(--gray-50)}
+    .fdash-empty{padding:32px 20px;text-align:center;color:var(--gray-400);font-size:12.5px}
+
+    .fdash-side{display:flex;flex-direction:column;gap:16px}
+    .fdash-atencao-body{padding:16px 20px;display:flex;align-items:flex-start;gap:12px}
+    .fdash-atencao-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .fdash-fin-row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 20px;border-top:1px solid var(--line-soft)}
+    .fdash-fin-row:first-child{border-top:none}
+    .fdash-fin-label{font-size:12px;color:var(--gray-500);font-weight:600}
+    .fdash-fin-value{font-size:14.5px;font-weight:800;color:var(--ink)}
+
+    .fdash-destaque-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+    .fdash-destaque-card{display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;transition:.2s;border:1px solid var(--line-soft);border-radius:var(--radius-lg);background:var(--paper);box-shadow:var(--shadow-xs)}
+    .fdash-destaque-card:hover{border-color:var(--line);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .fdash-destaque-card:not(.dq-hero):not(.dq-lembretes):hover{background:var(--gray-50)}
+    .fdash-destaque-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .dq-hero{background:linear-gradient(135deg,#123524 0%,#1f7a4d 65%,#2fae68 100%);border:none;box-shadow:0 10px 24px -12px rgba(31,122,77,.55)}
+    .dq-hero .fdash-destaque-icon{background:rgba(255,255,255,.18)}
+    .dq-hero .dq-title{color:#fff}
+    .dq-hero .dq-track{background:rgba(255,255,255,.25)}
+    .dq-hero .dq-fill{background:#fff}
+    .dq-hero .dq-pct{color:#fff;font-weight:800}
+    .dq-ia .fdash-destaque-icon{background:#6d28d9}
+    .dq-lembretes{background:#FDECC8;border-color:#f3d38a}
+    .dq-lembretes .fdash-destaque-icon{background:#b45309}
+    .fdash-equipe-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--radius-md);transition:.15s}
+    .fdash-equipe-row:hover{background:var(--gray-50);border-color:var(--line)}
+    .fdash-equipe-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;flex-shrink:0}
+
+    @media(max-width:1080px){
+      .fdash-kpi-grid{grid-template-columns:1fr 1fr}
+      .fdash-main-grid{grid-template-columns:1fr}
+      .fdash-destaque-grid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:640px){
+      .fdash-kpi-grid{grid-template-columns:1fr 1fr;gap:10px}
+      .fdash-destaque-grid{grid-template-columns:1fr}
+      .fdash-greeting h1{font-size:21px}
+      .fdash-kpi-card{padding:16px}
+      .fdash-section-head{flex-direction:column;align-items:flex-start;gap:10px}
+      .fdash-section-head .btn{width:100%;justify-content:center}
+    }
+    @media(max-width:480px){
+      .header-title{font-size:14px}
+    }
+    </style>
+
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
 
-      <!-- HERO BANNER -->
-      <div style="background:linear-gradient(135deg,#111 0%,#2d2d2d 100%);border-radius:18px;padding:24px 28px;margin-bottom:18px;position:relative;overflow:hidden">
-        <!-- Tulip decoration -->
-        <div style="position:absolute;right:24px;top:50%;transform:translateY(-50%);opacity:.08">
-          <svg width="120" height="140" viewBox="0 0 100 115" fill="none">
-            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white"/>
-            <path d="M50 62 L50 110" stroke="white" stroke-width="6" stroke-linecap="round"/>
-            <path d="M50 88 C50 88 28 83 24 68 C38 68 50 80 50 88Z" fill="white"/>
-            <path d="M50 80 C50 80 72 75 76 60 C62 60 50 72 50 80Z" fill="white"/>
-          </svg>
+      <!-- SAUDAÇÃO -->
+      <div class="fdash-greeting">
+        <div>
+          <div class="fdash-eyebrow" id="dashboard-data-hoje"></div>
+          <h1 data-saudacao>Bom dia! 🌷</h1>
+          <p>Veja como está o seu negócio hoje. <span data-nome-salao style="color:var(--gray-400)">FLORA / STUDIO</span></p>
+          <div class="fdash-meta"><span id="dash-clientes-ativos">0</span> clientes ativos · <span id="dash-header-atend-hoje">0 atendimentos hoje</span></div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-          <div>
-            <div style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px" id="dashboard-data-hoje"></div>
-            <div style="font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-0.5px" data-saudacao>Bom dia! 🌷</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.6)"><span data-nome-salao>FLORA / STUDIO</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-            <span id="dash-badge-caixa" style="background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:5px">
-              <span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto
-            </span>
-            <div id="dash-header-atend-hoje" style="font-size:11px;color:rgba(255,255,255,.4)">0 atendimentos hoje</div>
-          </div>
-        </div>
+        <span id="dash-badge-caixa" class="fdash-caixa-pill" style="background:rgba(34,197,94,.14);color:#15803d">
+          <span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block"></span>Caixa Aberto
+        </span>
       </div>
 
       <!-- KPI CARDS -->
-      <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('fluxo')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#22c55e;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Receita do Mês</div>
-          <div id="dash-receita-mes" style="font-size:28px;font-weight:900;color:#22c55e;padding-left:6px">R$ 0,00</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
-            <span style="font-size:10px;color:#aaa">vs mês anterior</span>
-          </div>
+      <div class="fdash-kpi-grid">
+        <div class="fdash-kpi-card kpi-green" onclick="showPage('fluxo')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Faturamento Previsto</div>
+          <div class="fdash-kpi-value" id="dash-faturamento-previsto">R$ 0,00</div>
+          <div class="fdash-kpi-sub">hoje, todos os atendimentos</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('agenda')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#111;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Atendimentos Hoje</div>
-          <div id="dash-atendimentos-hoje" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px"></span>
-            <span style="font-size:10px;color:#aaa"></span>
-          </div>
+        <div class="fdash-kpi-card kpi-blue" onclick="showPage('agenda')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Atendimentos</div>
+          <div class="fdash-kpi-value" id="dash-atendimentos-hoje">0</div>
+          <div class="fdash-kpi-sub">agendados para hoje</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('clientes')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#8b5cf6;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Clientes Ativos</div>
-          <div id="dash-clientes-ativos" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">0</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#f3e8ff;color:#6d28d9;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">-</span>
-          </div>
+        <div class="fdash-kpi-card kpi-amber" onclick="showPage('caixa')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>A Receber</div>
+          <div class="fdash-kpi-value" id="dash-a-receber">R$ 0,00</div>
+          <div class="fdash-kpi-sub">hoje, ainda não pago</div>
         </div>
-        <div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e5e5;cursor:pointer;transition:.2s;position:relative;overflow:hidden" onclick="showPage('relatorios')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#f59e0b;border-radius:4px 0 0 4px"></div>
-          <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-left:6px">Ticket Médio</div>
-          <div id="dash-ticket-medio" style="font-size:28px;font-weight:900;color:#111;padding-left:6px">R$ 0,00</div>
-          <div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding-left:6px">
-            <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">↑ 5%</span>
-            <span style="font-size:10px;color:#aaa">vs mês anterior</span>
-          </div>
+        <div class="fdash-kpi-card kpi-red" onclick="showPage('agenda')">
+          <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Pendências</div>
+          <div class="fdash-kpi-value" id="dash-pendencias">0</div>
+          <div class="fdash-kpi-sub">confirmações em aberto</div>
         </div>
       </div>
 
-      <!-- ALERTAS RÁPIDOS -->
-      <div class="dash-alerts-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
-        <!-- Florescimento -->
-        <div style="background:linear-gradient(135deg,#111,#333);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showPage('florescimento')">
-          <div style="font-size:32px;flex-shrink:0">🌷</div>
+      <!-- DESTAQUES -->
+      <div class="fdash-destaque-grid">
+        <div class="fdash-destaque-card dq-hero" onclick="showPage('florescimento')">
+          <div class="fdash-destaque-icon">🌷</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:4px">Florescimento</div>
-            <div style="height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:62%;background:#fff;border-radius:3px"></div></div>
-            <div style="font-size:10px;color:rgba(255,255,255,.55)">🌿 62% · </div>
+            <div class="dq-title" style="font-size:12px;font-weight:700">Florescimento</div>
+            <div class="dq-track" style="height:5px;border-radius:3px;overflow:hidden;margin-top:6px"><div class="dq-fill" style="height:100%;width:62%;border-radius:3px"></div></div>
           </div>
+          <div class="dq-pct" style="font-size:12px">62%</div>
         </div>
-        <!-- IA -->
-        <div style="background:#fff;border:1.5px solid #e5e5e5;border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showPage('ia')">
-          <div style="width:42px;height:42px;background:#111;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🧠</div>
+        <div class="fdash-destaque-card dq-ia" onclick="showPage('ia')">
+          <div class="fdash-destaque-icon" style="color:#fff">🧠</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#111;margin-bottom:2px">IA Estratégica</div>
-            <div style="font-size:10px;color:#888;line-height:1.4">Sem dados ainda</div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink)">IA Estratégica</div>
+            <div style="font-size:10.5px;color:var(--gray-400)">Sem dados ainda</div>
           </div>
-          <div style="font-size:14px;color:#ccc">→</div>
+          <div style="font-size:13px;color:var(--gray-300)">→</div>
         </div>
-        <!-- Retornos -->
-        <div style="background:#fff;border:1.5px solid #f59e0b;border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;background:#fffbeb" onclick="showPage('retornos')">
-          <div style="width:42px;height:42px;background:#f59e0b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔔</div>
+        <div class="fdash-destaque-card dq-lembretes" onclick="showPage('retornos')">
+          <div class="fdash-destaque-icon" style="color:#fff">🔔</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">Lembretes de Retorno</div>
-            <div style="font-size:10px;color:#b45309;line-height:1.4"><b>2 hoje</b> · 2 vencidos · 3 pendentes</div>
+            <div style="font-size:12px;font-weight:700;color:#7c3a0a">Lembretes de Retorno</div>
+            <div style="font-size:10.5px;color:#92400e"><b>2 hoje</b> · 2 vencidos · 3 pendentes</div>
           </div>
-          <div style="font-size:14px;color:#f59e0b">→</div>
+          <div style="font-size:13px;color:#b45309">→</div>
         </div>
       </div>
 
-      <!-- GRID INFERIOR -->
-      <div class="dash-grid-inferior" style="display:grid;grid-template-columns:1fr 300px;gap:14px">
-        <!-- Tabela atendimentos -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
+      <!-- GRID PRINCIPAL -->
+      <div class="fdash-main-grid">
+        <!-- Próximos atendimentos -->
+        <div class="fdash-section">
+          <div class="fdash-section-head">
             <div>
-              <div style="font-size:14px;font-weight:800;color:#111">Atendimentos de Hoje</div>
-              <div id="dash-data-hoje" style="font-size:11px;color:#aaa;margin-top:1px">Carregando...</div>
+              <div class="fdash-section-title">Próximos atendimentos</div>
+              <div class="fdash-section-sub" id="dash-data-hoje">Carregando...</div>
 <script>
 (function(){var d=new Date();var dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];var el=document.getElementById('dash-data-hoje');if(el)el.textContent=dias[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'/'+(String(d.getMonth()+1).padStart(2,'0'))+'/'+d.getFullYear();})();
 </script>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="showPage('agenda')">Ver agenda →</button>
+            <button class="btn btn-outline btn-sm" onclick="showPage('agenda')">Ver agenda completa →</button>
           </div>
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:#fafafa">
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Cliente</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Serviço</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Prof.</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Hora</th>
-              <th style="padding:9px 16px;text-align:left;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px">Status</th>
-            </tr></thead>
-            <tbody id="dash-atend-hoje-tbody"><tr><td colspan="5" style="padding:32px;text-align:center;color:#aaa;font-size:13px">Nenhum atendimento hoje ainda.</td></tr></tbody>
-          </table>
+          <div id="dash-proximos-lista">
+            <div class="fdash-empty">Carregando...</div>
+          </div>
         </div>
 
-        <!-- Coluna lateral -->
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <!-- Colaboradores online -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-            <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Equipe Hoje</div>
-            <div id="dash-equipe-hoje" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px"></div>
-          </div>
-          <!-- Próximos agendamentos -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-            <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800;color:#111">Próximos</div>
-            <div id="dash-proximos-lista" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
-              <div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Carregando...</div>
+        <!-- Coluna lateral: Atenção + Resumo financeiro -->
+        <div class="fdash-side">
+          <div class="fdash-section" id="dash-atencao-card">
+            <div class="fdash-section-head">
+              <div class="fdash-section-title">Atenção</div>
+            </div>
+            <div class="fdash-atencao-body">
+              <div class="fdash-atencao-icon" id="dash-atencao-icon" style="background:#FEF3E2;color:#9A5B13">🔔</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.4" id="dash-atencao-texto">Carregando...</div>
+                <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="showPage('agenda')" id="dash-atencao-btn">Ver agenda</button>
+              </div>
             </div>
           </div>
-          <!-- Acesso rápido -->
-          <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;padding:14px">
-            <div style="font-size:12px;font-weight:800;color:#111;margin-bottom:10px" class="dash-acesso-rapido-section">Acesso Rápido</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-              <button onclick="showPage('agenda')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📅<br>Agenda</button>
-              <button onclick="showPage('clientes')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">👤<br>Clientes</button>
-              <button onclick="showPage('comandas')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📋<br>Comandas</button>
-              <button onclick="showPage('marketing')" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:9px;padding:10px 8px;cursor:pointer;text-align:center;font-size:10px;font-weight:600;color:#333;transition:.15s" onmouseover="this.style.background='#111';this.style.color='#fff'" onmouseout="this.style.background='#f8f8f8';this.style.color='#333'">📣<br>Marketing</button>
+
+          <div class="fdash-section">
+            <div class="fdash-section-head"><div class="fdash-section-title">Equipe Hoje</div></div>
+            <div id="dash-equipe-hoje" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+
+          <div class="fdash-section">
+            <div class="fdash-section-head">
+              <div class="fdash-section-title">Resumo financeiro</div>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Faturamento previsto (hoje)</span>
+              <span class="fdash-fin-value" id="dash-fin-previsto">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Recebido (mês)</span>
+              <span class="fdash-fin-value" id="dash-receita-mes" style="color:#15803d">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">A receber (hoje)</span>
+              <span class="fdash-fin-value" id="dash-fin-areceber" style="color:#9A5B13">R$ 0,00</span>
+            </div>
+            <div class="fdash-fin-row">
+              <span class="fdash-fin-label">Ticket médio (mês)</span>
+              <span class="fdash-fin-value" id="dash-ticket-medio">R$ 0,00</span>
+            </div>
+            <div style="padding:14px 20px;border-top:1px solid var(--line-soft)">
+              <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="showPage('fluxo')">Ver financeiro →</button>
             </div>
           </div>
         </div>
@@ -1075,15 +1189,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="calendar-container">
         <div id="agenda-scroll" style="overflow:auto;max-height:480px">
-          <div class="prof-headers" id="agenda-prof-headers" style="position:sticky;top:0;z-index:2;grid-template-columns:70px repeat(6,minmax(120px,1fr))">
-            <div style="border-right:1px solid var(--gray-100)"></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#007BFF">AF</div><div style="font-size:11px;font-weight:600">Ana Flor</div></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#FF5722">ED</div><div style="font-size:11px;font-weight:600">Edu</div></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#8b5cf6">JE</div><div style="font-size:11px;font-weight:600">Jenny</div></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#ec4899">VI</div><div style="font-size:11px;font-weight:600">Vi</div></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#94a3b8">LA</div><div style="font-size:11px;font-weight:600">Lara</div></div>
-            <div class="prof-col"><div class="pro-avatar" style="background:#14b8a6">AN</div><div style="font-size:11px;font-weight:600">Angélica</div></div>
-          </div>
           <div id="agenda-grid"></div>
         </div>
       </div>
@@ -6088,7 +6193,7 @@ var colaboradores=[
   {nome:'Stephanie',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
   {nome:'Angélica da Silva Moreira',email:'',cargo:'Colaborador',comissao:'50%',status:'Inativo',cor:''},
   {nome:'Lara',email:'',cargo:'Colaborador',comissao:'50%',status:'Inativo',cor:''},
-  {nome:'Flora',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:''},
+  {nome:'Flora',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'#ec4899'},
 ];
 var COLABORADORES_PADRAO=[
   {nome:'Ana',email:'',cargo:'Proprietário(a)',comissao:'100%',status:'Ativo',cor:'pink'},
@@ -7173,10 +7278,15 @@ function atualizarBadgeNav(){
 }
 
 
+var _avatarPalette=['#007BFF','#FF5722','#8b5cf6','#ec4899','#14b8a6','#f59e0b'];
+function _avatarFallbackColor(nome){
+  var h=0;for(var i=0;i<(nome||'').length;i++)h=(h*31+nome.charCodeAt(i))>>>0;
+  return _avatarPalette[h%_avatarPalette.length];
+}
 function mkAvatar(c,size){
   size=size||36;
   var ini=initials(c.nome);
-  var bg=c.cor||'#111';
+  var bg=c.cor||_avatarFallbackColor(c.nome||'');
   if(c.foto){
     return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid #e5e5e5"><img src="'+c.foto+'" style="width:100%;height:100%;object-fit:cover"/></div>';
   }
@@ -7225,10 +7335,11 @@ async function renderEquipeHoje(){
   }
   el.innerHTML=ativos.map(function(c){
     var cnt=matchProf(c.nome);
-    return '<div style="display:flex;align-items:center;gap:9px">'
+    var ativo=cnt>0;
+    return '<div class="fdash-equipe-row">'
       +mkAvatar(c,32)
-      +'<div style="flex:1"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:#aaa">'+cnt+' atend.</div></div>'
-      +'<span style="width:8px;height:8px;background:'+(cnt>0?'#22c55e':'#d1d5db')+';border-radius:50%;flex-shrink:0"></span>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700">'+c.nome+'</div><div style="font-size:10px;color:var(--gray-400);margin-top:1px">'+(ativo?'Em atendimento hoje':'Sem atendimentos hoje')+'</div></div>'
+      +'<span class="fdash-equipe-badge" style="background:'+(ativo?'#dcfce7':'var(--gray-100)')+';color:'+(ativo?'#15803d':'var(--gray-500)')+'">'+cnt+' atend.</span>'
       +'</div>';
   }).join('');
 }
@@ -7273,6 +7384,7 @@ function renderColabs(){
 // ===== NAVEGAÇÃO DE DATA DA AGENDA =====
 var agendaDataAtual = new Date();
 var agendaDiaAtual = {}; var agendaDataKeyAtual=''; // agendamentos do dia atual — global para o popup
+var agendaMobileProfAtivo = null; // profissional selecionado nas abas mobile
 
 var diasSemana=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 var meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -7458,7 +7570,7 @@ function abrirAgendaPopup(key,dados,event){
   event.stopPropagation();
   var popup=document.createElement('div');
   popup.id='agenda-popup';
-  popup.style.cssText="position:fixed;z-index:800;background:#fff;border-radius:14px;padding:20px 20px 0;width:340px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid #e5e5e5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif";
+  popup.style.cssText="position:fixed;z-index:800;background:#fff;border-radius:14px;padding:20px 20px 0;width:340px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid #e5e5e5;font-family:var(--font-flora)";
   // Posicionar sempre visível — centro da tela ou próximo ao clique
   var popupH=Math.min(window.innerHeight*0.8, 700);
   var x=event.clientX+10;
@@ -8729,6 +8841,23 @@ function corTextoBlocoAgenda(cor){
   if(cor==='#facc15') return '#111111';
   return '#ffffff';
 }
+var _pastelPaletteAgenda=['#FBE7EC','#EFEAFB','#E7F1FB','#FBF0DC','#E6F4EA'];
+function _pastelByString(s){
+  var h=0;for(var i=0;i<(s||'').length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return _pastelPaletteAgenda[h%_pastelPaletteAgenda.length];
+}
+function corBlocoAgendaPastel(a){
+  if(!a) return '#F1F0EC';
+  var st=(a.status||'').toLowerCase();
+  var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
+  var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
+  // Dourado suave: sinal pago, atendimento pendente
+  if(sinalPago) return '#FBF0DC';
+  // Verde suave: concluído/comanda fechada
+  if(concluido) return '#E6F4EA';
+  // Agendado sem sinal: tom suave por serviço (consistente pro mesmo serviço)
+  return _pastelByString(a.servico||a.cliente||'');
+}
 
 function toggleBuscaAgenda(){
   var dd=document.getElementById('busca-agenda-dropdown');
@@ -8927,23 +9056,32 @@ function renderAgenda(){
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
     :agendaProfs.slice();
   if(filtro&&!profNames.length)profNames=[normalizeProfAgenda(filtro)];
-  var headers=document.getElementById('agenda-prof-headers');
-  if(headers){
-    headers.style.gridTemplateColumns='70px repeat('+profNames.length+',minmax(120px,1fr))';
-    headers.innerHTML='<div style="border-right:1px solid #f0f0f0"></div>'+
-    profNames.map(function(nome){
-      var colab=colaboradores.find(function(c){return c.nome.startsWith(nome.split(' ')[0]);});
-      var cor=colab&&colab.cor&&colab.cor!==''?colab.cor:profCores[nome]||'#111';
-      var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
-      var avatarHtml=colab&&colab.foto?
-        '<img src="'+colab.foto+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e5e5e5;display:block"/>':
-        '<div style="width:44px;height:44px;border-radius:50%;background:'+cor+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(255,255,255,.3)">'+ini+'</div>';
-      return '<div class="prof-col" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px">'+avatarHtml+'<div style="font-size:11px;font-weight:600;color:#333">'+nome.split(' ')[0]+'</div></div>';
-    }).join('');
-  }
   const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
   const profs=profNames;
+  if(!agendaMobileProfAtivo||profs.indexOf(agendaMobileProfAtivo)===-1)agendaMobileProfAtivo=profs[0]||null;
+  const countAtendimentosProf=(nome)=>{
+    var pn=normalizeProfAgenda(nome);
+    var cnt=0;
+    Object.keys(apptsDiaFull).forEach(function(k){
+      var a=apptsDiaFull[k];
+      if(!a||!a.cliente)return;
+      var ap=normalizeProfAgenda(a.prof||k.split(':')[0]);
+      if(ap===pn)cnt++;
+    });
+    return cnt;
+  };
+  const buildProfHeader=(nome)=>{
+    var colab=colaboradores.find(function(c){return c.nome.startsWith(nome.split(' ')[0]);});
+    var cor=colab&&colab.cor&&colab.cor!==''?colab.cor:profCores[nome]||'#111';
+    var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
+    var avatarHtml=colab&&colab.foto?
+      `<img src="${colab.foto}" style="width:42px;height:42px;border-radius:10px;object-fit:cover;border:2px solid #e5e5e5;display:block;flex-shrink:0"/>`:
+      `<div style="width:42px;height:42px;border-radius:10px;background:${cor};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(255,255,255,.3);flex-shrink:0">${ini}</div>`;
+    var cnt=countAtendimentosProf(nome);
+    var cntTxt=cnt+' atendimento'+(cnt===1?'':'s');
+    return `<div class="agenda-prof-header">${avatarHtml}<div style="min-width:0;overflow:hidden"><div style="font-size:16px;font-weight:800;color:#15803d;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nome.split(' ')[0]}</div><div style="font-size:11px;color:var(--gray-400);margin-top:2px;white-space:nowrap">${cntTxt}</div></div></div>`;
+  };
 
   // Data atual formatada para chave
   var d=agendaDataAtual;
@@ -9009,68 +9147,89 @@ function renderAgenda(){
     ?Object.keys(apptsDiaFull).some(function(k){var a=apptsDiaFull[k];return a&&profAgendaIgual(a.prof||k.split(':')[0],filtro);})
     :Object.keys(apptsDiaFull).length>0;
 
-  grid.innerHTML=hours.map(h=>`
-    <div style="display:grid;grid-template-columns:70px repeat(${profs.length},minmax(120px,1fr))">
-      <div class="time-label" style="${h==='12:00'?'border-top:1px dashed #e5e5e5':''}">${h}</div>
-      ${profs.map(p=>{
-        var slot=buscarApptAgenda(apptsDiaFull,p,h,filtro||null);
-        const a=slot?slot.a:null;
-        const key=slot?slot.key:(normalizeProfAgenda(p)+':'+h);
-        if(!a){
-          var pn=normalizeProfAgenda(p);
-          var bloqueado=false;
-          var bloqCliente='',bloqServico='',bloqFim='',bloqAppt=null,bloqFimMin=0;
-          for(var k2 in apptsDiaFull){
-            var a2=apptsDiaFull[k2];
-            if(!a2)continue;
-            var p2=normalizeProfAgenda(a2.prof||k2.split(':')[0]);
-            if(p2!==pn)continue;
-            var hIni=normalizarHoraAgenda(a2.hora||k2.split(':')[1]||'');
-            var durMin=parseInt((a2.duracao||'60 min').replace(/\D/g,''))||60;
-            var [hh,mm]=hIni.split(':').map(Number);
-            var inicioMin=hh*60+mm;
-            var fimMin=inicioMin+durMin;
-            var [hh2,mm2]=h.split(':').map(Number);
-            var slotMin=hh2*60+mm2;
-            if(slotMin>inicioMin&&slotMin<fimMin){
-              bloqueado=true;
-              bloqCliente=a2.cliente||'';
-              bloqServico=a2.servico||'';
-              bloqAppt=a2;
-              bloqFimMin=fimMin;
-              var fimH=Math.floor(fimMin/60).toString().padStart(2,'0')+':'+((fimMin%60).toString().padStart(2,'0'));
-              bloqFim=fimH;
-              break;
-            }
+  const timeAxisHtml='<div class="agenda-timeaxis"><div class="agenda-timeaxis-spacer"></div>'+
+    hours.map(h=>`<div class="time-label" style="${h==='12:00'?'border-top:1px dashed var(--gray-200)':''}">${h}</div>`).join('')+
+    '</div>';
+
+  const mobileTabsHtml=profs.length>1?('<div class="agenda-mobile-tabs">'+profs.map(p=>{
+    const ativo=p===agendaMobileProfAtivo;
+    return `<button class="agenda-mobile-tab${ativo?' active':''}" onclick="agendaSelecionarProfMobile('${p}')">${p.split(' ')[0]}</button>`;
+  }).join('')+'</div>'):'';
+
+  const profBlocksHtml=profs.map(p=>{
+    const rowsHtml=hours.map(h=>{
+      var slot=buscarApptAgenda(apptsDiaFull,p,h,filtro||null);
+      const a=slot?slot.a:null;
+      const key=slot?slot.key:(normalizeProfAgenda(p)+':'+h);
+      if(!a){
+        var pn=normalizeProfAgenda(p);
+        var bloqueado=false;
+        var bloqCliente='',bloqServico='',bloqFim='',bloqAppt=null,bloqFimMin=0;
+        for(var k2 in apptsDiaFull){
+          var a2=apptsDiaFull[k2];
+          if(!a2)continue;
+          var p2=normalizeProfAgenda(a2.prof||k2.split(':')[0]);
+          if(p2!==pn)continue;
+          var hIni=normalizarHoraAgenda(a2.hora||k2.split(':')[1]||'');
+          var durMin=parseInt((a2.duracao||'60 min').replace(/\D/g,''))||60;
+          var [hh,mm]=hIni.split(':').map(Number);
+          var inicioMin=hh*60+mm;
+          var fimMin=inicioMin+durMin;
+          var [hh2,mm2]=h.split(':').map(Number);
+          var slotMin=hh2*60+mm2;
+          if(slotMin>inicioMin&&slotMin<fimMin){
+            bloqueado=true;
+            bloqCliente=a2.cliente||'';
+            bloqServico=a2.servico||'';
+            bloqAppt=a2;
+            bloqFimMin=fimMin;
+            var fimH=Math.floor(fimMin/60).toString().padStart(2,'0')+':'+((fimMin%60).toString().padStart(2,'0'));
+            bloqFim=fimH;
+            break;
           }
-          if(bloqueado){
-            var [hh2b,mm2b]=h.split(':').map(Number);
-            var isUltimoBloq=(hh2b*60+mm2b+30)>=bloqFimMin;
-            var raioB=isUltimoBloq?'0 0 6px 6px':'0';
-            var insetB=isUltimoBloq?'0 2px 2px 2px':'-1px 2px 0 2px';
-            return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="position:relative;cursor:not-allowed;border-bottom:none"><div style="position:absolute;inset:${insetB};background:${corBlocoAgenda(bloqAppt)};border-radius:${raioB}"></div></div>`;
-          }
-          return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
         }
-        const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
-        const corBloco=corBlocoAgenda(a);
-        const corTexto=corTextoBlocoAgenda(corBloco);
-        return `<div class="slot occupied" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
-          <div style="position:absolute;inset:2px 2px -1px 2px;background:${corBloco};border-radius:6px 6px 0 0;padding:3px 6px;font-size:10px;font-weight:700;color:${corTexto};overflow:hidden;cursor:pointer">
-            <div style="line-height:1.2">${a.cliente}</div>
-            <div style="font-size:9px;opacity:.85">${a.servico}</div>
-            <div style="font-size:8px;margin-top:2px;display:flex;flex-direction:column;gap:2px">
-              ${a.sinal?`<span style="opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
-              ${!a.confirmado?`<div style="display:flex;align-items:center;gap:3px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.6;font-size:8px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:2px 5px;font-size:7px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
-              <span style="opacity:.55">${a.hora}</span>
-            </div>
+        if(bloqueado){
+          var [hh2b,mm2b]=h.split(':').map(Number);
+          var isUltimoBloq=(hh2b*60+mm2b+30)>=bloqFimMin;
+          var raioB=isUltimoBloq?'0 0 14px 14px':'0';
+          var insetB=isUltimoBloq?'0 6px 4px 6px':'0 6px 0 6px';
+          var slotStyleB=isUltimoBloq?'position:relative;cursor:not-allowed':'position:relative;cursor:not-allowed;border-bottom:none';
+          return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="${slotStyleB}"><div class="agenda-card" style="position:absolute;inset:${insetB};background:${corBlocoAgendaPastel(bloqAppt)};border-radius:${raioB}"></div></div>`;
+        }
+        return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
+      }
+      const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
+      const corBloco=corBlocoAgendaPastel(a);
+      const durMinCard=parseInt((a.duracao||'30 min').replace(/\D/g,''))||30;
+      const isMultiSlot=durMinCard>30;
+      const slotSpanCard=Math.max(1,Math.round(durMinCard/30));
+      const raioCard=isMultiSlot?'14px 14px 0 0':'14px';
+      const insetCard=isMultiSlot?'4px 6px 0 6px':`top:4px;left:6px;right:6px;min-height:${slotSpanCard*64-8}px`;
+      const posCard=isMultiSlot?`position:absolute;inset:${insetCard}`:`position:absolute;${insetCard}`;
+      const slotStyleCard=isMultiSlot?'position:relative;border-bottom:none':'position:relative';
+      return `<div class="slot occupied" style="${slotStyleCard}" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
+        <div class="agenda-card" style="${posCard};background:${corBloco};border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
+          <div style="line-height:1.25">${a.cliente}</div>
+          <div style="font-size:11px;opacity:.75;margin-top:1px">${a.servico}</div>
+          <div style="font-size:10px;margin-top:4px;display:flex;flex-direction:column;gap:3px">
+            ${a.sinal?`<span style="opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
+            ${!a.confirmado?`<div style="display:flex;align-items:center;gap:4px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:10px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
+            <span style="opacity:.5">${a.hora}</span>
           </div>
-        </div>`;
-      }).join('')}
-    </div>
-  `).join('')+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
+        </div>
+      </div>`;
+    }).join('');
+    const mobileActiveClass=p===agendaMobileProfAtivo?' mobile-active':'';
+    return `<div class="agenda-prof-block${mobileActiveClass}">${buildProfHeader(p)}<div class="agenda-prof-timeline">${rowsHtml}</div></div>`;
+  }).join('');
+
+  grid.innerHTML=mobileTabsHtml+`<div class="agenda-cols-wrap">${timeAxisHtml}${profBlocksHtml}</div>`+(temAgendamentos?'':'<div style="text-align:center;padding:32px;color:#aaa;font-size:13px;border-top:1px solid #f0f0f0">📅 Nenhum agendamento para este dia<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="abrirModalAgendar()">+ Novo agendamento</button></div>');
   agendaAtualizarLabel();
   if(document.getElementById('page-comandas')&&document.getElementById('page-comandas').classList.contains('active')&&typeof renderComandas==='function')renderComandas();
+}
+function agendaSelecionarProfMobile(nome){
+  agendaMobileProfAtivo=nome;
+  renderAgenda();
 }
 
 // Close modals on overlay click
@@ -11478,8 +11637,7 @@ function salvarEdicaoColab(idx){
   else{
     // Atualizar só o header da agenda sem re-renderizar tudo
     setTimeout(function(){
-      var h=document.getElementById('agenda-prof-headers');
-      if(h)renderAgenda();
+      if(document.getElementById('agenda-grid'))renderAgenda();
     },100);
   }
   document.getElementById('modal-editar-colab').classList.remove('open');
@@ -13871,6 +14029,44 @@ async function renderDashboardCards(){
     if(elTicket)elTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
     var elHeaderAtend=document.getElementById('dash-header-atend-hoje');
     if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
+
+    // ===== Faturamento Previsto, A Receber e Pendências (dados reais de hoje) =====
+    var faturamentoPrevisto=0, aReceberHoje=0, pendenciasConfirmacao=0;
+    if(diaDataHoje){
+      Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;}).forEach(function(k){
+        var a=diaDataHoje[k];
+        var totalServ=typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0));
+        faturamentoPrevisto+=totalServ;
+        var stCalc=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
+        if(stCalc!=='Paga'){
+          var sinalInfoCalc=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{abate:0};
+          aReceberHoje+=Math.max(0,totalServ-(sinalInfoCalc.abate||0));
+        }
+        if(!a.confirmado) pendenciasConfirmacao++;
+      });
+    }
+    var elFatPrev=document.getElementById('dash-faturamento-previsto');
+    var elAReceber=document.getElementById('dash-a-receber');
+    var elPendencias=document.getElementById('dash-pendencias');
+    var elFinPrev=document.getElementById('dash-fin-previsto');
+    var elFinAReceber=document.getElementById('dash-fin-areceber');
+    if(elFatPrev)elFatPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
+    if(elAReceber)elAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
+    if(elPendencias)elPendencias.textContent=pendenciasConfirmacao;
+    if(elFinPrev)elFinPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
+    if(elFinAReceber)elFinAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
+    var elAtencaoTexto=document.getElementById('dash-atencao-texto');
+    var elAtencaoIcon=document.getElementById('dash-atencao-icon');
+    if(elAtencaoTexto){
+      if(pendenciasConfirmacao>0){
+        elAtencaoTexto.innerHTML='<b>'+pendenciasConfirmacao+'</b> cliente'+(pendenciasConfirmacao!==1?'s':'')+' ainda '+(pendenciasConfirmacao!==1?'não confirmaram':'não confirmou')+' o atendimento de hoje.';
+        if(elAtencaoIcon){elAtencaoIcon.style.background='#FEF3E2';elAtencaoIcon.style.color='#9A5B13';elAtencaoIcon.textContent='🔔';}
+      } else {
+        elAtencaoTexto.innerHTML='Tudo certo por aqui! Nenhuma pendência para hoje.';
+        if(elAtencaoIcon){elAtencaoIcon.style.background='#EAF7EE';elAtencaoIcon.style.color='#15803d';elAtencaoIcon.textContent='✅';}
+      }
+    }
+
     var tbodyAtend=document.getElementById('dash-atend-hoje-tbody');
     if(tbodyAtend){
       var linhasTabela=[];
@@ -13913,11 +14109,11 @@ async function renderDashboardCards(){
     var elBadge=document.getElementById('dash-badge-caixa');
     if(elBadge){
       if(cxAberto){
-        elBadge.style.background='rgba(34,197,94,.2)';elBadge.style.border='1px solid rgba(34,197,94,.4)';elBadge.style.color='#4ade80';
-        elBadge.innerHTML='<span style="width:6px;height:6px;background:#4ade80;border-radius:50%;display:inline-block"></span>Caixa Aberto';
+        elBadge.style.background='#EAF7EE';elBadge.style.border='none';elBadge.style.color='#15803d';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block"></span>Caixa Aberto';
       } else {
-        elBadge.style.background='rgba(239,68,68,.2)';elBadge.style.border='1px solid rgba(239,68,68,.4)';elBadge.style.color='#f87171';
-        elBadge.innerHTML='<span style="width:6px;height:6px;background:#f87171;border-radius:50%;display:inline-block"></span>Caixa Fechado';
+        elBadge.style.background='#FBEAEA';elBadge.style.border='none';elBadge.style.color='#b91c1c';
+        elBadge.innerHTML='<span style="width:6px;height:6px;background:#ef4444;border-radius:50%;display:inline-block"></span>Caixa Fechado';
       }
     }
     var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
@@ -13976,13 +14172,11 @@ async function renderDashProximos(){
       }
     }catch(e){}
   }
-  if(!items.length){el.innerHTML='<div style="font-size:11px;color:#aaa;text-align:center;padding:8px 0">Nenhum agendamento próximo</div>';return;}
+  if(!items.length){el.innerHTML='<div class="fdash-empty">Nenhum agendamento próximo. 🌿</div>';return;}
   // Agrupar por dia
-  var grupos={};
-  items.forEach(function(i){if(!grupos[i.dk])grupos[i.dk]=[];grupos[i.dk].push(i);});
   var diasNome=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   var mesesNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  var LIMITE=5;
+  var LIMITE=8;
   var totalItens=items.length;
   var itensMostrar=items.slice(0,LIMITE);
   // Reagrupar apenas os itens que serão exibidos
@@ -13994,15 +14188,17 @@ async function renderDashProximos(){
     var dt=lista[0].data;
     var diff=Math.round((new Date(dt.getFullYear(),dt.getMonth(),dt.getDate())-new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()))/(1000*60*60*24));
     var label=diff===0?'Hoje':diff===1?'Amanhã':diasNome[dt.getDay()]+', '+dt.getDate()+' '+mesesNome[dt.getMonth()];
-    html+='<div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:4px">'+label+'</div>';
-    lista.forEach(function(a,i){
-      html+='<div style="'+(i>0?'border-top:1px solid #f5f5f5;padding-top:8px;':'')+' display:flex;align-items:center;justify-content:space-between">'
-        +'<div><div style="font-size:12px;font-weight:700">'+a.cliente+'</div><div style="font-size:10px;color:#888">'+a.servico+(a.prof?' · '+a.prof:'')+'</div></div>'
-        +'<span style="background:#f0f0f0;color:#555;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">'+a.hora+'</span>'
+    html+='<div class="fdash-pill-day">'+label+'</div>';
+    lista.forEach(function(a){
+      html+='<div class="fdash-appt-row">'
+        +'<div class="fdash-appt-time">'+a.hora+'</div>'
+        +'<div class="fdash-appt-avatar">'+(typeof initials==='function'?initials(a.cliente):a.cliente.slice(0,2).toUpperCase())+'</div>'
+        +'<div class="fdash-appt-info"><div class="fdash-appt-client">'+a.cliente+'</div><div class="fdash-appt-metaline">'+a.servico+(a.prof?' · '+a.prof:'')+'</div></div>'
+        +'<span class="fdash-pill fdash-pill-gray">'+(a.prof||'')+'</span>'
         +'</div>';
     });
   });
-  if(totalItens>LIMITE)html+='<div style="font-size:10px;color:#aaa;text-align:center;margin-top:6px">+'+(totalItens-LIMITE)+' mais agendamentos</div>';
+  if(totalItens>LIMITE)html+='<div style="font-size:11px;color:var(--gray-400);text-align:center;padding:10px 20px">+'+(totalItens-LIMITE)+' mais agendamentos — <a href="#" onclick="showPage(\'agenda\');return false" style="color:var(--ink);font-weight:700;text-decoration:none">ver agenda completa</a></div>';
   el.innerHTML=html;
 }
 function renderHistoricoCaixa(){
