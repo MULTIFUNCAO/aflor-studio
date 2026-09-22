@@ -6767,9 +6767,16 @@ async function carregarMatriculasDoAlunoSupa(alunoId){
 function renderFichaAluno(alunoId){
   var wrap=document.getElementById('ficha-aluno-corpo');
   if(!wrap)return;
+  var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
+  var acessoHtml='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-bottom:14px">'
+    +'<div style="font-size:12.5px;color:#555">'
+    +(aluno&&aluno.auth_user_id?'🔑 Acesso ao Portal do Aluno já criado':'🔒 Aluno ainda não tem acesso ao Portal')
+    +'</div>'
+    +(aluno&&!aluno.auth_user_id?'<button class="btn btn-outline btn-sm" onclick="criarAcessoAluno(\''+alunoId+'\')" id="btn-criar-acesso-aluno">Criar Acesso</button>':'')
+    +'</div>';
   var matriculasDoAluno=cursoMatriculas.filter(function(m){return m.aluno_id===alunoId;});
-  if(!matriculasDoAluno.length){wrap.innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhuma matrícula ainda.</div>';return;}
-  wrap.innerHTML=matriculasDoAluno.map(function(m){
+  if(!matriculasDoAluno.length){wrap.innerHTML=acessoHtml+'<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhuma matrícula ainda.</div>';return;}
+  wrap.innerHTML=acessoHtml+matriculasDoAluno.map(function(m){
     var nomeCursoCombo=m.curso_id
       ?((cursos.find(function(c){return c.id===m.curso_id;})||{}).nome||'Curso removido')
       :((cursoCombos.find(function(c){return c.id===m.combo_id;})||{}).nome||'Combo removido');
@@ -6826,6 +6833,34 @@ async function darBaixaParcela(idxP){
     renderCursosDashCards();
     showAlert('Parcela paga e lançada no Fluxo de Caixa!');
   }catch(e){console.log('err dar baixa parcela',e);alert('Erro ao dar baixa na parcela.');}
+}
+async function criarAcessoAluno(alunoId){
+  var btn=document.getElementById('btn-criar-acesso-aluno');
+  if(btn){btn.disabled=true;btn.textContent='Criando...';}
+  try{
+    var sessao=await supa.auth.getSession();
+    var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
+    var resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-aluno',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)},
+      body:JSON.stringify({aluno_id:alunoId})
+    });
+    var data=await resp.json();
+    if(!resp.ok){
+      console.log('err criar acesso aluno',data);
+      alert('Não foi possível criar o acesso: '+(data&&data.error?data.error:'erro desconhecido'));
+      if(btn){btn.disabled=false;btn.textContent='Criar Acesso';}
+      return;
+    }
+    var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
+    if(aluno)aluno.auth_user_id=data.auth_user_id;
+    renderFichaAluno(alunoId);
+    showAlert('Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+  }catch(e){
+    console.log('err criar acesso aluno',e);
+    alert('Erro ao criar acesso do aluno.');
+    if(btn){btn.disabled=false;btn.textContent='Criar Acesso';}
+  }
 }
 async function carregarMatriculasSupa(){
   try{
@@ -15459,6 +15494,19 @@ async function sincronizarMovimentoCaixaSupa(mov){
 async function sincronizarRemocaoMovimentoCaixaSupa(supaId){
   try{
     if(!supa||!window.SALAO_ID||!supaId)return;
+    var respMov=await supa.from('caixa_movimentos').select('*').eq('id',supaId).eq('salao_id',window.SALAO_ID);
+    var movRemovido=(respMov.data||[])[0];
+    if(movRemovido){
+      try{
+        await supa.from('log_operacoes_criticas').insert([{
+          salao_id:window.SALAO_ID,
+          tabela:'caixa_movimentos',
+          operacao:'delete_movimento_avulso',
+          quantidade_linhas:1,
+          dados_antes:[movRemovido]
+        }]);
+      }catch(eLog){console.log('err gravar log_operacoes_criticas',eLog);}
+    }
     await supa.from('caixa_movimentos').delete().eq('id',supaId).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err remover mov caixa supa',e);}
 }
@@ -15494,8 +15542,24 @@ async function sincronizarFechamentoCaixaSupa(){
           status:'confirmado'
         };
       });
-      var rIns=await supa.from('fluxo_lancamentos').insert(lancs);
-      if(rIns.error)console.log('err inserir fluxo_lancamentos no fechamento',rIns.error);
+      // Grava e CONFIRMA antes de apagar: se a gravação falhar ou vier
+      // incompleta, aborta o fechamento inteiro (não zera caixa_estado
+      // nem apaga caixa_movimentos) para nunca perder dados financeiros.
+      var rIns=await supa.from('fluxo_lancamentos').insert(lancs).select('id');
+      if(rIns.error||!rIns.data||rIns.data.length!==lancs.length){
+        console.log('err inserir fluxo_lancamentos no fechamento - abortando',rIns.error);
+        if(typeof showAlert==='function')showAlert('⚠️ Não foi possível gravar os lançamentos no Fluxo Financeiro. O caixa NÃO foi fechado para evitar perda de dados — tente novamente.');
+        return;
+      }
+      try{
+        await supa.from('log_operacoes_criticas').insert([{
+          salao_id:window.SALAO_ID,
+          tabela:'caixa_movimentos',
+          operacao:'delete_fechamento_caixa',
+          quantidade_linhas:movs.length,
+          dados_antes:movs
+        }]);
+      }catch(eLog){console.log('err gravar log_operacoes_criticas',eLog);}
     }
     await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
     await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
