@@ -1434,7 +1434,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div id="caixa-historico-section" style="margin-top:24px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:15px;font-weight:800;color:#111">📋 Histórico de Caixas</div>
-        <button onclick="limparHistoricoCaixa()" style="background:none;border:1px solid #ddd;border-radius:7px;padding:5px 10px;font-size:11px;color:#888;cursor:pointer">Limpar tudo</button>
       </div>
       <div id="caixa-historico-lista">
         <div style="text-align:center;padding:24px;color:#aaa;font-size:13px">Nenhum fechamento registrado ainda.</div>
@@ -11674,7 +11673,59 @@ async function carregarFluxoLancamentosSupa(){
     });
     renderFluxo();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
+    if(typeof reconstruirHistoricoCaixasDeFluxo==='function'){
+      reconstruirHistoricoCaixasDeFluxo();
+      if(typeof renderHistoricoCaixa==='function')renderHistoricoCaixa();
+      if(typeof caixaNavIdx!=='undefined'&&caixaNavIdx<=0&&typeof renderCaixaNavData==='function')renderCaixaNavData();
+    }
   }catch(e){console.error('Erro ao carregar lançamentos:',e);}
+}
+// Reconstrói o painel "Histórico de Caixas" (Controle de Caixa) a partir de fluxo_lancamentos,
+// agrupado por dia — substitui a leitura antiga de localStorage (aflor_historico_caixas),
+// que só existia no navegador que fez o fechamento e não refletia o banco.
+function reconstruirHistoricoCaixasDeFluxo(){
+  if(typeof fluxoLancamentos==='undefined'||!fluxoLancamentos)return;
+  var hj=new Date();
+  var hjFmt=hj.getDate().toString().padStart(2,'0')+'/'+(hj.getMonth()+1).toString().padStart(2,'0')+'/'+hj.getFullYear();
+  var porDia={};
+  var ordemDias=[];
+  fluxoLancamentos.forEach(function(l){
+    if(l.data===hjFmt)return; // hoje é o caixa ao vivo (caixaState), não faz parte do histórico
+    if(!porDia[l.data]){porDia[l.data]=[];ordemDias.push(l.data);}
+    porDia[l.data].push(l);
+  });
+  ordemDias.sort(function(a,b){
+    var da=fluxoParseData(a),db=fluxoParseData(b);
+    if(!da||!db)return 0;
+    return db-da;
+  });
+  historicoCaixas=ordemDias.map(function(dataStr){
+    var lancs=porDia[dataStr];
+    var dataObj=fluxoParseData(dataStr);
+    var movimentos=lancs.map(function(l){
+      return{
+        id:l.id,
+        tipo:l.tipo==='receita'?'entrada':'saida',
+        categoria:l.cat||'',
+        descricao:l.desc||'',
+        valor:parseFloat(l.val)||0,
+        forma:(l.forma||'').toLowerCase(),
+        hora:'',
+        profissional:l.prof||''
+      };
+    });
+    var entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
+    var saidas=movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
+    return{
+      data:dataObj?dataObj.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}):dataStr,
+      hora:'',
+      entradas:entradas,
+      saidas:saidas,
+      troco:0,
+      saldo:entradas-saidas,
+      movimentos:movimentos
+    };
+  });
 }
 function fluxoNavMes(dir){
   if(dir===0){
@@ -13719,7 +13770,14 @@ function confirmarMovimento(){
       movEd.tipo=caixaState.tipoAtual;movEd.categoria=cat;movEd.descricao=desc;movEd.valor=valor;movEd.forma=forma;movEd.profissional=profissional;
       recalcularRegistroHistorico(regEd);
       historicoCaixas[idxHistEd]=regEd;
-      persistirHistoricoCaixas();
+      if(movEd.id&&supa){
+        supa.from('fluxo_lancamentos').update({
+          categoria:cat,descricao:desc,valor:valor,forma_pagamento:forma,
+          tipo:(caixaState.tipoAtual==='entrada'?'receita':'despesa')
+        }).eq('id',movEd.id).then(function(r){
+          if(r.error)console.log('err atualizar lancamento historico',r.error);
+        }).catch(function(e){console.log('err atualizar lancamento historico',e);});
+      }
       historicoDetalheAberto=idxHistEd;
       fecharModalMovimento();
       renderHistoricoCaixa();
@@ -13736,24 +13794,23 @@ function confirmarMovimento(){
     showAlert('Lançamento atualizado!');
     return;
   }
-  var agora=new Date();
-  var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
   if(caixaHistMovIdx>=0){
     var idxHist=caixaHistMovIdx;
     var reg=historicoCaixas[idxHist];
     if(!reg){showAlert('Registro do dia não encontrado.');return;}
-    if(!reg.movimentos)reg.movimentos=[];
-    var maxHistId=0;
-    reg.movimentos.forEach(function(m){if(m.id&&m.id>maxHistId)maxHistId=m.id;});
-    var movHist={id:maxHistId+1,tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,hora:horaStr,profissional:profissional};
-    reg.movimentos.push(movHist);
-    recalcularRegistroHistorico(reg);
-    historicoCaixas[idxHist]=reg;
-    persistirHistoricoCaixas();
-    historicoDetalheAberto=idxHist;
+    var dmHist=String(reg.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if(!dmHist||!supa){showAlert('Não foi possível identificar a data deste dia.');return;}
+    var dataIsoHist=dmHist[3]+'-'+dmHist[2]+'-'+dmHist[1];
+    var tipoLancHist=caixaState.tipoAtual==='entrada'?'receita':'despesa';
     fecharModalMovimento();
-    renderHistoricoCaixa();
-    if(caixaNavIdx<0)renderCaixaNavData();
+    supa.from('fluxo_lancamentos').insert({
+      salao_id:window.SALAO_ID,data:dataIsoHist,descricao:desc,categoria:cat,
+      forma_pagamento:forma,valor:valor,tipo:tipoLancHist,status:'confirmado'
+    }).then(function(r){
+      if(r.error){console.log('err adicionar lancamento historico',r.error);showAlert('Erro ao salvar. Tente novamente.');return;}
+      historicoDetalheAberto=idxHist;
+      if(typeof carregarFluxoLancamentosSupa==='function')carregarFluxoLancamentosSupa();
+    }).catch(function(e){console.log('err adicionar lancamento historico',e);});
     showAlert(caixaState.tipoAtual==='entrada'?'Entrada adicionada ao histórico!':'Saída adicionada ao histórico!');
     return;
   }
@@ -13798,7 +13855,6 @@ async function fecharCaixaAutomatico(){
   var hojeStr=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
   // Guard: não fechar duas vezes no mesmo dia
   if(localStorage.getItem('aflor_auto_fechamento_data')===hojeStr)return;
-  try{salvarHistoricoCaixa(caixaState.movimentos,caixaState.troco);}catch(e){console.log('err auto fechar historico',e);}
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;caixaNavIdx=0;
   localStorage.setItem('aflor_auto_fechamento_data',hojeStr);
   var elFechado=document.getElementById('caixa-fechado-view');
@@ -13807,9 +13863,10 @@ async function fecharCaixaAutomatico(){
   if(elFechado)elFechado.style.display='block';
   if(elAberto)elAberto.style.display='none';
   if(elFechamento)elFechamento.style.display='none';
-  renderHistoricoCaixa();
   if(typeof renderDashboardCards==='function')renderDashboardCards();
-  sincronizarFechamentoCaixaSupa().catch(function(e){console.log(e);});
+  sincronizarFechamentoCaixaSupa().then(function(){
+    if(typeof carregarFluxoLancamentosSupa==='function')carregarFluxoLancamentosSupa();
+  }).catch(function(e){console.log(e);});
   console.log('[Caixa] Fechamento automático executado em',hojeStr);
 }
 
@@ -13835,7 +13892,7 @@ setInterval(function(){
   var abStr=caixaState.horaAbertura.getDate()+'/'+(caixaState.horaAbertura.getMonth()+1)+'/'+caixaState.horaAbertura.getFullYear();
   if(abStr!==hojeStr)fecharCaixaAutomatico();
 },60000);
-var historicoCaixas = JSON.parse(localStorage.getItem('aflor_historico_caixas')||'[]');
+var historicoCaixas = []; // populado a partir de fluxo_lancamentos (ver reconstruirHistoricoCaixasDeFluxo), não mais do localStorage
 var historicoDetalheAberto=-1;
 var caixaNavIdx = -1; // -1 = hoje (caixa atual)
 
@@ -13929,24 +13986,6 @@ function renderCaixaDiaHistorico(reg){
 }
 
 
-function salvarHistoricoCaixa(movimentos, troco){
-  var entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
-  var saidas=movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
-  var saldo=troco+entradas-saidas;
-  var agora=new Date();
-  var registro={
-    data:agora.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}),
-    hora:agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0'),
-    entradas:entradas,
-    saidas:saidas,
-    troco:troco,
-    saldo:saldo,
-    movimentos:movimentos.slice()
-  };
-  historicoCaixas.unshift(registro);
-  if(historicoCaixas.length>30)historicoCaixas=historicoCaixas.slice(0,30);
-  persistirHistoricoCaixas();
-}
 function recalcularRegistroHistorico(reg){
   var movimentos=reg.movimentos||[];
   reg.entradas=movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(parseFloat(m.valor)||0);},0);
@@ -13954,20 +13993,22 @@ function recalcularRegistroHistorico(reg){
   reg.saldo=(parseFloat(reg.troco)||0)+reg.entradas-reg.saidas;
   return reg;
 }
-function persistirHistoricoCaixas(){
-  try{localStorage.setItem('aflor_historico_caixas',JSON.stringify(historicoCaixas));}catch(e){console.log('err persistir historico caixa',e);}
-}
 function removerMovimentoHistorico(histIdx,movIdx,ev){
   if(ev){ev.stopPropagation();}
   var reg=historicoCaixas[histIdx];
   if(!reg||!reg.movimentos||movIdx<0||movIdx>=reg.movimentos.length)return;
+  var movRem=reg.movimentos[movIdx];
   reg.movimentos.splice(movIdx,1);
   recalcularRegistroHistorico(reg);
   historicoCaixas[histIdx]=reg;
-  persistirHistoricoCaixas();
   historicoDetalheAberto=histIdx;
   renderHistoricoCaixa();
   if(caixaNavIdx<0)renderCaixaNavData();
+  if(movRem&&movRem.id&&supa){
+    supa.from('fluxo_lancamentos').delete().eq('id',movRem.id).then(function(r){
+      if(r.error)console.log('err remover lancamento historico',r.error);
+    }).catch(function(e){console.log('err remover lancamento historico',e);});
+  }
 }
 
 async function renderDashboardCards(){
@@ -14271,16 +14312,7 @@ function toggleHistoricoDetalhe(i){
   }
 }
 
-function limparHistoricoCaixa(){
-  if(confirm('Limpar todo o histórico de caixas?')){
-    historicoCaixas=[];
-    localStorage.removeItem('aflor_historico_caixas');
-    renderHistoricoCaixa();
-  }
-}
-
 function confirmarFechamentoCaixa(){
-  try{salvarHistoricoCaixa(caixaState.movimentos,caixaState.troco);}catch(e){console.log('err salvar historico caixa',e);}
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;
   caixaNavIdx=0;
   var elTrocoInput=document.getElementById('caixa-troco-input');
@@ -14291,10 +14323,11 @@ function confirmarFechamentoCaixa(){
   if(elFechamento)elFechamento.style.display='none';
   if(elAberto)elAberto.style.display='none';
   if(elFechado)elFechado.style.display='block';
-  renderHistoricoCaixa();
   if(typeof renderDashboardCards==='function')renderDashboardCards();
   showAlert('Caixa fechado!');
-  sincronizarFechamentoCaixaSupa().catch(function(e){console.log(e);});
+  sincronizarFechamentoCaixaSupa().then(function(){
+    if(typeof carregarFluxoLancamentosSupa==='function')carregarFluxoLancamentosSupa();
+  }).catch(function(e){console.log(e);});
 }
 
 
