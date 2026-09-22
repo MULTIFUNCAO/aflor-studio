@@ -423,6 +423,24 @@ CREATE INDEX IF NOT EXISTS idx_curso_notificacoes_destinatario ON curso_notifica
 -- 8. my_aluno_id() — equivalente de my_salao_id() para a sessão do aluno
 -- =====================================================================
 
+-- check_function_bodies off: quem aplica esta migration (cursos_migrator) não tem
+-- USAGE no schema `auth`, então o Postgres não consegue validar a referência a
+-- auth.uid() no CREATE FUNCTION (mesmo sendo SECURITY DEFINER, a validação de corpo
+-- roda com o privilégio de quem cria, não de quem executa). Desligar a validação
+-- aqui é seguro e não afeta o comportamento em runtime da função.
+SET check_function_bodies = off;
+
+-- Wrapper de auth.uid(): existe só para que as policies abaixo (que também não
+-- conseguem referenciar auth.* diretamente, pelo mesmo motivo) possam comparar
+-- contra um identificador de sessão sem precisar de USAGE no schema auth.
+CREATE OR REPLACE FUNCTION public.my_auth_uid()
+RETURNS uuid
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT auth.uid();
+$$;
+
 CREATE OR REPLACE FUNCTION public.my_aluno_id()
 RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER
@@ -431,6 +449,9 @@ AS $$
   SELECT id FROM curso_alunos WHERE auth_user_id = auth.uid() LIMIT 1;
 $$;
 
+SET check_function_bodies = on;
+
+GRANT EXECUTE ON FUNCTION public.my_auth_uid() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.my_aluno_id() TO authenticated;
 
 -- =====================================================================
@@ -563,7 +584,7 @@ CREATE POLICY "curso_turma_aulas_select_aluno" ON curso_turma_aulas FOR SELECT T
 -- Identidade/matrícula/financeiro/presença/certificados: SELECT read-only da própria linha.
 DROP POLICY IF EXISTS "curso_alunos_select_proprio" ON curso_alunos;
 CREATE POLICY "curso_alunos_select_proprio" ON curso_alunos FOR SELECT TO authenticated
-  USING (auth_user_id = auth.uid());
+  USING (auth_user_id = my_auth_uid());
 
 DROP POLICY IF EXISTS "curso_matriculas_select_aluno" ON curso_matriculas;
 CREATE POLICY "curso_matriculas_select_aluno" ON curso_matriculas FOR SELECT TO authenticated
