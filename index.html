@@ -850,6 +850,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
   </div>
   <div class="sidebar-section">
+    <div class="sidebar-section-label">Cursos</div>
+    <div class="nav-item" onclick="showPage('cursos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/></svg>
+      Cursos
+    </div>
+  </div>
+  <div class="sidebar-section">
     <div class="sidebar-section-label">🧠 Inteligência</div>
     <div class="nav-item" onclick="showPage('ia')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1564,6 +1571,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-servico')">+ Novo Serviço</button>
       </div>
       <div class="table-card" id="servicos-list"></div>
+    </div>
+
+    <!-- CURSOS -->
+    <div class="page" id="page-cursos">
+      <div class="cards-grid" id="cursos-dash-cards"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:20px 0 16px">
+        <button class="btn btn-primary btn-sm" id="cursos-tab-cursos" onclick="cursosSetTab('cursos')">🎓 Cursos</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-combos" onclick="cursosSetTab('combos')">🧩 Combos</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
+      </div>
+      <div class="table-card" id="cursos-list"></div>
+      <div class="table-card" id="combos-list" style="display:none"></div>
     </div>
 
     <!-- PRODUTOS -->
@@ -4350,6 +4370,187 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-curso">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🎓 Novo Curso</span>
+      <button class="modal-close" onclick="closeModal('modal-curso')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Foto/Capa</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img id="curso-capa-preview" style="width:56px;height:56px;border-radius:10px;object-fit:cover;display:none;background:var(--gray-100)"/>
+          <label for="curso-capa-input" class="btn btn-outline btn-sm" style="cursor:pointer">Enviar imagem</label>
+          <input type="file" id="curso-capa-input" accept="image/*" style="display:none" onchange="uploadCapaCurso(this,'curso')"/>
+        </div>
+        <input type="hidden" id="curso-capa-url"/>
+      </div>
+      <div class="form-group full"><label>Nome do Curso *</label><input id="curso-nome" placeholder="Ex: Design de Sobrancelhas"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="curso-descricao" placeholder="Sobre o que é o curso..."></textarea></div>
+      <div class="form-group"><label>Categoria</label><input id="curso-categoria" placeholder="Ex: Sobrancelhas"/></div>
+      <div class="form-group"><label>Modalidade</label>
+        <select id="curso-modalidade"><option value="presencial">Presencial</option><option value="online">Online</option><option value="hibrido">Híbrido</option></select>
+      </div>
+      <div class="form-group"><label>Carga Horária (h)</label><input type="number" id="curso-carga-horas" min="0" step="0.5"/></div>
+      <div class="form-group"><label>Qtd. de Dias</label><input type="number" id="curso-carga-dias" min="0"/></div>
+      <div class="form-group"><label>Qtd. de Aulas</label><input type="number" id="curso-aulas-totais" min="0"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="curso-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      </div>
+      <div class="form-group"><label>Valor Normal (R$)</label><input type="number" id="curso-valor-normal" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Valor Promocional (R$)</label><input type="number" id="curso-valor-promo" min="0" step="0.01"/></div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="curso-certificado" onchange="toggleCursoCertCampos('curso')" style="width:auto"/> Emite certificado ao concluir</label>
+      </div>
+      <div id="curso-cert-campos" style="display:none" class="form-group full">
+        <div class="form-grid">
+          <div class="form-group"><label>Presença mínima (%)</label><input type="number" id="curso-cert-presenca" min="0" max="100" value="75"/></div>
+          <div class="form-group" style="justify-content:flex-end;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;font-size:12.5px"><input type="checkbox" id="curso-cert-provas" style="width:auto"/> Exige provas aprovadas</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;font-size:12.5px"><input type="checkbox" id="curso-cert-exercicios" style="width:auto"/> Exige exercícios concluídos</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCurso()">✅ Salvar Curso</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-combo">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🧩 Novo Combo</span>
+      <button class="modal-close" onclick="closeModal('modal-combo')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Foto/Capa</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img id="combo-capa-preview" style="width:56px;height:56px;border-radius:10px;object-fit:cover;display:none;background:var(--gray-100)"/>
+          <label for="combo-capa-input" class="btn btn-outline btn-sm" style="cursor:pointer">Enviar imagem</label>
+          <input type="file" id="combo-capa-input" accept="image/*" style="display:none" onchange="uploadCapaCurso(this,'combo')"/>
+        </div>
+        <input type="hidden" id="combo-capa-url"/>
+      </div>
+      <div class="form-group full"><label>Nome do Combo *</label><input id="combo-nome" placeholder="Ex: Combo Beauty 3 em 1"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="combo-descricao"></textarea></div>
+      <div class="form-group"><label>Valor Normal (R$)</label><input type="number" id="combo-valor-normal" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Valor Promocional (R$)</label><input type="number" id="combo-valor-promo" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="combo-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      </div>
+      <div class="form-group full">
+        <label>Cursos incluídos *</label>
+        <div id="combo-cursos-checklist" style="max-height:140px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:8px;padding:8px 12px"></div>
+      </div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="combo-certificado" onchange="toggleCursoCertCampos('combo')" style="width:auto"/> Emite certificado ao concluir</label>
+      </div>
+      <div id="combo-cert-campos" style="display:none" class="form-group full">
+        <div class="form-grid">
+          <div class="form-group"><label>Presença mínima (%)</label><input type="number" id="combo-cert-presenca" min="0" max="100" value="75"/></div>
+          <div class="form-group" style="justify-content:flex-end;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;font-size:12.5px"><input type="checkbox" id="combo-cert-provas" style="width:auto"/> Exige provas aprovadas</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;font-size:12.5px"><input type="checkbox" id="combo-cert-exercicios" style="width:auto"/> Exige exercícios concluídos</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-combo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCombo()">✅ Salvar Combo</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-conteudo">
+  <div class="modal" style="width:640px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title">📚 Conteúdo</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-conteudo')">✕</button>
+    </div>
+    <div id="curso-conteudo-lista" style="max-height:50vh;overflow-y:auto;margin-bottom:14px"></div>
+    <button class="btn btn-outline btn-sm" onclick="abrirNovoModulo()" style="width:100%">+ Novo Módulo</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-modulo">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <span class="modal-title">+ Novo Módulo</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-modulo')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome do Módulo *</label><input id="modulo-nome" placeholder="Ex: Módulo 1 — Fundamentos"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="modulo-descricao"></textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-modulo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarModulo()">✅ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-aula">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">+ Nova Aula</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-aula')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título da Aula *</label><input id="aula-titulo" placeholder="Ex: Aula 1 — Visagismo"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="aula-descricao"></textarea></div>
+      <div class="form-group"><label>Tipo de Conteúdo</label>
+        <select id="aula-tipo" onchange="toggleAulaTipoCampos()">
+          <option value="texto">Texto</option><option value="video">Vídeo</option><option value="misto">Vídeo + Texto</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Duração (min)</label><input type="number" id="aula-duracao" min="0"/></div>
+      <div class="form-group full" id="aula-video-area" style="display:none"><label>URL do Vídeo</label><input id="aula-video-url" placeholder="https://..."/></div>
+      <div class="form-group full" id="aula-texto-area"><label>Conteúdo em Texto</label><textarea id="aula-texto" style="min-height:100px"></textarea></div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="aula-obrigatoria" checked style="width:auto"/> Aula obrigatória</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-aula')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarAula()">✅ Salvar Aula</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-material">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <span class="modal-title">+ Novo Material</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-material')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Arquivo (PDF) *</label>
+        <input type="file" id="material-arquivo-input" accept="application/pdf" onchange="uploadArquivoMaterial(this)"/>
+        <div id="material-arquivo-status" style="font-size:12px;color:#888;margin-top:4px">Nenhum arquivo enviado ainda.</div>
+        <input type="hidden" id="material-arquivo-url"/>
+      </div>
+      <div class="form-group full"><label>Nome do Material *</label><input id="material-nome" placeholder="Ex: Apostila — Design de Sobrancelhas"/></div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="material-tipo"><option value="apostila">Apostila</option><option value="pdf">PDF</option><option value="anexo">Anexo</option></select>
+      </div>
+      <div class="form-group" style="justify-content:flex-end">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="material-permite-download" checked style="width:auto"/> Permitir download</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-material')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMaterial()">✅ Salvar Material</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-despesa">
   <div class="modal">
     <div class="modal-header">
@@ -5013,11 +5214,765 @@ async function seedServicosPadraoSupa(){
   }catch(e){console.log('err seed servicos padrao',e);}
 }
 
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function modalidadeLabel(m){return {presencial:'Presencial',online:'Online',hibrido:'Híbrido'}[m]||m||'—';}
+function cursoStatusBadge(status){return status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>';}
+function toggleCursoCertCampos(prefixo){
+  var chk=document.getElementById(prefixo+'-certificado');
+  var area=document.getElementById(prefixo+'-cert-campos');
+  if(chk&&area)area.style.display=chk.checked?'':'none';
+}
+
+// ===== CURSOS: dashboard =====
+async function renderCursosDashCards(){
+  var el=document.getElementById('cursos-dash-cards');
+  if(!el)return;
+  var cursosAtivos=cursos.filter(function(c){return c.status==='ativo';}).length;
+  var combosAtivos=cursoCombos.filter(function(c){return c.status==='ativo';}).length;
+  var stats={turmasAndamento:0,proximasTurmas:0,alunosMatriculados:0,vagasDisponiveis:0,cursosConcluidos:0,valoresAReceber:0,proximasAulas:0};
+  try{
+    if(supa&&window.SALAO_ID){
+      var hojeISO=new Date().toISOString().slice(0,10);
+      var resultados=await Promise.all([
+        supa.from('curso_turmas').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID).eq('status','andamento'),
+        supa.from('curso_turmas').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID).eq('status','planejada'),
+        supa.from('curso_matriculas').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID).in('status',['matriculado','andamento']),
+        supa.from('curso_turmas').select('vagas_maximas,vagas_ocupadas').eq('salao_id',window.SALAO_ID).in('status',['planejada','andamento']),
+        supa.from('curso_matriculas').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID).eq('status','concluido'),
+        supa.from('curso_matricula_parcelas').select('valor').eq('salao_id',window.SALAO_ID).eq('status','pendente'),
+        supa.from('curso_turma_aulas').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID).gte('data',hojeISO).eq('status','agendada')
+      ]);
+      stats.turmasAndamento=resultados[0].count||0;
+      stats.proximasTurmas=resultados[1].count||0;
+      stats.alunosMatriculados=resultados[2].count||0;
+      stats.vagasDisponiveis=(resultados[3].data||[]).reduce(function(s,t){return s+Math.max(0,(t.vagas_maximas||0)-(t.vagas_ocupadas||0));},0);
+      stats.cursosConcluidos=resultados[4].count||0;
+      stats.valoresAReceber=(resultados[5].data||[]).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+      stats.proximasAulas=resultados[6].count||0;
+    }
+  }catch(e){console.log('err dash cursos stats',e);}
+  var cards=[
+    {label:'Cursos Ativos',value:cursosAtivos,sub:combosAtivos+' combo(s) ativo(s)'},
+    {label:'Turmas em Andamento',value:stats.turmasAndamento,sub:''},
+    {label:'Próximas Turmas',value:stats.proximasTurmas,sub:'planejadas'},
+    {label:'Alunos Matriculados',value:stats.alunosMatriculados,sub:''},
+    {label:'Vagas Disponíveis',value:stats.vagasDisponiveis,sub:'nas turmas abertas'},
+    {label:'Cursos Concluídos',value:stats.cursosConcluidos,sub:'matrículas'},
+    {label:'Valores a Receber',value:fmtCaixa(stats.valoresAReceber),sub:'parcelas pendentes'},
+    {label:'Próximas Aulas',value:stats.proximasAulas,sub:'agendadas'}
+  ];
+  el.innerHTML=cards.map(function(c){return '<div class="stat-card"><div class="stat-card-label">'+c.label+'</div><div class="stat-card-value">'+c.value+'</div><div class="stat-card-sub">'+c.sub+'</div></div>';}).join('');
+}
+
+// ===== CURSOS: tabs =====
+function cursosSetTab(tab){
+  cursosTabAtual=tab;
+  var bC=document.getElementById('cursos-tab-cursos'),bK=document.getElementById('cursos-tab-combos');
+  var lC=document.getElementById('cursos-list'),lK=document.getElementById('combos-list');
+  var btnNovo=document.getElementById('cursos-btn-novo');
+  if(tab==='cursos'){
+    if(bC)bC.className='btn btn-primary btn-sm';
+    if(bK)bK.className='btn btn-outline btn-sm';
+    if(lC)lC.style.display='block';
+    if(lK)lK.style.display='none';
+    if(btnNovo){btnNovo.textContent='+ Novo Curso';btnNovo.setAttribute('onclick','abrirNovoCurso()');}
+    renderCursos();
+  }else{
+    if(bC)bC.className='btn btn-outline btn-sm';
+    if(bK)bK.className='btn btn-primary btn-sm';
+    if(lC)lC.style.display='none';
+    if(lK)lK.style.display='block';
+    if(btnNovo){btnNovo.textContent='+ Novo Combo';btnNovo.setAttribute('onclick','abrirNovoCombo()');}
+    renderCombos();
+  }
+}
+
+// ===== CURSOS: CRUD =====
+function renderCursos(){
+  var wrap=document.getElementById('cursos-list');
+  if(!wrap)return;
+  if(!cursos.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:#999;font-size:13px">Nenhum curso cadastrado ainda.</div>';return;}
+  wrap.innerHTML=cursos.map(function(c,i){
+    var precoTxt=(c.valor_promocional&&Number(c.valor_promocional)>0)
+      ?(fmtCaixa(c.valor_promocional)+' <span style="text-decoration:line-through;color:#aaa;font-size:11px;margin-left:4px">'+fmtCaixa(c.valor_normal||0)+'</span>')
+      :fmtCaixa(c.valor_normal||0);
+    var capa=c.capa_url?('<img src="'+c.capa_url+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover"/>')
+      :'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">🎓</div>';
+    return '<div class="service-row">'
+      +capa
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">'+escHtml(c.nome)+'</div>'
+      +'<div style="font-size:12px;color:#888">'+escHtml(c.categoria||'Sem categoria')+' · '+modalidadeLabel(c.modalidade)+' · '+(c.carga_horaria_dias||0)+' dia(s) · '+(c.aulas_totais||0)+' aula(s)</div></div>'
+      +'<div style="font-size:13px;font-weight:600;white-space:nowrap;margin:0 14px">'+precoTxt+'</div>'
+      +cursoStatusBadge(c.status)
+      +'<button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="abrirConteudoCurso('+i+')">📚 Conteúdo</button>'
+      +'<button onclick="menuCurso(event,'+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888;margin-left:6px">⋮</button>'
+      +'</div>';
+  }).join('');
+}
+function menuCurso(e,idx){
+  e.stopPropagation();
+  var old=document.getElementById('curso-menu-popup');if(old)old.remove();
+  var div=document.createElement('div');
+  div.id='curso-menu-popup';
+  div.style.cssText='position:fixed;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;min-width:160px;padding:4px 0';
+  div.innerHTML='<div onclick="editarCurso('+idx+');document.getElementById(\'curso-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px">✏️ Editar</div>'+
+    '<div onclick="deletarCurso('+idx+');document.getElementById(\'curso-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#ef4444">🗑️ Excluir</div>';
+  div.style.top=(e.clientY+4)+'px';
+  div.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){document.addEventListener('click',function rem(){div.remove();document.removeEventListener('click',rem);});},10);
+}
+function deletarCurso(idx){
+  var c=cursos[idx];
+  if(!c)return;
+  if(!confirm('Excluir o curso "'+c.nome+'"? Isso também remove seus módulos, aulas e materiais.'))return;
+  if(c.id)deletarCursoSupa(c.id);
+  cursos.splice(idx,1);
+  renderCursos();
+  renderCursosDashCards();
+}
+function abrirNovoCurso(){
+  window._editCursoIdx=-1;
+  var get=function(id){return document.getElementById(id);};
+  get('curso-nome').value='';
+  get('curso-descricao').value='';
+  get('curso-categoria').value='';
+  get('curso-modalidade').value='presencial';
+  get('curso-carga-horas').value='';
+  get('curso-carga-dias').value='';
+  get('curso-aulas-totais').value='';
+  get('curso-valor-normal').value='';
+  get('curso-valor-promo').value='';
+  get('curso-certificado').checked=true;
+  get('curso-cert-presenca').value=75;
+  get('curso-cert-provas').checked=true;
+  get('curso-cert-exercicios').checked=true;
+  get('curso-status').value='ativo';
+  get('curso-capa-url').value='';
+  var prev=get('curso-capa-preview');if(prev){prev.src='';prev.style.display='none';}
+  toggleCursoCertCampos('curso');
+  document.querySelector('#modal-curso .modal-title').textContent='🎓 Novo Curso';
+  openModal('modal-curso');
+}
+function editarCurso(idx){
+  var c=cursos[idx];
+  if(!c)return;
+  window._editCursoIdx=idx;
+  var get=function(id){return document.getElementById(id);};
+  get('curso-nome').value=c.nome||'';
+  get('curso-descricao').value=c.descricao||'';
+  get('curso-categoria').value=c.categoria||'';
+  get('curso-modalidade').value=c.modalidade||'presencial';
+  get('curso-carga-horas').value=c.carga_horaria_horas||'';
+  get('curso-carga-dias').value=c.carga_horaria_dias||'';
+  get('curso-aulas-totais').value=c.aulas_totais||'';
+  get('curso-valor-normal').value=c.valor_normal||'';
+  get('curso-valor-promo').value=c.valor_promocional||'';
+  get('curso-certificado').checked=!!c.gera_certificado;
+  get('curso-cert-presenca').value=c.certificado_presenca_minima_pct!=null?c.certificado_presenca_minima_pct:75;
+  get('curso-cert-provas').checked=c.certificado_exige_provas_aprovadas!==false;
+  get('curso-cert-exercicios').checked=c.certificado_exige_exercicios!==false;
+  get('curso-status').value=c.status||'ativo';
+  get('curso-capa-url').value=c.capa_url||'';
+  var prev=get('curso-capa-preview');
+  if(prev){prev.src=c.capa_url||'';prev.style.display=c.capa_url?'block':'none';}
+  toggleCursoCertCampos('curso');
+  document.querySelector('#modal-curso .modal-title').textContent='✏️ Editar Curso';
+  openModal('modal-curso');
+}
+function salvarCurso(){
+  var get=function(id){return document.getElementById(id);};
+  var nome=get('curso-nome').value.trim();
+  if(!nome){alert('Informe o nome do curso.');return;}
+  var obj={
+    nome:nome,
+    descricao:get('curso-descricao').value.trim(),
+    categoria:get('curso-categoria').value.trim(),
+    capa_url:get('curso-capa-url').value||null,
+    modalidade:get('curso-modalidade').value,
+    carga_horaria_horas:get('curso-carga-horas').value?parseFloat(get('curso-carga-horas').value):null,
+    carga_horaria_dias:get('curso-carga-dias').value?parseInt(get('curso-carga-dias').value):null,
+    aulas_totais:get('curso-aulas-totais').value?parseInt(get('curso-aulas-totais').value):null,
+    valor_normal:get('curso-valor-normal').value?parseFloat(get('curso-valor-normal').value):null,
+    valor_promocional:get('curso-valor-promo').value?parseFloat(get('curso-valor-promo').value):null,
+    gera_certificado:get('curso-certificado').checked,
+    certificado_presenca_minima_pct:parseFloat(get('curso-cert-presenca').value)||75,
+    certificado_exige_provas_aprovadas:get('curso-cert-provas').checked,
+    certificado_exige_exercicios:get('curso-cert-exercicios').checked,
+    status:get('curso-status').value
+  };
+  var idx=window._editCursoIdx;
+  if(idx>=0&&cursos[idx]){
+    var existente=cursos[idx];
+    Object.assign(existente,obj);
+    if(existente.id)atualizarCursoSupa(existente.id,obj);
+  }else{
+    cursos.push(obj);
+    salvarCursoSupa(obj);
+  }
+  renderCursos();
+  renderCursosDashCards();
+  closeModal('modal-curso');
+  showAlert('Curso salvo com sucesso!');
+}
+async function salvarCursoSupa(c){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},c,{salao_id:window.SALAO_ID});
+    var r=await supa.from('cursos').insert([payload]).select('id').single();
+    if(r.data&&r.data.id)c.id=r.data.id;
+    if(r.error)console.log('err supa curso insert',r.error);
+  }catch(e){console.log('err supa curso insert',e);}
+}
+async function atualizarCursoSupa(id,c){
+  try{
+    if(!supa||!id)return;
+    var r=await supa.from('cursos').update(c).eq('id',id).eq('salao_id',window.SALAO_ID);
+    if(r.error)console.log('err supa curso update',r.error);
+  }catch(e){console.log('err supa curso update',e);}
+}
+async function deletarCursoSupa(id){
+  try{
+    if(!supa||!id)return;
+    await supa.from('curso_materiais').delete().eq('curso_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_aulas').delete().eq('curso_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_modulos').delete().eq('curso_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('cursos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err supa curso delete',e);}
+}
+async function carregarCursosSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('cursos').select('*').eq('salao_id',window.SALAO_ID).order('ordem').order('nome');
+    if(r.error){console.log('err carregar cursos',r.error);return;}
+    cursos=r.data||[];
+    renderCursos();
+    renderCursosDashCards();
+  }catch(e){console.log('err carregar cursos',e);}
+}
+
+// ===== COMBOS: CRUD =====
+function renderCombos(){
+  var wrap=document.getElementById('combos-list');
+  if(!wrap)return;
+  if(!cursoCombos.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:#999;font-size:13px">Nenhum combo cadastrado ainda.</div>';return;}
+  wrap.innerHTML=cursoCombos.map(function(combo,i){
+    var itens=cursoComboItens.filter(function(it){return it.combo_id===combo.id;});
+    var nomesInclusos=itens.map(function(it){var c=cursos.find(function(x){return x.id===it.curso_id;});return c?c.nome:'?';});
+    var precoTxt=(combo.valor_promocional&&Number(combo.valor_promocional)>0)
+      ?(fmtCaixa(combo.valor_promocional)+' <span style="text-decoration:line-through;color:#aaa;font-size:11px;margin-left:4px">'+fmtCaixa(combo.valor_normal||0)+'</span>')
+      :fmtCaixa(combo.valor_normal||0);
+    var capa=combo.capa_url?('<img src="'+combo.capa_url+'" style="width:40px;height:40px;border-radius:8px;object-fit:cover"/>')
+      :'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">🧩</div>';
+    return '<div class="service-row">'
+      +capa
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">'+escHtml(combo.nome)+'</div>'
+      +'<div style="font-size:12px;color:#888">'+(nomesInclusos.length?nomesInclusos.map(escHtml).join(' + '):'nenhum curso vinculado')+'</div></div>'
+      +'<div style="font-size:13px;font-weight:600;white-space:nowrap;margin:0 14px">'+precoTxt+'</div>'
+      +cursoStatusBadge(combo.status)
+      +'<button onclick="menuCombo(event,'+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888;margin-left:10px">⋮</button>'
+      +'</div>';
+  }).join('');
+}
+function menuCombo(e,idx){
+  e.stopPropagation();
+  var old=document.getElementById('combo-menu-popup');if(old)old.remove();
+  var div=document.createElement('div');
+  div.id='combo-menu-popup';
+  div.style.cssText='position:fixed;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;min-width:160px;padding:4px 0';
+  div.innerHTML='<div onclick="editarCombo('+idx+');document.getElementById(\'combo-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px">✏️ Editar</div>'+
+    '<div onclick="deletarCombo('+idx+');document.getElementById(\'combo-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#ef4444">🗑️ Excluir</div>';
+  div.style.top=(e.clientY+4)+'px';
+  div.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){document.addEventListener('click',function rem(){div.remove();document.removeEventListener('click',rem);});},10);
+}
+function deletarCombo(idx){
+  var combo=cursoCombos[idx];
+  if(!combo)return;
+  if(!confirm('Excluir o combo "'+combo.nome+'"? Os cursos individuais não são afetados.'))return;
+  if(combo.id)deletarComboSupa(combo.id);
+  cursoComboItens=cursoComboItens.filter(function(it){return it.combo_id!==combo.id;});
+  cursoCombos.splice(idx,1);
+  renderCombos();
+  renderCursosDashCards();
+}
+function abrirNovoCombo(){
+  window._editComboIdx=-1;
+  var get=function(id){return document.getElementById(id);};
+  get('combo-nome').value='';
+  get('combo-descricao').value='';
+  get('combo-valor-normal').value='';
+  get('combo-valor-promo').value='';
+  get('combo-certificado').checked=true;
+  get('combo-cert-presenca').value=75;
+  get('combo-cert-provas').checked=true;
+  get('combo-cert-exercicios').checked=true;
+  get('combo-status').value='ativo';
+  get('combo-capa-url').value='';
+  var prev=get('combo-capa-preview');if(prev){prev.src='';prev.style.display='none';}
+  toggleCursoCertCampos('combo');
+  renderComboCursosChecklist([]);
+  document.querySelector('#modal-combo .modal-title').textContent='🧩 Novo Combo';
+  openModal('modal-combo');
+}
+function editarCombo(idx){
+  var combo=cursoCombos[idx];
+  if(!combo)return;
+  window._editComboIdx=idx;
+  var get=function(id){return document.getElementById(id);};
+  get('combo-nome').value=combo.nome||'';
+  get('combo-descricao').value=combo.descricao||'';
+  get('combo-valor-normal').value=combo.valor_normal||'';
+  get('combo-valor-promo').value=combo.valor_promocional||'';
+  get('combo-certificado').checked=!!combo.gera_certificado;
+  get('combo-cert-presenca').value=combo.certificado_presenca_minima_pct!=null?combo.certificado_presenca_minima_pct:75;
+  get('combo-cert-provas').checked=combo.certificado_exige_provas_aprovadas!==false;
+  get('combo-cert-exercicios').checked=combo.certificado_exige_exercicios!==false;
+  get('combo-status').value=combo.status||'ativo';
+  get('combo-capa-url').value=combo.capa_url||'';
+  var prev=get('combo-capa-preview');
+  if(prev){prev.src=combo.capa_url||'';prev.style.display=combo.capa_url?'block':'none';}
+  toggleCursoCertCampos('combo');
+  var itens=cursoComboItens.filter(function(it){return it.combo_id===combo.id;}).map(function(it){return it.curso_id;});
+  renderComboCursosChecklist(itens);
+  document.querySelector('#modal-combo .modal-title').textContent='✏️ Editar Combo';
+  openModal('modal-combo');
+}
+function renderComboCursosChecklist(selecionados){
+  var wrap=document.getElementById('combo-cursos-checklist');
+  if(!wrap)return;
+  var ativos=cursos.filter(function(c){return c.status==='ativo';});
+  if(!ativos.length){wrap.innerHTML='<div style="font-size:12px;color:#999">Cadastre cursos ativos primeiro.</div>';return;}
+  wrap.innerHTML=ativos.map(function(c){
+    var checked=selecionados.indexOf(c.id)>=0?'checked':'';
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+c.id+'" class="combo-curso-chk" '+checked+' style="width:auto"/> '+escHtml(c.nome)+'</label>';
+  }).join('');
+}
+function salvarCombo(){
+  var get=function(id){return document.getElementById(id);};
+  var nome=get('combo-nome').value.trim();
+  if(!nome){alert('Informe o nome do combo.');return;}
+  var cursoIds=Array.prototype.slice.call(document.querySelectorAll('.combo-curso-chk:checked')).map(function(el){return el.value;});
+  if(!cursoIds.length){alert('Selecione ao menos um curso para o combo.');return;}
+  var obj={
+    nome:nome,
+    descricao:get('combo-descricao').value.trim(),
+    capa_url:get('combo-capa-url').value||null,
+    valor_normal:get('combo-valor-normal').value?parseFloat(get('combo-valor-normal').value):null,
+    valor_promocional:get('combo-valor-promo').value?parseFloat(get('combo-valor-promo').value):null,
+    gera_certificado:get('combo-certificado').checked,
+    certificado_presenca_minima_pct:parseFloat(get('combo-cert-presenca').value)||75,
+    certificado_exige_provas_aprovadas:get('combo-cert-provas').checked,
+    certificado_exige_exercicios:get('combo-cert-exercicios').checked,
+    status:get('combo-status').value
+  };
+  var idx=window._editComboIdx;
+  if(idx>=0&&cursoCombos[idx]){
+    var existente=cursoCombos[idx];
+    Object.assign(existente,obj);
+    if(existente.id){
+      atualizarComboSupa(existente.id,obj);
+      sincronizarComboItens(existente.id,cursoIds);
+    }
+  }else{
+    cursoCombos.push(obj);
+    salvarComboSupa(obj,cursoIds);
+  }
+  renderCombos();
+  renderCursosDashCards();
+  closeModal('modal-combo');
+  showAlert('Combo salvo com sucesso!');
+}
+async function salvarComboSupa(combo,cursoIds){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},combo,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_combos').insert([payload]).select('id').single();
+    if(r.error){console.log('err supa combo insert',r.error);return;}
+    combo.id=r.data.id;
+    await sincronizarComboItens(combo.id,cursoIds);
+  }catch(e){console.log('err supa combo insert',e);}
+}
+async function atualizarComboSupa(id,combo){
+  try{
+    if(!supa||!id)return;
+    var r=await supa.from('curso_combos').update(combo).eq('id',id).eq('salao_id',window.SALAO_ID);
+    if(r.error)console.log('err supa combo update',r.error);
+  }catch(e){console.log('err supa combo update',e);}
+}
+async function deletarComboSupa(id){
+  try{
+    if(!supa||!id)return;
+    await supa.from('curso_combo_itens').delete().eq('combo_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_combos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err supa combo delete',e);}
+}
+async function sincronizarComboItens(comboId,cursoIds){
+  try{
+    if(!supa||!window.SALAO_ID||!comboId)return;
+    await supa.from('curso_combo_itens').delete().eq('combo_id',comboId).eq('salao_id',window.SALAO_ID);
+    var rows=cursoIds.map(function(cid,i){return {combo_id:comboId,curso_id:cid,salao_id:window.SALAO_ID,ordem:i};});
+    if(rows.length){
+      var r=await supa.from('curso_combo_itens').insert(rows).select('*');
+      if(r.error){console.log('err supa combo itens insert',r.error);return;}
+      cursoComboItens=cursoComboItens.filter(function(it){return it.combo_id!==comboId;}).concat(r.data||[]);
+    }else{
+      cursoComboItens=cursoComboItens.filter(function(it){return it.combo_id!==comboId;});
+    }
+  }catch(e){console.log('err sincronizar combo itens',e);}
+}
+async function carregarCombosSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var rCombos=await supa.from('curso_combos').select('*').eq('salao_id',window.SALAO_ID).order('nome');
+    if(rCombos.error){console.log('err carregar combos',rCombos.error);return;}
+    cursoCombos=rCombos.data||[];
+    var rItens=await supa.from('curso_combo_itens').select('*').eq('salao_id',window.SALAO_ID);
+    cursoComboItens=rItens.data||[];
+    renderCombos();
+    renderCursosDashCards();
+  }catch(e){console.log('err carregar combos',e);}
+}
+
+// ===== CONTEÚDO: módulos, aulas, materiais =====
+function abrirConteudoCurso(idx){
+  var c=cursos[idx];
+  if(!c||!c.id){alert('Salve o curso antes de gerenciar o conteúdo.');return;}
+  cursoConteudoCursoId=c.id;
+  document.querySelector('#modal-curso-conteudo .modal-title').textContent='📚 Conteúdo — '+c.nome;
+  document.getElementById('curso-conteudo-lista').innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Carregando...</div>';
+  openModal('modal-curso-conteudo');
+  carregarConteudoCursoSupa(c.id);
+}
+async function carregarConteudoCursoSupa(cursoId){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var resultados=await Promise.all([
+      supa.from('curso_modulos').select('*').eq('salao_id',window.SALAO_ID).eq('curso_id',cursoId).order('ordem'),
+      supa.from('curso_aulas').select('*').eq('salao_id',window.SALAO_ID).eq('curso_id',cursoId).order('ordem'),
+      supa.from('curso_materiais').select('*').eq('salao_id',window.SALAO_ID).eq('curso_id',cursoId).order('ordem')
+    ]);
+    cursoModulosAtuais=resultados[0].data||[];
+    cursoAulasAtuais=resultados[1].data||[];
+    cursoMateriaisAtuais=resultados[2].data||[];
+    renderConteudoCurso();
+  }catch(e){console.log('err carregar conteudo curso',e);}
+}
+function renderConteudoCurso(){
+  var wrap=document.getElementById('curso-conteudo-lista');
+  if(!wrap)return;
+  if(!cursoModulosAtuais.length){
+    wrap.innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhum módulo ainda. Adicione o primeiro abaixo.</div>';
+    return;
+  }
+  wrap.innerHTML=cursoModulosAtuais.map(function(m,mi){
+    var aulas=cursoAulasAtuais.filter(function(a){return a.modulo_id===m.id;});
+    var materiais=cursoMateriaisAtuais.filter(function(x){return x.modulo_id===m.id;});
+    var aulasHtml=aulas.map(function(a){
+      var ai=cursoAulasAtuais.indexOf(a);
+      return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
+        +'<span style="margin-right:8px">'+(a.tipo_conteudo==='video'?'🎥':'📄')+'</span>'
+        +'<span style="flex:1">'+escHtml(a.titulo)+(a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'')+'</span>'
+        +'<button onclick="editarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
+        +'<button onclick="deletarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
+        +'</div>';
+    }).join('');
+    var materiaisHtml=materiais.map(function(mt){
+      var mti=cursoMateriaisAtuais.indexOf(mt);
+      return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
+        +'<span style="margin-right:8px">📎</span>'
+        +'<span style="flex:1">'+escHtml(mt.nome)+' <span style="color:#aaa;font-size:11px">('+mt.tipo+(mt.permite_download?'':' · sem download')+')</span></span>'
+        +'<button onclick="editarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
+        +'<button onclick="deletarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
+        +'</div>';
+    }).join('');
+    return '<div style="border:1px solid #eee;border-radius:10px;margin-bottom:10px;overflow:hidden">'
+      +'<div style="display:flex;align-items:center;padding:10px 14px;background:#fafafa">'
+      +'<span style="flex:1;font-weight:600;font-size:13.5px">Módulo '+(mi+1)+' — '+escHtml(m.nome)+'</span>'
+      +'<button class="btn btn-outline btn-sm" onclick="abrirNovaAula(\''+m.id+'\')" style="margin-right:6px">+ Aula</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="abrirNovoMaterial(\''+m.id+'\')" style="margin-right:6px">+ Material</button>'
+      +'<button onclick="editarModulo('+mi+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:13px;margin-right:8px">✏️</button>'
+      +'<button onclick="deletarModulo('+mi+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px">🗑️</button>'
+      +'</div>'
+      +aulasHtml+materiaisHtml
+      +(!aulas.length&&!materiais.length?'<div style="padding:8px 16px;font-size:12px;color:#bbb">Vazio — adicione aulas ou materiais.</div>':'')
+      +'</div>';
+  }).join('');
+}
+function abrirNovoModulo(){
+  window._editModuloIdx=-1;
+  document.getElementById('modulo-nome').value='';
+  document.getElementById('modulo-descricao').value='';
+  document.querySelector('#modal-curso-modulo .modal-title').textContent='+ Novo Módulo';
+  openModal('modal-curso-modulo');
+}
+function editarModulo(idx){
+  var m=cursoModulosAtuais[idx];
+  if(!m)return;
+  window._editModuloIdx=idx;
+  document.getElementById('modulo-nome').value=m.nome||'';
+  document.getElementById('modulo-descricao').value=m.descricao||'';
+  document.querySelector('#modal-curso-modulo .modal-title').textContent='✏️ Editar Módulo';
+  openModal('modal-curso-modulo');
+}
+function deletarModulo(idx){
+  var m=cursoModulosAtuais[idx];
+  if(!m)return;
+  if(!confirm('Excluir o módulo "'+m.nome+'"? Aulas e materiais dele também serão removidos.'))return;
+  if(m.id){
+    deletarModuloSupa(m.id);
+    cursoAulasAtuais=cursoAulasAtuais.filter(function(a){return a.modulo_id!==m.id;});
+    cursoMateriaisAtuais=cursoMateriaisAtuais.filter(function(x){return x.modulo_id!==m.id;});
+  }
+  cursoModulosAtuais.splice(idx,1);
+  renderConteudoCurso();
+}
+function salvarModulo(){
+  var nome=document.getElementById('modulo-nome').value.trim();
+  if(!nome){alert('Informe o nome do módulo.');return;}
+  var obj={nome:nome,descricao:document.getElementById('modulo-descricao').value.trim(),curso_id:cursoConteudoCursoId,ordem:cursoModulosAtuais.length};
+  var idx=window._editModuloIdx;
+  if(idx>=0&&cursoModulosAtuais[idx]){
+    var existente=cursoModulosAtuais[idx];
+    existente.nome=obj.nome;existente.descricao=obj.descricao;
+    if(existente.id)atualizarModuloSupa(existente.id,{nome:obj.nome,descricao:obj.descricao});
+  }else{
+    cursoModulosAtuais.push(obj);
+    salvarModuloSupa(obj);
+  }
+  renderConteudoCurso();
+  closeModal('modal-curso-modulo');
+}
+async function salvarModuloSupa(m){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},m,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_modulos').insert([payload]).select('id').single();
+    if(r.data&&r.data.id)m.id=r.data.id;
+    if(r.error)console.log('err supa modulo insert',r.error);
+  }catch(e){console.log('err supa modulo insert',e);}
+}
+async function atualizarModuloSupa(id,m){
+  try{if(!supa||!id)return;await supa.from('curso_modulos').update(m).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa modulo update',e);}
+}
+async function deletarModuloSupa(id){
+  try{
+    if(!supa||!id)return;
+    await supa.from('curso_materiais').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_aulas').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_modulos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err supa modulo delete',e);}
+}
+function abrirNovaAula(moduloId){
+  window._editAulaIdx=-1;
+  window._novaAulaModuloId=moduloId;
+  document.getElementById('aula-titulo').value='';
+  document.getElementById('aula-descricao').value='';
+  document.getElementById('aula-tipo').value='texto';
+  document.getElementById('aula-video-url').value='';
+  document.getElementById('aula-texto').value='';
+  document.getElementById('aula-duracao').value='';
+  document.getElementById('aula-obrigatoria').checked=true;
+  toggleAulaTipoCampos();
+  document.querySelector('#modal-curso-aula .modal-title').textContent='+ Nova Aula';
+  openModal('modal-curso-aula');
+}
+function editarAula(idx){
+  var a=cursoAulasAtuais[idx];
+  if(!a)return;
+  window._editAulaIdx=idx;
+  window._novaAulaModuloId=a.modulo_id;
+  document.getElementById('aula-titulo').value=a.titulo||'';
+  document.getElementById('aula-descricao').value=a.descricao||'';
+  document.getElementById('aula-tipo').value=a.tipo_conteudo||'texto';
+  document.getElementById('aula-video-url').value=a.video_url||'';
+  document.getElementById('aula-texto').value=a.texto_conteudo||'';
+  document.getElementById('aula-duracao').value=a.duracao_min||'';
+  document.getElementById('aula-obrigatoria').checked=a.obrigatoria!==false;
+  toggleAulaTipoCampos();
+  document.querySelector('#modal-curso-aula .modal-title').textContent='✏️ Editar Aula';
+  openModal('modal-curso-aula');
+}
+function toggleAulaTipoCampos(){
+  var tipo=document.getElementById('aula-tipo').value;
+  var vArea=document.getElementById('aula-video-area');
+  var tArea=document.getElementById('aula-texto-area');
+  if(vArea)vArea.style.display=(tipo==='video'||tipo==='misto')?'':'none';
+  if(tArea)tArea.style.display=(tipo==='texto'||tipo==='misto')?'':'none';
+}
+function deletarAula(idx){
+  var a=cursoAulasAtuais[idx];
+  if(!a)return;
+  if(!confirm('Excluir a aula "'+a.titulo+'"?'))return;
+  if(a.id)deletarAulaSupa(a.id);
+  cursoAulasAtuais.splice(idx,1);
+  renderConteudoCurso();
+}
+function salvarAula(){
+  var titulo=document.getElementById('aula-titulo').value.trim();
+  if(!titulo){alert('Informe o título da aula.');return;}
+  var moduloId=window._novaAulaModuloId;
+  var aulasDoModulo=cursoAulasAtuais.filter(function(a){return a.modulo_id===moduloId;});
+  var obj={
+    titulo:titulo,
+    descricao:document.getElementById('aula-descricao').value.trim(),
+    tipo_conteudo:document.getElementById('aula-tipo').value,
+    video_url:document.getElementById('aula-video-url').value.trim()||null,
+    texto_conteudo:document.getElementById('aula-texto').value.trim()||null,
+    duracao_min:document.getElementById('aula-duracao').value?parseInt(document.getElementById('aula-duracao').value):null,
+    obrigatoria:document.getElementById('aula-obrigatoria').checked,
+    modulo_id:moduloId,
+    curso_id:cursoConteudoCursoId,
+    ordem:aulasDoModulo.length
+  };
+  var idx=window._editAulaIdx;
+  if(idx>=0&&cursoAulasAtuais[idx]){
+    var existente=cursoAulasAtuais[idx];
+    Object.assign(existente,obj);
+    if(existente.id)atualizarAulaSupa(existente.id,obj);
+  }else{
+    cursoAulasAtuais.push(obj);
+    salvarAulaSupa(obj);
+  }
+  renderConteudoCurso();
+  closeModal('modal-curso-aula');
+}
+async function salvarAulaSupa(a){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},a,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_aulas').insert([payload]).select('id').single();
+    if(r.data&&r.data.id)a.id=r.data.id;
+    if(r.error)console.log('err supa aula insert',r.error);
+  }catch(e){console.log('err supa aula insert',e);}
+}
+async function atualizarAulaSupa(id,a){
+  try{if(!supa||!id)return;await supa.from('curso_aulas').update(a).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa aula update',e);}
+}
+async function deletarAulaSupa(id){
+  try{if(!supa||!id)return;await supa.from('curso_aulas').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa aula delete',e);}
+}
+function abrirNovoMaterial(moduloId){
+  window._editMaterialIdx=-1;
+  window._novoMaterialModuloId=moduloId;
+  document.getElementById('material-nome').value='';
+  document.getElementById('material-tipo').value='apostila';
+  document.getElementById('material-permite-download').checked=true;
+  document.getElementById('material-arquivo-url').value='';
+  document.getElementById('material-arquivo-status').textContent='Nenhum arquivo enviado ainda.';
+  document.querySelector('#modal-curso-material .modal-title').textContent='+ Novo Material';
+  openModal('modal-curso-material');
+}
+function editarMaterial(idx){
+  var m=cursoMateriaisAtuais[idx];
+  if(!m)return;
+  window._editMaterialIdx=idx;
+  window._novoMaterialModuloId=m.modulo_id;
+  document.getElementById('material-nome').value=m.nome||'';
+  document.getElementById('material-tipo').value=m.tipo||'apostila';
+  document.getElementById('material-permite-download').checked=m.permite_download!==false;
+  document.getElementById('material-arquivo-url').value=m.arquivo_url||'';
+  document.getElementById('material-arquivo-status').textContent=m.arquivo_url?('Arquivo atual: '+m.arquivo_url.split('/').pop()):'Nenhum arquivo enviado ainda.';
+  document.querySelector('#modal-curso-material .modal-title').textContent='✏️ Editar Material';
+  openModal('modal-curso-material');
+}
+function deletarMaterial(idx){
+  var m=cursoMateriaisAtuais[idx];
+  if(!m)return;
+  if(!confirm('Excluir o material "'+m.nome+'"?'))return;
+  if(m.id)deletarMaterialSupa(m.id);
+  cursoMateriaisAtuais.splice(idx,1);
+  renderConteudoCurso();
+}
+async function uploadArquivoMaterial(fileInput){
+  var file=fileInput.files[0];
+  if(!file)return;
+  var statusEl=document.getElementById('material-arquivo-status');
+  if(statusEl)statusEl.textContent='Enviando...';
+  try{
+    if(!supa||!window.SALAO_ID)throw new Error('sem sessão');
+    var path=window.SALAO_ID+'/'+(cursoConteudoCursoId||'sem-curso')+'/'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+    var up=await supa.storage.from('curso-materiais').upload(path,file,{upsert:true});
+    if(up.error)throw up.error;
+    document.getElementById('material-arquivo-url').value=path;
+    if(statusEl)statusEl.textContent='Enviado: '+file.name;
+    var nomeEl=document.getElementById('material-nome');
+    if(nomeEl&&!nomeEl.value)nomeEl.value=file.name.replace(/\.[^.]+$/,'');
+  }catch(e){
+    console.log('err upload material',e);
+    if(statusEl)statusEl.textContent='Falha ao enviar o arquivo (verifique se o bucket "curso-materiais" existe).';
+  }
+}
+function salvarMaterial(){
+  var nome=document.getElementById('material-nome').value.trim();
+  var arquivoUrl=document.getElementById('material-arquivo-url').value;
+  if(!nome){alert('Informe o nome do material.');return;}
+  if(!arquivoUrl){alert('Envie um arquivo antes de salvar.');return;}
+  var moduloId=window._novoMaterialModuloId;
+  var materiaisDoModulo=cursoMateriaisAtuais.filter(function(m){return m.modulo_id===moduloId;});
+  var obj={
+    nome:nome,
+    tipo:document.getElementById('material-tipo').value,
+    arquivo_url:arquivoUrl,
+    permite_download:document.getElementById('material-permite-download').checked,
+    modulo_id:moduloId,
+    curso_id:cursoConteudoCursoId,
+    ordem:materiaisDoModulo.length
+  };
+  var idx=window._editMaterialIdx;
+  if(idx>=0&&cursoMateriaisAtuais[idx]){
+    var existente=cursoMateriaisAtuais[idx];
+    Object.assign(existente,obj);
+    if(existente.id)atualizarMaterialSupa(existente.id,obj);
+  }else{
+    cursoMateriaisAtuais.push(obj);
+    salvarMaterialSupa(obj);
+  }
+  renderConteudoCurso();
+  closeModal('modal-curso-material');
+}
+async function salvarMaterialSupa(m){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},m,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_materiais').insert([payload]).select('id').single();
+    if(r.data&&r.data.id)m.id=r.data.id;
+    if(r.error)console.log('err supa material insert',r.error);
+  }catch(e){console.log('err supa material insert',e);}
+}
+async function atualizarMaterialSupa(id,m){
+  try{if(!supa||!id)return;await supa.from('curso_materiais').update(m).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa material update',e);}
+}
+async function deletarMaterialSupa(id){
+  try{if(!supa||!id)return;await supa.from('curso_materiais').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa material delete',e);}
+}
+
+// ===== Upload de capa (curso e combo) =====
+async function uploadCapaCurso(fileInput,prefixo){
+  var file=fileInput.files[0];
+  if(!file)return;
+  try{
+    if(!supa||!window.SALAO_ID)throw new Error('sem sessão');
+    var path=window.SALAO_ID+'/'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+    var up=await supa.storage.from('curso-capas').upload(path,file,{upsert:true});
+    if(up.error)throw up.error;
+    var pub=supa.storage.from('curso-capas').getPublicUrl(path);
+    var url=pub&&pub.data?pub.data.publicUrl:'';
+    document.getElementById(prefixo+'-capa-url').value=url;
+    var prev=document.getElementById(prefixo+'-capa-preview');
+    if(prev){prev.src=url;prev.style.display='block';}
+  }catch(e){
+    console.log('err upload capa',e);
+    alert('Não foi possível enviar a imagem (verifique se o bucket "curso-capas" existe).');
+  }
+}
+
 const pages = {
   'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Vendas',
   'comandas':'Comandas','fluxo':'Fluxo de Caixa','caixa':'Controle de Caixa',
   'remuneracoes':'Remunerações','despesas':'Despesas','finpessoal':'💝 Financeiro Pessoal',
-  'servicos':'Serviços','produtos':'Produtos','pacotes':'Pacotes',
+  'servicos':'Serviços','produtos':'Produtos','pacotes':'Pacotes','cursos':'🎓 Cursos',
   'clientes':'Clientes','retornos':'Lembretes de Retorno','colaboradores':'Colaboradores',
   'metas':'Metas e Tarefas',
   'ia':'🧠 IA Estratégica','marketing':'📣 Marketing & Campanhas',
@@ -5063,6 +6018,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -6182,6 +7138,14 @@ let servicos=[];
 
 var clientes=[];
 
+var cursos=[];
+var cursoCombos=[];
+var cursoComboItens=[];
+var cursosTabAtual='cursos';
+var cursoConteudoCursoId=null;
+var cursoModulosAtuais=[];
+var cursoAulasAtuais=[];
+var cursoMateriaisAtuais=[];
 
 var colaboradores=[
   {nome:'Thiago dos Santos',email:'aflorschool@gmail.com',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'blue'},
@@ -11657,21 +12621,20 @@ function removerColab(idx){
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
-async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:lanc.data,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
+async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
 async function carregarFluxoLancamentosSupa(){
   try{
     if(!window.SALAO_ID)return;
     var h=await _authHeaders({'Accept':'application/json'});
-    var resp=await fetch(SUPA_URL+'/rest/v1/caixa_movimentos?salao_id=eq.'+window.SALAO_ID+'&order=id.desc',{headers:h});
-    if(!resp.ok)throw new Error('caixa_movimentos fluxo fetch '+resp.status);
+    var resp=await fetch(SUPA_URL+'/rest/v1/fluxo_lancamentos?salao_id=eq.'+window.SALAO_ID+'&order=id.desc',{headers:h});
+    if(!resp.ok)throw new Error('fluxo_lancamentos fetch '+resp.status);
     var hj=new Date();
     var hjFmt=hj.getDate().toString().padStart(2,'0')+'/'+(hj.getMonth()+1).toString().padStart(2,'0')+'/'+hj.getFullYear();
     fluxoLancamentos=(await resp.json()||[]).map(function(row){
-      var ts=row.created_at||row.data||'';
+      var ts=row.data||row.created_at||'';
       var isoM=ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
       var d=isoM?isoM[3]+'/'+isoM[2]+'/'+isoM[1]:(ts.match(/^\d{2}\/\d{2}\/\d{4}/)?ts:hjFmt);
-      var tipo=(row.tipo==='entrada')?'receita':'despesa';
-      return{id:row.id,tipo:tipo,data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma||'',val:parseFloat(row.valor)||0,status:'confirmado',prof:row.profissional||''};
+      return{id:row.id,tipo:row.tipo||'receita',data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma_pagamento||'',val:parseFloat(row.valor)||0,status:row.status||'confirmado',prof:row.profissional||''};
     });
     renderFluxo();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
@@ -13089,6 +14052,9 @@ function fazerLogout(){
   if(typeof servicos!=='undefined')servicos=[];
   if(typeof produtos!=='undefined')produtos=[];
   if(typeof retornos!=='undefined')retornos=[];
+  if(typeof cursos!=='undefined')cursos=[];
+  if(typeof cursoCombos!=='undefined')cursoCombos=[];
+  if(typeof cursoComboItens!=='undefined')cursoComboItens=[];
   try{sessionStorage.removeItem('flora_salao_id');}catch(e){}
   if(supa)supa.auth.signOut().then(function(){window.location.replace('login.html');}).catch(function(){window.location.replace('login.html');});
   else window.location.replace('login.html');
