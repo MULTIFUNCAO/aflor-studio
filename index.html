@@ -11689,8 +11689,9 @@ function reconstruirHistoricoCaixasDeFluxo(){
   var hjFmt=hj.getDate().toString().padStart(2,'0')+'/'+(hj.getMonth()+1).toString().padStart(2,'0')+'/'+hj.getFullYear();
   var porDia={};
   var ordemDias=[];
+  var caixaHojeAberto=(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto);
   fluxoLancamentos.forEach(function(l){
-    if(l.data===hjFmt)return; // hoje é o caixa ao vivo (caixaState), não faz parte do histórico
+    if(l.data===hjFmt&&caixaHojeAberto)return; // enquanto o caixa de hoje está aberto, ele é o caixa ao vivo (caixaState), não faz parte do histórico ainda
     if(!porDia[l.data]){porDia[l.data]=[];ordemDias.push(l.data);}
     porDia[l.data].push(l);
   });
