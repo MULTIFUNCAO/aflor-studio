@@ -13486,6 +13486,26 @@ async function sincronizarAtualizacaoMovimentoCaixaSupa(mov){
 async function sincronizarFechamentoCaixaSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
+    var respMov=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID);
+    var movs=respMov.data||[];
+    if(movs.length){
+      var dataRef=(caixaState&&caixaState.horaAbertura)?caixaState.horaAbertura:new Date();
+      var dataIso=dataRef.getFullYear()+'-'+(dataRef.getMonth()+1).toString().padStart(2,'0')+'-'+dataRef.getDate().toString().padStart(2,'0');
+      var lancs=movs.map(function(m){
+        return{
+          salao_id:window.SALAO_ID,
+          data:dataIso,
+          descricao:m.descricao||(m.tipo==='entrada'?'Entrada caixa':'Saída caixa'),
+          categoria:m.categoria||'Outros',
+          forma_pagamento:m.forma||'',
+          valor:m.valor,
+          tipo:m.tipo==='entrada'?'receita':'despesa',
+          status:'confirmado'
+        };
+      });
+      var rIns=await supa.from('fluxo_lancamentos').insert(lancs);
+      if(rIns.error)console.log('err inserir fluxo_lancamentos no fechamento',rIns.error);
+    }
     await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
     await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err fechar caixa supa',e);}
