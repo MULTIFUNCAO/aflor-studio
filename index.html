@@ -13520,6 +13520,19 @@ async function sincronizarMovimentoCaixaSupa(mov){
 async function sincronizarRemocaoMovimentoCaixaSupa(supaId){
   try{
     if(!supa||!window.SALAO_ID||!supaId)return;
+    var respMov=await supa.from('caixa_movimentos').select('*').eq('id',supaId).eq('salao_id',window.SALAO_ID);
+    var movRemovido=(respMov.data||[])[0];
+    if(movRemovido){
+      try{
+        await supa.from('log_operacoes_criticas').insert([{
+          salao_id:window.SALAO_ID,
+          tabela:'caixa_movimentos',
+          operacao:'delete_movimento_avulso',
+          quantidade_linhas:1,
+          dados_antes:[movRemovido]
+        }]);
+      }catch(eLog){console.log('err gravar log_operacoes_criticas',eLog);}
+    }
     await supa.from('caixa_movimentos').delete().eq('id',supaId).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err remover mov caixa supa',e);}
 }
@@ -13555,8 +13568,24 @@ async function sincronizarFechamentoCaixaSupa(){
           status:'confirmado'
         };
       });
-      var rIns=await supa.from('fluxo_lancamentos').insert(lancs);
-      if(rIns.error)console.log('err inserir fluxo_lancamentos no fechamento',rIns.error);
+      // Grava e CONFIRMA antes de apagar: se a gravação falhar ou vier
+      // incompleta, aborta o fechamento inteiro (não zera caixa_estado
+      // nem apaga caixa_movimentos) para nunca perder dados financeiros.
+      var rIns=await supa.from('fluxo_lancamentos').insert(lancs).select('id');
+      if(rIns.error||!rIns.data||rIns.data.length!==lancs.length){
+        console.log('err inserir fluxo_lancamentos no fechamento - abortando',rIns.error);
+        if(typeof showAlert==='function')showAlert('⚠️ Não foi possível gravar os lançamentos no Fluxo Financeiro. O caixa NÃO foi fechado para evitar perda de dados — tente novamente.');
+        return;
+      }
+      try{
+        await supa.from('log_operacoes_criticas').insert([{
+          salao_id:window.SALAO_ID,
+          tabela:'caixa_movimentos',
+          operacao:'delete_fechamento_caixa',
+          quantidade_linhas:movs.length,
+          dados_antes:movs
+        }]);
+      }catch(eLog){console.log('err gravar log_operacoes_criticas',eLog);}
     }
     await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
     await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
