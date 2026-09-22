@@ -1579,11 +1579,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="display:flex;align-items:center;gap:10px;margin:20px 0 16px">
         <button class="btn btn-primary btn-sm" id="cursos-tab-cursos" onclick="cursosSetTab('cursos')">🎓 Cursos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-combos" onclick="cursosSetTab('combos')">🧩 Combos</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-turmas" onclick="cursosSetTab('turmas')">📅 Turmas</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
       <div class="table-card" id="cursos-list"></div>
       <div class="table-card" id="combos-list" style="display:none"></div>
+      <div class="table-card" id="turmas-list" style="display:none"></div>
     </div>
 
     <!-- PRODUTOS -->
@@ -4551,6 +4553,62 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-turma-info">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <span class="modal-title" id="turma-info-titulo">🎓 Aula</span>
+      <button class="modal-close" onclick="closeModal('modal-turma-info')">✕</button>
+    </div>
+    <div id="turma-info-corpo"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-turma-info')">Fechar</button>
+      <button class="btn btn-primary" onclick="closeModal('modal-turma-info');showPage('cursos');cursosSetTab('turmas');setTimeout(function(){editarTurmaPorId(window._turmaInfoAtualId);},300)">Gerenciar Turma</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-turma">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🎓 Nova Turma</span>
+      <button class="modal-close" onclick="closeModal('modal-turma')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Curso ou Combo *</label>
+        <select id="turma-curso-combo"></select>
+      </div>
+      <div class="form-group full"><label>Nome da Turma *</label><input id="turma-nome" placeholder="Ex: Turma Setembro"/></div>
+      <div class="form-group"><label>Professor(a) *</label>
+        <select id="turma-professor"></select>
+      </div>
+      <div class="form-group"><label>Local</label><input id="turma-local" placeholder="Ex: Unidade Centro"/></div>
+      <div class="form-group"><label>Hora Início *</label><input type="time" id="turma-hora-inicio" value="10:00"/></div>
+      <div class="form-group"><label>Hora Fim *</label><input type="time" id="turma-hora-fim" value="13:00"/></div>
+      <div class="form-group"><label>Vagas Máximas</label><input type="number" id="turma-vagas" min="0" value="10"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="turma-status">
+          <option value="planejada">Planejada</option>
+          <option value="andamento">Em andamento</option>
+          <option value="concluida">Concluída</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Datas das aulas *</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="date" id="turma-nova-data" style="flex:1"/>
+          <button type="button" class="btn btn-outline btn-sm" onclick="turmaAdicionarData()">+ Adicionar data</button>
+        </div>
+        <div id="turma-datas-lista" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-turma')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTurma()">✅ Salvar Turma</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-despesa">
   <div class="modal">
     <div class="modal-header">
@@ -4879,11 +4937,80 @@ async function carregarAgendamentosSupa(){
         });
       }
     });
+    await mesclarTurmaAulasNaAgenda(dataInicio,dataFim);
     if(typeof renderAgenda==='function')renderAgenda();
     if(typeof renderComandas==='function')renderComandas();
     if(typeof renderDashProximos==='function')renderDashProximos();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
   }catch(e){console.log('err carregar agendamentos',e);}
+}
+
+// Mescla curso_turma_aulas em agendamentosPorData como um "ocupante" sintético
+// por prof:hora — nunca escreve em `agendamentos`. Cada aula de turma vira UM
+// registro (não um por aluno), então herda de graça toda a lógica existente de
+// bloqueio/renderização de slot, que já lida com "1 evento ocupa N slots de 30min".
+async function mesclarTurmaAulasNaAgenda(dataInicio,dataFim){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var rAulas=await supa.from('curso_turma_aulas').select('*')
+      .eq('salao_id',window.SALAO_ID).gte('data',dataInicio).lte('data',dataFim).eq('status','agendada');
+    if(rAulas.error||!rAulas.data||!rAulas.data.length)return;
+    var turmaIds=Array.from(new Set(rAulas.data.map(function(a){return a.turma_id;})));
+    var rTurmas=await supa.from('curso_turmas').select('id,nome,curso_id,combo_id,vagas_ocupadas,status').in('id',turmaIds);
+    var turmasPorId={};
+    (rTurmas.data||[]).forEach(function(t){turmasPorId[t.id]=t;});
+    var colabPorId={};
+    (typeof colaboradores!=='undefined'?colaboradores:[]).forEach(function(c){if(c.id)colabPorId[c.id]=c;});
+    var faltamColabs=rAulas.data.some(function(a){return !colabPorId[a.profissional_id];});
+    if(faltamColabs){
+      var rColab=await supa.from('colaboradores').select('id,nome').eq('salao_id',window.SALAO_ID);
+      (rColab.data||[]).forEach(function(c){colabPorId[c.id]=c;});
+    }
+    var nomeCursoPorId={},nomeComboPorId={};
+    var cursoIdsNec=Array.from(new Set((rTurmas.data||[]).map(function(t){return t.curso_id;}).filter(Boolean)));
+    var comboIdsNec=Array.from(new Set((rTurmas.data||[]).map(function(t){return t.combo_id;}).filter(Boolean)));
+    if(cursoIdsNec.length){
+      var rC=await supa.from('cursos').select('id,nome').in('id',cursoIdsNec);
+      (rC.data||[]).forEach(function(c){nomeCursoPorId[c.id]=c.nome;});
+    }
+    if(comboIdsNec.length){
+      var rCo=await supa.from('curso_combos').select('id,nome').in('id',comboIdsNec);
+      (rCo.data||[]).forEach(function(c){nomeComboPorId[c.id]=c.nome;});
+    }
+    rAulas.data.forEach(function(ta){
+      var turma=turmasPorId[ta.turma_id];
+      if(!turma||turma.status==='cancelada')return;
+      var colab=colabPorId[ta.profissional_id];
+      if(!colab)return;
+      var profNomeAgenda=agProfParaAgenda(colab.nome);
+      var partes=ta.data.split('-');
+      var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
+      var horaSlot=normalizarHoraAgenda((ta.hora_inicio||'00:00').substring(0,5));
+      var horaFimNorm=(ta.hora_fim||'00:00').substring(0,5);
+      var [hIniH,hIniM]=horaSlot.split(':').map(Number);
+      var [hFimH,hFimM]=horaFimNorm.split(':').map(Number);
+      var durMin=Math.max(30,(hFimH*60+hFimM)-(hIniH*60+hIniM));
+      var nomeCursoOuCombo=turma.curso_id?(nomeCursoPorId[turma.curso_id]||'Curso'):(nomeComboPorId[turma.combo_id]||'Combo');
+      var vagas=turma.vagas_ocupadas||0;
+      if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
+      agendamentosPorData[dataKey][profNomeAgenda+':'+horaSlot]={
+        tipo:'aula',
+        turmaAulaId:ta.id,
+        turmaId:turma.id,
+        cliente:'🎓 '+turma.nome,
+        servico:nomeCursoOuCombo+' ('+vagas+' aluno'+(vagas===1?'':'s')+')',
+        prof:profNomeAgenda,
+        hora:horaSlot,
+        duracao:durMin+' min',
+        valor:'',
+        status:'Aula',
+        sinal:false,
+        sinalPago:false,
+        confirmado:true,
+        obs:''
+      };
+    });
+  }catch(e){console.log('err mesclar turma aulas agenda',e);}
 }
 async function salvarComandaSupa(c){try{if(supa)await supa.from('comandas').insert([Object.assign({},c,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function salvarPacoteClienteSupa(p){
@@ -5267,23 +5394,22 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var bC=document.getElementById('cursos-tab-cursos'),bK=document.getElementById('cursos-tab-combos');
-  var lC=document.getElementById('cursos-list'),lK=document.getElementById('combos-list');
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list')};
   var btnNovo=document.getElementById('cursos-btn-novo');
+  Object.keys(tabs).forEach(function(k){
+    if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
+    if(lists[k])lists[k].style.display=k===tab?'block':'none';
+  });
   if(tab==='cursos'){
-    if(bC)bC.className='btn btn-primary btn-sm';
-    if(bK)bK.className='btn btn-outline btn-sm';
-    if(lC)lC.style.display='block';
-    if(lK)lK.style.display='none';
-    if(btnNovo){btnNovo.textContent='+ Novo Curso';btnNovo.setAttribute('onclick','abrirNovoCurso()');}
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Curso';btnNovo.setAttribute('onclick','abrirNovoCurso()');}
     renderCursos();
-  }else{
-    if(bC)bC.className='btn btn-outline btn-sm';
-    if(bK)bK.className='btn btn-primary btn-sm';
-    if(lC)lC.style.display='none';
-    if(lK)lK.style.display='block';
-    if(btnNovo){btnNovo.textContent='+ Novo Combo';btnNovo.setAttribute('onclick','abrirNovoCombo()');}
+  }else if(tab==='combos'){
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Combo';btnNovo.setAttribute('onclick','abrirNovoCombo()');}
     renderCombos();
+  }else{
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Turma';btnNovo.setAttribute('onclick','abrirNovaTurma()');}
+    renderTurmas();
   }
 }
 
@@ -5968,6 +6094,259 @@ async function uploadCapaCurso(fileInput,prefixo){
   }
 }
 
+// ===== TURMAS: CRUD + geração/sincronização de curso_turma_aulas =====
+function turmaStatusBadge(status){
+  var map={planejada:'badge-blue',andamento:'badge-green',concluida:'badge-gray',cancelada:'badge-red'};
+  var label={planejada:'Planejada',andamento:'Em andamento',concluida:'Concluída',cancelada:'Cancelada'};
+  return '<span class="badge '+(map[status]||'badge-gray')+'">'+(label[status]||status)+'</span>';
+}
+function popularSelectCursoComboTurma(selecionado){
+  var sel=document.getElementById('turma-curso-combo');
+  if(!sel)return;
+  var opts=['<option value="">— Selecione —</option>'];
+  cursos.filter(function(c){return c.status==='ativo';}).forEach(function(c){
+    opts.push('<option value="curso:'+c.id+'">🎓 '+escHtml(c.nome)+'</option>');
+  });
+  cursoCombos.filter(function(c){return c.status==='ativo';}).forEach(function(c){
+    opts.push('<option value="combo:'+c.id+'">🧩 '+escHtml(c.nome)+'</option>');
+  });
+  sel.innerHTML=opts.join('');
+  if(selecionado)sel.value=selecionado;
+}
+function popularSelectProfessorTurma(selecionado){
+  var sel=document.getElementById('turma-professor');
+  if(!sel)return;
+  var ativos=(typeof colaboradores!=='undefined'?colaboradores:[]).filter(function(c){return !c.status||c.status==='Ativo';});
+  sel.innerHTML='<option value="">— Selecione —</option>'+ativos.map(function(c){return '<option value="'+c.id+'">'+escHtml(c.nome)+'</option>';}).join('');
+  if(selecionado)sel.value=selecionado;
+}
+function renderTurmaDatasChips(){
+  var wrap=document.getElementById('turma-datas-lista');
+  if(!wrap)return;
+  if(!turmaDatasAtuais.length){wrap.innerHTML='<span style="font-size:12px;color:#999">Nenhuma data adicionada ainda.</span>';return;}
+  var datasOrdenadas=turmaDatasAtuais.slice().sort();
+  wrap.innerHTML=datasOrdenadas.map(function(d){
+    var partes=d.split('-');
+    var label=partes[2]+'/'+partes[1];
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px">'+label
+      +'<button type="button" onclick="turmaRemoverData(\''+d+'\')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;padding:0 4px">✕</button></span>';
+  }).join('');
+}
+function turmaAdicionarData(){
+  var inp=document.getElementById('turma-nova-data');
+  var v=inp.value;
+  if(!v)return;
+  if(turmaDatasAtuais.indexOf(v)===-1)turmaDatasAtuais.push(v);
+  inp.value='';
+  renderTurmaDatasChips();
+}
+function turmaRemoverData(d){
+  turmaDatasAtuais=turmaDatasAtuais.filter(function(x){return x!==d;});
+  renderTurmaDatasChips();
+}
+function renderTurmas(){
+  var wrap=document.getElementById('turmas-list');
+  if(!wrap)return;
+  if(!cursoTurmas.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:#999;font-size:13px">Nenhuma turma cadastrada ainda.</div>';return;}
+  wrap.innerHTML=cursoTurmas.map(function(t,i){
+    var nomeCursoCombo=t.curso_id
+      ?((cursos.find(function(c){return c.id===t.curso_id;})||{}).nome||'Curso removido')
+      :((cursoCombos.find(function(c){return c.id===t.combo_id;})||{}).nome||'Combo removido');
+    var prof=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.id===t.professor_id;});
+    var periodo=t.data_inicio&&t.data_fim
+      ?(fmtDataBR(t.data_inicio)+(t.data_fim!==t.data_inicio?' a '+fmtDataBR(t.data_fim):''))
+      :'—';
+    return '<div class="service-row">'
+      +'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">📅</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">'+escHtml(t.nome)+'</div>'
+      +'<div style="font-size:12px;color:#888">'+escHtml(nomeCursoCombo)+' · '+(prof?escHtml(prof.nome):'sem professor')+' · '+periodo+' · '+(t.hora_inicio||'').substring(0,5)+'–'+(t.hora_fim||'').substring(0,5)+'</div></div>'
+      +'<div style="font-size:12px;color:#888;white-space:nowrap;margin:0 14px">'+(t.vagas_ocupadas||0)+'/'+(t.vagas_maximas||0)+' vagas</div>'
+      +turmaStatusBadge(t.status)
+      +'<button onclick="menuTurma(event,'+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888;margin-left:10px">⋮</button>'
+      +'</div>';
+  }).join('');
+}
+function fmtDataBR(iso){
+  if(!iso)return '';
+  var p=iso.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function menuTurma(e,idx){
+  e.stopPropagation();
+  var old=document.getElementById('turma-menu-popup');if(old)old.remove();
+  var div=document.createElement('div');
+  div.id='turma-menu-popup';
+  div.style.cssText='position:fixed;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;min-width:160px;padding:4px 0';
+  div.innerHTML='<div onclick="editarTurma('+idx+');document.getElementById(\'turma-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px">✏️ Editar</div>'+
+    '<div onclick="deletarTurma('+idx+');document.getElementById(\'turma-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#ef4444">🗑️ Excluir</div>';
+  div.style.top=(e.clientY+4)+'px';
+  div.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){document.addEventListener('click',function rem(){div.remove();document.removeEventListener('click',rem);});},10);
+}
+function deletarTurma(idx){
+  var t=cursoTurmas[idx];
+  if(!t)return;
+  if(!confirm('Excluir a turma "'+t.nome+'"? Os horários bloqueados na agenda da profissional serão liberados.'))return;
+  if(t.id)deletarTurmaSupa(t.id);
+  cursoTurmas.splice(idx,1);
+  renderTurmas();
+  if(typeof carregarAgendamentosSupa==='function')carregarAgendamentosSupa();
+}
+function abrirNovaTurma(){
+  window._editTurmaIdx=-1;
+  turmaDatasAtuais=[];
+  popularSelectCursoComboTurma('');
+  popularSelectProfessorTurma('');
+  document.getElementById('turma-nome').value='';
+  document.getElementById('turma-local').value='';
+  document.getElementById('turma-hora-inicio').value='10:00';
+  document.getElementById('turma-hora-fim').value='13:00';
+  document.getElementById('turma-vagas').value='10';
+  document.getElementById('turma-status').value='planejada';
+  renderTurmaDatasChips();
+  document.querySelector('#modal-turma .modal-title').textContent='🎓 Nova Turma';
+  openModal('modal-turma');
+}
+function editarTurmaPorId(id){
+  var idx=cursoTurmas.findIndex(function(t){return t.id===id;});
+  if(idx>=0)editarTurma(idx);
+}
+async function editarTurma(idx){
+  var t=cursoTurmas[idx];
+  if(!t)return;
+  window._editTurmaIdx=idx;
+  popularSelectCursoComboTurma(t.curso_id?('curso:'+t.curso_id):('combo:'+t.combo_id));
+  popularSelectProfessorTurma(t.professor_id);
+  document.getElementById('turma-nome').value=t.nome||'';
+  document.getElementById('turma-local').value=t.local||'';
+  document.getElementById('turma-hora-inicio').value=(t.hora_inicio||'10:00').substring(0,5);
+  document.getElementById('turma-hora-fim').value=(t.hora_fim||'13:00').substring(0,5);
+  document.getElementById('turma-vagas').value=t.vagas_maximas||0;
+  document.getElementById('turma-status').value=t.status||'planejada';
+  turmaDatasAtuais=[];
+  renderTurmaDatasChips();
+  document.querySelector('#modal-turma .modal-title').textContent='✏️ Editar Turma';
+  openModal('modal-turma');
+  try{
+    if(supa&&t.id){
+      var r=await supa.from('curso_turma_aulas').select('data').eq('turma_id',t.id).eq('salao_id',window.SALAO_ID).order('data');
+      turmaDatasAtuais=(r.data||[]).map(function(x){return x.data;});
+      renderTurmaDatasChips();
+    }
+  }catch(e){console.log('err carregar datas turma',e);}
+}
+async function salvarTurma(){
+  var get=function(id){return document.getElementById(id);};
+  var cursoComboVal=get('turma-curso-combo').value;
+  var nome=get('turma-nome').value.trim();
+  var professorId=get('turma-professor').value;
+  var horaInicio=get('turma-hora-inicio').value;
+  var horaFim=get('turma-hora-fim').value;
+  if(!cursoComboVal){alert('Selecione o curso ou combo da turma.');return;}
+  if(!nome){alert('Informe o nome da turma.');return;}
+  if(!professorId){alert('Selecione a profissional responsável.');return;}
+  if(!horaInicio||!horaFim){alert('Informe hora de início e fim.');return;}
+  if(!turmaDatasAtuais.length){alert('Adicione ao menos uma data de aula.');return;}
+  var [tipo,id]=cursoComboVal.split(':');
+  var datasOrdenadas=turmaDatasAtuais.slice().sort();
+  var obj={
+    nome:nome,
+    curso_id:tipo==='curso'?id:null,
+    combo_id:tipo==='combo'?id:null,
+    professor_id:professorId,
+    local:get('turma-local').value.trim(),
+    data_inicio:datasOrdenadas[0],
+    data_fim:datasOrdenadas[datasOrdenadas.length-1],
+    hora_inicio:horaInicio,
+    hora_fim:horaFim,
+    vagas_maximas:parseInt(get('turma-vagas').value)||0,
+    status:get('turma-status').value
+  };
+  var idx=window._editTurmaIdx;
+  var turmaId=null;
+  if(idx>=0&&cursoTurmas[idx]){
+    var existente=cursoTurmas[idx];
+    Object.assign(existente,obj);
+    turmaId=existente.id;
+    if(turmaId)await atualizarTurmaSupa(turmaId,obj);
+  }else{
+    turmaId=await salvarTurmaSupa(obj);
+    if(turmaId){obj.id=turmaId;cursoTurmas.push(obj);}
+  }
+  if(turmaId)await sincronizarTurmaAulas(turmaId,datasOrdenadas,professorId,horaInicio,horaFim,obj.curso_id);
+  renderTurmas();
+  renderCursosDashCards();
+  closeModal('modal-turma');
+  showAlert('Turma salva com sucesso!');
+  if(typeof carregarAgendamentosSupa==='function')carregarAgendamentosSupa();
+}
+async function salvarTurmaSupa(t){
+  try{
+    if(!supa||!window.SALAO_ID)return null;
+    var payload=Object.assign({},t,{salao_id:window.SALAO_ID,vagas_ocupadas:0});
+    var r=await supa.from('curso_turmas').insert([payload]).select('id').single();
+    if(r.error){console.log('err supa turma insert',r.error);return null;}
+    return r.data.id;
+  }catch(e){console.log('err supa turma insert',e);return null;}
+}
+async function atualizarTurmaSupa(id,t){
+  try{
+    if(!supa||!id)return;
+    var r=await supa.from('curso_turmas').update(t).eq('id',id).eq('salao_id',window.SALAO_ID);
+    if(r.error)console.log('err supa turma update',r.error);
+  }catch(e){console.log('err supa turma update',e);}
+}
+async function deletarTurmaSupa(id){
+  try{
+    if(!supa||!id)return;
+    await supa.from('curso_turma_aulas').delete().eq('turma_id',id).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_turmas').delete().eq('id',id).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err supa turma delete',e);}
+}
+// Sincroniza as datas concretas da turma na tabela-ponte curso_turma_aulas.
+// Estratégia: apaga tudo que existia e recria do zero — simples e robusto,
+// aceitável porque é uma ação administrativa pouco frequente (não é o volume
+// de escrita de uma agenda de atendimentos). Nunca toca a tabela `agendamentos`.
+async function sincronizarTurmaAulas(turmaId,datas,profissionalId,horaInicio,horaFim,cursoId){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    await supa.from('curso_turma_aulas').delete().eq('turma_id',turmaId).eq('salao_id',window.SALAO_ID);
+    var rows=datas.map(function(d){
+      return {
+        turma_id:turmaId,salao_id:window.SALAO_ID,curso_id:cursoId||null,
+        data:d,hora_inicio:horaInicio,hora_fim:horaFim,
+        profissional_id:profissionalId,status:'agendada'
+      };
+    });
+    var r=await supa.from('curso_turma_aulas').insert(rows);
+    if(r.error)console.log('err sincronizar turma aulas',r.error);
+  }catch(e){console.log('err sincronizar turma aulas',e);}
+}
+async function carregarTurmasSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('curso_turmas').select('*').eq('salao_id',window.SALAO_ID).order('data_inicio',{ascending:false});
+    if(r.error){console.log('err carregar turmas',r.error);return;}
+    cursoTurmas=r.data||[];
+    renderTurmas();
+    renderCursosDashCards();
+  }catch(e){console.log('err carregar turmas',e);}
+}
+function abrirInfoTurmaAgenda(key){
+  var a=typeof agendaDiaAtual!=='undefined'&&agendaDiaAtual?agendaDiaAtual[key]:null;
+  if(!a||a.tipo!=='aula')return;
+  document.getElementById('turma-info-titulo').textContent=a.cliente;
+  document.getElementById('turma-info-corpo').innerHTML=
+    '<div style="font-size:13px;color:#555;line-height:2">'
+    +'<div><b>Curso/Combo:</b> '+escHtml(a.servico)+'</div>'
+    +'<div><b>Profissional:</b> '+escHtml(a.prof)+'</div>'
+    +'<div><b>Horário:</b> '+a.hora+' ('+a.duracao+')</div>'
+    +'</div>';
+  window._turmaInfoAtualId=a.turmaId;
+  openModal('modal-turma-info');
+}
+
 const pages = {
   'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Vendas',
   'comandas':'Comandas','fluxo':'Fluxo de Caixa','caixa':'Controle de Caixa',
@@ -6018,7 +6397,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -7141,6 +7520,8 @@ var clientes=[];
 var cursos=[];
 var cursoCombos=[];
 var cursoComboItens=[];
+var cursoTurmas=[];
+var turmaDatasAtuais=[];
 var cursosTabAtual='cursos';
 var cursoConteudoCursoId=null;
 var cursoModulosAtuais=[];
@@ -9788,6 +10169,7 @@ var agendaAppts={};
 
 function corBlocoAgenda(a){
   if(!a) return '#111111';
+  if(a.tipo==='aula') return '#8b5cf6';
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
@@ -9812,6 +10194,7 @@ function _pastelByString(s){
 }
 function corBlocoAgendaPastel(a){
   if(!a) return '#F1F0EC';
+  if(a.tipo==='aula') return '#EFEAFB';
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
@@ -10171,7 +10554,8 @@ function renderAgenda(){
       const insetCard=isMultiSlot?'4px 6px 0 6px':`top:4px;left:6px;right:6px;min-height:${slotSpanCard*64-8}px`;
       const posCard=isMultiSlot?`position:absolute;inset:${insetCard}`:`position:absolute;${insetCard}`;
       const slotStyleCard=isMultiSlot?'position:relative;border-bottom:none':'position:relative';
-      return `<div class="slot occupied" style="${slotStyleCard}" onclick="abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)">
+      const clickHandlerCard=a.tipo==='aula'?`abrirInfoTurmaAgenda('${key}')`:`abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)`;
+      return `<div class="slot occupied" style="${slotStyleCard}" onclick="${clickHandlerCard}">
         <div class="agenda-card" style="${posCard};background:${corBloco};border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
           <div style="line-height:1.25">${a.cliente}</div>
           <div style="font-size:11px;opacity:.75;margin-top:1px">${a.servico}</div>
@@ -13054,7 +13438,14 @@ function salvarAgendamento(){
     var profsServ=agColetarProfissionaisServico();
     if(!profsServ.length){showAlert('Selecione o profissional do serviço.');return;}
     var conflito=agVerificarConflitoHorarioAgenda(data,hora,profsServ);
-    if(conflito){showAlert('Horário '+hora+' já ocupado para '+conflito.prof+'.');return;}
+    if(conflito){
+      if(conflito.ocupado&&conflito.ocupado.tipo==='aula'){
+        showAlert('Profissional indisponível neste horário. Existe uma aula cadastrada ('+conflito.ocupado.cliente+').');
+      }else{
+        showAlert('Horário '+hora+' já ocupado para '+conflito.prof+'.');
+      }
+      return;
+    }
   }else{
     var profPac=document.getElementById('ag-pacote-prof')?.value||'';
     if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
@@ -14055,6 +14446,7 @@ function fazerLogout(){
   if(typeof cursos!=='undefined')cursos=[];
   if(typeof cursoCombos!=='undefined')cursoCombos=[];
   if(typeof cursoComboItens!=='undefined')cursoComboItens=[];
+  if(typeof cursoTurmas!=='undefined')cursoTurmas=[];
   try{sessionStorage.removeItem('flora_salao_id');}catch(e){}
   if(supa)supa.auth.signOut().then(function(){window.location.replace('login.html');}).catch(function(){window.location.replace('login.html');});
   else window.location.replace('login.html');
