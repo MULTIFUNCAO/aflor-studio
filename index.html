@@ -1580,12 +1580,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-primary btn-sm" id="cursos-tab-cursos" onclick="cursosSetTab('cursos')">🎓 Cursos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-combos" onclick="cursosSetTab('combos')">🧩 Combos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-turmas" onclick="cursosSetTab('turmas')">📅 Turmas</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-alunos" onclick="cursosSetTab('alunos')">👤 Alunos</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
       <div class="table-card" id="cursos-list"></div>
       <div class="table-card" id="combos-list" style="display:none"></div>
       <div class="table-card" id="turmas-list" style="display:none"></div>
+      <div class="table-card" id="alunos-list" style="display:none"></div>
     </div>
 
     <!-- PRODUTOS -->
@@ -4609,6 +4611,88 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-aluno">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <span class="modal-title">👤 Novo Aluno</span>
+      <button class="modal-close" onclick="closeModal('modal-aluno')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Vincular a cliente existente (opcional)</label>
+        <select id="aluno-cliente-vinculo" onchange="alunoPreencherDeCliente()"><option value="">— Nenhum / cadastrar do zero —</option></select>
+      </div>
+      <div class="form-group full"><label>Nome do Aluno *</label><input id="aluno-nome" placeholder="Nome completo"/></div>
+      <div class="form-group"><label>CPF</label><input id="aluno-cpf" placeholder="000.000.000-00"/></div>
+      <div class="form-group"><label>Telefone</label><input id="aluno-tel" placeholder="(00) 00000-0000"/></div>
+      <div class="form-group"><label>E-mail</label><input id="aluno-email" type="email" placeholder="aluno@email.com"/></div>
+      <div class="form-group"><label>Data de Nascimento</label><input type="date" id="aluno-nasc"/></div>
+      <div class="form-group full"><label>Endereço</label><input id="aluno-endereco"/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="aluno-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-aluno')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarAluno()">✅ Salvar Aluno</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-matricula">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">📝 Nova Matrícula</span>
+      <button class="modal-close" onclick="closeModal('modal-matricula')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Aluno *</label>
+        <select id="matricula-aluno"></select>
+      </div>
+      <div class="form-group full"><label>Curso ou Combo *</label>
+        <select id="matricula-curso-combo" onchange="matriculaAoTrocarCursoCombo()"></select>
+      </div>
+      <div class="form-group full"><label>Turma</label>
+        <select id="matricula-turma"><option value="">— Sem turma definida ainda —</option></select>
+      </div>
+      <div class="form-group"><label>Valor Total (R$) *</label><input type="number" id="matricula-valor" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Forma de Pagamento</label>
+        <select id="matricula-forma-pagamento">
+          <option value="Pix">Pix</option><option value="Cartão de Crédito">Cartão de Crédito</option>
+          <option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Transferência">Transferência</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Qtd. de Parcelas</label><input type="number" id="matricula-parcelas" min="1" value="1"/></div>
+      <div class="form-group"><label>Vencimento da 1ª Parcela</label><input type="date" id="matricula-primeira-parcela"/></div>
+      <div class="form-group full"><label>Status da Matrícula</label>
+        <select id="matricula-status">
+          <option value="interessado">Interessado</option>
+          <option value="ficha_enviada">Ficha enviada</option>
+          <option value="pagamento_pendente">Pagamento pendente</option>
+          <option value="matriculado" selected>Matriculado</option>
+          <option value="andamento">Em andamento</option>
+          <option value="concluido">Concluído</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-matricula')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMatricula()">✅ Confirmar Matrícula</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-aluno-ficha">
+  <div class="modal" style="width:640px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title" id="ficha-aluno-titulo">👤 Aluno</span>
+      <button class="modal-close" onclick="closeModal('modal-aluno-ficha')">✕</button>
+    </div>
+    <div id="ficha-aluno-corpo" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
+    <button class="btn btn-outline btn-sm" onclick="abrirNovaMatriculaDaFicha()" style="width:100%">+ Nova Matrícula</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-despesa">
   <div class="modal">
     <div class="modal-header">
@@ -5394,8 +5478,8 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas')};
-  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list')};
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list')};
   var btnNovo=document.getElementById('cursos-btn-novo');
   Object.keys(tabs).forEach(function(k){
     if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
@@ -5407,9 +5491,12 @@ function cursosSetTab(tab){
   }else if(tab==='combos'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Combo';btnNovo.setAttribute('onclick','abrirNovoCombo()');}
     renderCombos();
-  }else{
+  }else if(tab==='turmas'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Turma';btnNovo.setAttribute('onclick','abrirNovaTurma()');}
     renderTurmas();
+  }else{
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aluno';btnNovo.setAttribute('onclick','abrirNovoAluno()');}
+    renderAlunos();
   }
 }
 
@@ -6333,6 +6420,398 @@ async function carregarTurmasSupa(){
     renderCursosDashCards();
   }catch(e){console.log('err carregar turmas',e);}
 }
+// ===== ALUNOS: CRUD =====
+function matriculaStatusBadge(status){
+  var map={interessado:'badge-gray',ficha_enviada:'badge-blue',pagamento_pendente:'badge-yellow',matriculado:'badge-green',andamento:'badge-green',concluido:'badge-blue',cancelado:'badge-red'};
+  var label={interessado:'Interessado',ficha_enviada:'Ficha enviada',pagamento_pendente:'Pagamento pendente',matriculado:'Matriculado',andamento:'Em andamento',concluido:'Concluído',cancelado:'Cancelado'};
+  return '<span class="badge '+(map[status]||'badge-gray')+'">'+(label[status]||status)+'</span>';
+}
+function parcelaStatusBadge(status){
+  var map={pendente:'badge-yellow',pago:'badge-green',atrasado:'badge-red',cancelado:'badge-gray'};
+  var label={pendente:'Pendente',pago:'Pago',atrasado:'Atrasado',cancelado:'Cancelado'};
+  return '<span class="badge '+(map[status]||'badge-gray')+'">'+(label[status]||status)+'</span>';
+}
+function popularSelectClienteVinculo(){
+  var sel=document.getElementById('aluno-cliente-vinculo');
+  if(!sel)return;
+  var listaClientes=typeof clientes!=='undefined'?clientes:[];
+  sel.innerHTML='<option value="">— Nenhum / cadastrar do zero —</option>'
+    +listaClientes.map(function(c,i){return '<option value="'+i+'">'+escHtml(c.nome)+(c.tel?' — '+escHtml(c.tel):'')+'</option>';}).join('');
+}
+function alunoPreencherDeCliente(){
+  var idx=document.getElementById('aluno-cliente-vinculo').value;
+  if(idx===''||typeof clientes==='undefined')return;
+  var c=clientes[parseInt(idx)];
+  if(!c)return;
+  document.getElementById('aluno-nome').value=c.nome||'';
+  document.getElementById('aluno-tel').value=c.tel||'';
+  document.getElementById('aluno-cpf').value=c.cpf||'';
+  document.getElementById('aluno-endereco').value=c.endereco||'';
+}
+function renderAlunos(){
+  var wrap=document.getElementById('alunos-list');
+  if(!wrap)return;
+  if(!cursoAlunos.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:#999;font-size:13px">Nenhum aluno cadastrado ainda.</div>';return;}
+  wrap.innerHTML=cursoAlunos.map(function(a,i){
+    var matriculasDoAluno=cursoMatriculas.filter(function(m){return m.aluno_id===a.id;});
+    var statusResumo=matriculasDoAluno.length?matriculasDoAluno.map(function(m){return matriculaStatusBadge(m.status);}).join(' '):'<span style="font-size:12px;color:#bbb">sem matrícula</span>';
+    return '<div class="service-row">'
+      +'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'
+      +'<div style="flex:1;min-width:0;cursor:pointer" onclick="abrirFichaAluno('+i+')"><div style="font-weight:600;font-size:13.5px">'+escHtml(a.nome)+'</div>'
+      +'<div style="font-size:12px;color:#888">'+escHtml(a.tel||a.email||'sem contato')+'</div></div>'
+      +'<div style="margin-right:14px">'+statusResumo+'</div>'
+      +'<button class="btn btn-outline btn-sm" onclick="abrirFichaAluno('+i+')" style="margin-right:6px">📋 Ficha</button>'
+      +'<button onclick="menuAluno(event,'+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888;margin-left:6px">⋮</button>'
+      +'</div>';
+  }).join('');
+}
+function menuAluno(e,idx){
+  e.stopPropagation();
+  var old=document.getElementById('aluno-menu-popup');if(old)old.remove();
+  var div=document.createElement('div');
+  div.id='aluno-menu-popup';
+  div.style.cssText='position:fixed;background:#fff;border:1px solid #e5e5e5;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:9999;min-width:160px;padding:4px 0';
+  div.innerHTML='<div onclick="editarAluno('+idx+');document.getElementById(\'aluno-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px">✏️ Editar</div>'+
+    '<div onclick="deletarAluno('+idx+');document.getElementById(\'aluno-menu-popup\').remove()" style="padding:10px 16px;cursor:pointer;font-size:13px;color:#ef4444">🗑️ Excluir</div>';
+  div.style.top=(e.clientY+4)+'px';
+  div.style.left=Math.min(e.clientX,window.innerWidth-180)+'px';
+  document.body.appendChild(div);
+  setTimeout(function(){document.addEventListener('click',function rem(){div.remove();document.removeEventListener('click',rem);});},10);
+}
+function deletarAluno(idx){
+  var a=cursoAlunos[idx];
+  if(!a)return;
+  var temMatricula=cursoMatriculas.some(function(m){return m.aluno_id===a.id;});
+  if(temMatricula){alert('Este aluno tem matrículas — cancele ou remova as matrículas antes de excluir o cadastro.');return;}
+  if(!confirm('Excluir o aluno "'+a.nome+'"?'))return;
+  if(a.id)deletarAlunoSupa(a.id);
+  cursoAlunos.splice(idx,1);
+  renderAlunos();
+}
+function abrirNovoAluno(){
+  window._editAlunoIdx=-1;
+  popularSelectClienteVinculo();
+  document.getElementById('aluno-cliente-vinculo').value='';
+  document.getElementById('aluno-nome').value='';
+  document.getElementById('aluno-cpf').value='';
+  document.getElementById('aluno-tel').value='';
+  document.getElementById('aluno-email').value='';
+  document.getElementById('aluno-nasc').value='';
+  document.getElementById('aluno-endereco').value='';
+  document.getElementById('aluno-status').value='ativo';
+  document.querySelector('#modal-aluno .modal-title').textContent='👤 Novo Aluno';
+  openModal('modal-aluno');
+}
+function editarAluno(idx){
+  var a=cursoAlunos[idx];
+  if(!a)return;
+  window._editAlunoIdx=idx;
+  popularSelectClienteVinculo();
+  document.getElementById('aluno-cliente-vinculo').value='';
+  document.getElementById('aluno-nome').value=a.nome||'';
+  document.getElementById('aluno-cpf').value=a.cpf||'';
+  document.getElementById('aluno-tel').value=a.tel||'';
+  document.getElementById('aluno-email').value=a.email||'';
+  document.getElementById('aluno-nasc').value=a.nasc||'';
+  document.getElementById('aluno-endereco').value=a.endereco||'';
+  document.getElementById('aluno-status').value=a.status||'ativo';
+  document.querySelector('#modal-aluno .modal-title').textContent='✏️ Editar Aluno';
+  openModal('modal-aluno');
+}
+function salvarAluno(){
+  var get=function(id){return document.getElementById(id);};
+  var nome=get('aluno-nome').value.trim();
+  if(!nome){alert('Informe o nome do aluno.');return;}
+  var clienteIdx=get('aluno-cliente-vinculo').value;
+  var clienteId=(clienteIdx!==''&&typeof clientes!=='undefined'&&clientes[parseInt(clienteIdx)])?(clientes[parseInt(clienteIdx)].id||null):null;
+  var obj={
+    nome:nome,
+    cliente_id:clienteId,
+    cpf:get('aluno-cpf').value.trim(),
+    tel:get('aluno-tel').value.trim(),
+    email:get('aluno-email').value.trim(),
+    nasc:get('aluno-nasc').value||null,
+    endereco:get('aluno-endereco').value.trim(),
+    status:get('aluno-status').value
+  };
+  var idx=window._editAlunoIdx;
+  if(idx>=0&&cursoAlunos[idx]){
+    var existente=cursoAlunos[idx];
+    Object.assign(existente,obj);
+    if(existente.id)atualizarAlunoSupa(existente.id,obj);
+  }else{
+    cursoAlunos.push(obj);
+    salvarAlunoSupa(obj);
+  }
+  renderAlunos();
+  closeModal('modal-aluno');
+  showAlert('Aluno salvo com sucesso!');
+}
+async function salvarAlunoSupa(a){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var payload=Object.assign({},a,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_alunos').insert([payload]).select('id').single();
+    if(r.data&&r.data.id)a.id=r.data.id;
+    if(r.error)console.log('err supa aluno insert',r.error);
+  }catch(e){console.log('err supa aluno insert',e);}
+}
+async function atualizarAlunoSupa(id,a){
+  try{if(!supa||!id)return;await supa.from('curso_alunos').update(a).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa aluno update',e);}
+}
+async function deletarAlunoSupa(id){
+  try{if(!supa||!id)return;await supa.from('curso_alunos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa aluno delete',e);}
+}
+async function carregarAlunosSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('curso_alunos').select('*').eq('salao_id',window.SALAO_ID).order('nome');
+    if(r.error){console.log('err carregar alunos',r.error);return;}
+    cursoAlunos=r.data||[];
+    renderAlunos();
+  }catch(e){console.log('err carregar alunos',e);}
+}
+
+// ===== MATRÍCULA: wizard + geração de parcelas =====
+function matriculaAoTrocarCursoCombo(){
+  var val=document.getElementById('matricula-curso-combo').value;
+  if(!val)return;
+  var [tipo,id]=val.split(':');
+  var item=tipo==='curso'?cursos.find(function(c){return c.id===id;}):cursoCombos.find(function(c){return c.id===id;});
+  if(item){
+    var valor=(item.valor_promocional&&Number(item.valor_promocional)>0)?item.valor_promocional:(item.valor_normal||0);
+    document.getElementById('matricula-valor').value=valor;
+  }
+  var selTurma=document.getElementById('matricula-turma');
+  var turmasDoItem=cursoTurmas.filter(function(t){
+    return (tipo==='curso'&&t.curso_id===id)||(tipo==='combo'&&t.combo_id===id);
+  }).filter(function(t){return t.status==='planejada'||t.status==='andamento';});
+  selTurma.innerHTML='<option value="">— Sem turma definida ainda —</option>'
+    +turmasDoItem.map(function(t){
+      var vagas=Math.max(0,(t.vagas_maximas||0)-(t.vagas_ocupadas||0));
+      return '<option value="'+t.id+'">'+escHtml(t.nome)+' ('+vagas+' vaga(s))</option>';
+    }).join('');
+}
+function popularSelectAlunoMatricula(selecionado){
+  var sel=document.getElementById('matricula-aluno');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Selecione —</option>'
+    +cursoAlunos.filter(function(a){return a.status==='ativo';}).map(function(a){return '<option value="'+a.id+'">'+escHtml(a.nome)+'</option>';}).join('');
+  if(selecionado)sel.value=selecionado;
+}
+function abrirNovaMatricula(alunoId){
+  window._matriculaAlunoIdContexto=alunoId||null;
+  popularSelectAlunoMatricula(alunoId);
+  var selCC=document.getElementById('matricula-curso-combo');
+  var opts=['<option value="">— Selecione —</option>'];
+  cursos.filter(function(c){return c.status==='ativo';}).forEach(function(c){opts.push('<option value="curso:'+c.id+'">🎓 '+escHtml(c.nome)+'</option>');});
+  cursoCombos.filter(function(c){return c.status==='ativo';}).forEach(function(c){opts.push('<option value="combo:'+c.id+'">🧩 '+escHtml(c.nome)+'</option>');});
+  selCC.innerHTML=opts.join('');
+  document.getElementById('matricula-turma').innerHTML='<option value="">— Sem turma definida ainda —</option>';
+  document.getElementById('matricula-valor').value='';
+  document.getElementById('matricula-forma-pagamento').value='Pix';
+  document.getElementById('matricula-parcelas').value='1';
+  document.getElementById('matricula-primeira-parcela').value=new Date().toISOString().slice(0,10);
+  document.getElementById('matricula-status').value='matriculado';
+  openModal('modal-matricula');
+}
+function abrirNovaMatriculaDaFicha(){
+  var alunoId=window._fichaAlunoIdAtual;
+  closeModal('modal-aluno-ficha');
+  abrirNovaMatricula(alunoId);
+}
+async function salvarMatricula(){
+  var get=function(id){return document.getElementById(id);};
+  var alunoId=get('matricula-aluno').value;
+  var cursoComboVal=get('matricula-curso-combo').value;
+  var valorTotal=parseFloat(get('matricula-valor').value);
+  var qtdParcelas=parseInt(get('matricula-parcelas').value)||1;
+  var primeiraParcela=get('matricula-primeira-parcela').value;
+  if(!alunoId){alert('Selecione o aluno.');return;}
+  if(!cursoComboVal){alert('Selecione o curso ou combo.');return;}
+  if(isNaN(valorTotal)||valorTotal<0){alert('Informe o valor total da matrícula.');return;}
+  if(!primeiraParcela){alert('Informe o vencimento da 1ª parcela.');return;}
+  var [tipo,id]=cursoComboVal.split(':');
+  var turmaId=get('matricula-turma').value||null;
+  var formaPagamento=get('matricula-forma-pagamento').value;
+  var status=get('matricula-status').value;
+  var obj={
+    aluno_id:alunoId,
+    curso_id:tipo==='curso'?id:null,
+    combo_id:tipo==='combo'?id:null,
+    turma_id:turmaId,
+    status:status,
+    data_matricula:new Date().toISOString().slice(0,10),
+    valor_total:valorTotal,
+    valor_pago:0,
+    forma_pagamento:formaPagamento,
+    qtd_parcelas:qtdParcelas,
+    percentual_presenca:0,
+    certificado_liberado:false
+  };
+  var matriculaId=await salvarMatriculaSupa(obj);
+  if(!matriculaId){alert('Não foi possível salvar a matrícula. Veja o console para detalhes.');return;}
+  obj.id=matriculaId;
+  cursoMatriculas.push(obj);
+  await gerarParcelas(matriculaId,valorTotal,qtdParcelas,primeiraParcela,formaPagamento);
+  await registrarHistoricoMatricula(matriculaId,null,status,'Matrícula criada');
+  if(turmaId)await incrementarVagasOcupadas(turmaId,1);
+  renderAlunos();
+  renderTurmas();
+  renderCursosDashCards();
+  closeModal('modal-matricula');
+  showAlert('Matrícula confirmada com sucesso!');
+  if(window._fichaAlunoIdAtual===alunoId)abrirFichaAlunoPorId(alunoId);
+}
+async function salvarMatriculaSupa(m){
+  try{
+    if(!supa||!window.SALAO_ID)return null;
+    var payload=Object.assign({},m,{salao_id:window.SALAO_ID});
+    var r=await supa.from('curso_matriculas').insert([payload]).select('id').single();
+    if(r.error){console.log('err supa matricula insert',r.error);return null;}
+    return r.data.id;
+  }catch(e){console.log('err supa matricula insert',e);return null;}
+}
+async function gerarParcelas(matriculaId,valorTotal,qtd,primeiraData,formaPagamento){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var valorParcela=Math.round((valorTotal/qtd)*100)/100;
+    var rows=[];
+    var dataBase=new Date(primeiraData+'T12:00:00');
+    for(var i=0;i<qtd;i++){
+      var d=new Date(dataBase);
+      d.setMonth(d.getMonth()+i);
+      var venc=d.toISOString().slice(0,10);
+      var valorLinha=(i===qtd-1)?(Math.round((valorTotal-valorParcela*(qtd-1))*100)/100):valorParcela;
+      rows.push({matricula_id:matriculaId,salao_id:window.SALAO_ID,numero_parcela:i+1,valor:valorLinha,vencimento:venc,status:'pendente',forma_pagamento:formaPagamento});
+    }
+    var r=await supa.from('curso_matricula_parcelas').insert(rows).select('*');
+    if(r.error){console.log('err gerar parcelas',r.error);return;}
+    cursoMatriculaParcelas=cursoMatriculaParcelas.concat(r.data||[]);
+  }catch(e){console.log('err gerar parcelas',e);}
+}
+async function registrarHistoricoMatricula(matriculaId,statusAnterior,statusNovo,obs){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    await supa.from('curso_matricula_status_historico').insert([{
+      matricula_id:matriculaId,salao_id:window.SALAO_ID,status_anterior:statusAnterior,status_novo:statusNovo,
+      alterado_por:(window.SALAO_NOME||'Administrador'),observacao:obs||''
+    }]);
+  }catch(e){console.log('err historico matricula',e);}
+}
+async function incrementarVagasOcupadas(turmaId,delta){
+  try{
+    if(!supa||!turmaId)return;
+    var turma=cursoTurmas.find(function(t){return t.id===turmaId;});
+    var novoValor=Math.max(0,(turma?turma.vagas_ocupadas||0:0)+delta);
+    if(turma)turma.vagas_ocupadas=novoValor;
+    await supa.from('curso_turmas').update({vagas_ocupadas:novoValor}).eq('id',turmaId).eq('salao_id',window.SALAO_ID);
+  }catch(e){console.log('err incrementar vagas',e);}
+}
+
+// ===== FICHA DO ALUNO: matrículas + parcelas + baixa financeira real =====
+function abrirFichaAluno(idx){
+  var a=cursoAlunos[idx];
+  if(!a||!a.id){alert('Salve o aluno antes de abrir a ficha.');return;}
+  abrirFichaAlunoPorId(a.id);
+}
+async function abrirFichaAlunoPorId(alunoId){
+  var a=cursoAlunos.find(function(x){return x.id===alunoId;});
+  if(!a)return;
+  window._fichaAlunoIdAtual=alunoId;
+  document.getElementById('ficha-aluno-titulo').textContent='👤 '+a.nome;
+  document.getElementById('ficha-aluno-corpo').innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Carregando...</div>';
+  openModal('modal-aluno-ficha');
+  await carregarMatriculasDoAlunoSupa(alunoId);
+  renderFichaAluno(alunoId);
+}
+async function carregarMatriculasDoAlunoSupa(alunoId){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var rMat=await supa.from('curso_matriculas').select('*').eq('salao_id',window.SALAO_ID).eq('aluno_id',alunoId);
+    var matriculasDoAluno=rMat.data||[];
+    cursoMatriculas=cursoMatriculas.filter(function(m){return m.aluno_id!==alunoId;}).concat(matriculasDoAluno);
+    var idsMatriculas=matriculasDoAluno.map(function(m){return m.id;});
+    if(idsMatriculas.length){
+      var rParc=await supa.from('curso_matricula_parcelas').select('*').eq('salao_id',window.SALAO_ID).in('matricula_id',idsMatriculas).order('numero_parcela');
+      var parcelasDoAluno=rParc.data||[];
+      cursoMatriculaParcelas=cursoMatriculaParcelas.filter(function(p){return idsMatriculas.indexOf(p.matricula_id)===-1;}).concat(parcelasDoAluno);
+    }
+  }catch(e){console.log('err carregar matriculas aluno',e);}
+}
+function renderFichaAluno(alunoId){
+  var wrap=document.getElementById('ficha-aluno-corpo');
+  if(!wrap)return;
+  var matriculasDoAluno=cursoMatriculas.filter(function(m){return m.aluno_id===alunoId;});
+  if(!matriculasDoAluno.length){wrap.innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhuma matrícula ainda.</div>';return;}
+  wrap.innerHTML=matriculasDoAluno.map(function(m){
+    var nomeCursoCombo=m.curso_id
+      ?((cursos.find(function(c){return c.id===m.curso_id;})||{}).nome||'Curso removido')
+      :((cursoCombos.find(function(c){return c.id===m.combo_id;})||{}).nome||'Combo removido');
+    var turma=m.turma_id?cursoTurmas.find(function(t){return t.id===m.turma_id;}):null;
+    var parcelasDaMatricula=cursoMatriculaParcelas.filter(function(p){return p.matricula_id===m.id;}).sort(function(a,b){return a.numero_parcela-b.numero_parcela;});
+    var parcelasHtml=parcelasDaMatricula.map(function(p){
+      var idxP=cursoMatriculaParcelas.indexOf(p);
+      return '<div style="display:flex;align-items:center;padding:6px 0;font-size:12.5px;border-top:1px solid #f5f5f5">'
+        +'<span style="width:70px">Parc. '+p.numero_parcela+'</span>'
+        +'<span style="width:90px">'+fmtDataBR(p.vencimento)+'</span>'
+        +'<span style="flex:1">'+fmtCaixa(p.valor)+'</span>'
+        +parcelaStatusBadge(p.status)
+        +(p.status==='pendente'?'<button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="darBaixaParcela('+idxP+')">💰 Dar baixa</button>':'')
+        +'</div>';
+    }).join('');
+    return '<div style="border:1px solid #eee;border-radius:10px;margin-bottom:12px;padding:12px 14px">'
+      +'<div style="display:flex;align-items:center;margin-bottom:6px">'
+      +'<div style="flex:1"><div style="font-weight:600;font-size:13.5px">'+escHtml(nomeCursoCombo)+'</div>'
+      +'<div style="font-size:12px;color:#888">'+(turma?escHtml(turma.nome):'sem turma')+' · '+fmtCaixa(m.valor_pago||0)+' pago de '+fmtCaixa(m.valor_total||0)+'</div></div>'
+      +matriculaStatusBadge(m.status)
+      +'</div>'
+      +parcelasHtml
+      +'</div>';
+  }).join('');
+}
+async function darBaixaParcela(idxP){
+  var p=cursoMatriculaParcelas[idxP];
+  if(!p)return;
+  if(!confirm('Confirmar recebimento da parcela '+p.numero_parcela+' ('+fmtCaixa(p.valor)+')?'))return;
+  var m=cursoMatriculas.find(function(x){return x.id===p.matricula_id;});
+  var aluno=cursoAlunos.find(function(a){return a.id===(m?m.aluno_id:null);});
+  var nomeCursoCombo=m?(m.curso_id?((cursos.find(function(c){return c.id===m.curso_id;})||{}).nome):((cursoCombos.find(function(c){return c.id===m.combo_id;})||{}).nome)):'Curso';
+  var hoje=new Date();
+  var hojeBR=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  try{
+    // Lançamento real no Fluxo de Caixa — mesma tabela/formato que fluxoInserirSupa() usa,
+    // só que aqui capturamos o id de volta pra linkar em curso_matricula_parcelas.fluxo_lancamento_id.
+    var rFluxo=await supa.from('fluxo_lancamentos').insert({
+      salao_id:window.SALAO_ID,data:hoje.toISOString().slice(0,10),
+      descricao:'Matrícula — '+(nomeCursoCombo||'Curso')+' — '+(aluno?aluno.nome:'Aluno')+' (parcela '+p.numero_parcela+')',
+      categoria:'Cursos',forma_pagamento:p.forma_pagamento||'',valor:p.valor,tipo:'receita',status:'confirmado'
+    }).select('id').single();
+    if(rFluxo.error){console.log('err lancar fluxo parcela',rFluxo.error);alert('Não foi possível lançar no Fluxo de Caixa. Veja o console.');return;}
+    var fluxoId=rFluxo.data.id;
+    var rParc=await supa.from('curso_matricula_parcelas').update({status:'pago',data_pagamento:hoje.toISOString().slice(0,10),fluxo_lancamento_id:fluxoId}).eq('id',p.id).eq('salao_id',window.SALAO_ID);
+    if(rParc.error){console.log('err atualizar parcela paga',rParc.error);return;}
+    p.status='pago';p.data_pagamento=hoje.toISOString().slice(0,10);p.fluxo_lancamento_id=fluxoId;
+    if(m){
+      m.valor_pago=(m.valor_pago||0)+p.valor;
+      await supa.from('curso_matriculas').update({valor_pago:m.valor_pago}).eq('id',m.id).eq('salao_id',window.SALAO_ID);
+    }
+    if(typeof carregarFluxoLancamentosSupa==='function')carregarFluxoLancamentosSupa();
+    renderFichaAluno(window._fichaAlunoIdAtual);
+    renderCursosDashCards();
+    showAlert('Parcela paga e lançada no Fluxo de Caixa!');
+  }catch(e){console.log('err dar baixa parcela',e);alert('Erro ao dar baixa na parcela.');}
+}
+async function carregarMatriculasSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('curso_matriculas').select('*').eq('salao_id',window.SALAO_ID);
+    if(r.error){console.log('err carregar matriculas',r.error);return;}
+    cursoMatriculas=r.data||[];
+    renderAlunos();
+  }catch(e){console.log('err carregar matriculas',e);}
+}
+
 function abrirInfoTurmaAgenda(key){
   var a=typeof agendaDiaAtual!=='undefined'&&agendaDiaAtual?agendaDiaAtual[key]:null;
   if(!a||a.tipo!=='aula')return;
@@ -6397,7 +6876,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -7522,6 +8001,9 @@ var cursoCombos=[];
 var cursoComboItens=[];
 var cursoTurmas=[];
 var turmaDatasAtuais=[];
+var cursoAlunos=[];
+var cursoMatriculas=[];
+var cursoMatriculaParcelas=[];
 var cursosTabAtual='cursos';
 var cursoConteudoCursoId=null;
 var cursoModulosAtuais=[];
@@ -14447,6 +14929,9 @@ function fazerLogout(){
   if(typeof cursoCombos!=='undefined')cursoCombos=[];
   if(typeof cursoComboItens!=='undefined')cursoComboItens=[];
   if(typeof cursoTurmas!=='undefined')cursoTurmas=[];
+  if(typeof cursoAlunos!=='undefined')cursoAlunos=[];
+  if(typeof cursoMatriculas!=='undefined')cursoMatriculas=[];
+  if(typeof cursoMatriculaParcelas!=='undefined')cursoMatriculaParcelas=[];
   try{sessionStorage.removeItem('flora_salao_id');}catch(e){}
   if(supa)supa.auth.signOut().then(function(){window.location.replace('login.html');}).catch(function(){window.location.replace('login.html');});
   else window.location.replace('login.html');
