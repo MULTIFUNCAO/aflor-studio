@@ -9899,7 +9899,7 @@ function lancarSinalCaixaSeNecessario(reg,valor,forma){
   reg.formaSinal=forma;
   var nomeSvc=nomeServicoAgendamento(reg);
   var descricao='Sinal · '+(nomeSvc||reg.servico||'Serviço')+' · '+((reg.cliente||'').trim()||'Cliente');
-  var mov=inserirMovimentoCaixa({categoria:'Sinal/Reserva',descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
+  var mov=inserirMovimentoCaixa({tipo:'entrada',categoria:'Sinal/Reserva',descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
   if(mov){reg.sinalMovId=mov.id;reg.sinalLancadoCaixa=true;return mov.id;}
   return null;
 }
@@ -15617,9 +15617,43 @@ async function salvarLancamentoRetroativoSupa(opts){
     showAlert('⚠️ Não foi possível salvar o lançamento retroativo. Tente novamente.');
   }
 }
+// Apaga caixa_movimentos e CONFIRMA que apagou de verdade — esse projeto já teve caso de
+// DELETE "rodar" sem persistir no Supabase. Se ainda sobrar linha, tenta mais uma vez; se
+// persistir, alerta em vez de ficar quieto (evita lançamento velho voltando a contar como
+// "hoje" pra sempre, foi isso que causou o "Saldo inicial de caixa" repetindo todo dia).
+async function apagarCaixaMovimentosComVerificacao(){
+  for(var tentativa=0;tentativa<2;tentativa++){
+    await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
+    var rCheck=await supa.from('caixa_movimentos').select('id',{count:'exact',head:true}).eq('salao_id',window.SALAO_ID);
+    if(!rCheck.count)return true;
+  }
+  console.log('err caixa_movimentos não esvaziou após DELETE + retry');
+  if(typeof showAlert==='function')showAlert('⚠️ Alguns lançamentos antigos do caixa não foram apagados do servidor. Avise o suporte — eles podem voltar a aparecer.');
+  return false;
+}
 async function sincronizarAberturaCaixaSupa(troco,horaAbertura){
   try{
     if(!supa||!window.SALAO_ID)return;
+    // Segurança: se sobrou movimento de uma sessão anterior que não foi fechada direito
+    // (ex: ninguém com o app aberto na hora da virada do dia comercial), joga esses
+    // lançamentos pro Fluxo de Caixa ANTES de abrir a sessão nova — senão eles voltam a
+    // contar como "hoje" na sessão que está abrindo agora.
+    var rSobra=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID);
+    if(rSobra.data&&rSobra.data.length){
+      var rEstadoAntigo=await supa.from('caixa_estado').select('hora_abertura').eq('salao_id',window.SALAO_ID).maybeSingle();
+      var dataRefAntiga=diaComercialDate(rEstadoAntigo&&rEstadoAntigo.data&&rEstadoAntigo.data.hora_abertura?new Date(rEstadoAntigo.data.hora_abertura):new Date());
+      var dataIsoAntiga=dataRefAntiga.getFullYear()+'-'+(dataRefAntiga.getMonth()+1).toString().padStart(2,'0')+'-'+dataRefAntiga.getDate().toString().padStart(2,'0');
+      var lancsAntigos=rSobra.data.map(function(m){
+        return{salao_id:window.SALAO_ID,data:dataIsoAntiga,descricao:m.descricao||(m.tipo==='entrada'?'Entrada caixa':'Saída caixa'),categoria:m.categoria||'Outros',forma_pagamento:m.forma||'',valor:m.valor,tipo:m.tipo==='entrada'?'receita':'despesa',status:'confirmado'};
+      });
+      var rInsAntigo=await supa.from('fluxo_lancamentos').insert(lancsAntigos).select('id');
+      if(rInsAntigo.error||!rInsAntigo.data||rInsAntigo.data.length!==lancsAntigos.length){
+        console.log('err flush de sobra do caixa antigo ao abrir - abortando abertura',rInsAntigo.error);
+        if(typeof showAlert==='function')showAlert('⚠️ Havia lançamentos de uma sessão de caixa anterior não fechada, e não foi possível gravá-los no Fluxo Financeiro. Caixa não foi aberto — tente novamente.');
+        return;
+      }
+      await apagarCaixaMovimentosComVerificacao();
+    }
     await supa.from('caixa_estado').upsert({salao_id:window.SALAO_ID,aberto:true,troco:troco,hora_abertura:horaAbertura});
   }catch(e){console.log('err abrir caixa supa',e);}
 }
@@ -15708,7 +15742,7 @@ async function sincronizarFechamentoCaixaSupa(){
       }catch(eLog){console.log('err gravar log_operacoes_criticas',eLog);}
     }
     await supa.from('caixa_estado').update({aberto:false,troco:0}).eq('salao_id',window.SALAO_ID);
-    await supa.from('caixa_movimentos').delete().eq('salao_id',window.SALAO_ID);
+    await apagarCaixaMovimentosComVerificacao();
   }catch(e){console.log('err fechar caixa supa',e);}
 }
 function abrirCaixa(){
