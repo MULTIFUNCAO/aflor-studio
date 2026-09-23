@@ -1056,7 +1056,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div class="fdash-kpi-card kpi-green" onclick="showPage('fluxo')">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Faturamento Previsto</div>
           <div class="fdash-kpi-value" id="dash-faturamento-previsto">R$ 0,00</div>
-          <div class="fdash-kpi-sub">hoje, todos os atendimentos</div>
+          <div class="fdash-kpi-sub">Já atendido: <span id="dash-fat-ja-atendido">R$ 0,00</span> · Ainda por vir: <span id="dash-fat-ainda-vir">R$ 0,00</span></div>
         </div>
         <div class="fdash-kpi-card kpi-blue" onclick="showPage('agenda')">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Atendimentos</div>
@@ -16216,11 +16216,16 @@ async function renderDashboardCards(){
 
     // ===== Faturamento Previsto, A Receber e Pendências (dados reais de hoje) =====
     var faturamentoPrevisto=0, aReceberHoje=0, pendenciasConfirmacao=0;
+    var faturamentoJaAtendido=0, faturamentoAindaPorVir=0;
+    var agoraMinDash=agora.getHours()*60+agora.getMinutes();
     if(diaDataHoje){
       Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;}).forEach(function(k){
         var a=diaDataHoje[k];
         var totalServ=typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0));
         faturamentoPrevisto+=totalServ;
+        var horaP=(a.hora||k.split(':')[1]||'').split(':');
+        var horaMin=(parseInt(horaP[0]||0,10)*60)+parseInt(horaP[1]||0,10);
+        if(horaMin<=agoraMinDash) faturamentoJaAtendido+=totalServ; else faturamentoAindaPorVir+=totalServ;
         var stCalc=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
         if(stCalc!=='Paga'){
           var sinalInfoCalc=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{abate:0};
@@ -16234,11 +16239,15 @@ async function renderDashboardCards(){
     var elPendencias=document.getElementById('dash-pendencias');
     var elFinPrev=document.getElementById('dash-fin-previsto');
     var elFinAReceber=document.getElementById('dash-fin-areceber');
+    var elFatJaAtendido=document.getElementById('dash-fat-ja-atendido');
+    var elFatAindaVir=document.getElementById('dash-fat-ainda-vir');
     if(elFatPrev)elFatPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
     if(elAReceber)elAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
     if(elPendencias)elPendencias.textContent=pendenciasConfirmacao;
     if(elFinPrev)elFinPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
     if(elFinAReceber)elFinAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
+    if(elFatJaAtendido)elFatJaAtendido.textContent='R$ '+faturamentoJaAtendido.toFixed(2).replace('.',',');
+    if(elFatAindaVir)elFatAindaVir.textContent='R$ '+faturamentoAindaPorVir.toFixed(2).replace('.',',');
     var elAtencaoTexto=document.getElementById('dash-atencao-texto');
     var elAtencaoIcon=document.getElementById('dash-atencao-icon');
     if(elAtencaoTexto){
