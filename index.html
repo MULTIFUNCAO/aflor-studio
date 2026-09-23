@@ -11847,8 +11847,7 @@ function renderFluxoDRE(){
   var despesas=fluxoAgruparPorCat(lancs,'despesa');
   var totalR=receitas.reduce(function(s,r){return s+r.val;},0);
   var totalD=despesas.reduce(function(s,r){return s+r.val;},0);
-  var totalComissoes=calcularComissoesMes(lancs);
-  var lucro=totalR-totalComissoes-totalD;
+  var lucro=totalR-totalD;
   var margem=totalR>0?((lucro/totalR)*100).toFixed(1):'0';
   var html='<tr style="background:#f8f8f8"><td style="padding:10px 18px;font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px" colspan="3">RECEITAS</td></tr>';
   if(!receitas.length){
@@ -11868,7 +11867,6 @@ function renderFluxoDRE(){
     });
   }
   html+='<tr style="border-bottom:1px solid #fecaca;background:#fff5f5"><td style="padding:12px 18px;font-size:13px;font-weight:800">TOTAL DESPESAS</td><td></td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#ef4444">('+fluxoFmtMoeda(totalD)+')</td></tr>';
-  html+='<tr style="border-bottom:2px solid #111;background:#fef9ec"><td style="padding:12px 18px;font-size:13px;font-weight:800">(-) Comissões Colaboradores</td><td style="padding:12px 18px;text-align:left;font-size:11px;color:#888">estimado pela % de cada profissional</td><td style="padding:12px 18px;text-align:right;font-size:15px;font-weight:900;color:#f59e0b">('+fluxoFmtMoeda(totalComissoes)+')</td></tr>';
   html+='<tr style="background:#111"><td style="padding:14px 18px;font-size:15px;font-weight:900;color:#fff">LUCRO LÍQUIDO</td><td></td><td style="padding:14px 18px;text-align:right;font-size:18px;font-weight:900;color:#4ade80">'+fluxoFmtMoeda(lucro)+'</td></tr>';
   html+='<tr style="background:#1a1a1a"><td style="padding:10px 18px;font-size:12px;color:rgba(255,255,255,.5)">Margem de lucro</td><td></td><td style="padding:10px 18px;text-align:right;font-size:13px;font-weight:700;color:rgba(255,255,255,.7)">'+margem+'%</td></tr>';
   var tb=document.getElementById('fluxo-dre-tbody');
