@@ -16219,9 +16219,22 @@ async function renderDashboardCards(){
     var faturamentoJaAtendido=0, faturamentoAindaPorVir=0;
     var agoraMinDash=agora.getHours()*60+agora.getMinutes();
     if(diaDataHoje){
-      Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;}).forEach(function(k){
+      var keysFatHoje=Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;});
+      // Um atendimento dividido entre profissionais (ex: Botox com a Ana Flor + Manicure com a
+      // Jenny no mesmo horário/cliente) vira 2+ slots aqui, mas todos compartilham o mesmo id e
+      // o mesmo servicos_detalhe (comanda combinada). Conta quantos slots cada id ocupa hoje para
+      // não somar a comanda inteira uma vez por profissional envolvido.
+      var contagemIdFatHoje={};
+      keysFatHoje.forEach(function(k){
+        var idAt=diaDataHoje[k].id;
+        if(idAt)contagemIdFatHoje[idAt]=(contagemIdFatHoje[idAt]||0)+1;
+      });
+      keysFatHoje.forEach(function(k){
         var a=diaDataHoje[k];
-        var totalServ=typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0));
+        var dividoEntreProfs=a.id&&contagemIdFatHoje[a.id]>1;
+        var totalServ=dividoEntreProfs
+          ?(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0))
+          :(typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0)));
         faturamentoPrevisto+=totalServ;
         var horaP=(a.hora||k.split(':')[1]||'').split(':');
         var horaMin=(parseInt(horaP[0]||0,10)*60)+parseInt(horaP[1]||0,10);
