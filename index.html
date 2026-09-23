@@ -13875,8 +13875,7 @@ function renderFluxo(){
   var lancsMesConf=lancsMes.filter(function(l){return l.status==='confirmado';});
   var kpiR=lancsMesConf.reduce(function(s,l){return l.tipo==='receita'?s+(l.val||0):s;},0);
   var kpiD=lancsMesConf.reduce(function(s,l){return l.tipo==='despesa'?s+(l.val||0):s;},0);
-  var kpiComissoes=calcularComissoesMes(lancsMesConf);
-  var kpiL=kpiR-kpiComissoes-kpiD;
+  var kpiL=kpiR-kpiD;
   var elKpiR=document.getElementById('fluxo-kpi-receita-val');
   var elKpiD=document.getElementById('fluxo-kpi-despesa-val');
   var elKpiL=document.getElementById('fluxo-kpi-lucro-val');
