@@ -4026,7 +4026,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
     </div>
     <div class="form-group full" id="pg-area-forma">
-      <label>Forma de pagamento do saldo</label>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+        <label style="margin:0">Forma de pagamento do saldo</label>
+        <span onclick="pgToggleSplit()" id="pg-split-toggle" style="font-size:11px;color:#d4af37;cursor:pointer;font-weight:700">➗ Dividir em 2 formas</span>
+      </div>
       <select id="pg-forma-pagamento" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
         <option value="">Selecione...</option>
         <option value="Pix">📱 Pix</option>
@@ -4035,6 +4038,30 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
         <option value="Cartão de Débito">💳 Cartão de Débito</option>
       </select>
+      <div id="pg-split-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="number" id="pg-split-valor1" min="0" step="0.01" oninput="pgRecalcularSplit()" placeholder="Valor" style="width:110px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:700;color:#111;outline:none"/>
+          <select id="pg-split-forma1" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
+            <option value="">Selecione...</option>
+            <option value="Pix">📱 Pix</option>
+            <option value="Dinheiro">💵 Dinheiro</option>
+            <option value="Link de Pagamento">🔗 Link de Pagamento</option>
+            <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+            <option value="Cartão de Débito">💳 Cartão de Débito</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="pg-split-valor2-display" style="width:110px;padding:8px 10px;background:#f8f8f8;border-radius:8px;font-size:13px;font-weight:700;color:#111;text-align:right">R$ 0,00</div>
+          <select id="pg-split-forma2" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
+            <option value="">Selecione...</option>
+            <option value="Pix">📱 Pix</option>
+            <option value="Dinheiro">💵 Dinheiro</option>
+            <option value="Link de Pagamento">🔗 Link de Pagamento</option>
+            <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+            <option value="Cartão de Débito">💳 Cartão de Débito</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-confirmar-pagamento')">Cancelar</button>
@@ -9824,6 +9851,7 @@ function confirmarAgendamentoWpp(key){
   renderAgenda();
 }
 var pagamentoCtx=null;
+var pgSplitAtivo=false;
 
 function lerSinalAgendamento(dados){
   var sinalVal=0;
@@ -9846,6 +9874,7 @@ function pgRecalcularSaldo(){
   document.getElementById('pg-valor-restante').textContent=fmtCaixa(restante);
   var areaForma=document.getElementById('pg-area-forma');
   if(areaForma)areaForma.style.display=restante>0?'block':'none';
+  if(pgSplitAtivo)pgRecalcularSplit();
 }
 
 function abrirConfirmarPagamento(key){
@@ -9885,7 +9914,50 @@ function abrirConfirmarPagamento(key){
   var areaForma=document.getElementById('pg-area-forma');
   if(areaForma)areaForma.style.display=restante>0?'block':'none';
   document.getElementById('pg-forma-pagamento').value=formaSinalSalva||'';
+  // Sempre reabre em modo "forma única" — nunca herda o split do atendimento anterior
+  // (mesma classe de bug do caixaState.tipoAtual: estado que precisa ser resetado a
+  // cada abertura, não só quando o usuário lembra de desmarcar).
+  pgSplitAtivo=false;
+  var elToggle=document.getElementById('pg-split-toggle');
+  if(elToggle)elToggle.textContent='➗ Dividir em 2 formas';
+  var elSplitArea=document.getElementById('pg-split-area');
+  if(elSplitArea)elSplitArea.style.display='none';
+  var elForma=document.getElementById('pg-forma-pagamento');
+  if(elForma)elForma.style.display='';
+  var elSplitV1=document.getElementById('pg-split-valor1');
+  if(elSplitV1)elSplitV1.value='';
+  var elSplitF1=document.getElementById('pg-split-forma1');
+  if(elSplitF1)elSplitF1.value='';
+  var elSplitF2=document.getElementById('pg-split-forma2');
+  if(elSplitF2)elSplitF2.value='';
   openModal('modal-confirmar-pagamento');
+}
+// Alterna entre "forma única" e "dividir o saldo em 2 formas de pagamento".
+function pgToggleSplit(){
+  pgSplitAtivo=!pgSplitAtivo;
+  var toggle=document.getElementById('pg-split-toggle');
+  var selUnico=document.getElementById('pg-forma-pagamento');
+  var areaSplit=document.getElementById('pg-split-area');
+  if(pgSplitAtivo){
+    if(toggle)toggle.textContent='✖ Cancelar divisão';
+    if(selUnico)selUnico.style.display='none';
+    if(areaSplit)areaSplit.style.display='block';
+    var elV1=document.getElementById('pg-split-valor1');
+    if(elV1&&!elV1.value)elV1.value=(pagamentoCtx?pagamentoCtx.restante:0).toFixed(2);
+    pgRecalcularSplit();
+  }else{
+    if(toggle)toggle.textContent='➗ Dividir em 2 formas';
+    if(selUnico)selUnico.style.display='';
+    if(areaSplit)areaSplit.style.display='none';
+  }
+}
+// Valor da 2ª forma é sempre o restante do restante — nunca deixa a soma bater errado.
+function pgRecalcularSplit(){
+  if(!pagamentoCtx)return;
+  var v1=parseFloat(document.getElementById('pg-split-valor1')?.value)||0;
+  var v2=Math.max(0,pagamentoCtx.restante-v1);
+  var elV2=document.getElementById('pg-split-valor2-display');
+  if(elV2)elV2.textContent=fmtCaixa(v2);
 }
 
 function lancarSinalCaixaSeNecessario(reg,valor,forma){
@@ -9919,8 +9991,26 @@ function lancarEntradaCaixaAuto(desc,valor,forma){
 function confirmarFechamentoPagamento(){
   if(!pagamentoCtx){return;}
   pgRecalcularSaldo();
-  var forma=document.getElementById('pg-forma-pagamento').value;
-  if(pagamentoCtx.restante>0&&!forma){showAlert('Selecione a forma de pagamento do saldo.');return;}
+  // partesPagamento: 1 parte (forma única) ou 2 (split), sempre somando ctx.restante —
+  // a 2ª parte é sempre o restante da 1ª, então a soma nunca fica errada.
+  var forma='',partesPagamento=[];
+  if(pgSplitAtivo){
+    var v1=parseFloat(document.getElementById('pg-split-valor1')?.value)||0;
+    var f1=document.getElementById('pg-split-forma1')?.value||'';
+    var v2=Math.max(0,pagamentoCtx.restante-v1);
+    var f2=document.getElementById('pg-split-forma2')?.value||'';
+    if(pagamentoCtx.restante>0){
+      if(v1<=0||!f1){showAlert('Informe o valor e a forma de pagamento da 1ª parte.');return;}
+      if(v2>0&&!f2){showAlert('Informe a forma de pagamento da 2ª parte.');return;}
+      partesPagamento.push({valor:v1,forma:f1});
+      if(v2>0)partesPagamento.push({valor:v2,forma:f2});
+    }
+    forma=partesPagamento.map(function(p){return p.forma;}).join(' + ');
+  }else{
+    forma=document.getElementById('pg-forma-pagamento').value;
+    if(pagamentoCtx.restante>0&&!forma){showAlert('Selecione a forma de pagamento do saldo.');return;}
+    if(pagamentoCtx.restante>0)partesPagamento.push({valor:pagamentoCtx.restante,forma:forma});
+  }
   var ctx=pagamentoCtx;
   var key=ctx.key;
   var valorTotalFmt='R$ '+ctx.total.toFixed(2).replace('.',',');
@@ -9946,10 +10036,12 @@ function confirmarFechamentoPagamento(){
         agendamentosPorData[dataKey][key].formaSinal=ctx.dados.formaSinal;
       }
     }
-    // Lançar saldo restante da comanda
+    // Lançar saldo restante da comanda — 1 lançamento por parte do pagamento (1 ou 2 se dividido)
     if(ctx.restante>0){
       var svcNome=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
-      lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,ctx.restante,forma);
+      partesPagamento.forEach(function(parte){
+        lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,parte.valor,parte.forma);
+      });
     }
     // Lançar comissão do colaborador
     // ctx.total já tem o desconto subtraído (é o valor líquido).
@@ -9975,7 +10067,19 @@ function confirmarFechamentoPagamento(){
       var _mm=String(_now.getMonth()+1).padStart(2,'0');
       var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
       var _svcFluxo=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico||'Serviço';
-      var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
+      if(pgSplitAtivo&&partesPagamento.length){
+        // Sinal (se houver) + 1 linha por parte do saldo dividido — mantém a soma igual a ctx.total
+        if(ctx.sinalAbate>0){
+          var _lancSinal={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||'')+' (sinal)',cat:'Serviço',forma:(ctx.dados&&ctx.dados.formaSinal)||'',val:ctx.sinalAbate,status:'confirmado'};
+          fluxoLancamentos.push(_lancSinal);fluxoInserirSupa(_lancSinal);
+        }
+        partesPagamento.forEach(function(parte){
+          var _lancParte={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:parte.forma,val:parte.valor,status:'confirmado'};
+          fluxoLancamentos.push(_lancParte);fluxoInserirSupa(_lancParte);
+        });
+      }else{
+        var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
+      }
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
