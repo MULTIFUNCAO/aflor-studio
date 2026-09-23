@@ -13988,7 +13988,7 @@ setInterval(function(){
 },60000);
 var historicoCaixas = []; // populado a partir de fluxo_lancamentos (ver reconstruirHistoricoCaixasDeFluxo), não mais do localStorage
 var historicoDetalheAberto=-1;
-var caixaNavIdx = -1; // -1 = hoje (caixa atual)
+var caixaNavIdx = 0; // 0 = hoje (caixa atual) — corrigido: o resto do código (caixaNavData, renderCaixaNavData, fecharCaixaConfirmar/Automatico) usa 0 como "hoje", não -1
 
 function caixaNavData(dir){
   var max = historicoCaixas.length;
