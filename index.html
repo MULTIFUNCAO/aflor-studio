@@ -1460,6 +1460,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn" onclick="abrirModalMovimento('saida')" style="background:#ef4444;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">- Saida</button>
         <button class="btn" onclick="fecharCaixaConfirmar()" style="background:#f59e0b;color:#fff;font-size:13px;padding:9px 16px;border-radius:8px">Fechar Caixa</button>
       </div>
+      <div id="caixa-botoes-retroativo" style="display:none;gap:8px;align-items:center">
+        <span style="font-size:11px;color:#9ca3af">Lançar retroativo neste dia:</span>
+        <button class="btn" onclick="abrirModalMovimentoRetroativo('entrada')" style="background:#dcfce7;color:#15803d;font-size:13px;padding:9px 16px;border-radius:8px;border:1px dashed #22c55e">+ Entrada</button>
+        <button class="btn" onclick="abrirModalMovimentoRetroativo('saida')" style="background:#fee2e2;color:#b91c1c;font-size:13px;padding:9px 16px;border-radius:8px;border:1px dashed #ef4444">- Saida</button>
+      </div>
     </div>
     <div class="caixa-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
       <div onclick="toggleCardDetalhe('entradas')" id="card-btn-entradas" style="background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px 18px;cursor:pointer;border-top:3px solid #22c55e">
@@ -11656,6 +11661,20 @@ function removerColab(idx){
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
+// "Dia comercial" do caixa: a virada só acontece às CAIXA_HORA_CORTE (não à
+// meia-noite) — um caixa aberto ou reaberto de madrugada (ex: pra bater um
+// sinal recebido às 01h30) continua contando pro dia anterior, em vez de
+// nascer carimbado com a data-relógio do dia seguinte.
+var CAIXA_HORA_CORTE=5;
+function diaComercialDate(date){
+  var d=new Date(date.getTime());
+  if(d.getHours()<CAIXA_HORA_CORTE)d.setDate(d.getDate()-1);
+  return d;
+}
+function diaComercialStr(date){
+  var d=diaComercialDate(date);
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+}
 async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
 async function carregarFluxoLancamentosSupa(){
   try{
@@ -13350,6 +13369,8 @@ var modoEdicaoMovimentoId=null;
 var modoEdicaoMovArrayIdx=null;
 var suprimirChangeCatMov=false;
 var caixaHistMovIdx=-1;
+var modoRetroativoAtivo=false;
+var retroativoDataIso=null;
 var caixaCatParaServicoCats={
   'Servico de cabelo':['Cabelo'],
   'Manicure/Pedicure':['Unhas'],
@@ -13494,6 +13515,39 @@ async function carregarCaixaSupa(){
     if(typeof verificarFechamentoAutomatico==='function')verificarFechamentoAutomatico();
   }catch(e){console.log('err carregar caixa supa',e);}
 }
+// Lançamento retroativo (Controle de Caixa, navegando pra um dia já fechado):
+// grava direto em fluxo_lancamentos com a data daquele dia, sem tocar em
+// caixa_movimentos/caixa_estado — não reabre nem refecha caixa nenhum.
+// lancado_retroativo_em marca quando de fato foi lançado, pra rastreabilidade
+// (fluxo_lancamentos.data continua sendo o dia a que o lançamento pertence).
+async function salvarLancamentoRetroativoSupa(opts){
+  try{
+    if(!supa||!window.SALAO_ID){showAlert('Sem conexão com o servidor.');return;}
+    var r=await supa.from('fluxo_lancamentos').insert({
+      salao_id:window.SALAO_ID,
+      data:opts.dataIso,
+      descricao:opts.descricao,
+      categoria:opts.categoria,
+      forma_pagamento:opts.forma,
+      valor:opts.valor,
+      tipo:opts.tipo==='entrada'?'receita':'despesa',
+      status:'confirmado',
+      profissional:opts.profissional||null,
+      lancado_retroativo_em:new Date().toISOString()
+    }).select('id');
+    if(r.error||!r.data||!r.data.length){
+      console.log('err salvar lançamento retroativo',r.error);
+      showAlert('⚠️ Não foi possível salvar o lançamento retroativo. Tente novamente.');
+      return;
+    }
+    fecharModalMovimento();
+    var dataBr=opts.dataIso.split('-').reverse().join('/');
+    showAlert('✅ Lançamento retroativo registrado em '+dataBr+'! Já aparece no Fluxo de Caixa/DRE — os cards aqui em Controle de Caixa não atualizam sozinhos pra esse dia, só recarregando a página.');
+  }catch(e){
+    console.log('err salvarLancamentoRetroativoSupa',e);
+    showAlert('⚠️ Não foi possível salvar o lançamento retroativo. Tente novamente.');
+  }
+}
 async function sincronizarAberturaCaixaSupa(troco,horaAbertura){
   try{
     if(!supa||!window.SALAO_ID)return;
@@ -13551,7 +13605,7 @@ async function sincronizarFechamentoCaixaSupa(){
     var respMov=await supa.from('caixa_movimentos').select('*').eq('salao_id',window.SALAO_ID);
     var movs=respMov.data||[];
     if(movs.length){
-      var dataRef=(caixaState&&caixaState.horaAbertura)?caixaState.horaAbertura:new Date();
+      var dataRef=diaComercialDate((caixaState&&caixaState.horaAbertura)?caixaState.horaAbertura:new Date());
       var dataIso=dataRef.getFullYear()+'-'+(dataRef.getMonth()+1).toString().padStart(2,'0')+'-'+dataRef.getDate().toString().padStart(2,'0');
       var lancs=movs.map(function(m){
         return{
@@ -13695,6 +13749,16 @@ function abrirModalMovimento(tipo,histIdx){
   var modal=document.getElementById('modal-movimento-caixa');
   modal.style.display='flex';
 }
+function abrirModalMovimentoRetroativo(tipo){
+  var reg=historicoCaixas[Math.abs(caixaNavIdx)-1];
+  if(!reg){showAlert('Dia não encontrado.');return;}
+  var m=(reg.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(!m){showAlert('Não foi possível identificar a data deste dia.');return;}
+  retroativoDataIso=m[3]+'-'+m[2]+'-'+m[1];
+  modoRetroativoAtivo=true;
+  abrirModalMovimento(tipo);
+  document.getElementById('modal-mov-titulo').textContent=(tipo==='entrada'?'Entrada retroativa — ':'Saída retroativa — ')+m[0];
+}
 function abrirModalMovimentoPreenchido(mov){
   var tipo=mov.tipo||'entrada';
   caixaState.tipoAtual=tipo;
@@ -13744,6 +13808,8 @@ function fecharModalMovimento(){
   caixaHistMovIdx=-1;
   modoEdicaoMovimentoId=null;
   modoEdicaoMovArrayIdx=null;
+  modoRetroativoAtivo=false;
+  retroativoDataIso=null;
   suprimirChangeCatMov=false;
   caixaState.formaAtual='';
   document.getElementById('modal-movimento-caixa').style.display='none';
@@ -13785,6 +13851,10 @@ function confirmarMovimento(){
   if(!desc){showAlert('Selecione ou informe o serviço!');return;}
   if(!valor||valor<=0){showAlert('Digite um valor valido!');return;}
   if(!forma){showAlert('Selecione a forma de pagamento!');return;}
+  if(modoRetroativoAtivo){
+    salvarLancamentoRetroativoSupa({tipo:caixaState.tipoAtual,categoria:cat,descricao:desc,valor:valor,forma:forma,profissional:profissional,dataIso:retroativoDataIso});
+    return;
+  }
   if(modoEdicaoMovimentoId!=null||modoEdicaoMovArrayIdx!=null){
     if(caixaHistMovIdx>=0){
       var idxHistEd=caixaHistMovIdx;
@@ -13878,9 +13948,8 @@ function reabrirCaixa(){document.getElementById('caixa-aberto-view').style.displ
 
 async function fecharCaixaAutomatico(){
   if(!caixaState||!caixaState.aberto)return;
-  var hoje=new Date();
-  var hojeStr=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
-  // Guard: não fechar duas vezes no mesmo dia
+  var hojeStr=diaComercialStr(new Date());
+  // Guard: não fechar duas vezes no mesmo dia comercial
   if(localStorage.getItem('aflor_auto_fechamento_data')===hojeStr)return;
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;caixaNavIdx=0;
   localStorage.setItem('aflor_auto_fechamento_data',hojeStr);
@@ -13899,24 +13968,22 @@ async function fecharCaixaAutomatico(){
 
 function verificarFechamentoAutomatico(){
   if(!caixaState||!caixaState.aberto)return;
-  var hoje=new Date();
-  var hojeStr=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
-  // Limpa guard de dia anterior para não bloquear novo fechamento automático hoje
+  var hojeStr=diaComercialStr(new Date());
+  // Limpa guard de dia comercial anterior para não bloquear novo fechamento automático hoje
   var ultimoAuto=localStorage.getItem('aflor_auto_fechamento_data');
   if(ultimoAuto&&ultimoAuto!==hojeStr)localStorage.removeItem('aflor_auto_fechamento_data');
-  // Se o caixa foi aberto em dia anterior, fecha agora
+  // Se o caixa foi aberto em dia comercial anterior, fecha agora
   if(caixaState.horaAbertura){
-    var abStr=caixaState.horaAbertura.getDate()+'/'+(caixaState.horaAbertura.getMonth()+1)+'/'+caixaState.horaAbertura.getFullYear();
+    var abStr=diaComercialStr(caixaState.horaAbertura);
     if(abStr!==hojeStr)fecharCaixaAutomatico();
   }
 }
 
-// Verifica a cada minuto se virou meia-noite com caixa aberto
+// Verifica a cada minuto se virou o dia comercial (CAIXA_HORA_CORTE) com caixa aberto
 setInterval(function(){
   if(!caixaState||!caixaState.aberto||!caixaState.horaAbertura)return;
-  var agora=new Date();
-  var hojeStr=agora.getDate()+'/'+(agora.getMonth()+1)+'/'+agora.getFullYear();
-  var abStr=caixaState.horaAbertura.getDate()+'/'+(caixaState.horaAbertura.getMonth()+1)+'/'+caixaState.horaAbertura.getFullYear();
+  var hojeStr=diaComercialStr(new Date());
+  var abStr=diaComercialStr(caixaState.horaAbertura);
   if(abStr!==hojeStr)fecharCaixaAutomatico();
 },60000);
 var historicoCaixas = []; // populado a partir de fluxo_lancamentos (ver reconstruirHistoricoCaixasDeFluxo), não mais do localStorage
@@ -13936,6 +14003,7 @@ function renderCaixaNavData(){
   var label = document.getElementById('caixa-nav-data-label');
   var btnProx = document.getElementById('caixa-nav-btn-proximo');
   var botoesAcao = document.getElementById('caixa-botoes-acao');
+  var botoesRetro = document.getElementById('caixa-botoes-retroativo');
   var statusBadge = document.getElementById('caixa-status-badge');
 
   if(caixaNavIdx === 0 || historicoCaixas.length === 0){
@@ -13944,6 +14012,7 @@ function renderCaixaNavData(){
     if(label) label.textContent = 'Hoje';
     if(btnProx) btnProx.style.opacity = '0.3';
     if(botoesAcao) botoesAcao.style.display = 'flex';
+    if(botoesRetro) botoesRetro.style.display = 'none';
     if(statusBadge) statusBadge.style.display = 'flex';
     atualizarTotaisCaixa();
   } else {
@@ -13952,7 +14021,8 @@ function renderCaixaNavData(){
     if(!reg) return;
     if(label) label.textContent = reg.data.replace(/^\w+\.,\s*/,'');
     if(btnProx) btnProx.style.opacity = caixaNavIdx < 0 ? '1' : '0.3';
-    if(botoesAcao) botoesAcao.style.display = 'none'; // esconder botões no histórico
+    if(botoesAcao) botoesAcao.style.display = 'none'; // ações do caixa do dia ficam escondidas no histórico — só lançamento retroativo é permitido
+    if(botoesRetro) botoesRetro.style.display = 'flex';
     if(statusBadge) statusBadge.style.display = 'none';
     // Renderizar dados do dia histórico
     renderCaixaDiaHistorico(reg);
