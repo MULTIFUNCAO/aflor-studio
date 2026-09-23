@@ -64,7 +64,14 @@ serve(async (req: Request) => {
   try {
     const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       aluno.email,
-      { data: { nome: aluno.nome, tipo_conta: 'aluno' } },
+      {
+        data: { nome: aluno.nome, tipo_conta: 'aluno' },
+        // Sem isso o convite cai no Site URL padrão do projeto (o painel do
+        // salão, index.html) em vez do Portal do Aluno. index.html também
+        // tem um guard que redireciona sessões de aluno pra cá como segunda
+        // camada — mas o link já apontar certo evita o hop extra.
+        redirectTo: 'https://floragestao.com.br/portal-aluno.html',
+      },
     );
     if (inviteErr || !invited?.user) {
       throw inviteErr ?? new Error('Falha ao convidar aluno');
@@ -80,6 +87,12 @@ serve(async (req: Request) => {
     return json({ auth_user_id: invited.user.id, email: aluno.email });
   } catch (e) {
     console.error('[criar-acesso-aluno] erro:', e);
-    return json({ error: String(e) }, 500);
+    const msg = e instanceof Error ? e.message : String(e);
+    const isRateLimit = /rate limit/i.test(msg);
+    return json({
+      error: isRateLimit
+        ? 'Limite de envio de e-mail do Supabase excedido. Configure um provedor SMTP customizado (Authentication → Settings → SMTP Settings) ou tente novamente mais tarde.'
+        : msg,
+    }, 500);
   }
 });
