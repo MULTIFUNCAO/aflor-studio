@@ -4542,7 +4542,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full">
         <label>Arquivo (PDF) *</label>
         <input type="file" id="material-arquivo-input" accept="application/pdf" onchange="uploadArquivoMaterial(this)"/>
-        <div id="material-arquivo-status" style="font-size:12px;color:#888;margin-top:4px">Nenhum arquivo enviado ainda.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <div id="material-arquivo-status" style="font-size:12px;color:#888">Nenhum arquivo enviado ainda.</div>
+          <button type="button" id="material-baixar-btn" onclick="baixarMaterialAtual()" style="display:none;font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">⬇ Baixar</button>
+        </div>
         <input type="hidden" id="material-arquivo-url"/>
       </div>
       <div class="form-group full"><label>Nome do Material *</label><input id="material-nome" placeholder="Ex: Apostila — Design de Sobrancelhas"/></div>
@@ -6103,6 +6106,7 @@ function abrirNovoMaterial(moduloId){
   document.getElementById('material-permite-download').checked=true;
   document.getElementById('material-arquivo-url').value='';
   document.getElementById('material-arquivo-status').textContent='Nenhum arquivo enviado ainda.';
+  document.getElementById('material-baixar-btn').style.display='none';
   document.querySelector('#modal-curso-material .modal-title').textContent='+ Novo Material';
   openModal('modal-curso-material');
 }
@@ -6116,6 +6120,7 @@ function editarMaterial(idx){
   document.getElementById('material-permite-download').checked=m.permite_download!==false;
   document.getElementById('material-arquivo-url').value=m.arquivo_url||'';
   document.getElementById('material-arquivo-status').textContent=m.arquivo_url?('Arquivo atual: '+m.arquivo_url.split('/').pop()):'Nenhum arquivo enviado ainda.';
+  document.getElementById('material-baixar-btn').style.display=m.arquivo_url?'inline-block':'none';
   document.querySelector('#modal-curso-material .modal-title').textContent='✏️ Editar Material';
   openModal('modal-curso-material');
 }
@@ -6139,11 +6144,29 @@ async function uploadArquivoMaterial(fileInput){
     if(up.error)throw up.error;
     document.getElementById('material-arquivo-url').value=path;
     if(statusEl)statusEl.textContent='Enviado: '+file.name;
+    var baixarBtn=document.getElementById('material-baixar-btn');
+    if(baixarBtn)baixarBtn.style.display='inline-block';
     var nomeEl=document.getElementById('material-nome');
     if(nomeEl&&!nomeEl.value)nomeEl.value=file.name.replace(/\.[^.]+$/,'');
   }catch(e){
     console.log('err upload material',e);
     if(statusEl)statusEl.textContent='Falha ao enviar o arquivo (verifique se o bucket "curso-materiais" existe).';
+  }
+}
+// curso-materiais é bucket privado (apostila não deve ficar acessível por link
+// direto pra sempre) — link gerado sob demanda, expira em 60s.
+async function baixarMaterialAtual(){
+  var path=document.getElementById('material-arquivo-url').value;
+  if(!path){showAlert?showAlert('Nenhum arquivo enviado ainda.'):alert('Nenhum arquivo enviado ainda.');return;}
+  try{
+    if(!supa)throw new Error('sem sessão');
+    var r=await supa.storage.from('curso-materiais').createSignedUrl(path,60);
+    if(r.error)throw r.error;
+    window.open(r.data.signedUrl,'_blank');
+  }catch(e){
+    console.log('err gerar link material',e);
+    var msg='Não foi possível gerar o link do arquivo.';
+    if(showAlert)showAlert(msg);else alert(msg);
   }
 }
 function salvarMaterial(){
