@@ -14086,11 +14086,18 @@ function renderFluxo(){
   if(elKpiD)elKpiD.textContent=fluxoFmtMoeda(kpiD);
   if(elKpiL){elKpiL.textContent=fluxoFmtMoeda(kpiL);elKpiL.style.color=kpiL>=0?'#111':'#ef4444';}
   if(elKpiS){
-    var cxSaldo=0;
+    // Saldo em Caixa = acumulado de TODO o histórico já fechado em fluxo_lancamentos
+    // (receita - despesa, não só o mês corrente) + o que está no caixa aberto agora
+    // (ainda não fechado/copiado pro Fluxo). Antes só somava caixaState.movimentos —
+    // qualquer ajuste fechado em dia anterior (ex: "Saldo inicial de caixa") sumia do
+    // cálculo assim que saía da sessão aberta. Achado revisando o caixa de 23/09.
+    var fluxoNetAcumulado=fluxoLancamentos.filter(function(l){return l.status==='confirmado';})
+      .reduce(function(s,l){return s+(l.tipo==='receita'?(l.val||0):-(l.val||0));},0);
+    var cxSaldo=fluxoNetAcumulado;
     if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto){
       var cxEnt=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(m.valor||0);},0);
       var cxSai=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(m.valor||0);},0);
-      cxSaldo=(caixaState.troco||0)+cxEnt-cxSai;
+      cxSaldo+=(caixaState.troco||0)+cxEnt-cxSai;
     }
     elKpiS.textContent=fluxoFmtMoeda(cxSaldo);
   }
