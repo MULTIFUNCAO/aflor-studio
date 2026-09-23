@@ -9963,8 +9963,13 @@ function confirmarFechamentoPagamento(){
       baseComissao=Math.max(0,baseComissao);
       lancarComissaoServico(ctx.dados.prof,svcNomeComissao,ctx.dados.cliente,baseComissao);
     }
-    // Registrar receita no Fluxo de Caixa
-    if(ctx.total>0){
+    // Registrar receita no Fluxo de Caixa — só grava direto aqui se o caixa estiver
+    // FECHADO (não há outro jeito de capturar o valor nesse caso). Com o caixa aberto,
+    // o valor já foi (ou vai ser, via lancarEntradaCaixaAuto/lancarSinalCaixaSeNecessario
+    // acima) lançado em caixa_movimentos, e o fechamento do caixa copia isso pro Fluxo —
+    // gravar direto aqui TAMBÉM duplicava toda receita de serviço sempre que o caixa
+    // estava aberto no momento do pagamento (achado revisando o caixa de 23/09).
+    if(ctx.total>0&&!caixaState.aberto){
       var _now=new Date();
       var _dd=String(_now.getDate()).padStart(2,'0');
       var _mm=String(_now.getMonth()+1).padStart(2,'0');
