@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Portal do Aluno — Flora</title>
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --ivory:#FAF8F4; --paper:#FFFFFF; --ink:#17160F;
+  --line:rgba(23,22,15,.07); --line-soft:rgba(23,22,15,.045);
+  --shadow-xs:0 1px 2px rgba(23,22,15,.04);
+  --shadow-sm:0 4px 16px -8px rgba(23,22,15,.10);
+  --shadow-md:0 16px 40px -20px rgba(23,22,15,.18);
+  --radius-lg:18px; --radius-md:14px; --radius-sm:10px;
+  --font-flora:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0; --gray-400:#94a3b8; --gray-600:#475569;
+  --green:#15803d; --purple:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-flora);background:var(--ivory);color:var(--ink);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font-family:inherit}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ===== Login ===== */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--paper);border-radius:var(--radius-lg);padding:36px 28px;width:100%;max-width:380px;box-shadow:var(--shadow-md)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .icon{width:56px;height:56px;background:linear-gradient(135deg,#7c3aed,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.login-logo .brand{font-size:22px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#7c3aed,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-logo .sub{font-size:12px;color:var(--gray-600);margin-top:2px}
+.field{margin-bottom:12px}
+.field label{font-size:11px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:14px;outline:none;background:var(--gray-50)}
+.field input:focus{border-color:#7c3aed;background:var(--paper)}
+.btn-main{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:999px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-main:disabled{opacity:.6;cursor:not-allowed}
+.btn-outline{width:100%;padding:11px;background:var(--paper);color:#333;border:1.5px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer}
+.alert-box{border-radius:10px;padding:10px 13px;font-size:12.5px;font-weight:600;margin-bottom:12px;display:none}
+.alert-box.err{display:block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.alert-box.ok{display:block;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+
+/* ===== App ===== */
+.topbar{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10}
+.topbar-title{font-size:16px;font-weight:800}
+.topbar-sair{background:none;border:none;color:#888;font-size:12px;cursor:pointer;font-weight:600}
+.content{padding:16px;max-width:640px;margin:0 auto 80px}
+.saudacao{font-size:19px;font-weight:800;margin-bottom:4px}
+.saudacao-sub{font-size:13px;color:var(--gray-600);margin-bottom:18px}
+
+.curso-card{background:var(--paper);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-xs);cursor:pointer;border:1px solid var(--line-soft)}
+.curso-card-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.curso-card-capa{width:48px;height:48px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;object-fit:cover}
+.curso-card-nome{font-weight:700;font-size:14.5px}
+.curso-card-status{font-size:11.5px;color:var(--gray-600);margin-top:2px}
+.progress-track{background:var(--gray-100);border-radius:20px;height:8px;overflow:hidden}
+.progress-fill{background:var(--green);height:100%;border-radius:20px;transition:width .3s}
+.progress-label{font-size:11px;color:var(--gray-600);margin-top:5px;text-align:right}
+
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-gray{background:#f1f5f9;color:#555}
+.badge-yellow{background:#fef3c7;color:#92400e}
+
+.back-btn{background:none;border:none;color:#888;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.modulo-block{border:1px solid var(--line);border-radius:var(--radius-md);margin-bottom:12px;overflow:hidden}
+.modulo-head{background:var(--gray-50);padding:11px 14px;font-weight:700;font-size:13.5px}
+.item-row{display:flex;align-items:center;padding:11px 14px;border-top:1px solid var(--line-soft);font-size:13px;cursor:pointer}
+.item-row:active{background:var(--gray-50)}
+.item-icon{margin-right:10px;font-size:15px}
+.item-check{margin-left:auto;font-size:16px}
+
+.item-viewer{position:fixed;inset:0;background:var(--paper);z-index:100;display:none;flex-direction:column}
+.item-viewer.open{display:flex}
+.item-viewer-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px}
+.item-viewer video, .item-viewer iframe{width:100%;border-radius:var(--radius-sm);border:none}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);display:flex;box-shadow:0 -2px 12px rgba(0,0,0,.04)}
+.bottom-nav button{flex:1;background:none;border:none;padding:10px 0 8px;font-size:10.5px;color:var(--gray-400);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
+.bottom-nav button.active{color:var(--ink)}
+.bottom-nav button .ic{font-size:19px}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px}
+.spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">
+          <svg width="28" height="32" viewBox="0 0 100 115" fill="none">
+            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+            <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">FLORA</div>
+        <div class="sub">Portal do Aluno</div>
+      </div>
+      <div class="alert-box" id="login-alert"></div>
+      <div class="field"><label>E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
+      <div class="field"><label>Senha</label><input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password"/></div>
+      <button class="btn-main" id="btn-login" onclick="fazerLoginAluno()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="screen-app">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-titulo">Meus Cursos</div>
+    <button class="topbar-sair" onclick="sairAluno()">Sair</button>
+  </div>
+
+  <div class="content" id="view-cursos">
+    <div class="saudacao" id="saudacao-aluno">Olá! 🌷</div>
+    <div class="saudacao-sub">Seus cursos e progresso</div>
+    <div id="lista-cursos-aluno"><div class="empty-state">Carregando...</div></div>
+  </div>
+
+  <div class="content" id="view-curso-detalhe" style="display:none">
+    <button class="back-btn" onclick="mostrarView('cursos')">← Meus Cursos</button>
+    <div id="curso-detalhe-corpo"></div>
+  </div>
+
+  <div class="content" id="view-turma" style="display:none">
+    <div class="saudacao" style="font-size:16px">📅 Minha Turma</div>
+    <div id="turma-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
+  </div>
+
+  <div class="content" id="view-certificados" style="display:none">
+    <div class="saudacao" style="font-size:16px">🎓 Certificados</div>
+    <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Ainda não disponível — em breve.</div></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button id="nav-cursos" onclick="mostrarView('cursos')"><span class="ic">📚</span>Cursos</button>
+    <button id="nav-turma" onclick="mostrarView('turma')"><span class="ic">📅</span>Turma</button>
+    <button id="nav-certificados" onclick="mostrarView('certificados')"><span class="ic">🎓</span>Certificados</button>
+  </div>
+</div>
+
+<!-- Visualizador de conteúdo (aula / material) -->
+<div class="item-viewer" id="item-viewer">
+  <div class="item-viewer-head">
+    <div style="font-weight:700;font-size:14px" id="item-viewer-titulo">Conteúdo</div>
+    <button onclick="fecharViewer()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer">✕</button>
+  </div>
+  <div class="item-viewer-body" id="item-viewer-body"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
+// storageKey isolado — evita colidir com a sessão do dono do salão (index.html)
+// caso os dois estejam abertos no mesmo navegador.
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { storageKey: 'flora-aluno-auth' } });
+
+let alunoAtual = null;         // linha de curso_alunos
+let matriculasAtuais = [];     // curso_matriculas + dados agregados de progresso
+let matriculaDetalheAtual = null;
+
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function showLoginAlert(msg, tipo){
+  var el = document.getElementById('login-alert');
+  el.textContent = msg;
+  el.className = 'alert-box ' + tipo;
+}
+
+async function fazerLoginAluno(){
+  var email = document.getElementById('login-email').value.trim();
+  var senha = document.getElementById('login-senha').value;
+  if(!email || !senha){ showLoginAlert('Preencha e-mail e senha.', 'err'); return; }
+  var btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Entrando...';
+  try{
+    var r = await supa.auth.signInWithPassword({ email: email, password: senha });
+    if(r.error){
+      showLoginAlert('E-mail ou senha incorretos.', 'err');
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    await iniciarApp();
+  }catch(e){
+    console.log('err login aluno', e);
+    showLoginAlert('Erro inesperado. Tente novamente.', 'err');
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function sairAluno(){
+  await supa.auth.signOut();
+  alunoAtual = null; matriculasAtuais = [];
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-senha').value = '';
+}
+
+async function iniciarApp(){
+  try{
+    var rAluno = await supa.from('curso_alunos').select('*');
+    if(rAluno.error || !rAluno.data || !rAluno.data.length){
+      showLoginAlert('Esta conta não está vinculada a nenhum cadastro de aluno.', 'err');
+      await supa.auth.signOut();
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('btn-login').textContent = 'Entrar';
+      return;
+    }
+    alunoAtual = rAluno.data[0];
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-app').classList.add('active');
+    document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
+    await carregarMeusCursos();
+  }catch(e){
+    console.log('err iniciar app aluno', e);
+  }
+}
+
+function mostrarView(view){
+  ['cursos','curso-detalhe','turma','certificados'].forEach(function(v){
+    var el = document.getElementById('view-' + v);
+    if(el) el.style.display = (v === view) ? 'block' : 'none';
+  });
+  ['cursos','turma','certificados'].forEach(function(v){
+    var b = document.getElementById('nav-' + v);
+    if(b) b.classList.toggle('active', v === view);
+  });
+  var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados' };
+  if(titulos[view]) document.getElementById('topbar-titulo').textContent = titulos[view];
+  if(view === 'turma') carregarMinhaTurma();
+}
+
+// ===== Meus Cursos =====
+async function carregarMeusCursos(){
+  var wrap = document.getElementById('lista-cursos-aluno');
+  try{
+    var rMat = await supa.from('curso_matriculas').select('*').in('status', ['matriculado','andamento','concluido']);
+    matriculasAtuais = rMat.data || [];
+    if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; return; }
+
+    var cursoIds = matriculasAtuais.filter(function(m){return m.curso_id;}).map(function(m){return m.curso_id;});
+    var comboIds = matriculasAtuais.filter(function(m){return m.combo_id;}).map(function(m){return m.combo_id;});
+    var cursosPorId = {}, combosPorId = {}, itensComboPorCombo = {};
+    if(cursoIds.length){
+      var rC = await supa.from('cursos').select('*').in('id', cursoIds);
+      (rC.data||[]).forEach(function(c){ cursosPorId[c.id] = c; });
+    }
+    if(comboIds.length){
+      var rCo = await supa.from('curso_combos').select('*').in('id', comboIds);
+      (rCo.data||[]).forEach(function(c){ combosPorId[c.id] = c; });
+      var rItens = await supa.from('curso_combo_itens').select('*').in('combo_id', comboIds);
+      (rItens.data||[]).forEach(function(it){
+        if(!itensComboPorCombo[it.combo_id]) itensComboPorCombo[it.combo_id] = [];
+        itensComboPorCombo[it.combo_id].push(it.curso_id);
+      });
+      var todosCursosDeCombo = Object.values(itensComboPorCombo).flat();
+      if(todosCursosDeCombo.length){
+        var rCsub = await supa.from('cursos').select('*').in('id', todosCursosDeCombo);
+        (rCsub.data||[]).forEach(function(c){ cursosPorId[c.id] = c; });
+      }
+    }
+
+    for(var i=0;i<matriculasAtuais.length;i++){
+      var m = matriculasAtuais[i];
+      var cursoIdsDaMatricula = m.curso_id ? [m.curso_id] : (itensComboPorCombo[m.combo_id] || []);
+      var prog = await calcularProgresso(m.id, cursoIdsDaMatricula);
+      m._nome = m.curso_id ? (cursosPorId[m.curso_id]||{}).nome : (combosPorId[m.combo_id]||{}).nome;
+      m._capa = m.curso_id ? (cursosPorId[m.curso_id]||{}).capa_url : (combosPorId[m.combo_id]||{}).capa_url;
+      m._cursoIds = cursoIdsDaMatricula;
+      m._progresso = prog;
+    }
+    renderMeusCursos();
+  }catch(e){
+    console.log('err carregar meus cursos', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus cursos agora.</div>';
+  }
+}
+async function calcularProgresso(matriculaId, cursoIds){
+  if(!cursoIds || !cursoIds.length) return 0;
+  try{
+    var rAulas = await supa.from('curso_aulas').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
+    var rMats = await supa.from('curso_materiais').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
+    var total = (rAulas.count||0) + (rMats.count||0);
+    if(total === 0) return 0;
+    var rConcl = await supa.from('curso_progresso_conteudo').select('id', { count: 'exact', head: true }).eq('matricula_id', matriculaId).eq('status', 'concluido');
+    return Math.round(((rConcl.count||0) / total) * 100);
+  }catch(e){ console.log('err calcular progresso', e); return 0; }
+}
+function matriculaStatusBadgeAluno(status){
+  var map = { matriculado:'badge-green', andamento:'badge-green', concluido:'badge-blue', pagamento_pendente:'badge-yellow' };
+  var label = { matriculado:'Matriculado', andamento:'Em andamento', concluido:'Concluído', pagamento_pendente:'Pagamento pendente' };
+  return '<span class="badge ' + (map[status]||'badge-gray') + '">' + (label[status]||status) + '</span>';
+}
+function renderMeusCursos(){
+  var wrap = document.getElementById('lista-cursos-aluno');
+  if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; return; }
+  wrap.innerHTML = matriculasAtuais.map(function(m){
+    var capa = m._capa ? ('<img class="curso-card-capa" src="'+m._capa+'"/>') : '<div class="curso-card-capa">🎓</div>';
+    return '<div class="curso-card" onclick="abrirCursoDetalhe(\''+m.id+'\')">'
+      + '<div class="curso-card-top">' + capa
+      + '<div style="flex:1"><div class="curso-card-nome">' + escHtml(m._nome||'Curso') + '</div>'
+      + '<div class="curso-card-status">' + matriculaStatusBadgeAluno(m.status) + '</div></div>'
+      + '</div>'
+      + '<div class="progress-track"><div class="progress-fill" style="width:' + m._progresso + '%"></div></div>'
+      + '<div class="progress-label">Progresso: ' + m._progresso + '%</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== Detalhe do curso: módulos, aulas, materiais =====
+async function abrirCursoDetalhe(matriculaId){
+  var m = matriculasAtuais.find(function(x){return x.id === matriculaId;});
+  if(!m) return;
+  matriculaDetalheAtual = m;
+  mostrarView('curso-detalhe');
+  document.getElementById('topbar-titulo').textContent = m._nome || 'Curso';
+  var corpo = document.getElementById('curso-detalhe-corpo');
+  corpo.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var cursoIds = m._cursoIds;
+    var rMod = await supa.from('curso_modulos').select('*').in('curso_id', cursoIds).order('ordem');
+    var rAulas = await supa.from('curso_aulas').select('*').in('curso_id', cursoIds).order('ordem');
+    var rMats = await supa.from('curso_materiais').select('*').in('curso_id', cursoIds).order('ordem');
+    var rProg = await supa.from('curso_progresso_conteudo').select('*').eq('matricula_id', matriculaId);
+    var progressoPorItem = {};
+    (rProg.data||[]).forEach(function(p){
+      var chave = (p.aula_id ? 'aula:'+p.aula_id : 'material:'+p.material_id);
+      progressoPorItem[chave] = p;
+    });
+    renderCursoDetalhe(rMod.data||[], rAulas.data||[], rMats.data||[], progressoPorItem);
+  }catch(e){
+    console.log('err abrir curso detalhe', e);
+    corpo.innerHTML = '<div class="empty-state">Não foi possível carregar o conteúdo.</div>';
+  }
+}
+function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
+  var corpo = document.getElementById('curso-detalhe-corpo');
+  if(!modulos.length){ corpo.innerHTML = '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
+  corpo.innerHTML = modulos.map(function(mod){
+    var aulasDoModulo = aulas.filter(function(a){return a.modulo_id === mod.id;});
+    var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id;});
+    var aulasHtml = aulasDoModulo.map(function(a){
+      var prog = progressoPorItem['aula:'+a.id];
+      var feito = prog && prog.status === 'concluido';
+      return '<div class="item-row" onclick="abrirAulaViewer(\''+a.id+'\')">'
+        + '<span class="item-icon">' + (a.tipo_conteudo==='video'?'🎥':'📄') + '</span>'
+        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + '</span>'
+        + '<span class="item-check">' + (feito?'✅':'') + '</span>'
+        + '</div>';
+    }).join('');
+    var matsHtml = matsDoModulo.map(function(mt){
+      var prog = progressoPorItem['material:'+mt.id];
+      var feito = prog && prog.status === 'concluido';
+      return '<div class="item-row" onclick="abrirMaterialViewer(\''+mt.id+'\')">'
+        + '<span class="item-icon">📎</span>'
+        + '<span style="flex:1">' + escHtml(mt.nome) + '</span>'
+        + '<span class="item-check">' + (feito?'✅':'') + '</span>'
+        + '</div>';
+    }).join('');
+    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + '</div>';
+  }).join('');
+  window._aulasCache = aulas; window._materiaisCache = materiais;
+}
+function fecharViewer(){ document.getElementById('item-viewer').classList.remove('open'); }
+async function abrirAulaViewer(aulaId){
+  var a = (window._aulasCache||[]).find(function(x){return x.id === aulaId;});
+  if(!a) return;
+  document.getElementById('item-viewer-titulo').textContent = a.titulo;
+  var body = document.getElementById('item-viewer-body');
+  var html = '';
+  if(a.video_url) html += '<video controls style="width:100%;border-radius:10px;margin-bottom:14px" src="' + a.video_url + '"></video>';
+  if(a.texto_conteudo) html += '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
+  if(!html) html = '<div class="empty-state">Sem conteúdo cadastrado ainda.</div>';
+  html += '<button class="btn-main" style="margin-top:20px" onclick="marcarConcluido(\'aula\',\''+aulaId+'\')">✅ Marcar como concluída</button>';
+  body.innerHTML = html;
+  document.getElementById('item-viewer').classList.add('open');
+  registrarAberturaConteudo('aula', aulaId);
+}
+async function abrirMaterialViewer(materialId){
+  var mt = (window._materiaisCache||[]).find(function(x){return x.id === materialId;});
+  if(!mt) return;
+  document.getElementById('item-viewer-titulo').textContent = mt.nome;
+  var body = document.getElementById('item-viewer-body');
+  body.innerHTML = '<div class="empty-state">Carregando...</div>';
+  document.getElementById('item-viewer').classList.add('open');
+  var html = '';
+  if(mt.arquivo_url){
+    // curso-materiais é bucket privado — arquivo_url guarda só o path bruto
+    // do Storage, não uma URL utilizável. Link assinado gerado na hora,
+    // válido por 1h (tempo de sobra pra ler o PDF na tela).
+    try{
+      var signed = await supa.storage.from('curso-materiais').createSignedUrl(mt.arquivo_url, 3600);
+      if(signed.error || !signed.data) throw signed.error || new Error('sem signed url');
+      var url = signed.data.signedUrl;
+      html += '<iframe src="' + url + '" style="width:100%;height:60vh;margin-bottom:14px"></iframe>';
+      if(mt.permite_download) html += '<a href="' + url + '" download target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px">⬇️ Baixar</a>';
+    }catch(e){
+      console.log('err gerar link material aluno', e);
+      html = '<div class="empty-state">Não foi possível carregar o arquivo agora.</div>';
+    }
+  } else {
+    html = '<div class="empty-state">Arquivo não disponível.</div>';
+  }
+  html += '<button class="btn-main" onclick="marcarConcluido(\'material\',\''+materialId+'\')">✅ Marcar como concluído</button>';
+  body.innerHTML = html;
+  registrarAberturaConteudo('material', materialId);
+}
+async function registrarAberturaConteudo(tipo, id){
+  try{
+    var matriculaId = matriculaDetalheAtual.id;
+    var campo = tipo === 'aula' ? 'aula_id' : 'material_id';
+    var existente = await supa.from('curso_progresso_conteudo').select('id,status').eq('matricula_id', matriculaId).eq(campo, id).maybeSingle();
+    if(!existente.data){
+      await supa.from('curso_progresso_conteudo').insert([{
+        matricula_id: matriculaId, salao_id: alunoAtual.salao_id, tipo_conteudo: tipo,
+        aula_id: tipo==='aula'?id:null, material_id: tipo==='material'?id:null,
+        status: 'em_andamento', aberto_em: new Date().toISOString()
+      }]);
+    }
+  }catch(e){ console.log('err registrar abertura', e); }
+}
+async function marcarConcluido(tipo, id){
+  try{
+    var matriculaId = matriculaDetalheAtual.id;
+    var campo = tipo === 'aula' ? 'aula_id' : 'material_id';
+    var existente = await supa.from('curso_progresso_conteudo').select('id').eq('matricula_id', matriculaId).eq(campo, id).maybeSingle();
+    if(existente.data){
+      await supa.from('curso_progresso_conteudo').update({ status: 'concluido', concluido_em: new Date().toISOString() }).eq('id', existente.data.id);
+    } else {
+      await supa.from('curso_progresso_conteudo').insert([{
+        matricula_id: matriculaId, salao_id: alunoAtual.salao_id, tipo_conteudo: tipo,
+        aula_id: tipo==='aula'?id:null, material_id: tipo==='material'?id:null,
+        status: 'concluido', aberto_em: new Date().toISOString(), concluido_em: new Date().toISOString()
+      }]);
+    }
+    fecharViewer();
+    abrirCursoDetalhe(matriculaId);
+  }catch(e){ console.log('err marcar concluido', e); }
+}
+
+// ===== Minha Turma =====
+async function carregarMinhaTurma(){
+  var wrap = document.getElementById('turma-aluno-corpo');
+  wrap.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var comTurma = matriculasAtuais.filter(function(m){return m.turma_id;});
+    if(!comTurma.length){ wrap.innerHTML = '<div class="empty-state">Você ainda não está em nenhuma turma.</div>'; return; }
+    var turmaIds = comTurma.map(function(m){return m.turma_id;});
+    var rT = await supa.from('curso_turmas').select('*').in('id', turmaIds);
+    var turmas = rT.data || [];
+    var rTA = await supa.from('curso_turma_aulas').select('*').in('turma_id', turmaIds).order('data');
+    var aulasPorTurma = {};
+    (rTA.data||[]).forEach(function(ta){
+      if(!aulasPorTurma[ta.turma_id]) aulasPorTurma[ta.turma_id] = [];
+      aulasPorTurma[ta.turma_id].push(ta);
+    });
+    wrap.innerHTML = turmas.map(function(t){
+      var aulasDaTurma = aulasPorTurma[t.id] || [];
+      var datasHtml = aulasDaTurma.map(function(ta){
+        var p = ta.data.split('-');
+        var badge = ta.status === 'realizada' ? '<span class="badge badge-green">Realizada</span>' : '<span class="badge badge-gray">Agendada</span>';
+        return '<div class="item-row" style="cursor:default"><span style="flex:1">' + p[2]+'/'+p[1] + '</span>' + badge + '</div>';
+      }).join('');
+      return '<div class="modulo-block"><div class="modulo-head">' + escHtml(t.nome)
+        + '<div style="font-weight:400;font-size:12px;color:#888;margin-top:2px">' + (t.local?escHtml(t.local)+' · ':'') + (t.hora_inicio||'').substring(0,5) + '–' + (t.hora_fim||'').substring(0,5) + '</div></div>'
+        + datasHtml + '</div>';
+    }).join('');
+  }catch(e){
+    console.log('err carregar minha turma', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar sua turma.</div>';
+  }
+}
+
+// ===== Boot =====
+(async function boot(){
+  try{
+    var s = await supa.auth.getSession();
+    if(s.data && s.data.session){ await iniciarApp(); }
+  }catch(e){ console.log('err boot portal aluno', e); }
+})();
+</script>
+</body>
+</html>
