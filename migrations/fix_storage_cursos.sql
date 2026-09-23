@@ -8,18 +8,22 @@
 -- ============================================================
 
 -- ============================================================
--- BLOCO 1 — Criar os 3 buckets (públicos: o código já usa
--- getPublicUrl() para exibir capa de curso/combo sem exigir
--- token; escrita continua controlada por RLS abaixo, só leitura
--- é liberada geral).
+-- BLOCO 1 — Criar os 3 buckets.
+-- curso-capas é público: o código usa getPublicUrl() pra exibir
+-- capa de curso/combo na vitrine sem exigir token.
+-- curso-materiais e curso-certificados são PRIVADOS: apostila e
+-- certificado são conteúdo pago, não devem ficar acessíveis por
+-- link direto pra sempre — o app já gera link sob demanda via
+-- createSignedUrl() (expira em 60s, ver baixarMaterialAtual() no
+-- index.html). Escrita nos 3 continua controlada por RLS abaixo.
 -- ============================================================
 
 insert into storage.buckets (id, name, public)
 values
   ('curso-capas', 'curso-capas', true),
-  ('curso-materiais', 'curso-materiais', true),
-  ('curso-certificados', 'curso-certificados', true)
-on conflict (id) do nothing;
+  ('curso-materiais', 'curso-materiais', false),
+  ('curso-certificados', 'curso-certificados', false)
+on conflict (id) do update set public = excluded.public;
 
 
 -- ============================================================
@@ -64,10 +68,13 @@ CREATE POLICY "curso_capas_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'curso-capas' AND (storage.foldername(name))[1] = my_salao_id());
 
--- curso-materiais — mesmo padrão
+-- curso-materiais — bucket privado: leitura só pra sessão autenticada do
+-- próprio salão dono do arquivo (mesmo isolamento por pasta usado no
+-- INSERT/UPDATE/DELETE abaixo). NUNCA "TO public" aqui — apostila é
+-- conteúdo pago, diferente de curso-capas.
 CREATE POLICY "curso_materiais_select" ON storage.objects
-  FOR SELECT TO public
-  USING (bucket_id = 'curso-materiais');
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'curso-materiais' AND (storage.foldername(name))[1] = my_salao_id());
 
 CREATE POLICY "curso_materiais_insert" ON storage.objects
   FOR INSERT TO authenticated
@@ -82,10 +89,10 @@ CREATE POLICY "curso_materiais_delete" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'curso-materiais' AND (storage.foldername(name))[1] = my_salao_id());
 
--- curso-certificados — mesmo padrão (bucket ainda sem código de upload usando ele hoje, criado por completude/Fase 1)
+-- curso-certificados — mesmo padrão (bucket privado; ainda sem código de upload usando ele hoje, criado por completude/Fase 1)
 CREATE POLICY "curso_certificados_select" ON storage.objects
-  FOR SELECT TO public
-  USING (bucket_id = 'curso-certificados');
+  FOR SELECT TO authenticated
+  USING (bucket_id = 'curso-certificados' AND (storage.foldername(name))[1] = my_salao_id());
 
 CREATE POLICY "curso_certificados_insert" ON storage.objects
   FOR INSERT TO authenticated
