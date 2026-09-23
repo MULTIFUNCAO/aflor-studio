@@ -484,6 +484,18 @@ async function carregarMinhaTurma(){
 // ===== Boot =====
 (async function boot(){
   try{
+    // Redirecionado do index.html (guard de sessão de aluno) com o token
+    // pelo hash — este client usa storageKey próprio ('flora-aluno-auth'),
+    // não enxerga a sessão criada no client do painel do salão sozinho.
+    var hash = window.location.hash;
+    if(hash && hash.indexOf('access_token=') >= 0){
+      var params = new URLSearchParams(hash.slice(1));
+      var at = params.get('access_token'), rt = params.get('refresh_token');
+      if(at && rt){
+        await supa.auth.setSession({ access_token: at, refresh_token: rt });
+        history.replaceState(null, '', window.location.pathname);
+      }
+    }
     var s = await supa.auth.getSession();
     if(s.data && s.data.session){ await iniciarApp(); }
   }catch(e){ console.log('err boot portal aluno', e); }

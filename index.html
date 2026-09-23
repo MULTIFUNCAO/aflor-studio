@@ -13306,7 +13306,26 @@ function copiarLinkCadastroCliente(){
 
   var _appAtivo=false;
 
-  function ativarApp(){
+  async function ativarApp(){
+    if(_appAtivo)return;
+    // Guard: sessão de aluno do Portal do Aluno nunca deve cair no painel
+    // administrativo do salão (mesmo projeto de Auth para os dois tipos de
+    // conta — sem isso, qualquer link de convite/recovery que aterrisse
+    // aqui abriria o painel do dono, mesmo vazio pra ela por causa do RLS).
+    // curso_alunos_select_proprio (auth_user_id = my_auth_uid()) deixa
+    // qualquer sessão autenticada checar isso sobre si mesma, sem precisar
+    // saber salao_id antecipadamente.
+    try{
+      var sessAtual=(await supa.auth.getSession()).data.session;
+      if(sessAtual&&sessAtual.user){
+        var checkAluno=await supa.from('curso_alunos').select('id').eq('auth_user_id',sessAtual.user.id).maybeSingle();
+        if(checkAluno.data){
+          if(_appAtivo)return;
+          window.location.replace('portal-aluno.html#access_token='+encodeURIComponent(sessAtual.access_token)+'&refresh_token='+encodeURIComponent(sessAtual.refresh_token));
+          return;
+        }
+      }
+    }catch(e){console.log('err checar sessao aluno',e);}
     if(_appAtivo)return;
     _appAtivo=true;
     try{localStorage.setItem('aflor_logado','admin');}catch(e){}
