@@ -286,6 +286,12 @@ textarea{resize:vertical;min-height:80px}
 .modal-title{font-size:16px;font-weight:700}
 .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray-400);line-height:1}
 
+/* PAINEL LATERAL — Agenda: Novo Agendamento abre em painel à direita, não modal central,
+   pra manter a grade do dia visível ao lado (igual ao popup de detalhe do atendimento). */
+#modal-agendar{background:transparent;justify-content:flex-end;align-items:stretch}
+#modal-agendar .modal{width:460px;max-width:92vw;height:100vh;max-height:100vh;margin:0;border-radius:0;box-shadow:-10px 0 34px rgba(0,0,0,.18);animation:agPainelSlideIn .2s ease-out}
+@keyframes agPainelSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
 /* ALERT */
 .alert{display:none;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px}
 .alert.show{display:block}
@@ -3818,7 +3824,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-agendar">
-  <div class="modal" style="width:560px;max-height:90vh;overflow-y:auto;padding-bottom:80px">
+  <div class="modal" style="overflow-y:auto;padding-bottom:80px">
     <div class="modal-header">
       <span class="modal-title">📅 Novo Agendamento</span>
       <button class="modal-close" onclick="closeModal('modal-agendar')">✕</button>
@@ -9633,17 +9639,9 @@ function abrirAgendaPopup(key,dados,event){
   event.stopPropagation();
   var popup=document.createElement('div');
   popup.id='agenda-popup';
-  popup.style.cssText="position:fixed;z-index:800;background:#fff;border-radius:14px;padding:20px 20px 0;width:340px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid #e5e5e5;font-family:var(--font-flora)";
-  // Posicionar sempre visível — centro da tela ou próximo ao clique
-  var popupH=Math.min(window.innerHeight*0.8, 700);
-  var x=event.clientX+10;
-  var y=event.clientY-100;
-  if(x+350>window.innerWidth)x=event.clientX-360;
-  if(x<10)x=10;
-  if(y<10)y=10;
-  if(y+popupH>window.innerHeight)y=Math.max(10,window.innerHeight-popupH-10);
-  popup.style.left=x+'px';
-  popup.style.top=y+'px';
+  // Painel lateral à direita (mesmo padrão do Novo Agendamento) em vez de popup flutuante
+  // perto do clique — a grade do dia continua visível e clicável ao lado.
+  popup.style.cssText="position:fixed;top:0;right:0;z-index:800;background:#fff;border-radius:0;padding:20px 20px 0;width:420px;max-width:92vw;height:100vh;max-height:100vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:-10px 0 34px rgba(0,0,0,.18);border-left:1px solid #e5e5e5;font-family:var(--font-flora);animation:agPainelSlideIn .2s ease-out";
   var sinalInfoPg=lerSinalAgendamento(dados);
   var servicosComandaPg=popupServicosDoAtendimento(dados);
   var servicoValPg=servicosComandaPg.reduce(function(s,sd){return s+sd.valor;},0);
