@@ -11242,7 +11242,7 @@ function renderAgenda(){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{headers:h});
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
