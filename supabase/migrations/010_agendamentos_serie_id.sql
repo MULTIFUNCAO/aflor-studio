@@ -8,3 +8,10 @@ alter table public.agendamentos
 create index if not exists idx_agendamentos_serie_id
   on public.agendamentos(serie_id)
   where serie_id is not null;
+
+-- Confirma que a coluna e o índice foram criados.
+select column_name, data_type, is_nullable
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'agendamentos'
+  and column_name = 'serie_id';
