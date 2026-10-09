@@ -9951,6 +9951,49 @@ function cancelarAtendimentoAgenda(key){
     }else executarCancelamentoAtendimento(key,false);
   });
 }
+// Cancela esta ocorrência e todas as futuras da mesma série de "Repetir atendimento"
+// (mesmo serie_id, data >= dia que está sendo visualizado na agenda). Sinais já pagos
+// em dias ainda não carregados localmente não são estornados do caixa automaticamente —
+// avisamos isso na confirmação em vez de tentar (e falhar silenciosamente) um estorno.
+function cancelarSerieAtendimento(serieId,key){
+  var d=agendaDataAtual;
+  var dataISO=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var dataBr=dataISO.split('-').reverse().join('/');
+  showConfirmBotoes('Cancelar este e todos os próximos atendimentos dessa repetição (a partir de '+dataBr+')? Sinais já pagos no caixa não são estornados automaticamente — confira o Fluxo de Caixa se precisar.',[
+    {label:'Sim, cancelar todos',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp==='sim')executarCancelamentoSerie(serieId,dataISO);
+  });
+}
+function executarCancelamentoSerie(serieId,dataISO){
+  _authHeaders({'Accept':'application/json'}).then(function(h){
+    return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&serie_id=eq.'+serieId+'&data=gte.'+dataISO+'&select=id',{headers:h});
+  }).then(function(r){
+    return r.ok?r.json():[];
+  }).then(function(linhas){
+    if(!linhas||!linhas.length){showAlert('Nenhuma ocorrência futura encontrada pra cancelar.');return Promise.reject('vazio');}
+    return _authHeaders({'Content-Type':'application/json'}).then(function(h2){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&serie_id=eq.'+serieId+'&data=gte.'+dataISO,{method:'DELETE',headers:h2});
+    }).then(function(r2){
+      if(!r2.ok)throw new Error('delete falhou');
+      Object.keys(agendamentosPorData).forEach(function(dk){
+        var p=dk.split('/');
+        var dkISO=p[2]+'-'+String(p[1]).padStart(2,'0')+'-'+String(p[0]).padStart(2,'0');
+        if(dkISO<dataISO)return;
+        Object.keys(agendamentosPorData[dk]).forEach(function(kk){
+          var a=agendamentosPorData[dk][kk];
+          if(a&&a.serie_id===serieId)delete agendamentosPorData[dk][kk];
+        });
+      });
+      fecharAgendaPopup();
+      renderAgenda();
+      showAlert('✅ '+linhas.length+' atendimento(s) da série cancelado(s).');
+    });
+  }).catch(function(e){
+    if(e!=='vazio')showAlert('Erro ao cancelar a série. Tente novamente.');
+  });
+}
 function abrirAgendaPopup(key,dados,event){
   // Fechar popup anterior
   fecharAgendaPopup();
@@ -9999,6 +10042,9 @@ function abrirAgendaPopup(key,dados,event){
     '<span style="font-size:10px;font-weight:700;background:#f0f0f0;color:#555;padding:2px 8px;border-radius:20px">Em aberto</span>';
   var btnCancelarHtml=atendEmAberto?
     '<button type="button" onclick="cancelarAtendimentoAgenda(\''+key+'\')" style="width:100%;padding:9px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px">🗑️ Cancelar Atendimento</button>':
+    '';
+  var btnCancelarSerieHtml=(atendEmAberto&&dados.serie_id)?
+    '<button type="button" onclick="cancelarSerieAtendimento(\''+dados.serie_id+'\',\''+key+'\')" style="width:100%;padding:9px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:6px">🗑️ Cancelar esta e as próximas (repetição)</button>':
     '';
   var sinalStatusHtml=sinalInfoPg.pago?
     '<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">✅ Sinal pago</span>':
@@ -10129,6 +10175,7 @@ function abrirAgendaPopup(key,dados,event){
         <button onclick="verComandaEspecifica('${key}')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
       </div>
     </div>
+    ${btnCancelarSerieHtml}
     ${btnCancelarHtml}
     </div>
     <div style="flex-shrink:0;position:sticky;bottom:0;background:#fff;padding-top:12px;padding-bottom:20px;box-shadow:0 -6px 16px rgba(0,0,0,.06);z-index:1">
@@ -11558,7 +11605,7 @@ function renderAgenda(){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe',{headers:h});
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
@@ -11582,7 +11629,7 @@ function renderAgenda(){
           var durMinPrimario=durFromServico(svcPrimario)||60;
           var detalhes=null;
           try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null};
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -14608,6 +14655,7 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
   var profSupa=mapaNomesInv[prof]||prof;
   var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
   if(!ehPacote)obj.servicos_detalhe=servicosDetalhe;
+  if(ctx.serieId)obj.serie_id=ctx.serieId;
   return _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
     return fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:h,body:JSON.stringify(obj)});
   }).then(function(r){
@@ -14626,7 +14674,8 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
       sinal:!!ctx.sinalAtivo,sinalPago:ctx.sinalStatus==='pago',sinal_status:ctx.sinalStatus,
       sinal_valor:ctx.sinalValNum,sinalValor:ctx.sinalAtivo?('R$ '+ctx.sinalValNum.toFixed(2).replace('.',',')):'',
       ehPacote:ehPacote,produtosUsados:ctx.produtosUsados||[],obs:ctx.obs,
-      sinalLancadoCaixa:!!(ctx.sinalAtivo&&ctx.sinalStatus==='pago'&&ctx.sinalValNum>0)
+      sinalLancadoCaixa:!!(ctx.sinalAtivo&&ctx.sinalStatus==='pago'&&ctx.sinalValNum>0),
+      serie_id:ctx.serieId||null
     };
     var primeiroProf=null;
     if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
@@ -14748,7 +14797,8 @@ function afSalvarAtendimento(){
     }
   }
 
-  var ctxServ=Object.assign({},ctxBase,{tipo:'servico',blocosServico:blocosValidos});
+  var serieId=(datas.length>1)?afGerarUUID():null;
+  var ctxServ=Object.assign({},ctxBase,{tipo:'servico',blocosServico:blocosValidos,serieId:serieId});
   var prom=Promise.resolve();
   datas.forEach(function(d){
     prom=prom.then(function(){return afInserirAtendimentoUmaData(d,ctxServ);});
@@ -14785,6 +14835,13 @@ function afSucessoIrParaAgenda(){
 }
 
 // ---- Repetir atendimento ----
+function afGerarUUID(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+    var r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);
+    return v.toString(16);
+  });
+}
 var AF_REPETIR_MAX_OCORRENCIAS=60;
 var AF_REPETIR_MAX_MESES=12;
 function afToggleRepetir(){
