@@ -7352,13 +7352,14 @@ function agAddProduto(){
   var list = document.getElementById('ag-produtos-list');
   var row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:6px;align-items:center';
-  // Montar opções de produtos
+  // Montar opções de produtos (value = preço cadastrado, pra pré-preencher o campo de valor)
   var opts = '<option value="">— Selecione o produto —</option>'
     + (typeof produtos !== 'undefined' ? produtos : []).filter(function(p){ return p.status!=='Inativo'; }).map(function(p){
-        return '<option>'+p.nome+'</option>';
+        var preco=parseFloat(String(p.preco||'0').replace(',','.'))||0;
+        return '<option value="'+preco+'">'+p.nome+'</option>';
       }).join('');
-  row.innerHTML = '<select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
-    
+  row.innerHTML = '<select onchange="this.nextElementSibling.value=this.value" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
+    +'<input type="number" min="0" step="0.01" placeholder="Valor" style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;text-align:right;outline:none"/>'
     +'<button onclick="this.closest(\'div\').remove()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   list.appendChild(row);
 }
