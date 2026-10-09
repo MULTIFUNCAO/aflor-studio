@@ -11,8 +11,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 
 <style>
+/* ===== Material Symbols (ícones do formulário de Atendimento, estilo Salão99) ===== */
+.material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;color:#5f6368;vertical-align:middle}
+
 /* ===== FLORA OVERLAY — PRETO & BRANCO ===== */
 #aflor-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#f4f4f4;padding:16px;font-family:var(--font-flora)}
 #aflor-overlay *{box-sizing:border-box}
@@ -286,11 +290,96 @@ textarea{resize:vertical;min-height:80px}
 .modal-title{font-size:16px;font-weight:700}
 .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray-400);line-height:1}
 
-/* PAINEL LATERAL — Agenda: Novo Agendamento abre em painel à direita, não modal central,
-   pra manter a grade do dia visível ao lado (igual ao popup de detalhe do atendimento). */
-#modal-agendar{background:transparent;justify-content:flex-end;align-items:stretch}
-#modal-agendar .modal{width:460px;max-width:92vw;height:100vh;max-height:100vh;margin:0;border-radius:0;box-shadow:-10px 0 34px rgba(0,0,0,.18);animation:agPainelSlideIn .2s ease-out}
+/* Detalhe do atendimento existente (popup JS #agenda-popup) continua em painel lateral — Etapa 1, intocado. */
 @keyframes agPainelSlideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+/* ===== FORMULÁRIO DE ATENDIMENTO — Etapa 2, estilo Salão99 (Material Design) =====
+   Tela própria (não painel lateral): fundo cinza claro, cartão branco centralizado
+   no desktop, tela cheia no mobile. Cor de destaque = verde da marca (#15803d,
+   mesma do .btn-primary em todo o app). Só vale pro fluxo de CRIAR atendimento —
+   clicar num agendamento existente continua abrindo o painel de detalhes de sempre. */
+:root{--af-accent:#15803d;--af-accent-light:#f0fdf4;--af-ink:#1f1f1f;--af-gray:#5f6368;--af-border:#dadce0}
+#modal-agendar{background:#f1f3f4;align-items:center;justify-content:center}
+#modal-agendar .modal.af-card{width:480px;max-width:92vw;max-height:92vh;height:auto;margin:0;border-radius:20px;border:1px solid var(--af-border);box-shadow:0 2px 28px rgba(0,0,0,.12);padding:0;display:flex;flex-direction:column;overflow:hidden;animation:afCardIn .16s ease-out;font-family:var(--font-flora)}
+@keyframes afCardIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(max-width:640px){#modal-agendar .modal.af-card{width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;border:none}}
+
+.af-header{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--af-border);flex-shrink:0}
+.af-header .af-back{background:none;border:none;cursor:pointer;padding:4px;display:flex;border-radius:50%}
+.af-header .af-back:hover{background:#f1f3f4}
+.af-header .af-title{font-size:16px;font-weight:700;color:var(--af-ink)}
+.af-body{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px}
+.af-footer{display:flex;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--af-border);flex-shrink:0}
+
+.af-section-title{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:800;color:var(--af-gray);text-transform:uppercase;letter-spacing:.4px;margin:4px 0 -4px}
+.af-section-title::after{content:'';flex:1;height:1px;background:var(--af-border)}
+
+/* linha de campo: ícone fora da caixa (esquerda) + caixa Material outlined */
+.af-row{display:flex;align-items:flex-start;gap:10px}
+.af-row>.material-symbols-outlined{margin-top:14px;flex-shrink:0}
+.af-field{position:relative;flex:1;min-width:0}
+.af-field.af-field-sm{flex:none;width:110px}
+.af-input{width:100%;box-sizing:border-box;padding:16px 14px 8px;border:1px solid var(--af-border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--af-ink);outline:none;background:#fff;transition:border-color .12s}
+.af-input:focus{border-color:var(--af-accent);border-width:1.5px;padding:15.5px 13.5px 7.5px}
+select.af-input{padding-top:12px;padding-bottom:12px;cursor:pointer}
+.af-field label{position:absolute;left:14px;top:13px;font-size:14px;color:var(--af-gray);pointer-events:none;transition:.12s;background:#fff;padding:0 4px;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.af-input:focus+label,.af-input.af-filled+label,.af-field.af-filled label,.af-field select.af-input+label{top:-7px;left:10px;font-size:10.5px;font-weight:700}
+.af-input:focus+label{color:var(--af-accent)}
+.af-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:16px;display:none;padding:2px;border-radius:50%}
+.af-field.af-has-clear .af-input{padding-right:32px}
+.af-field.af-filled .af-clear{display:block}
+.af-input-icon-r{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--af-gray)}
+.af-field.af-has-icon-r .af-input{padding-right:34px}
+.af-field.af-has-icon-r.af-has-clear .af-input{padding-right:56px}
+.af-field.af-has-icon-r.af-has-clear .af-input-icon-r{right:32px}
+
+.af-link{background:none;border:none;color:var(--af-accent);font-weight:700;font-size:12.5px;cursor:pointer;padding:0;text-align:left;display:inline-flex;align-items:center;gap:4px}
+.af-link-caps{text-transform:uppercase;letter-spacing:.3px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;border:1.5px dashed var(--af-accent);border-radius:10px;background:var(--af-accent-light)}
+
+.af-servico-bloco{border:1px solid var(--af-border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;position:relative}
+.af-servico-bloco .af-servico-remove{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:#9aa0a6}
+
+.af-resumo{background:#fafafa;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.af-resumo-row{display:flex;justify-content:space-between;font-size:13px;color:var(--af-gray)}
+.af-resumo-row.af-resumo-total{font-weight:800;color:var(--af-ink);font-size:14px;border-top:1px dashed var(--af-border);padding-top:8px;margin-top:2px}
+
+.af-toggle-row{display:flex;align-items:center;justify-content:space-between}
+.af-switch{position:relative;width:38px;height:22px;flex-shrink:0}
+.af-switch input{opacity:0;width:0;height:0}
+.af-switch .af-slider{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:.15s}
+.af-switch .af-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.af-switch input:checked+.af-slider{background:var(--af-accent)}
+.af-switch input:checked+.af-slider::before{transform:translateX(16px)}
+
+.af-stepper{display:flex;align-items:center;gap:8px}
+.af-stepper button{width:30px;height:30px;border-radius:8px;border:1px solid var(--af-border);background:#fff;font-size:16px;font-weight:700;color:var(--af-ink);cursor:pointer}
+.af-stepper input{width:48px;text-align:center;border:1px solid var(--af-border);border-radius:8px;padding:6px 4px;font-size:13px;font-weight:700;font-family:inherit}
+
+.af-btn-primary{background:var(--af-accent);color:#fff;border:none;border-radius:24px;padding:12px 28px;font-size:13px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;cursor:pointer}
+.af-btn-primary:hover{filter:brightness(1.05)}
+.af-btn-wide{width:100%;padding:14px;border-radius:12px}
+
+/* overlays de seleção (cliente / categoria→serviço) empilhados acima do cartão */
+.af-picker{position:absolute;inset:0;background:#fff;z-index:20;display:none;flex-direction:column;border-radius:inherit}
+.af-picker.open{display:flex}
+.af-picker-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--af-border)}
+.af-picker-head input{flex:1;border:none;outline:none;font-size:14px;font-family:inherit}
+.af-picker-head .material-symbols-outlined{cursor:pointer}
+.af-picker-list{flex:1;overflow-y:auto}
+.af-picker-item{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f1f3f4;cursor:pointer;font-size:13.5px;color:var(--af-ink)}
+.af-picker-item:hover{background:#fafafa}
+.af-picker-item .af-picker-item-right{display:flex;align-items:center;gap:4px;color:var(--af-accent)}
+.af-picker-empty{padding:32px 16px;text-align:center;color:var(--af-gray);font-size:13px}
+
+.af-sucesso-overlay{position:absolute;inset:0;background:#fff;z-index:30;display:none;flex-direction:column;align-items:center;padding:32px 24px;border-radius:inherit}
+.af-sucesso-overlay.open{display:flex}
+.af-sucesso-icon{width:56px;height:56px;border-radius:50%;background:#e8f0fe;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.af-sucesso-icon .material-symbols-outlined{color:#1a73e8;font-size:32px}
+.af-sucesso-titulo{font-size:16px;font-weight:800;color:var(--af-ink);margin-bottom:18px;text-align:center}
+.af-sucesso-lista{width:100%;border:1px solid var(--af-border);border-radius:12px;overflow:hidden;margin-bottom:18px}
+.af-sucesso-item{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--af-border);cursor:pointer;font-size:13.5px;font-weight:600}
+.af-sucesso-item:last-child{border-bottom:none}
+.af-sucesso-item:hover{background:#fafafa}
 
 /* ALERT */
 .alert{display:none;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px}
@@ -3824,179 +3913,241 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-agendar">
-  <div class="modal" style="overflow-y:auto;padding-bottom:80px">
-    <div class="modal-header">
-      <span class="modal-title">📅 Novo Agendamento</span>
-      <button class="modal-close" onclick="closeModal('modal-agendar')">✕</button>
+  <div class="modal af-card" style="position:relative">
+
+    <!-- PICKER: Cliente -->
+    <div class="af-picker" id="af-picker-cliente">
+      <div class="af-picker-head">
+        <span class="material-symbols-outlined">search</span>
+        <input id="af-cliente-busca" placeholder="Buscar Cliente..." oninput="afFiltrarClientes(this.value)" autocomplete="off"/>
+        <span class="material-symbols-outlined" style="color:var(--af-accent);cursor:pointer" onclick="agCadastrarClienteRapido()" title="Cadastrar cliente nova">add</span>
+        <span class="material-symbols-outlined" style="cursor:pointer" onclick="afFecharPicker('af-picker-cliente')">close</span>
+      </div>
+      <div class="af-picker-list" id="af-picker-cliente-lista"></div>
     </div>
-    <div class="form-grid">
+
+    <!-- PICKER: Categoria → Serviço -->
+    <div class="af-picker" id="af-picker-servico">
+      <div class="af-picker-head">
+        <span class="material-symbols-outlined" id="af-picker-servico-voltar" style="display:none;cursor:pointer" onclick="afPickerServicoMostrarCategorias()">arrow_back</span>
+        <span class="material-symbols-outlined">search</span>
+        <input id="af-servico-busca" placeholder="Selecione..." oninput="afPickerServicoFiltrar(this.value)" autocomplete="off"/>
+        <span class="material-symbols-outlined" style="cursor:pointer" onclick="afFecharPicker('af-picker-servico')">close</span>
+      </div>
+      <div class="af-picker-list" id="af-picker-servico-lista"></div>
+    </div>
+
+    <!-- TELA DE SUCESSO -->
+    <div class="af-sucesso-overlay" id="af-sucesso">
+      <div class="af-sucesso-icon"><span class="material-symbols-outlined">check_circle</span></div>
+      <div class="af-sucesso-titulo">Atendimento criado com sucesso!</div>
+      <div class="af-sucesso-lista">
+        <div class="af-sucesso-item" onclick="afSucessoAdicionarMais()"><span>Adicionar mais serviços</span><span class="material-symbols-outlined">chevron_right</span></div>
+        <div class="af-sucesso-item" onclick="afSucessoVerCliente()"><span>Visualizar cliente</span><span class="material-symbols-outlined">chevron_right</span></div>
+        <div class="af-sucesso-item" onclick="afSucessoNovoAtendimento()"><span>Novo atendimento</span><span class="material-symbols-outlined">chevron_right</span></div>
+      </div>
+      <button class="af-btn-primary af-btn-wide" onclick="afSucessoIrParaAgenda()">Ir para a agenda</button>
+    </div>
+
+    <div class="af-header">
+      <button class="af-back" onclick="closeModal('modal-agendar')"><span class="material-symbols-outlined">arrow_back</span></button>
+      <span class="af-title">Atendimento</span>
+    </div>
+
+    <div class="af-body">
       <!-- Cliente -->
-      <div class="form-group full">
-        <label>Cliente *</label>
-        <input id="ag-cliente" list="ag-cliente-lista" placeholder="Nome do cliente" autocomplete="off" oninput="agClienteInput(this)"/>
-        <datalist id="ag-cliente-lista"></datalist>
-        <div id="ag-cadastrar-btn-wrap" style="display:none;margin-top:6px">
-          <button type="button" onclick="agCadastrarClienteRapido()" style="background:none;border:1.5px dashed #6366f1;border-radius:8px;padding:7px 14px;font-size:12px;color:#6366f1;cursor:pointer;font-weight:600;width:100%;text-align:left">➕ Cadastrar "<span id="ag-cadastrar-nome-hint"></span>" como nova cliente</button>
+      <div class="af-row">
+        <span class="material-symbols-outlined">person</span>
+        <div class="af-field af-has-clear" id="af-field-cliente">
+          <input class="af-input" id="ag-cliente" placeholder=" " readonly style="cursor:pointer" onclick="afAbrirPickerCliente()"/>
+          <label>Cliente</label>
+          <button type="button" class="af-clear" onclick="event.stopPropagation();afLimparCliente()">✕</button>
         </div>
       </div>
-      <div class="form-group"><label>Data *</label><input type="date" id="ag-data"/></div>
-      <div class="form-group"><label>Horário *</label><input type="time" id="ag-hora" value="09:00"/></div>
+      <div id="ag-cadastrar-btn-wrap" style="display:none">
+        <button type="button" class="af-link" onclick="agCadastrarClienteRapido()">➕ Cadastrar "<span id="ag-cadastrar-nome-hint"></span>" como nova cliente</button>
+      </div>
+
+      <!-- Data -->
+      <div class="af-row">
+        <span class="material-symbols-outlined">calendar_today</span>
+        <div class="af-field af-has-icon-r">
+          <input type="date" class="af-input" id="ag-data" placeholder=" " oninput="afToggleFilled(this)"/>
+          <label>Data</label>
+          <span class="material-symbols-outlined af-input-icon-r">calendar_today</span>
+        </div>
+      </div>
 
       <!-- TIPO DE AGENDAMENTO -->
-      <div class="form-group full">
-        <label>Tipo de Agendamento</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label onclick="agSetTipo('servico')" id="ag-tipo-srv" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #111;border-radius:10px;cursor:pointer;background:#f5f5f5">
-            <span>✂️</span><div><div style="font-size:12px;font-weight:700">Serviço</div><div style="font-size:10px;color:#888">Cobrado normalmente</div></div>
+      <div>
+        <div class="af-row" style="margin-bottom:8px"><span class="material-symbols-outlined">event_note</span><span style="font-size:12.5px;font-weight:700;color:var(--af-gray);margin-top:2px">Tipo de Agendamento</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:30px">
+          <label onclick="agSetTipo('servico')" id="ag-tipo-srv" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--af-accent);border-radius:10px;cursor:pointer;background:var(--af-accent-light)">
+            <span class="material-symbols-outlined" style="color:var(--af-accent)">content_cut</span><div><div style="font-size:12px;font-weight:700">Serviço</div><div style="font-size:10px;color:#888">Cobrado normalmente</div></div>
           </label>
-          <label onclick="agSetTipo('pacote')" id="ag-tipo-pac" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:#fff">
-            <span>🎁</span><div><div style="font-size:12px;font-weight:700">Pacote</div><div style="font-size:10px;color:#888">Já pago, desconta do pacote</div></div>
+          <label onclick="agSetTipo('pacote')" id="ag-tipo-pac" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--af-border);border-radius:10px;cursor:pointer;background:#fff">
+            <span class="material-symbols-outlined">redeem</span><div><div style="font-size:12px;font-weight:700">Pacote</div><div style="font-size:10px;color:#888">Já pago, desconta do pacote</div></div>
           </label>
         </div>
         <input type="hidden" id="ag-tipo-val" value="servico"/>
       </div>
 
-      <!-- SERVIÇO NORMAL -->
-      <div id="ag-area-servico" class="form-group full">
-        <label>Categoria</label>
-        <select id="ag-cat" onchange="agFiltrarServicos()" style="margin-bottom:8px">
-          <option value="">Todas as categorias</option>
-          <option>Cabelo</option><option>Manicure</option><option>Pedicure</option>
-          <option>Unhas</option><option>Bronzeamento</option><option>Estética</option>
-          <option>Sobrancelha</option>
-        </select>
-        <label style="display:flex;align-items:center;justify-content:space-between">
-          <span>Serviço *</span>
-          <button type="button" onclick="agAddServicoExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço</button>
-        </label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <select id="ag-servico" onchange="agAtualizarValorServico();agCalcSinal()" style="flex:2">
-            <option value="40">Manicure — R$ 40,00</option>
-            <option value="45">Pedicure — R$ 45,00</option>
-            <option value="80">Corte de Cabelo — R$ 80,00</option>
-            <option value="60">Escova — R$ 60,00</option>
-            <option value="150">Coloração — R$ 150,00</option>
-            <option value="80">Hidratação — R$ 80,00</option>
-            <option value="100">Manutenção — R$ 100,00</option>
-            <option value="12">Design de Sobrancelhas — R$ 12,00</option>
-          </select>
-          <select id="ag-servico-prof" style="flex:1" title="Profissional">
-            <option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option>
-          </select>
-        </div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
-          <label style="font-size:11px;color:#555;white-space:nowrap">Valor cobrado <span id="ag-servico-valor-cat" style="color:#aaa;font-weight:400"></span></label>
-          <input type="number" id="ag-servico-valor" min="0" step="0.01" oninput="agCalcSinal()" style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;text-align:right;outline:none"/>
-        </div>
-        <div id="ag-servicos-extra-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
+      <!-- SERVIÇOS -->
+      <div id="ag-area-servico">
+        <div id="af-servicos-container" style="display:flex;flex-direction:column;gap:12px"></div>
+        <button type="button" class="af-link-caps" style="margin-top:12px" onclick="afAddServicoBloco()">ADICIONAR MAIS SERVIÇOS<span class="material-symbols-outlined" style="font-size:18px">add_circle</span></button>
 
-        <!-- Produtos usados no serviço -->
-        <div style="margin-top:12px">
-          <label style="display:flex;align-items:center;justify-content:space-between">
-            <span>Produtos usados (opcional)</span>
-            <button type="button" onclick="agAddProduto()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar</button>
-          </label>
-          <div id="ag-produtos-list" style="margin-top:6px;display:flex;flex-direction:column;gap:6px"></div>
-          <div style="font-size:10px;color:#aaa;margin-top:4px">Produtos são cobrados à parte na comanda como "Produto utilizado"</div>
-        </div>
+        <!-- Produtos usados -->
+        <div class="af-section-title" style="margin-top:16px"><span class="material-symbols-outlined" style="font-size:16px">inventory_2</span>Produtos usados (opcional)</div>
+        <div id="ag-produtos-list" style="display:flex;flex-direction:column;gap:8px;margin-top:4px"></div>
+        <button type="button" class="af-link" onclick="agAddProduto()"><span class="material-symbols-outlined" style="font-size:16px">add</span>Adicionar produto</button>
       </div>
 
       <!-- PACOTE -->
-      <div id="ag-area-pacote" class="form-group full" style="display:none">
-        <label style="display:flex;align-items:center;justify-content:space-between">
-          <span>Selecionar Pacote do Cliente</span>
-          <button type="button" onclick="agAddPacoteExtra()" style="background:none;border:1px dashed #ddd;border-radius:8px;padding:3px 10px;font-size:11px;color:#888;cursor:pointer">+ Adicionar serviço do pacote</button>
-        </label>
-        <select id="ag-pacote-sel" onchange="agVerPacote()">
-          <option value="">— Selecione o pacote —</option>
-        </select>
-        <div id="ag-pacote-info" style="margin-top:8px;display:none;background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #bbf7d0">
+      <div id="ag-area-pacote" style="display:none">
+        <div class="af-section-title">Pacote do cliente</div>
+        <div class="af-row">
+          <span class="material-symbols-outlined">redeem</span>
+          <div class="af-field">
+            <select class="af-input" id="ag-pacote-sel" onchange="agVerPacote()">
+              <option value="">— Selecione o pacote —</option>
+            </select>
+            <label>Pacote</label>
+          </div>
+        </div>
+        <div id="ag-pacote-info" style="display:none;background:var(--af-accent-light);border-radius:10px;padding:12px;border:1px solid #bbf7d0;margin:10px 0 0 30px">
           <div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:4px">📦 Detalhes do Pacote</div>
           <div id="ag-pacote-detalhe" style="font-size:12px;color:#166534"></div>
         </div>
-        <label style="margin-top:8px;display:block">Profissional que vai executar</label>
-        <select id="ag-pacote-prof" onchange="agVerPacote()">
-          <option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option>
-        </select>
-        <div id="ag-pacote-extra-list" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
-        <div style="font-size:10px;color:#aaa;margin-top:6px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
+        <div class="af-row" style="margin-top:10px">
+          <span class="material-symbols-outlined">face</span>
+          <div class="af-field">
+            <select class="af-input" id="ag-pacote-prof" onchange="agVerPacote()">
+              <option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option>
+            </select>
+            <label>Profissional que vai executar</label>
+          </div>
+        </div>
+        <button type="button" class="af-link" style="margin:10px 0 0 30px" onclick="agAddPacoteExtra()"><span class="material-symbols-outlined" style="font-size:16px">add</span>Adicionar serviço do pacote</button>
+        <div id="ag-pacote-extra-list" style="margin:10px 0 0 30px;display:flex;flex-direction:column;gap:8px"></div>
+        <div style="font-size:10px;color:#aaa;margin:8px 0 0 30px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
       </div>
 
-      <div class="form-group full"><label>Observações</label><textarea id="ag-obs" placeholder="Alguma observação?" rows="2" style="resize:vertical"></textarea></div>
+      <!-- RESUMO -->
+      <div>
+        <div class="af-section-title">Resumo</div>
+        <div class="af-resumo" style="margin-top:8px">
+          <div class="af-resumo-row"><span>Subtotal</span><span id="af-resumo-subtotal">R$ 0,00</span></div>
+          <div class="af-resumo-row af-resumo-total"><span>Valor total</span><span id="af-resumo-total">R$ 0,00</span></div>
+        </div>
+      </div>
 
-      <!-- SINAL / ENTRADA -->
-      <div class="form-group full" id="ag-sinal-bloco">
-        <div style="background:#f8f8f8;border-radius:12px;padding:14px;border:1px solid #e5e5e5">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <!-- SINAL / ENTRADA (mantido, só restilizado) -->
+      <div id="ag-sinal-bloco">
+        <div class="af-row" style="margin-bottom:8px">
+          <span class="material-symbols-outlined">payments</span>
+          <div style="flex:1;display:flex;align-items:center;justify-content:space-between;margin-top:2px">
             <div>
-              <div style="font-size:13px;font-weight:800;color:#111">💰 Sinal / Entrada</div>
-              <div style="font-size:11px;color:#888;margin-top:2px">O cliente pagou algum valor para confirmar?</div>
+              <div style="font-size:13px;font-weight:700;color:var(--af-ink)">Sinal / Entrada</div>
+              <div style="font-size:11px;color:#888;margin-top:1px">O cliente pagou algum valor para confirmar?</div>
             </div>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="ag-sinal-ativo" onchange="agToggleSinal()" style="width:16px;height:16px;accent-color:#111"/>
-              <span style="font-size:12px;font-weight:600">Sim, deu sinal</span>
-            </label>
+            <label class="af-switch"><input type="checkbox" id="ag-sinal-ativo" onchange="agToggleSinal()"/><span class="af-slider"></span></label>
           </div>
-          <div id="ag-sinal-area" style="display:none">
-            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-              <span style="font-size:11px;color:#888;align-self:center">Atalhos:</span>
-              <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(25)">25%</button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(30)">30%</button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(50)">50%</button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(100)">100%</button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-              <div class="form-group">
-                <label>Porcentagem (%)</label>
-                <input type="number" id="ag-sinal-pct" value="50" min="1" max="100" oninput="agCalcSinal()" style="font-weight:700"/>
-              </div>
-              <div class="form-group">
-                <label>Valor do sinal (R$)</label>
-                <input type="number" id="ag-sinal-val" oninput="agCalcSinalVal()" style="font-weight:700"/>
-              </div>
-            </div>
-            <div style="background:#fff;border-radius:9px;padding:12px;border:1px solid #e5e5e5">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-                <span style="color:#666">Valor total do serviço</span>
-                <span id="ag-total" style="font-weight:700">R$ 40,00</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-                <span style="color:#666">Sinal a receber agora</span>
-                <span id="ag-sinal-agora" style="font-weight:800;color:#111">R$ 20,00</span>
-              </div>
-              <div style="border-top:1px dashed #e5e5e5;margin:6px 0;padding-top:6px;display:flex;justify-content:space-between;font-size:12px">
-                <span style="color:#888">Restante após o serviço</span>
-                <span id="ag-sinal-resto" style="font-weight:700;color:#888">R$ 20,00</span>
-              </div>
+        </div>
+        <div id="ag-sinal-area" style="display:none;margin-left:30px">
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#888;align-self:center">Atalhos:</span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(25)">25%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(30)">30%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(50)">50%</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="agSetPct(100)">100%</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="af-field"><input class="af-input" type="number" id="ag-sinal-pct" value="50" min="1" max="100" placeholder=" " oninput="agCalcSinal();afToggleFilled(this)"/><label>Porcentagem (%)</label></div>
+            <div class="af-field"><input class="af-input" type="number" id="ag-sinal-val" placeholder=" " oninput="agCalcSinalVal();afToggleFilled(this)"/><label>Valor do sinal (R$)</label></div>
+          </div>
+          <div style="background:#fafafa;border-radius:9px;padding:12px;border:1px solid var(--af-border)">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#666">Valor total do serviço</span><span id="ag-total" style="font-weight:700">R$ 0,00</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#666">Sinal a receber agora</span><span id="ag-sinal-agora" style="font-weight:800;color:var(--af-ink)">R$ 0,00</span></div>
+            <div style="border-top:1px dashed var(--af-border);margin:6px 0;padding-top:6px;display:flex;justify-content:space-between;font-size:12px"><span style="color:#888">Restante após o serviço</span><span id="ag-sinal-resto" style="font-weight:700;color:#888">R$ 0,00</span></div>
+          </div>
+          <div style="margin-top:10px">
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Status do sinal</label>
+            <div style="display:flex;gap:6px">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid var(--af-border);border-radius:8px;flex:1">
+                <input type="radio" name="ag-sinal-status" value="pendente" checked style="accent-color:var(--af-accent)"/><span style="font-size:12px;font-weight:600">⏳ Pendente</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid var(--af-border);border-radius:8px;flex:1">
+                <input type="radio" name="ag-sinal-status" value="pago" style="accent-color:var(--af-accent)"/><span style="font-size:12px;font-weight:600">✅ Já foi pago</span>
+              </label>
             </div>
             <div style="margin-top:10px">
-              <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Status do sinal</label>
-              <div style="display:flex;gap:6px">
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
-                  <input type="radio" name="ag-sinal-status" value="pendente" checked style="accent-color:#111"/>
-                  <span style="font-size:12px;font-weight:600">⏳ Pendente</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1.5px solid #e5e5e5;border-radius:8px;flex:1">
-                  <input type="radio" name="ag-sinal-status" value="pago" style="accent-color:#111"/>
-                  <span style="font-size:12px;font-weight:600">✅ Já foi pago</span>
-                </label>
-              </div>
-              <div style="margin-top:10px">
-                <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-                  <button type="button" onclick="agSetFormaSinal(this,'Pix')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
-                  <button type="button" onclick="agSetFormaSinal(this,'Dinheiro')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
-                  <button type="button" onclick="agSetFormaSinal(this,'Link')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid #ddd;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
-                </div>
+              <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <button type="button" onclick="agSetFormaSinal(this,'Pix')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid var(--af-border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
+                <button type="button" onclick="agSetFormaSinal(this,'Dinheiro')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid var(--af-border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
+                <button type="button" onclick="agSetFormaSinal(this,'Link')" class="ag-forma-btn" style="padding:7px 4px;border:1.5px solid var(--af-border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- OBSERVAÇÃO -->
+      <div class="af-row">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 20">label</span>
+        <div class="af-field">
+          <textarea class="af-input" id="ag-obs" placeholder=" " rows="2" style="resize:vertical" oninput="afToggleFilled(this)"></textarea>
+          <label>Observação (opcional)</label>
+        </div>
+      </div>
+
+      <!-- REPETIR ATENDIMENTO -->
+      <div>
+        <div class="af-row" style="align-items:center">
+          <span class="material-symbols-outlined">repeat</span>
+          <div class="af-toggle-row" style="flex:1">
+            <span style="font-size:13px;font-weight:700;color:var(--af-accent)">Repetir atendimento</span>
+            <label class="af-switch"><input type="checkbox" id="af-repetir-ativo" onchange="afToggleRepetir()"/><span class="af-slider"></span></label>
+          </div>
+        </div>
+        <div id="af-repetir-area" style="display:none;margin-left:30px;margin-top:10px;display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Repetir a cada</label>
+            <div class="af-stepper">
+              <button type="button" onclick="afRepetirStep(-1)">−</button>
+              <input type="number" id="af-repetir-intervalo" value="7" min="1" oninput="afRepetirAtualizarTexto()"/>
+              <button type="button" onclick="afRepetirStep(1)">+</button>
+              <select class="af-input" id="af-repetir-unidade" style="flex:1;padding-top:8px;padding-bottom:8px" onchange="afRepetirAtualizarTexto()">
+                <option value="dias">dias</option>
+                <option value="semanas">semanas</option>
+                <option value="meses">meses</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Terminar em</label>
+            <select class="af-input" id="af-repetir-fim" style="padding-top:10px;padding-bottom:10px" onchange="afRepetirAtualizarTexto()">
+              <option value="nunca">Nunca</option>
+              <option value="data">Na data</option>
+              <option value="apos">Após</option>
+            </select>
+          </div>
+          <div id="af-repetir-fim-data-wrap" style="display:none">
+            <input type="date" class="af-input" id="af-repetir-fim-data" oninput="afRepetirAtualizarTexto()"/>
+          </div>
+          <div id="af-repetir-fim-apos-wrap" style="display:none;display:flex;align-items:center;gap:8px">
+            <input type="number" class="af-input" id="af-repetir-fim-count" value="10" min="1" style="width:80px" oninput="afRepetirAtualizarTexto()"/>
+            <span style="font-size:12px;color:#666">ocorrências</span>
+          </div>
+          <div style="font-size:11px;color:#888" id="af-repetir-texto1">Repete a cada 7 dias.</div>
+          <div style="font-size:11px;color:#888" id="af-repetir-texto2">Próxima repetição: —</div>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <button class="btn btn-outline" onclick="closeModal('modal-agendar')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarAgendamento()">✅ Confirmar Agendamento</button>
+
+    <div class="af-footer">
+      <button class="af-btn-primary" onclick="afSalvarAtendimento()">SALVAR</button>
     </div>
   </div>
 </div>
@@ -7130,12 +7281,6 @@ function showPage(id){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
-  if(id === 'modal-agendar'){
-    var dl=document.getElementById('ag-cliente-lista');
-    if(dl&&typeof clientes!=='undefined'){
-      dl.innerHTML=clientes.map(function(c){return '<option value="'+c.nome+'"></option>';}).join('');
-    }
-  }
   if(id === 'modal-prolabore-socio'){
     document.getElementById('socio-edit-idx').value='-1';
     document.getElementById('socio-nome').value='';
@@ -7161,23 +7306,26 @@ function openModal(id){
 function resetFormAgendar(){
   var get=function(i){return document.getElementById(i);};
   var el;
-  if((el=get('ag-cliente')))el.value='';
+  if((el=get('ag-cliente'))){el.value='';afToggleFilled(el);}
   if((el=get('ag-cadastrar-btn-wrap')))el.style.display='none';
-  if((el=get('ag-hora')))el.value='09:00';
-  if((el=get('ag-obs')))el.value='';
+  if((el=get('ag-obs'))){el.value='';afToggleFilled(el);}
   if((el=get('ag-sinal-ativo'))){el.checked=false;var area=get('ag-sinal-area');if(area)area.style.display='none';}
   if((el=get('ag-sinal-pct')))el.value='50';
   if((el=get('ag-sinal-val')))el.value='';
   document.querySelectorAll('input[name="ag-sinal-status"]').forEach(function(r){r.checked=r.value==='pendente';});
   document.querySelectorAll('.ag-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';});
   agFormaSinal='';
-  if((el=get('ag-servico')))el.selectedIndex=0;
-  if((el=get('ag-servico-prof')))el.selectedIndex=0;
-  if((el=get('ag-servicos-extra-list')))el.innerHTML='';
+  afBlocos=[];
   if((el=get('ag-produtos-list')))el.innerHTML='';
   if((el=get('ag-pacote-extra-list')))el.innerHTML='';
   if((el=get('ag-pacote-info')))el.style.display='none';
+  if((el=get('af-repetir-ativo'))){el.checked=false;}
+  if((el=get('af-repetir-area')))el.style.display='none';
+  afFecharPicker('af-picker-cliente');
+  afFecharPicker('af-picker-servico');
+  if((el=get('af-sucesso')))el.classList.remove('open');
   if(typeof agSetTipo==='function')agSetTipo('servico');
+  afRenderServicoBlocos();
 }
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
@@ -7274,92 +7422,261 @@ function agSetTipo(tipo){
   }
 }
 
-function agFiltrarServicos(){
-  var catSel=document.getElementById('ag-cat');
-  if(catSel&&catSel.options.length<=1){
-    var cats=[...new Set(servicos.map(function(s){return s.cat;}))].sort();
-    cats.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
-  }
-  var cat=(catSel||{}).value||'';
-  var sel=document.getElementById('ag-servico');
-  if(!sel)return;
-  var filtrados=cat?servicos.filter(function(s){return s.cat===cat;}):servicos;
-  sel.innerHTML=filtrados.map(function(s){return'<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';}).join('');
-  if(!sel.innerHTML)sel.innerHTML='<option value="0">Nenhum serviço nessa categoria</option>';
-  agAtualizarValorServico();
-  agCalcSinal();
-}
-// Preenche o campo "Valor cobrado" com o preço de cadastro do serviço escolhido,
-// mas deixa o valor editável — o que for digitado ali é o preço final lançado na comanda.
-function agAtualizarValorServico(){
-  var sel=document.getElementById('ag-servico');
-  var inp=document.getElementById('ag-servico-valor');
-  if(!sel||!inp)return;
-  var preco=parseFloat(sel.value)||0;
-  inp.value=preco.toFixed(2);
-  var catRef=document.getElementById('ag-servico-valor-cat');
-  if(catRef)catRef.textContent=preco>0?('(catálogo: R$ '+preco.toFixed(2).replace('.',',')+')'):'';
-}
-function agAtualizarValorExtra(selEl){
-  var row=selEl.closest('[data-extra-row]');
-  var inp=row&&row.querySelector('input[type="number"]');
-  if(!inp)return;
-  inp.value=(parseFloat(selEl.value)||0).toFixed(2);
+// ===================================================================
+// FORMULÁRIO DE ATENDIMENTO (Etapa 2) — picker de cliente, picker de
+// categoria→serviço, blocos de serviço repetíveis, resumo e repetição.
+// ===================================================================
+
+function afToggleFilled(el){
+  if(!el)return;
+  var field=el.closest('.af-field');
+  if(!field)return;
+  var filled=(el.value||'').toString().trim().length>0;
+  field.classList.toggle('af-filled',filled);
 }
 
-function agAtualizarProfExtra(selServEl){
-  var row=selServEl.closest('div');
-  var selProf=row.querySelectorAll('select')[1];
-  if(!selProf)return;
-  var nome=(selServEl.options[selServEl.selectedIndex]?.text||'').split(' — ')[0];
-  var atual=selProf.value;
-  selProf.innerHTML=agOpcoesProfPorServico(nome);
-  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
+// ---- Picker de Cliente ----
+function afAbrirPickerCliente(){
+  var busca=document.getElementById('af-cliente-busca');
+  if(busca)busca.value='';
+  afRenderPickerClientes('');
+  document.getElementById('af-picker-cliente').classList.add('open');
+  setTimeout(function(){if(busca)busca.focus();},50);
 }
-function agAddServicoExtra(){
-  var list = document.getElementById('ag-servicos-extra-list');
-  var row = document.createElement('div');
-  row.setAttribute('data-extra-row','1');
-  row.style.cssText = 'display:flex;flex-direction:column;gap:4px;padding:6px;background:#fafafa;border-radius:8px';
-  var opts = (typeof servicos !== 'undefined' ? servicos : []).map(function(s){
-    return '<option value="'+parseFloat(s.preco.replace(',','.'))+'">'+s.nome+' — R$ '+s.preco+'</option>';
+function afFecharPicker(id){
+  var el=document.getElementById(id);
+  if(el)el.classList.remove('open');
+}
+function afFiltrarClientes(q){ afRenderPickerClientes(q); }
+function afRenderPickerClientes(q){
+  var lista=document.getElementById('af-picker-cliente-lista');
+  if(!lista)return;
+  q=(q||'').trim().toLowerCase();
+  var itens=(typeof clientes!=='undefined'?clientes:[]).slice().sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+  if(q)itens=itens.filter(function(c){return c.nome.toLowerCase().indexOf(q)>=0;});
+  if(!itens.length){lista.innerHTML='<div class="af-picker-empty">Nenhuma cliente encontrada.</div>';return;}
+  lista.innerHTML=itens.map(function(c){
+    return '<div class="af-picker-item" onclick="afSelecionarCliente(\''+c.nome.replace(/'/g,"\\'")+'\')">'
+      +'<span>'+c.nome+'</span>'
+      +'<span class="af-picker-item-right"><span class="material-symbols-outlined" style="font-size:18px">person</span><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></span>'
+      +'</div>';
   }).join('');
-  var primeiroNome=(typeof servicos!=='undefined'&&servicos[0])?servicos[0].nome:'';
-  var primeiroPreco=(typeof servicos!=='undefined'&&servicos[0])?parseFloat(String(servicos[0].preco).replace(',','.'))||0:0;
-  row.innerHTML = '<div style="display:flex;gap:6px;align-items:center">'
-    +'<select onchange="agCalcSinal();agAtualizarProfExtra(this);agAtualizarValorExtra(this)" style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
-    +'<select style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+agOpcoesProfPorServico(primeiroNome)+'</select>'
-    +'<button onclick="this.closest(\'[data-extra-row]\').remove();agCalcSinal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>'
-    +'</div>'
-    +'<div style="display:flex;align-items:center;gap:6px">'
-    +'<label style="font-size:10px;color:#888;white-space:nowrap">Valor (R$)</label>'
-    +'<input type="number" min="0" step="0.01" value="'+primeiroPreco.toFixed(2)+'" oninput="agCalcSinal()" style="flex:1;padding:5px 7px;border:1.5px solid #ddd;border-radius:7px;font-size:12px;font-weight:700;text-align:right;outline:none"/>'
-    +'</div>';
-  list.appendChild(row);
+}
+function afSelecionarCliente(nome){
+  var inp=document.getElementById('ag-cliente');
+  if(inp){inp.value=nome;afToggleFilled(inp);}
+  var wrap=document.getElementById('ag-cadastrar-btn-wrap');
+  if(wrap)wrap.style.display='none';
+  afFecharPicker('af-picker-cliente');
+}
+function afLimparCliente(){
+  var inp=document.getElementById('ag-cliente');
+  if(inp){inp.value='';afToggleFilled(inp);}
+  var wrap=document.getElementById('ag-cadastrar-btn-wrap');
+  if(wrap)wrap.style.display='none';
+}
+
+// ---- Picker de Categoria → Serviço (por bloco) ----
+var afPickerServicoAlvoId=null;
+function afAbrirServicoPicker(blocoId){
+  afPickerServicoAlvoId=blocoId;
+  var busca=document.getElementById('af-servico-busca');
+  if(busca)busca.value='';
+  afPickerServicoMostrarCategorias();
+  document.getElementById('af-picker-servico').classList.add('open');
+}
+function afPickerServicoMostrarCategorias(){
+  document.getElementById('af-picker-servico-voltar').style.display='none';
+  var cats=[...new Set((typeof servicos!=='undefined'?servicos:[]).map(function(s){return s.cat;}))].filter(Boolean).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+  var lista=document.getElementById('af-picker-servico-lista');
+  if(!cats.length){lista.innerHTML='<div class="af-picker-empty">Nenhuma categoria cadastrada.</div>';return;}
+  lista.innerHTML=cats.map(function(c){
+    return '<div class="af-picker-item" onclick="afPickerServicoMostrarServicos(\''+c.replace(/'/g,"\\'")+'\')">'
+      +'<span>'+c+'</span><span class="material-symbols-outlined" style="font-size:18px;color:var(--af-gray)">chevron_right</span></div>';
+  }).join('');
+}
+function afPickerServicoMostrarServicos(cat){
+  document.getElementById('af-picker-servico-voltar').style.display='inline-block';
+  document.getElementById('af-picker-servico-voltar').setAttribute('data-cat',cat);
+  var itens=(typeof servicos!=='undefined'?servicos:[]).filter(function(s){return s.cat===cat;}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+  var lista=document.getElementById('af-picker-servico-lista');
+  if(!itens.length){lista.innerHTML='<div class="af-picker-empty">Nenhum serviço nessa categoria.</div>';return;}
+  lista.innerHTML=itens.map(function(s,i){
+    return '<div class="af-picker-item" onclick="afSelecionarServicoPicker('+i+',\''+cat.replace(/'/g,"\\'")+'\')">'
+      +'<span>'+s.nome+' — R$ '+s.preco+'</span><span class="material-symbols-outlined" style="font-size:18px;color:var(--af-gray)">chevron_right</span></div>';
+  }).join('');
+}
+function afPickerServicoFiltrar(q){
+  q=(q||'').trim().toLowerCase();
+  if(!q){afPickerServicoMostrarCategorias();return;}
+  document.getElementById('af-picker-servico-voltar').style.display='none';
+  var itens=(typeof servicos!=='undefined'?servicos:[]).filter(function(s){return s.nome.toLowerCase().indexOf(q)>=0;});
+  var lista=document.getElementById('af-picker-servico-lista');
+  if(!itens.length){lista.innerHTML='<div class="af-picker-empty">Nenhum serviço encontrado.</div>';return;}
+  lista.innerHTML=itens.map(function(s){
+    return '<div class="af-picker-item" onclick="afSelecionarServicoPorNome(\''+s.nome.replace(/'/g,"\\'")+'\')">'
+      +'<span>'+s.cat+': '+s.nome+' — R$ '+s.preco+'</span><span class="material-symbols-outlined" style="font-size:18px;color:var(--af-gray)">chevron_right</span></div>';
+  }).join('');
+}
+function afSelecionarServicoPicker(idx,cat){
+  var s=(typeof servicos!=='undefined'?servicos:[]).filter(function(x){return x.cat===cat;}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');})[idx];
+  if(s)afAplicarServicoNoBloco(afPickerServicoAlvoId,s);
+  afFecharPicker('af-picker-servico');
+}
+function afSelecionarServicoPorNome(nome){
+  var s=(typeof servicos!=='undefined'?servicos:[]).find(function(x){return x.nome===nome;});
+  if(s)afAplicarServicoNoBloco(afPickerServicoAlvoId,s);
+  afFecharPicker('af-picker-servico');
+}
+
+// ---- Blocos de Serviço (Serviço 1, Serviço 2...) ----
+var afBlocos=[];
+var afBlocoSeq=0;
+function afNovoBloco(horario){
+  afBlocoSeq++;
+  return {id:'b'+afBlocoSeq,servico:null,profissional:'',horario:horario||'',duracaoMin:30,preco:0,desconto:0};
+}
+function afAddServicoBloco(){
+  var ultimo=afBlocos[afBlocos.length-1];
+  var sugestaoHora=ultimo&&ultimo.horario?minToHora((parseInt(ultimo.horario.split(':')[0],10)*60+parseInt(ultimo.horario.split(':')[1],10))+(ultimo.duracaoMin||30)):(document.getElementById('ag-data')?'':'');
+  afBlocos.push(afNovoBloco(sugestaoHora));
+  afRenderServicoBlocos();
+}
+function afRemoverServicoBloco(id){
+  afBlocos=afBlocos.filter(function(b){return b.id!==id;});
+  if(!afBlocos.length)afBlocos.push(afNovoBloco());
+  afRenderServicoBlocos();
+}
+function afAplicarServicoNoBloco(blocoId,servico){
+  var b=afBlocos.find(function(x){return x.id===blocoId;});
+  if(!b)return;
+  b.servico={nome:servico.nome,cat:servico.cat,preco:servico.preco,dur:servico.dur};
+  b.preco=parseFloat(String(servico.preco).replace(',','.'))||0;
+  b.duracaoMin=durToMinutes(servico.dur);
+  if(!b.profissional){
+    var opts=agProfissionaisQueFazem(servico.nome);
+    b.profissional=opts[0]||'';
+  }
+  afRenderServicoBlocos();
+}
+function afBlocoCampo(id,campo,valor){
+  var b=afBlocos.find(function(x){return x.id===id;});
+  if(!b)return;
+  if(campo==='preco'||campo==='desconto')valor=parseFloat(valor)||0;
+  if(campo==='duracaoMin')valor=parseInt(valor,10)||30;
+  b[campo]=valor;
+  if(campo!=='horario')afRecalcularResumo();else afRecalcularResumo();
+}
+function afBlocoLimparProfissional(id){ afBlocoCampo(id,'profissional',''); afRenderServicoBlocos(); }
+function afRenderServicoBlocos(){
+  if(!afBlocos.length)afBlocos.push(afNovoBloco());
+  var cont=document.getElementById('af-servicos-container');
+  if(!cont)return;
+  cont.innerHTML=afBlocos.map(function(b,i){
+    var durLista=[5,10,15,20,30,40,45,50,55,60,75,90,105,120,150,180,240];
+    if(b.duracaoMin&&durLista.indexOf(b.duracaoMin)<0)durLista.push(b.duracaoMin);
+    durLista.sort(function(a,c){return a-c;});
+    var durOpts=durLista.map(function(m){
+      var label=m<60?(m+'min'):((m%60===0?(m/60)+'h':Math.floor(m/60)+'h'+(m%60)));
+      return '<option value="'+m+'"'+(b.duracaoMin===m?' selected':'')+'>'+label+'</option>';
+    }).join('');
+    var profOpts=agOpcoesProfPorServico(b.servico?b.servico.nome:'').replace('<option>'+b.profissional+'</option>','<option selected>'+b.profissional+'</option>');
+    return '<div class="af-servico-bloco" data-bloco="'+b.id+'">'
+      +(afBlocos.length>1?'<button type="button" class="af-servico-remove" onclick="afRemoverServicoBloco(\''+b.id+'\')"><span class="material-symbols-outlined">close</span></button>':'')
+      +'<div class="af-section-title">Serviço '+(i+1)+'</div>'
+      +'<div class="af-row">'
+        +'<span class="material-symbols-outlined">face</span>'
+        +'<div class="af-field af-has-clear'+(b.profissional?' af-filled':'')+'">'
+          +'<select class="af-input" onchange="afBlocoCampo(\''+b.id+'\',\'profissional\',this.value)"><option value=""></option>'+profOpts+'</select>'
+          +'<label>Profissional</label>'
+          +'<button type="button" class="af-clear" onclick="afBlocoLimparProfissional(\''+b.id+'\')">✕</button>'
+        +'</div>'
+      +'</div>'
+      +'<button type="button" class="af-link" style="margin-left:30px" onclick="afAddAssistente(\''+b.id+'\')"><span class="material-symbols-outlined" style="font-size:16px">person_add</span>Adicionar Assistente</button>'
+      +'<div class="af-row">'
+        +'<span class="material-symbols-outlined">list_alt</span>'
+        +'<div class="af-field'+(b.servico?' af-filled':'')+'">'
+          +'<input class="af-input" placeholder=" " readonly style="cursor:pointer" value="'+(b.servico?(b.servico.cat+': '+b.servico.nome):'')+'" onclick="afAbrirServicoPicker(\''+b.id+'\')"/>'
+          +'<label>Serviço</label>'
+        +'</div>'
+      +'</div>'
+      +'<div class="af-row">'
+        +'<span class="material-symbols-outlined">schedule</span>'
+        +'<div class="af-field af-field-sm af-has-icon-r'+(b.horario?' af-filled':'')+'">'
+          +'<input type="time" class="af-input" value="'+(b.horario||'')+'" placeholder=" " onchange="afBlocoCampo(\''+b.id+'\',\'horario\',this.value);afToggleFilled(this)"/>'
+          +'<label>Horário</label>'
+          +'<span class="material-symbols-outlined af-input-icon-r" style="font-size:18px">timer</span>'
+        +'</div>'
+        +'<div class="af-field af-filled" style="margin-left:8px">'
+          +'<select class="af-input" onchange="afBlocoCampo(\''+b.id+'\',\'duracaoMin\',this.value)">'+durOpts+'</select>'
+          +'<label>Duração</label>'
+        +'</div>'
+      +'</div>'
+      +'<div class="af-row">'
+        +'<span class="material-symbols-outlined">attach_money</span>'
+        +'<div class="af-field'+(b.preco?' af-filled':'')+'">'
+          +'<input type="number" min="0" step="0.01" class="af-input" value="'+(b.preco||'')+'" placeholder=" " oninput="afBlocoCampo(\''+b.id+'\',\'preco\',this.value);afToggleFilled(this)"/>'
+          +'<label>Preço (R$)</label>'
+        +'</div>'
+      +'</div>'
+      +'<div class="af-row">'
+        +'<span class="material-symbols-outlined">money_off</span>'
+        +'<div class="af-field'+(b.desconto?' af-filled':'')+'">'
+          +'<input type="number" min="0" step="0.01" class="af-input" value="'+(b.desconto||'')+'" placeholder=" " oninput="afBlocoCampo(\''+b.id+'\',\'desconto\',this.value);afToggleFilled(this)"/>'
+          +'<label>Desconto (opcional)</label>'
+        +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  afRecalcularResumo();
+}
+// "Adicionar Assistente" = outro bloco de serviço (mesmo serviço do bloco de origem, pra
+// tocar em paralelo com outro profissional), reaproveitando o mesmo mecanismo de bloco —
+// cada um vira um item em servicos_detalhe no salvamento, igual sempre funcionou.
+function afAddAssistente(blocoOrigemId){
+  var origem=afBlocos.find(function(x){return x.id===blocoOrigemId;});
+  var novo=afNovoBloco(origem?origem.horario:'');
+  if(origem&&origem.servico)afAplicarServicoAoBlocoSemRender(novo,origem.servico);
+  afBlocos.push(novo);
+  afRenderServicoBlocos();
+}
+function afAplicarServicoAoBlocoSemRender(b,servico){
+  b.servico={nome:servico.nome,cat:servico.cat,preco:servico.preco,dur:servico.dur};
+  b.preco=parseFloat(String(servico.preco).replace(',','.'))||0;
+  b.duracaoMin=durToMinutes(servico.dur);
+  var opts=agProfissionaisQueFazem(servico.nome);
+  b.profissional=opts[0]||'';
+}
+
+function afSomaServicos(){
+  return afBlocos.reduce(function(s,b){return s+Math.max(0,(b.preco||0)-(b.desconto||0));},0);
+}
+function afRecalcularResumo(){
+  var subtotal=afBlocos.reduce(function(s,b){return s+(b.preco||0);},0);
+  var totalDesconto=afBlocos.reduce(function(s,b){return s+(b.desconto||0);},0);
+  var total=Math.max(0,subtotal-totalDesconto);
+  var elSub=document.getElementById('af-resumo-subtotal');
+  var elTot=document.getElementById('af-resumo-total');
+  if(elSub)elSub.textContent='R$ '+subtotal.toFixed(2).replace('.',',');
+  if(elTot)elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
   agCalcSinal();
 }
-function agSomaServicos(){
-  var valPrincipal=parseFloat(document.getElementById('ag-servico-valor')?.value);
-  var total=isNaN(valPrincipal)?(parseFloat(document.getElementById('ag-servico')?.value)||0):valPrincipal;
-  document.querySelectorAll('#ag-servicos-extra-list > [data-extra-row]').forEach(function(row){
-    var valExtra=parseFloat(row.querySelector('input[type="number"]')?.value);
-    if(isNaN(valExtra))valExtra=parseFloat(row.querySelector('select:first-child')?.value)||0;
-    total += valExtra;
-  });
-  return total;
-}
+
+// ---- Produtos usados (bug antigo corrigido: linha agora tem campo de valor) ----
 function agAddProduto(){
   var list = document.getElementById('ag-produtos-list');
   var row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:6px;align-items:center';
-  // Montar opções de produtos
+  row.className='af-row';
+  row.style.cssText = 'align-items:center';
   var opts = '<option value="">— Selecione o produto —</option>'
     + (typeof produtos !== 'undefined' ? produtos : []).filter(function(p){ return p.status!=='Inativo'; }).map(function(p){
-        return '<option>'+p.nome+'</option>';
+        var preco=parseFloat(String(p.preco||'0').replace(',','.'))||0;
+        return '<option value="'+preco+'">'+p.nome+'</option>';
       }).join('');
-  row.innerHTML = '<select style="flex:2;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select>'
-    
-    +'<button onclick="this.closest(\'div\').remove()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
+  row.innerHTML = '<span class="material-symbols-outlined">inventory_2</span>'
+    +'<div class="af-field" style="flex:2"><select class="af-input af-filled" onchange="var vi=this.closest(\'.af-field\').nextElementSibling.querySelector(\'input\');vi.value=this.value;vi.dispatchEvent(new Event(\'input\'))">'+opts+'</select><label>Produto</label></div>'
+    +'<div class="af-field" style="flex:1;margin-left:8px"><input type="number" class="af-input" min="0" step="0.01" placeholder=" " oninput="afToggleFilled(this)"/><label>Valor</label></div>'
+    +'<button type="button" onclick="this.closest(\'.af-row\').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
   list.appendChild(row);
 }
 
@@ -7422,15 +7739,16 @@ function construirTimelineAtendimento(horaPrimaria,durPrimariaMin,servicoPrimari
   });
   return linha;
 }
-function agColetarProfissionaisServico(){
-  var profs=[];
-  var main=document.getElementById('ag-servico-prof')?.value;
-  if(main)profs.push(main);
-  document.querySelectorAll('#ag-servicos-extra-list > div').forEach(function(row){
-    var p=row.querySelectorAll('select')[1]?.value;
-    if(p&&profs.indexOf(p)<0)profs.push(p);
-  });
-  return profs;
+// Verifica conflito de horário de todos os blocos de serviço (cada um com seu próprio
+// profissional+horário) contra uma data. Retorna o primeiro conflito encontrado, ou null.
+function afVerificarConflitoBlocos(data,blocos){
+  for(var i=0;i<blocos.length;i++){
+    var b=blocos[i];
+    if(!b.profissional||!b.horario)continue;
+    var c=agVerificarConflitoHorarioAgenda(data,b.horario,[b.profissional]);
+    if(c)return Object.assign({},c,{bloco:i+1,horario:b.horario});
+  }
+  return null;
 }
 function agVerificarConflitoHorarioAgenda(data,hora,profs){
   var partes=data.split('-');
@@ -14162,18 +14480,8 @@ function agToggleSinal(){
   if(area)area.style.display=ativo?'block':'none';
   if(ativo)agCalcSinal();
 }
-function agAtualizarProfServico(){
-  var selServ=document.getElementById('ag-servico');
-  var selProf=document.getElementById('ag-servico-prof');
-  if(!selServ||!selProf)return;
-  var nome=(selServ.options[selServ.selectedIndex]?.text||'').split(' — ')[0];
-  var atual=selProf.value;
-  selProf.innerHTML=agOpcoesProfPorServico(nome);
-  if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
-}
 function agCalcSinal(){
-  agAtualizarProfServico();
-  var total=agSomaServicos()||40;
+  var total=afSomaServicos()||0;
   var pct=parseFloat(document.getElementById('ag-sinal-pct')?.value)||50;
   var sinal=total*(pct/100);
   var elV=document.getElementById('ag-sinal-val');
@@ -14186,7 +14494,7 @@ function agCalcSinal(){
   if(elR)elR.textContent='R$ '+(total-sinal).toFixed(2).replace('.',',');
 }
 function agCalcSinalVal(){
-  var total=agSomaServicos()||40;
+  var total=afSomaServicos()||0;
   var val=parseFloat(document.getElementById('ag-sinal-val')?.value)||0;
   var pct=total>0?(val/total)*100:0;
   var elP=document.getElementById('ag-sinal-pct');
@@ -14214,33 +14522,14 @@ function normalizarHoraAgenda(hora){
 function abrirModalAgendar(prof,hora){
   if(!caixaState||!caixaState.aberto){showAlert('⚠️ Abra o caixa do dia antes de realizar agendamentos.');return;}
   resetFormAgendar();
-  var catSel=document.getElementById('ag-cat');if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
-  agFiltrarServicos();
   var d=agendaDataAtual;
   var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   var elData=document.getElementById('ag-data');
-  var elHora=document.getElementById('ag-hora');
-  if(elData)elData.value=iso;
-  if(elHora)elHora.value=hora||elHora.value||'09:00';
-  if(prof){
-    agAtualizarProfServico();
-    var selServProf=document.getElementById('ag-servico-prof');
-    if(selServProf&&[...selServProf.options].some(function(o){return o.value===prof||o.textContent===prof;})){
-      selServProf.value=[...selServProf.options].find(function(o){return o.value===prof||o.textContent===prof;}).value;
-    }
-  }
+  if(elData){elData.value=iso;afToggleFilled(elData);}
+  afBlocos=[afNovoBloco(hora||'09:00')];
+  if(prof)afBlocos[0].profissional=prof;
+  afRenderServicoBlocos();
   openModal('modal-agendar');
-}
-function agClienteInput(inp){
-  var val=(inp.value||'').trim();
-  var wrap=document.getElementById('ag-cadastrar-btn-wrap');
-  var hint=document.getElementById('ag-cadastrar-nome-hint');
-  if(!wrap)return;
-  if(!val){wrap.style.display='none';return;}
-  var existe=clientes.some(function(c){return c.nome.toLowerCase()===val.toLowerCase();});
-  if(existe){wrap.style.display='none';return;}
-  if(hint)hint.textContent=val;
-  wrap.style.display='block';
 }
 function agCadastrarClienteRapido(){
   var nomePreench=(document.getElementById('ag-cliente').value||'').trim();
@@ -14285,129 +14574,41 @@ function salvarClienteRapido(){
   var novaCliente={nome:nome,tel:tel,ultima:dataHoje,total:'R$ 0,00',atend:0,retornoStatus:'',retornoData:'',ultimoProc:'',email:'',nascimento:nasc,cep:cep,endereco:endereco,como_conheceu:como};
   clientes.unshift(novaCliente);
   salvarClienteSupa(novaCliente);
-  var dl=document.getElementById('ag-cliente-lista');
-  if(dl)dl.innerHTML=clientes.map(function(c){return '<option value="'+c.nome+'"></option>';}).join('');
   var inp=document.getElementById('ag-cliente');
-  if(inp)inp.value=nome;
+  if(inp){inp.value=nome;afToggleFilled(inp);}
   var wrap=document.getElementById('ag-cadastrar-btn-wrap');
   if(wrap)wrap.style.display='none';
   document.getElementById('modal-cadastro-rapido-cliente').classList.remove('open');
+  afFecharPicker('af-picker-cliente');
   showAlert('✅ '+nome+' cadastrada com sucesso!');
   if(typeof renderClientes==='function')renderClientes();
 }
-function salvarAgendamento(){
-  var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
-  var data=document.getElementById('ag-data')?.value||'';
-  var hora=normalizarHoraAgenda(document.getElementById('ag-hora')?.value||'');
-  var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
-  if(!cliente||!data||!hora){
-    showAlert('Preencha cliente, data e horário.');
-    return;
-  }
-  if(tipo==='servico'){
-    var profsServ=agColetarProfissionaisServico();
-    if(!profsServ.length){showAlert('Selecione o profissional do serviço.');return;}
-    var conflito=agVerificarConflitoHorarioAgenda(data,hora,profsServ);
-    if(conflito){
-      if(conflito.ocupado&&conflito.ocupado.tipo==='aula'){
-        showAlert('Profissional indisponível neste horário. Existe uma aula cadastrada ('+conflito.ocupado.cliente+').');
-      }else{
-        showAlert('Horário '+hora+' já ocupado para '+conflito.prof+'.');
-      }
-      return;
-    }
-  }else{
-    var profPac=document.getElementById('ag-pacote-prof')?.value||'';
-    if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
-  }
-
-  var servico, valorFmt, ehPacote=false, pacoteIdx=-1, servicosDetalhe, prof;
-
-  if(tipo==='pacote'){
-    ehPacote=true;
-    prof=document.getElementById('ag-pacote-prof')?.value||'';
-    var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
-    var itensPacote=[];
-    var selPac=document.getElementById('ag-pacote-sel');
-    var idxPrincipal=parseInt(selPac?.value);
-    if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
-    itensPacote.push({idx:idxPrincipal,prof:document.getElementById('ag-pacote-prof')?.value||prof});
-    document.querySelectorAll('#ag-pacote-extra-list > div').forEach(function(row){
-      var sels=row.querySelectorAll('select');
-      var idx=parseInt(sels[0]?.value);
-      if(!isNaN(idx)&&idx>=0){
-        itensPacote.push({idx:idx,prof:sels[1]?.value||prof});
-      }
-    });
-    // Valida disponibilidade de todos os itens antes de aplicar qualquer um
-    for(var vi=0;vi<itensPacote.length;vi++){
-      var vp=pacotes[itensPacote[vi].idx];
-      if(!vp){showAlert('Pacote não encontrado.');return;}
-      var jaUsadosNesteAgendamento=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
-      if(vp.total-vp.usado<jaUsadosNesteAgendamento){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
-    }
-    var nomesServ=[];
-    itensPacote.forEach(function(item){
-      var pac=pacotes[item.idx];
-      pac.usado=(pac.usado||0)+1;
-      pacotes[item.idx]=pac;
-      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
-      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
-      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
-    });
-    syncPacotesLegacyStorage();
-    var pacPrincipal=pacotes[idxPrincipal];
-    servico=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
-    valorFmt='R$ 0,00';
-  } else {
-    prof=document.getElementById('ag-servico-prof')?.value||'';
-    var selServ=document.getElementById('ag-servico');
-    var selServProf=document.getElementById('ag-servico-prof');
-    var nomes=[(selServ?.options[selServ?.selectedIndex]?.text||'').split(' — ')[0]];
-    var valorPrincipal=parseFloat(document.getElementById('ag-servico-valor')?.value);
-    if(isNaN(valorPrincipal))valorPrincipal=parseFloat(selServ?.value)||0;
-    servicosDetalhe=[{
-      nome:nomes[0],
-      valor:valorPrincipal,
-      profissional:selServProf?.value||prof
-    }];
-    document.querySelectorAll('#ag-servicos-extra-list > [data-extra-row]').forEach(function(row){
-      var selExtra=row.querySelector('select:first-child');
-      var profExtra=row.querySelectorAll('select')[1];
-      var n=(selExtra?.options[selExtra?.selectedIndex]?.text||'').split(' — ')[0];
-      if(n){
-        nomes.push(n);
-        var valorExtra=parseFloat(row.querySelector('input[type="number"]')?.value);
-        if(isNaN(valorExtra))valorExtra=parseFloat(selExtra.value)||0;
-        servicosDetalhe.push({nome:n,valor:valorExtra,profissional:profExtra?.value||prof});
-      }
-    });
-    servico=nomes.join(' + ');
-    var valorTotal=agSomaServicos();
-    valorFmt='R$ '+valorTotal.toFixed(2).replace('.',',');
-  }
-
-  // Coletar produtos usados
-  var produtosUsados=[];
-  document.querySelectorAll('#ag-produtos-list > div').forEach(function(row){
-    var selProd=row.querySelector('select');
-    var inpVal=row.querySelector('input[type="number"]');
-    if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
-      var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
-      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
-    }
-  });
-
-  var obs=(document.getElementById('ag-obs')?.value||'').trim();
-  var sinalAtivo=!ehPacote&&(document.getElementById('ag-sinal-ativo')?.checked);
-  var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
-  var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
-  var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
+// Insere UM atendimento (uma data) a partir do contexto do formulário. Usada direto pro
+// caso único, e em loop sequencial pra cada ocorrência de "Repetir atendimento" — sem
+// nenhuma coluna nova no banco, cada ocorrência é só mais uma linha comum em agendamentos
+// (ver plano da Etapa 2: serie_id fica pra depois, só pra permitir cancelar a série toda).
+function afInserirAtendimentoUmaData(dataISO,ctx){
   var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var ehPacote=ctx.tipo==='pacote';
+  var servico,valorFmt,servicosDetalhe,prof,hora;
+  if(ehPacote){
+    prof=ctx.pacote.prof;
+    hora=ctx.pacote.hora;
+    servico=ctx.pacote.servicoLabel;
+    valorFmt='R$ 0,00';
+  }else{
+    prof=ctx.blocosServico[0].profissional;
+    hora=ctx.blocosServico[0].horario;
+    servicosDetalhe=ctx.blocosServico.map(function(b){
+      return {nome:b.servico?b.servico.nome:'',valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,hora:b.horario,duracao_min:b.duracaoMin};
+    });
+    servico=servicosDetalhe.map(function(sd){return sd.nome;}).join(' + ');
+    valorFmt='R$ '+servicosDetalhe.reduce(function(s,sd){return s+sd.valor;},0).toFixed(2).replace('.',',');
+  }
   var profSupa=mapaNomesInv[prof]||prof;
-  var obj={cliente:cliente,data:data,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!sinalAtivo,sinal_status:sinalStatus,sinal_valor:sinalValNum,obs:obs,salao_id:window.SALAO_ID};
-  if(!ehPacote&&typeof servicosDetalhe!=='undefined')obj.servicos_detalhe=servicosDetalhe;
-  _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
+  var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
+  if(!ehPacote)obj.servicos_detalhe=servicosDetalhe;
+  return _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
     return fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:h,body:JSON.stringify(obj)});
   }).then(function(r){
     if(!r.ok)return r.json().then(function(err){throw err;});
@@ -14415,27 +14616,17 @@ function salvarAgendamento(){
   }).then(function(rows){
     var inserted=Array.isArray(rows)?rows[0]:rows;
     var supaId=inserted&&inserted.id?inserted.id:null;
-    var partes=data.split('-');
+    var partes=dataISO.split('-');
     var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
     if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
-    // Calcular duração real e horários sequenciais por profissional
-    var seqMin0=parseInt(hora.split(':')[0])*60+parseInt(hora.split(':')[1]);
-    if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
-      servicosDetalhe.forEach(function(sd){
-        var dm=durFromServico(sd.nome);
-        sd.duracao_min=dm;
-        sd.hora=minToHora(seqMin0);
-        seqMin0+=dm;
-      });
-    }
     var duracaoPrincipal=(!ehPacote&&servicosDetalhe&&servicosDetalhe[0])?servicosDetalhe[0].duracao_min:durFromServico(servico);
     var apptBase={
-      id:supaId,cliente:cliente,tel:'',servico:servico,hora:hora,
+      id:supaId,cliente:ctx.cliente,tel:'',servico:servico,hora:hora,
       duracao:duracaoPrincipal+' min',valor:valorFmt,status:'Pendente',
-      sinal:!!sinalAtivo,sinalPago:sinalStatus==='pago',sinal_status:sinalStatus,
-      sinal_valor:sinalValNum,sinalValor:sinalAtivo?sinalAgora:'',
-      ehPacote:ehPacote,produtosUsados:produtosUsados,obs:obs,
-      sinalLancadoCaixa:!!(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0)
+      sinal:!!ctx.sinalAtivo,sinalPago:ctx.sinalStatus==='pago',sinal_status:ctx.sinalStatus,
+      sinal_valor:ctx.sinalValNum,sinalValor:ctx.sinalAtivo?('R$ '+ctx.sinalValNum.toFixed(2).replace('.',',')):'',
+      ehPacote:ehPacote,produtosUsados:ctx.produtosUsados||[],obs:ctx.obs,
+      sinalLancadoCaixa:!!(ctx.sinalAtivo&&ctx.sinalStatus==='pago'&&ctx.sinalValNum>0)
     };
     var primeiroProf=null;
     if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
@@ -14449,29 +14640,222 @@ function salvarAgendamento(){
       primeiroProf=agProfParaAgenda(prof);
       agendamentosPorData[dataKey][primeiroProf+':'+hora]=Object.assign({},apptBase,{prof:primeiroProf});
     }
-    agendaDataAtual=new Date(parseInt(partes[0],10),parseInt(partes[1],10)-1,parseInt(partes[2],10));
-    if(sinalAtivo&&sinalStatus==='pago'&&sinalValNum>0){
+    if(ctx.sinalAtivo&&ctx.sinalStatus==='pago'&&ctx.sinalValNum>0){
       var chaveSinal=primeiroProf+':'+hora;
       var apptSinal=agendamentosPorData[dataKey][chaveSinal];
-      if(apptSinal)lancarSinalCaixaSeNecessario(apptSinal,sinalValNum,agFormaSinal||'Pix');
+      if(apptSinal)lancarSinalCaixaSeNecessario(apptSinal,ctx.sinalValNum,agFormaSinal||'Pix');
     }
-    agFormaSinal='';
-    document.querySelectorAll('.ag-forma-btn').forEach(function(b){
-      b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
+  });
+}
+function afFinalizarSalvamento(cliente,datas){
+  agFormaSinal='';
+  document.querySelectorAll('.ag-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';});
+  var p0=datas[0].split('-');
+  agendaDataAtual=new Date(parseInt(p0[0],10),parseInt(p0[1],10)-1,parseInt(p0[2],10));
+  agSetTipo('servico');
+  renderAgenda();
+  afUltimoClienteSalvo=cliente;
+  var el=document.getElementById('af-sucesso');
+  var tit=el&&el.querySelector('.af-sucesso-titulo');
+  if(tit)tit.textContent=datas.length>1?('Atendimento criado com sucesso! ('+datas.length+' ocorrências)'):'Atendimento criado com sucesso!';
+  if(el)el.classList.add('open');
+}
+function afSalvarAtendimento(){
+  var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
+  var dataBase=document.getElementById('ag-data')?.value||'';
+  var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
+  if(!cliente||!dataBase){showAlert('Preencha cliente e data.');return;}
+
+  var obs=(document.getElementById('ag-obs')?.value||'').trim();
+  var sinalAtivo=tipo!=='pacote'&&!!(document.getElementById('ag-sinal-ativo')?.checked);
+  var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
+  var sinalAgora=document.getElementById('ag-sinal-agora')?.textContent||'R$ 0,00';
+  var sinalValNum=sinalAtivo?parseMoedaBR(sinalAgora):0;
+
+  var produtosUsados=[];
+  document.querySelectorAll('#ag-produtos-list .af-row').forEach(function(row){
+    var selProd=row.querySelector('select');
+    var inpVal=row.querySelector('input[type="number"]');
+    if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
+      var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
+      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
+    }
+  });
+
+  var ctxBase={cliente:cliente,obs:obs,sinalAtivo:sinalAtivo,sinalStatus:sinalStatus,sinalValNum:sinalValNum,produtosUsados:produtosUsados};
+
+  if(tipo==='pacote'){
+    var profPac=document.getElementById('ag-pacote-prof')?.value||'';
+    if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
+    var pacotes=JSON.parse(localStorage.getItem('flora_pacotes')||'[]');
+    var itensPacote=[];
+    var selPac=document.getElementById('ag-pacote-sel');
+    var idxPrincipal=parseInt(selPac?.value);
+    if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
+    itensPacote.push({idx:idxPrincipal,prof:profPac});
+    document.querySelectorAll('#ag-pacote-extra-list > div').forEach(function(row){
+      var sels=row.querySelectorAll('select');
+      var idx=parseInt(sels[0]?.value);
+      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac});
     });
-    // Resetar tipo para serviço
-    agSetTipo('servico');
-    closeModal('modal-agendar');
-    renderAgenda();
-    var msg='✅ Agendamento confirmado para '+cliente+'!';
-    if(ehPacote)msg+=' 🎁 Sessão de pacote descontada!';
-    else if(sinalAtivo&&sinalStatus==='pago')msg+=' 💰 Sinal de '+sinalAgora+' registrado!';
-    else if(sinalAtivo)msg+=' Sinal: '+sinalAgora+' ⏳ pendente';
-    if(produtosUsados.length)msg+=' 📦 '+produtosUsados.length+' produto(s) adicionado(s) à comanda.';
-    showAlert(msg);
+    for(var vi=0;vi<itensPacote.length;vi++){
+      var vp=pacotes[itensPacote[vi].idx];
+      if(!vp){showAlert('Pacote não encontrado.');return;}
+      var jaUsados=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
+      if(vp.total-vp.usado<jaUsados){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
+    }
+    var nomesServ=[];
+    itensPacote.forEach(function(item){
+      var pac=pacotes[item.idx];
+      pac.usado=(pac.usado||0)+1;
+      pacotes[item.idx]=pac;
+      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
+      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
+      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
+    });
+    syncPacotesLegacyStorage();
+    var pacPrincipal=pacotes[idxPrincipal];
+    var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00'}});
+    afInserirAtendimentoUmaData(dataBase,ctxPac).then(function(){
+      afFinalizarSalvamento(cliente,[dataBase]);
+    }).catch(function(){showAlert('Erro ao salvar agendamento. Verifique os dados.');});
+    return;
+  }
+
+  // Tipo = Serviço (suporta múltiplos blocos + repetição)
+  var blocosValidos=afBlocos.filter(function(b){return b.servico&&b.profissional&&b.horario;});
+  if(blocosValidos.length!==afBlocos.length||!blocosValidos.length){
+    showAlert('Preencha profissional, serviço e horário em todos os blocos de serviço.');
+    return;
+  }
+  blocosValidos.forEach(function(b){b.horario=normalizarHoraAgenda(b.horario);});
+
+  var repetir=!!document.getElementById('af-repetir-ativo')?.checked;
+  var datas=repetir?afGerarDatasSerie(dataBase):[dataBase];
+  if(!datas.length)datas=[dataBase];
+
+  // Checa conflito em TODAS as datas da série antes de inserir qualquer uma
+  for(var di=0;di<datas.length;di++){
+    var conflito=afVerificarConflitoBlocos(datas[di],blocosValidos);
+    if(conflito){
+      var msgData=datas.length>1?(' em '+datas[di].split('-').reverse().join('/')):'';
+      if(conflito.ocupado&&conflito.ocupado.tipo==='aula'){
+        showAlert('Profissional indisponível'+msgData+'. Existe uma aula cadastrada ('+conflito.ocupado.cliente+').');
+      }else{
+        showAlert('Horário '+conflito.horario+' já ocupado para '+conflito.prof+msgData+'.');
+      }
+      return;
+    }
+  }
+
+  var ctxServ=Object.assign({},ctxBase,{tipo:'servico',blocosServico:blocosValidos});
+  var prom=Promise.resolve();
+  datas.forEach(function(d){
+    prom=prom.then(function(){return afInserirAtendimentoUmaData(d,ctxServ);});
+  });
+  prom.then(function(){
+    afFinalizarSalvamento(cliente,datas);
   }).catch(function(){
     showAlert('Erro ao salvar agendamento. Verifique os dados.');
   });
+}
+var afUltimoClienteSalvo=null;
+function afSucessoAdicionarMais(){
+  afFecharPicker('af-picker-cliente');
+  var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
+  afBlocos=[afNovoBloco()];
+  afRenderServicoBlocos();
+}
+function afSucessoVerCliente(){
+  var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
+  closeModal('modal-agendar');
+  if(typeof abrirPerfilCliente==='function'&&afUltimoClienteSalvo)abrirPerfilCliente(afUltimoClienteSalvo);
+}
+function afSucessoNovoAtendimento(){
+  var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
+  resetFormAgendar();
+  var d=agendaDataAtual;
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var elData=document.getElementById('ag-data');
+  if(elData){elData.value=iso;afToggleFilled(elData);}
+}
+function afSucessoIrParaAgenda(){
+  var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
+  closeModal('modal-agendar');
+}
+
+// ---- Repetir atendimento ----
+var AF_REPETIR_MAX_OCORRENCIAS=60;
+var AF_REPETIR_MAX_MESES=12;
+function afToggleRepetir(){
+  var ativo=!!document.getElementById('af-repetir-ativo')?.checked;
+  var area=document.getElementById('af-repetir-area');
+  if(area)area.style.display=ativo?'flex':'none';
+  if(ativo)afRepetirAtualizarTexto();
+}
+function afRepetirStep(delta){
+  var inp=document.getElementById('af-repetir-intervalo');
+  if(!inp)return;
+  inp.value=Math.max(1,(parseInt(inp.value,10)||1)+delta);
+  afRepetirAtualizarTexto();
+}
+function afFormatarDataBR(iso){
+  var p=iso.split('-');
+  var d=new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
+  var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  return dias[d.getDay()]+', '+p[2]+'/'+p[1]+'/'+p[0];
+}
+function afRepetirAtualizarTexto(){
+  var fim=document.getElementById('af-repetir-fim')?.value||'nunca';
+  var wrapData=document.getElementById('af-repetir-fim-data-wrap');
+  var wrapApos=document.getElementById('af-repetir-fim-apos-wrap');
+  if(wrapData)wrapData.style.display=fim==='data'?'block':'none';
+  if(wrapApos)wrapApos.style.display=fim==='apos'?'flex':'none';
+  var intervalo=parseInt(document.getElementById('af-repetir-intervalo')?.value,10)||1;
+  var unidade=document.getElementById('af-repetir-unidade')?.value||'dias';
+  var unidadeTxt=intervalo===1?unidade.replace(/s$/,''):unidade;
+  var t1=document.getElementById('af-repetir-texto1');
+  if(t1)t1.textContent='Repete a cada '+intervalo+' '+unidadeTxt+'.';
+  var dataBase=document.getElementById('ag-data')?.value;
+  var t2=document.getElementById('af-repetir-texto2');
+  if(t2){
+    var datas=dataBase?afGerarDatasSerie(dataBase):[];
+    t2.textContent=datas[1]?('Próxima repetição: '+afFormatarDataBR(datas[1])):'Próxima repetição: —';
+  }
+}
+// Gera as datas da série (inclui a data inicial como 1ª ocorrência), respeitando o teto
+// de segurança de 60 ocorrências OU 12 meses à frente — o que vier primeiro — em
+// QUALQUER modo de término (Nunca / Na data / Após N), conforme combinado.
+function afGerarDatasSerie(dataBaseISO){
+  var intervalo=Math.max(1,parseInt(document.getElementById('af-repetir-intervalo')?.value,10)||1);
+  var unidade=document.getElementById('af-repetir-unidade')?.value||'dias';
+  var fimModo=document.getElementById('af-repetir-fim')?.value||'nunca';
+  var p=dataBaseISO.split('-').map(function(n){return parseInt(n,10);});
+  var dataInicial=new Date(p[0],p[1]-1,p[2]);
+  var limiteData=new Date(p[0],p[1]-1,p[2]);
+  limiteData.setMonth(limiteData.getMonth()+AF_REPETIR_MAX_MESES);
+  var limiteCount=AF_REPETIR_MAX_OCORRENCIAS;
+  if(fimModo==='apos'){
+    var n=parseInt(document.getElementById('af-repetir-fim-count')?.value,10)||1;
+    limiteCount=Math.min(limiteCount,Math.max(1,n));
+  }
+  if(fimModo==='data'){
+    var fv=document.getElementById('af-repetir-fim-data')?.value;
+    if(fv){
+      var pf=fv.split('-').map(function(n){return parseInt(n,10);});
+      var fimData=new Date(pf[0],pf[1]-1,pf[2]);
+      if(fimData<limiteData)limiteData=fimData;
+    }
+  }
+  var datas=[];
+  var atual=new Date(dataInicial);
+  while(datas.length<limiteCount&&atual<=limiteData){
+    datas.push(atual.getFullYear()+'-'+String(atual.getMonth()+1).padStart(2,'0')+'-'+String(atual.getDate()).padStart(2,'0'));
+    if(unidade==='dias')atual.setDate(atual.getDate()+intervalo);
+    else if(unidade==='semanas')atual.setDate(atual.getDate()+intervalo*7);
+    else atual.setMonth(atual.getMonth()+intervalo);
+  }
+  return datas;
 }
 // ===== FIM AGENDAMENTO =====
 
