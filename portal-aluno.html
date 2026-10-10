@@ -187,9 +187,15 @@ button,input,textarea,select{font-family:inherit}
     <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
   </div>
 
+  <div class="content" id="view-avisos" style="display:none">
+    <div class="saudacao" style="font-size:16px">🔔 Avisos</div>
+    <div id="avisos-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
+  </div>
+
   <div class="bottom-nav">
     <button id="nav-cursos" onclick="mostrarView('cursos')"><span class="ic">📚</span>Cursos</button>
     <button id="nav-turma" onclick="mostrarView('turma')"><span class="ic">📅</span>Turma</button>
+    <button id="nav-avisos" onclick="mostrarView('avisos')" style="position:relative"><span class="ic">🔔</span>Avisos<span id="avisos-badge" style="display:none;position:absolute;top:4px;right:calc(50% - 22px);background:#ef4444;color:#fff;border-radius:999px;font-size:9px;font-weight:800;min-width:15px;height:15px;line-height:15px;text-align:center;padding:0 2px"></span></button>
     <button id="nav-certificados" onclick="mostrarView('certificados')"><span class="ic">🎓</span>Certificados</button>
   </div>
 </div>
@@ -323,24 +329,26 @@ async function iniciarApp(){
     mostrarTela('screen-app');
     document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
     await carregarMeusCursos();
+    carregarAvisos();
   }catch(e){
     console.log('err iniciar app aluno', e);
   }
 }
 
 function mostrarView(view){
-  ['cursos','curso-detalhe','turma','certificados'].forEach(function(v){
+  ['cursos','curso-detalhe','turma','certificados','avisos'].forEach(function(v){
     var el = document.getElementById('view-' + v);
     if(el) el.style.display = (v === view) ? 'block' : 'none';
   });
-  ['cursos','turma','certificados'].forEach(function(v){
+  ['cursos','turma','certificados','avisos'].forEach(function(v){
     var b = document.getElementById('nav-' + v);
     if(b) b.classList.toggle('active', v === view);
   });
-  var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados' };
+  var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados', avisos: 'Avisos' };
   if(titulos[view]) document.getElementById('topbar-titulo').textContent = titulos[view];
   if(view === 'turma') carregarMinhaTurma();
   if(view === 'certificados') carregarCertificados();
+  if(view === 'avisos') carregarAvisos();
 }
 
 // ===== Meus Cursos =====
@@ -632,6 +640,65 @@ async function carregarCertificados(){
     console.log('err carregar certificados', e);
     wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus certificados agora.</div>';
   }
+}
+
+// ===== Avisos =====
+var avisosAtuais = [];
+function avisoIcone(tipo){
+  var map = { aula_amanha:'📅', alteracao_horario:'⏰', nova_apostila:'📎', live_evento:'🔴', exercicio_corrigido:'📝', aprovado_prova:'✅', certificado_disponivel:'🎓' };
+  return map[tipo] || '🔔';
+}
+async function carregarAvisos(){
+  var wrap = document.getElementById('avisos-aluno-corpo');
+  wrap.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var r = await supa.from('curso_notificacoes').select('*').eq('destinatario_tipo','aluno').order('criado_em', { ascending:false });
+    avisosAtuais = r.data || [];
+    renderAvisos();
+    atualizarBadgeAvisos();
+  }catch(e){
+    console.log('err carregar avisos', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus avisos agora.</div>';
+  }
+}
+function renderAvisos(){
+  var wrap = document.getElementById('avisos-aluno-corpo');
+  if(!avisosAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum aviso por enquanto.</div>'; return; }
+  wrap.innerHTML = avisosAtuais.map(function(n){
+    var evento = n.entidade_ref && n.entidade_ref.data_evento
+      ? ('<div style="font-size:12px;color:var(--gray-600);margin-top:4px">📅 ' + fmtDataBRAluno(n.entidade_ref.data_evento) + (n.entidade_ref.hora_evento ? ' às ' + n.entidade_ref.hora_evento : '') + '</div>')
+      : '';
+    var link = n.entidade_ref && n.entidade_ref.link
+      ? ('<a href="' + n.entidade_ref.link + '" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-top:8px;padding:8px">Abrir link</a>')
+      : '';
+    return '<div class="curso-card" style="cursor:pointer;' + (n.lida ? 'opacity:.65' : 'border-left:3px solid #7c3aed') + '" onclick="abrirAviso(\'' + n.id + '\')">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px">'
+      + '<span style="font-size:18px">' + avisoIcone(n.tipo_evento) + '</span>'
+      + '<div style="flex:1">'
+      + '<div style="font-weight:700;font-size:13.5px">' + escHtml(n.titulo) + '</div>'
+      + (n.mensagem ? '<div style="font-size:12.5px;color:var(--gray-600);margin-top:3px">' + escHtml(n.mensagem) + '</div>' : '')
+      + evento + link
+      + '<div style="font-size:10.5px;color:var(--gray-400);margin-top:6px">' + new Date(n.criado_em).toLocaleString('pt-BR') + '</div>'
+      + '</div>'
+      + (!n.lida ? '<span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;flex-shrink:0;margin-top:4px"></span>' : '')
+      + '</div></div>';
+  }).join('');
+}
+async function abrirAviso(id){
+  var n = avisosAtuais.find(function(x){ return x.id === id; });
+  if(!n || n.lida) return;
+  n.lida = true;
+  renderAvisos();
+  atualizarBadgeAvisos();
+  try{ await supa.from('curso_notificacoes').update({ lida: true }).eq('id', id); }
+  catch(e){ console.log('err marcar aviso lido', e); }
+}
+function atualizarBadgeAvisos(){
+  var badge = document.getElementById('avisos-badge');
+  if(!badge) return;
+  var naoLidos = avisosAtuais.filter(function(n){ return !n.lida; }).length;
+  if(naoLidos > 0){ badge.textContent = naoLidos > 9 ? '9+' : String(naoLidos); badge.style.display = 'block'; }
+  else { badge.style.display = 'none'; }
 }
 
 // ===== Boot =====

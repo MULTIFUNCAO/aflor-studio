@@ -1594,6 +1594,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-outline btn-sm" id="cursos-tab-alunos" onclick="cursosSetTab('alunos')">👤 Alunos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-campanhas" onclick="cursosSetTab('campanhas')">📣 Campanhas</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-leads" onclick="cursosSetTab('leads')">🧲 Leads</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-notificacoes" onclick="cursosSetTab('notificacoes')">🔔 Notificações</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
@@ -1602,6 +1603,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="table-card" id="turmas-list" style="display:none"></div>
       <div class="table-card" id="alunos-list" style="display:none"></div>
       <div class="table-card" id="campanhas-list" style="display:none"></div>
+      <div class="table-card" id="notificacoes-list" style="display:none"></div>
       <div id="leads-page" style="display:none">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
           <button class="tab active" id="cl-view-kanban" onclick="clSetView('kanban')">🗂️ Kanban</button>
@@ -4864,6 +4866,58 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-curso-notificacao">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🔔 Novo Aviso</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-notificacao')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título *</label><input id="cn-titulo" placeholder="Ex: Aula de amanhã confirmada"/></div>
+      <div class="form-group full"><label>Mensagem</label><textarea id="cn-mensagem"></textarea></div>
+      <div class="form-group full"><label>Tipo</label>
+        <select id="cn-tipo" onchange="cnAtualizarCamposEvento()">
+          <option value="comunicado">Aviso geral</option>
+          <option value="aula_amanha">Aula amanhã</option>
+          <option value="alteracao_horario">Alteração de horário</option>
+          <option value="nova_apostila">Novo conteúdo liberado (apostila/vídeo)</option>
+          <option value="live_evento">Live / evento</option>
+          <option value="certificado_disponivel">Certificado disponível</option>
+        </select>
+      </div>
+      <div class="form-group full" id="cn-evento-wrap" style="display:none">
+        <label>Dados da live/evento</label>
+        <div style="display:flex;gap:8px">
+          <input type="date" id="cn-evento-data" style="flex:1"/>
+          <input type="time" id="cn-evento-hora" style="flex:1"/>
+        </div>
+        <input id="cn-evento-link" placeholder="Link da live (opcional)" style="margin-top:8px"/>
+      </div>
+      <div class="form-group full"><label>Enviar para</label>
+        <select id="cn-destino-tipo" onchange="cnAtualizarCamposDestino()">
+          <option value="todos">Todos os alunos com acesso ao Portal</option>
+          <option value="turma">Uma turma</option>
+          <option value="curso">Um curso ou combo</option>
+          <option value="aluno">Um aluno específico</option>
+        </select>
+      </div>
+      <div class="form-group full" id="cn-destino-turma-wrap" style="display:none">
+        <label>Turma</label><select id="cn-destino-turma"></select>
+      </div>
+      <div class="form-group full" id="cn-destino-curso-wrap" style="display:none">
+        <label>Curso ou Combo</label><select id="cn-destino-curso"></select>
+      </div>
+      <div class="form-group full" id="cn-destino-aluno-wrap" style="display:none">
+        <label>Aluno</label><select id="cn-destino-aluno"></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-notificacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="cnEnviar()">✅ Enviar Aviso</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-turma-aulas">
   <div class="modal" style="width:480px;max-height:80vh">
     <div class="modal-header">
@@ -5673,8 +5727,8 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads')};
-  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page')};
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads'),notificacoes:document.getElementById('cursos-tab-notificacoes')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page'),notificacoes:document.getElementById('notificacoes-list')};
   var btnNovo=document.getElementById('cursos-btn-novo');
   Object.keys(tabs).forEach(function(k){
     if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
@@ -5695,9 +5749,12 @@ function cursosSetTab(tab){
   }else if(tab==='campanhas'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Campanha';btnNovo.setAttribute('onclick','abrirNovaCampanha()');}
     if(typeof renderCampanhas==='function')renderCampanhas();
-  }else{
+  }else if(tab==='leads'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Lead';btnNovo.setAttribute('onclick','clAbrirNovoLead()');}
     if(typeof renderLeads==='function')renderLeads();
+  }else{
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aviso';btnNovo.setAttribute('onclick','abrirNovaNotificacao()');}
+    if(typeof renderNotificacoes==='function')renderNotificacoes();
   }
 }
 
@@ -7271,7 +7328,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -16986,5 +17043,6 @@ if('serviceWorker' in navigator){
 </div>
 <script src="cursos-campanhas.js"></script>
 <script src="cursos-leads.js"></script>
+<script src="cursos-notificacoes.js"></script>
 </body>
 </html>
