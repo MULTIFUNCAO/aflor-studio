@@ -14782,12 +14782,30 @@ function renderizarCancelarEdicao(key,dados){
   var atendEmAberto=!atendConcluido;
   var html='';
   if(atendEmAberto&&dados.serie_id){
-    html+='<button type="button" onclick="cancelarSerieAtendimento(\''+dados.serie_id+'\',\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">event_busy</span>Cancelar esta e as próximas (repetição)</button>';
+    html+='<button type="button" onclick="afCancelarSerieEdicao(\''+dados.serie_id+'\',\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">event_busy</span>Cancelar esta e as próximas (repetição)</button>';
   }
   if(atendEmAberto){
     html+='<button type="button" onclick="cancelarAtendimentoAgenda(\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">delete</span>Cancelar Atendimento</button>';
   }
   wrap.innerHTML=html;
+}
+// cancelarSerieAtendimento() original relê agendaDataAtual (o dia que a grade de FUNDO está
+// mostrando) no momento do clique — funciona bem no painel antigo porque ele é efêmero, mas
+// na tela de edição nova o modal pode ficar aberto um tempo (rolando pra ver Comanda/Sinal),
+// então ancoramos na data que já foi capturada quando ESSA ocorrência foi aberta
+// (agEditandoDataKeyOriginal), em vez de reler o estado "ao vivo" que pode ter mudado.
+function afCancelarSerieEdicao(serieId,key){
+  var dataKeyOriginal=agEditandoDataKeyOriginal||agendaDataKeyAtual;
+  var p=(dataKeyOriginal||'').split('/');
+  if(p.length!==3){cancelarSerieAtendimento(serieId,key);return;}
+  var dataISO=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+  var dataBr=p[0].padStart(2,'0')+'/'+p[1].padStart(2,'0')+'/'+p[2];
+  showConfirmBotoes('Cancelar este e todos os próximos atendimentos dessa repetição (a partir de '+dataBr+')? Sinais já pagos no caixa não são estornados automaticamente — confira o Fluxo de Caixa se precisar.',[
+    {label:'Sim, cancelar todos',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp==='sim')executarCancelamentoSerie(serieId,dataISO);
+  });
 }
 function abrirAtendimentoEdicao(key,dados){
   if(!dados)return;
