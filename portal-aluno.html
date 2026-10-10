@@ -443,17 +443,35 @@ async function abrirCursoDetalhe(matriculaId){
     var rMod = await supa.from('curso_modulos').select('*').in('curso_id', cursoIds).order('ordem');
     var rAulas = await supa.from('curso_aulas').select('*').in('curso_id', cursoIds).order('ordem');
     var rMats = await supa.from('curso_materiais').select('*').in('curso_id', cursoIds).order('ordem');
+    var rEx = await supa.from('curso_exercicios').select('*').in('curso_id', cursoIds).order('ordem');
+    var rProvas = await supa.from('curso_provas').select('*').in('curso_id', cursoIds).eq('ativo', true).order('ordem');
     var rProg = await supa.from('curso_progresso_conteudo').select('*').eq('matricula_id', matriculaId);
+    var rEnvios = await supa.from('curso_exercicio_envios').select('*').eq('matricula_id', matriculaId).order('criado_em', { ascending:false });
+    var rTentativas = await supa.from('curso_prova_tentativas').select('*').eq('matricula_id', matriculaId).order('numero_tentativa', { ascending:false });
     var progressoPorItem = {};
     (rProg.data||[]).forEach(function(p){
       var chave = (p.aula_id ? 'aula:'+p.aula_id : 'material:'+p.material_id);
       progressoPorItem[chave] = p;
     });
+    window._exerciciosCache = rEx.data || [];
+    window._provasCache = rProvas.data || [];
+    window._enviosCache = rEnvios.data || [];
+    window._tentativasCache = rTentativas.data || [];
     renderCursoDetalhe(rMod.data||[], rAulas.data||[], rMats.data||[], progressoPorItem);
   }catch(e){
     console.log('err abrir curso detalhe', e);
     corpo.innerHTML = '<div class="empty-state">Não foi possível carregar o conteúdo.</div>';
   }
+}
+function envioAtualDoExercicio(exercicioId){
+  return (window._enviosCache||[]).find(function(e){ return e.exercicio_id === exercicioId; }) || null;
+}
+function tentativasDaProva(provaId){
+  return (window._tentativasCache||[]).filter(function(t){ return t.prova_id === provaId; });
+}
+function envioStatusBadge(status){
+  var map = { enviado:'Enviado — aguardando correção', em_analise:'Em análise', aprovado:'Aprovado ✅', refazer:'Precisa refazer 🔁' };
+  return map[status] || status;
 }
 function itemAindaBloqueado(liberarEm){
   if(!liberarEm) return false;
@@ -485,7 +503,28 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
-    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + '</div>';
+    var exDoModulo = (window._exerciciosCache||[]).filter(function(e){ return e.modulo_id === mod.id; });
+    var provasDoModulo = (window._provasCache||[]).filter(function(p){ return p.modulo_id === mod.id; });
+    var exHtml = exDoModulo.map(function(e){
+      var envio = envioAtualDoExercicio(e.id);
+      var statusTxt = envio ? envioStatusBadge(envio.status) : '';
+      return '<div class="item-row" onclick="abrirExercicio(\''+e.id+'\')">'
+        + '<span class="item-icon">📝</span>'
+        + '<span style="flex:1">' + escHtml(e.titulo) + (statusTxt?' <span style="color:#888;font-size:11px">— '+statusTxt+'</span>':'') + '</span>'
+        + '<span class="item-check">' + (envio && envio.status==='aprovado' ? '✅' : '') + '</span>'
+        + '</div>';
+    }).join('');
+    var provasHtml = provasDoModulo.map(function(p){
+      var tentativas = tentativasDaProva(p.id);
+      var melhor = tentativas.reduce(function(acc,t){ return (acc===null || (t.percentual||0) > acc) ? (t.percentual||0) : acc; }, null);
+      var info = tentativas.length ? (' — melhor nota: '+Math.round(melhor)+'%') : '';
+      return '<div class="item-row" onclick="abrirProva(\''+p.id+'\')">'
+        + '<span class="item-icon">🧪</span>'
+        + '<span style="flex:1">' + escHtml(p.titulo) + info + '</span>'
+        + '<span class="item-check">' + (tentativas.some(function(t){return t.aprovado;}) ? '✅' : '') + '</span>'
+        + '</div>';
+    }).join('');
+    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + exHtml + provasHtml + '</div>';
   }).join('');
   window._aulasCache = aulas; window._materiaisCache = materiais;
 }
@@ -572,6 +611,172 @@ async function marcarConcluido(tipo, id){
     fecharViewer();
     abrirCursoDetalhe(matriculaId);
   }catch(e){ console.log('err marcar concluido', e); }
+}
+
+// ===== Exercícios =====
+function opcaoTexto(exercicio, optId){
+  var o = (exercicio.opcoes||[]).find(function(x){return x.id === optId;});
+  return o ? o.texto : optId;
+}
+function abrirExercicio(exercicioId){
+  var e = (window._exerciciosCache||[]).find(function(x){return x.id === exercicioId;});
+  if(!e) return;
+  document.getElementById('item-viewer-titulo').textContent = e.titulo;
+  var body = document.getElementById('item-viewer-body');
+  var envio = envioAtualDoExercicio(exercicioId);
+  var html = '<div style="font-size:14px;margin-bottom:16px;white-space:pre-wrap">' + escHtml(e.enunciado||'') + '</div>';
+  if(envio && envio.status !== 'refazer'){
+    html += '<div style="background:var(--gray-50);border-radius:10px;padding:12px 14px;font-size:13px">'
+      + '<div style="font-weight:700;margin-bottom:6px">' + envioStatusBadge(envio.status) + '</div>'
+      + (envio.resposta_texto ? '<div style="white-space:pre-wrap">'+escHtml(envio.resposta_texto)+'</div>' : '')
+      + (envio.resposta_opcao ? '<div>Resposta: '+escHtml(opcaoTexto(e, envio.resposta_opcao))+'</div>' : '')
+      + (envio.arquivo_url ? '<div>📎 arquivo enviado</div>' : '')
+      + (envio.comentario_professor ? '<div style="margin-top:8px;color:#555"><b>Comentário:</b> '+escHtml(envio.comentario_professor)+'</div>' : '')
+      + '</div>';
+    body.innerHTML = html;
+  }else{
+    if(envio && envio.status === 'refazer' && envio.comentario_professor){
+      html += '<div style="background:#fef2f2;border-radius:10px;padding:10px 14px;font-size:13px;color:#b91c1c;margin-bottom:14px"><b>O professor pediu pra refazer:</b> '+escHtml(envio.comentario_professor)+'</div>';
+    }
+    if(e.tipo === 'texto'){
+      html += '<textarea id="exec-resposta-texto" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px"></textarea>';
+    }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
+      html += (e.opcoes||[]).map(function(o){
+        return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
+          + '<input type="radio" name="exec-opcao" value="'+o.id+'"/> ' + escHtml(o.texto) + '</label>';
+      }).join('');
+    }else if(e.tipo === 'envio_imagem'){
+      html += '<input type="file" id="exec-arquivo" accept="image/jpeg,image/png,image/webp"/>';
+    }else if(e.tipo === 'envio_arquivo'){
+      html += '<input type="file" id="exec-arquivo" accept="application/pdf"/>';
+    }
+    html += '<button class="btn-main" style="margin-top:16px" onclick="enviarExercicio(\''+exercicioId+'\')">Enviar resposta</button>';
+    body.innerHTML = html;
+  }
+  document.getElementById('item-viewer').classList.add('open');
+}
+async function enviarExercicio(exercicioId){
+  var e = (window._exerciciosCache||[]).find(function(x){return x.id === exercicioId;});
+  if(!e) return;
+  var payload = { exercicio_id: exercicioId, matricula_id: matriculaDetalheAtual.id, salao_id: alunoAtual.salao_id, status: 'enviado' };
+  if(e.tipo === 'texto'){
+    var texto = document.getElementById('exec-resposta-texto').value.trim();
+    if(!texto){ alert('Escreva sua resposta antes de enviar.'); return; }
+    payload.resposta_texto = texto;
+  }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
+    var sel = document.querySelector('input[name="exec-opcao"]:checked');
+    if(!sel){ alert('Selecione uma opção.'); return; }
+    payload.resposta_opcao = sel.value;
+  }else{
+    var fileInput = document.getElementById('exec-arquivo');
+    var file = fileInput.files[0];
+    if(!file){ alert('Selecione um arquivo.'); return; }
+    try{
+      var path = alunoAtual.salao_id + '/' + alunoAtual.id + '/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+      var up = await supa.storage.from('curso-envios').upload(path, file);
+      if(up.error) throw up.error;
+      payload.arquivo_url = path;
+    }catch(err){ console.log('err upload exercicio', err); alert('Não foi possível enviar o arquivo (verifique o tipo e tamanho — só imagem ou PDF, até 10MB).'); return; }
+  }
+  try{
+    var r = await supa.from('curso_exercicio_envios').insert([payload]).select('*').single();
+    if(r.error) throw r.error;
+    window._enviosCache = (window._enviosCache||[]).filter(function(x){return x.exercicio_id !== exercicioId;}).concat([r.data]);
+  }catch(err){ console.log('err enviar exercicio', err); alert('Não foi possível enviar. Tente novamente.'); return; }
+  fecharViewer();
+  abrirCursoDetalhe(matriculaDetalheAtual.id);
+}
+
+// ===== Provas =====
+var provaEmAndamento = null; // {prova, perguntas, respostas:{perguntaId:valor}}
+async function abrirProva(provaId){
+  var p = (window._provasCache||[]).find(function(x){return x.id === provaId;});
+  if(!p) return;
+  var tentativas = tentativasDaProva(provaId);
+  document.getElementById('item-viewer-titulo').textContent = p.titulo;
+  var body = document.getElementById('item-viewer-body');
+  var usadas = tentativas.length;
+  var podeTentar = usadas < p.tentativas_maximas;
+  var html = '<div style="font-size:13.5px;color:var(--gray-600);margin-bottom:12px">' + escHtml(p.descricao||'') + '</div>';
+  html += '<div style="font-size:12.5px;color:var(--gray-600);margin-bottom:16px">Nota mínima: '+p.nota_minima+'% · Tentativas: '+usadas+'/'+p.tentativas_maximas+(p.tempo_limite_min?' · Tempo limite: '+p.tempo_limite_min+' min':'')+'</div>';
+  if(tentativas.length){
+    html += tentativas.map(function(t){
+      return '<div style="background:var(--gray-50);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;display:flex;justify-content:space-between"><span>Tentativa '+t.numero_tentativa+'</span><span>'+Math.round(t.percentual||0)+'% '+(t.aprovado?'✅':'')+'</span></div>';
+    }).join('');
+  }
+  if(podeTentar){
+    html += '<button class="btn-main" style="margin-top:12px" onclick="iniciarProva(\''+provaId+'\')">'+(tentativas.length?'Tentar novamente':'Iniciar prova')+'</button>';
+  }else{
+    html += '<div style="margin-top:12px;color:var(--gray-400);font-size:12.5px">Você já usou todas as tentativas disponíveis.</div>';
+  }
+  body.innerHTML = html;
+  document.getElementById('item-viewer').classList.add('open');
+}
+async function iniciarProva(provaId){
+  var p = (window._provasCache||[]).find(function(x){return x.id === provaId;});
+  if(!p) return;
+  try{
+    var r = await supa.from('curso_prova_perguntas').select('*').eq('prova_id', provaId).order('ordem');
+    var perguntas = r.data || [];
+    if(!perguntas.length){ alert('Esta prova ainda não tem perguntas cadastradas.'); return; }
+    provaEmAndamento = { prova: p, perguntas: perguntas, respostas: {} };
+    renderPerguntaAtualProva(0);
+  }catch(e){ console.log('err iniciar prova', e); alert('Não foi possível carregar a prova.'); }
+}
+function renderPerguntaAtualProva(idx){
+  var pa = provaEmAndamento;
+  if(!pa) return;
+  var pg = pa.perguntas[idx];
+  var body = document.getElementById('item-viewer-body');
+  if(!pg){ finalizarProva(); return; }
+  var respostaAtual = pa.respostas[pg.id];
+  var html = '<div style="font-size:12px;color:var(--gray-400);margin-bottom:6px">Pergunta '+(idx+1)+' de '+pa.perguntas.length+'</div>';
+  html += '<div style="font-size:14px;font-weight:700;margin-bottom:14px">'+escHtml(pg.enunciado)+'</div>';
+  html += (pg.opcoes||[]).map(function(o){
+    return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
+      + '<input type="radio" name="pg-opcao" value="'+o.id+'" '+(respostaAtual===o.id?'checked':'')+' onchange="provaEmAndamento.respostas[\''+pg.id+'\']=this.value"/> ' + escHtml(o.texto) + '</label>';
+  }).join('');
+  html += '<button class="btn-main" style="margin-top:12px" onclick="proximaPerguntaProva('+idx+')">'+(idx+1<pa.perguntas.length?'Próxima':'Finalizar e ver resultado')+'</button>';
+  body.innerHTML = html;
+}
+function proximaPerguntaProva(idxAtual){
+  var pa = provaEmAndamento;
+  var pg = pa.perguntas[idxAtual];
+  if(!pa.respostas[pg.id]){ alert('Selecione uma resposta antes de continuar.'); return; }
+  renderPerguntaAtualProva(idxAtual+1);
+}
+async function finalizarProva(){
+  var pa = provaEmAndamento;
+  if(!pa) return;
+  var pontuacaoMaxima = 0, pontuacaoObtida = 0;
+  var respostasSalvas = pa.perguntas.map(function(pg){
+    var resp = pa.respostas[pg.id];
+    pontuacaoMaxima += Number(pg.pontuacao)||0;
+    var correta = resp === pg.resposta_correta;
+    if(correta) pontuacaoObtida += Number(pg.pontuacao)||0;
+    return { pergunta_id: pg.id, resposta: resp, correta: correta };
+  });
+  var percentual = pontuacaoMaxima > 0 ? (pontuacaoObtida/pontuacaoMaxima*100) : 0;
+  var aprovado = percentual >= (pa.prova.nota_minima||0);
+  var numeroTentativa = tentativasDaProva(pa.prova.id).length + 1;
+  try{
+    var r = await supa.from('curso_prova_tentativas').insert([{
+      prova_id: pa.prova.id, matricula_id: matriculaDetalheAtual.id, salao_id: alunoAtual.salao_id,
+      numero_tentativa: numeroTentativa, respostas: respostasSalvas,
+      pontuacao_obtida: pontuacaoObtida, pontuacao_maxima: pontuacaoMaxima, percentual: percentual,
+      aprovado: aprovado, finalizado_em: new Date().toISOString()
+    }]).select('*').single();
+    if(r.error) throw r.error;
+    window._tentativasCache = (window._tentativasCache||[]).concat([r.data]);
+  }catch(e){ console.log('err finalizar prova', e); alert('Não foi possível registrar sua tentativa.'); return; }
+  var body = document.getElementById('item-viewer-body');
+  body.innerHTML = '<div style="text-align:center;padding:20px 0">'
+    + '<div style="font-size:40px">'+(aprovado?'🎉':'😕')+'</div>'
+    + '<div style="font-size:22px;font-weight:800;margin-top:10px">'+Math.round(percentual)+'%</div>'
+    + '<div style="font-size:13px;color:var(--gray-600);margin-top:6px">'+(aprovado?'Aprovado!':'Não atingiu a nota mínima de '+pa.prova.nota_minima+'%')+'</div>'
+    + '<button class="btn-main" style="margin-top:20px" onclick="fecharViewer();abrirCursoDetalhe(matriculaDetalheAtual.id)">Voltar ao curso</button>'
+    + '</div>';
+  provaEmAndamento = null;
 }
 
 // ===== Minha Turma =====
