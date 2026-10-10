@@ -108,6 +108,53 @@ button,input,textarea,select{font-family:inherit}
       <div class="field"><label>E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
       <div class="field"><label>Senha</label><input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password"/></div>
       <button class="btn-main" id="btn-login" onclick="fazerLoginAluno()">Entrar</button>
+      <div style="text-align:center;margin-top:12px">
+        <button type="button" onclick="mostrarRecuperarSenha()" style="background:none;border:none;color:var(--gray-600);font-size:12.5px;cursor:pointer;text-decoration:underline">Esqueci minha senha</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECUPERAR SENHA -->
+<div class="screen" id="screen-recuperar">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">
+          <svg width="28" height="32" viewBox="0 0 100 115" fill="none">
+            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+            <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">FLORA</div>
+        <div class="sub">Recuperar senha</div>
+      </div>
+      <div class="alert-box" id="recuperar-alert"></div>
+      <div class="field"><label>E-mail cadastrado</label><input id="recuperar-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
+      <button class="btn-main" id="btn-recuperar" onclick="enviarRecuperarSenha()">Enviar link de recuperação</button>
+      <button type="button" class="btn-outline" style="margin-top:10px" onclick="voltarParaLogin()">← Voltar pro login</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEFINIR NOVA SENHA (chegou aqui pelo link do e-mail) -->
+<div class="screen" id="screen-nova-senha">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">
+          <svg width="28" height="32" viewBox="0 0 100 115" fill="none">
+            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+            <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">FLORA</div>
+        <div class="sub">Defina sua nova senha</div>
+      </div>
+      <div class="alert-box" id="nova-senha-alert"></div>
+      <div class="field"><label>Nova senha</label><input id="nova-senha-1" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
+      <div class="field"><label>Confirme a nova senha</label><input id="nova-senha-2" type="password" placeholder="Repita a senha" autocomplete="new-password"/></div>
+      <button class="btn-main" id="btn-nova-senha" onclick="salvarNovaSenha()">Salvar nova senha</button>
     </div>
   </div>
 </div>
@@ -137,7 +184,7 @@ button,input,textarea,select{font-family:inherit}
 
   <div class="content" id="view-certificados" style="display:none">
     <div class="saudacao" style="font-size:16px">🎓 Certificados</div>
-    <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Ainda não disponível — em breve.</div></div>
+    <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
   </div>
 
   <div class="bottom-nav">
@@ -174,6 +221,62 @@ function showLoginAlert(msg, tipo){
   var el = document.getElementById('login-alert');
   el.textContent = msg;
   el.className = 'alert-box ' + tipo;
+}
+function mostrarTela(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+function mostrarRecuperarSenha(){
+  document.getElementById('recuperar-email').value = document.getElementById('login-email').value || '';
+  document.getElementById('recuperar-alert').className = 'alert-box';
+  mostrarTela('screen-recuperar');
+}
+function voltarParaLogin(){ mostrarTela('screen-login'); }
+async function enviarRecuperarSenha(){
+  var email = document.getElementById('recuperar-email').value.trim();
+  var alertEl = document.getElementById('recuperar-alert');
+  if(!email){ alertEl.textContent = 'Informe seu e-mail.'; alertEl.className = 'alert-box err'; return; }
+  var btn = document.getElementById('btn-recuperar');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Enviando...';
+  try{
+    var r = await supa.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    if(r.error){
+      alertEl.textContent = 'Não foi possível enviar o link agora. Tente novamente.';
+      alertEl.className = 'alert-box err';
+    }else{
+      alertEl.textContent = 'Se esse e-mail estiver cadastrado, você vai receber um link pra criar uma nova senha.';
+      alertEl.className = 'alert-box ok';
+    }
+  }catch(e){
+    console.log('err recuperar senha', e);
+    alertEl.textContent = 'Erro inesperado. Tente novamente.';
+    alertEl.className = 'alert-box err';
+  }
+  btn.disabled = false; btn.textContent = 'Enviar link de recuperação';
+}
+async function salvarNovaSenha(){
+  var s1 = document.getElementById('nova-senha-1').value;
+  var s2 = document.getElementById('nova-senha-2').value;
+  var alertEl = document.getElementById('nova-senha-alert');
+  if(!s1 || s1.length < 6){ alertEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; alertEl.className = 'alert-box err'; return; }
+  if(s1 !== s2){ alertEl.textContent = 'As senhas não coincidem.'; alertEl.className = 'alert-box err'; return; }
+  var btn = document.getElementById('btn-nova-senha');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Salvando...';
+  try{
+    var r = await supa.auth.updateUser({ password: s1 });
+    if(r.error){
+      alertEl.textContent = 'Não foi possível salvar a nova senha. Peça um novo link e tente de novo.';
+      alertEl.className = 'alert-box err';
+      btn.disabled = false; btn.textContent = 'Salvar nova senha';
+      return;
+    }
+    await iniciarApp();
+  }catch(e){
+    console.log('err salvar nova senha', e);
+    alertEl.textContent = 'Erro inesperado. Tente novamente.';
+    alertEl.className = 'alert-box err';
+    btn.disabled = false; btn.textContent = 'Salvar nova senha';
+  }
 }
 
 async function fazerLoginAluno(){
@@ -217,8 +320,7 @@ async function iniciarApp(){
       return;
     }
     alunoAtual = rAluno.data[0];
-    document.getElementById('screen-login').classList.remove('active');
-    document.getElementById('screen-app').classList.add('active');
+    mostrarTela('screen-app');
     document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
     await carregarMeusCursos();
   }catch(e){
@@ -238,6 +340,7 @@ function mostrarView(view){
   var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados' };
   if(titulos[view]) document.getElementById('topbar-titulo').textContent = titulos[view];
   if(view === 'turma') carregarMinhaTurma();
+  if(view === 'certificados') carregarCertificados();
 }
 
 // ===== Meus Cursos =====
@@ -288,8 +391,9 @@ async function carregarMeusCursos(){
 async function calcularProgresso(matriculaId, cursoIds){
   if(!cursoIds || !cursoIds.length) return 0;
   try{
-    var rAulas = await supa.from('curso_aulas').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
-    var rMats = await supa.from('curso_materiais').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
+    var hoje = new Date().toISOString().slice(0,10);
+    var rAulas = await supa.from('curso_aulas').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds).or('liberar_em.is.null,liberar_em.lte.'+hoje);
+    var rMats = await supa.from('curso_materiais').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds).or('liberar_em.is.null,liberar_em.lte.'+hoje);
     var total = (rAulas.count||0) + (rMats.count||0);
     if(total === 0) return 0;
     var rConcl = await supa.from('curso_progresso_conteudo').select('id', { count: 'exact', head: true }).eq('matricula_id', matriculaId).eq('status', 'concluido');
@@ -343,6 +447,10 @@ async function abrirCursoDetalhe(matriculaId){
     corpo.innerHTML = '<div class="empty-state">Não foi possível carregar o conteúdo.</div>';
   }
 }
+function itemAindaBloqueado(liberarEm){
+  if(!liberarEm) return false;
+  return liberarEm > new Date().toISOString().slice(0,10);
+}
 function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
   var corpo = document.getElementById('curso-detalhe-corpo');
   if(!modulos.length){ corpo.innerHTML = '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
@@ -352,24 +460,34 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
     var aulasHtml = aulasDoModulo.map(function(a){
       var prog = progressoPorItem['aula:'+a.id];
       var feito = prog && prog.status === 'concluido';
-      return '<div class="item-row" onclick="abrirAulaViewer(\''+a.id+'\')">'
-        + '<span class="item-icon">' + (a.tipo_conteudo==='video'?'🎥':'📄') + '</span>'
-        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + '</span>'
+      var bloqueado = itemAindaBloqueado(a.liberar_em);
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+a.liberar_em+'\')':'abrirAulaViewer(\''+a.id+'\')') + '">'
+        + '<span class="item-icon">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
+        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(a.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
     var matsHtml = matsDoModulo.map(function(mt){
       var prog = progressoPorItem['material:'+mt.id];
       var feito = prog && prog.status === 'concluido';
-      return '<div class="item-row" onclick="abrirMaterialViewer(\''+mt.id+'\')">'
-        + '<span class="item-icon">📎</span>'
-        + '<span style="flex:1">' + escHtml(mt.nome) + '</span>'
+      var bloqueado = itemAindaBloqueado(mt.liberar_em);
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+mt.liberar_em+'\')':'abrirMaterialViewer(\''+mt.id+'\')') + '">'
+        + '<span class="item-icon">' + (bloqueado?'🔒':'📎') + '</span>'
+        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(mt.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
     return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + '</div>';
   }).join('');
   window._aulasCache = aulas; window._materiaisCache = materiais;
+}
+function fmtDataBRAluno(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function alertConteudoBloqueado(liberarEm){
+  alert('Este conteúdo ainda não foi liberado. Disponível a partir de ' + fmtDataBRAluno(liberarEm) + '.');
 }
 function fecharViewer(){ document.getElementById('item-viewer').classList.remove('open'); }
 async function abrirAulaViewer(aulaId){
@@ -481,6 +599,41 @@ async function carregarMinhaTurma(){
   }
 }
 
+// ===== Certificados =====
+function certificadoStatusBadge(status){
+  var map = { liberado:'badge-green', emitido:'badge-blue', revogado:'badge-gray' };
+  var label = { liberado:'Disponível', emitido:'Emitido', revogado:'Indisponível' };
+  return '<span class="badge ' + (map[status]||'badge-gray') + '">' + (label[status]||status) + '</span>';
+}
+async function carregarCertificados(){
+  var wrap = document.getElementById('certificados-aluno-corpo');
+  wrap.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var matriculaIds = matriculasAtuais.map(function(m){ return m.id; });
+    if(!matriculaIds.length){ wrap.innerHTML = '<div class="empty-state">Nenhum certificado disponível ainda.</div>'; return; }
+    var r = await supa.from('curso_certificados').select('*').in('matricula_id', matriculaIds).neq('status', 'revogado').order('emitido_em', { ascending:false });
+    var certificados = r.data || [];
+    if(!certificados.length){ wrap.innerHTML = '<div class="empty-state">Nenhum certificado disponível ainda. Ele aparece aqui quando a escola liberar.</div>'; return; }
+    wrap.innerHTML = certificados.map(function(c){
+      var m = matriculasAtuais.find(function(x){ return x.id === c.matricula_id; });
+      var nome = m ? m._nome : 'Curso';
+      return '<div class="curso-card" style="cursor:default">'
+        + '<div class="curso-card-top">'
+        + '<div class="curso-card-capa">🎓</div>'
+        + '<div style="flex:1"><div class="curso-card-nome">' + escHtml(nome||'Curso') + '</div>'
+        + '<div class="curso-card-status">' + certificadoStatusBadge(c.status) + ' · nº ' + escHtml(c.numero_certificado) + '</div></div>'
+        + '</div>'
+        + (c.pdf_url
+            ? '<a href="' + c.pdf_url + '" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-top:10px">⬇️ Baixar certificado</a>'
+            : '<div style="font-size:12px;color:var(--gray-600);margin-top:8px">Liberado — o PDF ainda não foi gerado pela escola.</div>')
+        + '</div>';
+    }).join('');
+  }catch(e){
+    console.log('err carregar certificados', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus certificados agora.</div>';
+  }
+}
+
 // ===== Boot =====
 (async function boot(){
   try{
@@ -488,13 +641,21 @@ async function carregarMinhaTurma(){
     // pelo hash — este client usa storageKey próprio ('flora-aluno-auth'),
     // não enxerga a sessão criada no client do painel do salão sozinho.
     var hash = window.location.hash;
+    var ehRecuperacao = false;
     if(hash && hash.indexOf('access_token=') >= 0){
       var params = new URLSearchParams(hash.slice(1));
       var at = params.get('access_token'), rt = params.get('refresh_token');
+      ehRecuperacao = params.get('type') === 'recovery';
       if(at && rt){
         await supa.auth.setSession({ access_token: at, refresh_token: rt });
         history.replaceState(null, '', window.location.pathname);
       }
+    }
+    if(ehRecuperacao){
+      // Veio do link de "esqueci minha senha" — exige definir senha nova
+      // antes de entrar no app, em vez de logar direto com o token do e-mail.
+      mostrarTela('screen-nova-senha');
+      return;
     }
     var s = await supa.auth.getSession();
     if(s.data && s.data.session){ await iniciarApp(); }

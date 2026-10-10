@@ -1,0 +1,59 @@
+/* Kanban de Leads (aba Cursos) — arquivo próprio pra não crescer o <style> do index.html */
+#leads-kanban{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:8px;
+}
+.cl-kanban-col{
+  flex:0 0 220px;
+  background:var(--gray-50,#f7f7f7);
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  max-height:70vh;
+}
+.cl-kanban-col-head{
+  font-size:12px;
+  font-weight:800;
+  color:#555;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.cl-kanban-count{
+  background:#e5e5e5;
+  border-radius:999px;
+  padding:1px 7px;
+  font-size:11px;
+  color:#666;
+}
+.cl-kanban-col-body{
+  overflow-y:auto;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.cl-kanban-card{
+  background:#fff;
+  border:1px solid #e5e5e5;
+  border-radius:10px;
+  padding:10px 12px;
+  cursor:grab;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  transition:.15s;
+}
+.cl-kanban-card:hover{
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  border-color:#ccc;
+}
+.cl-kanban-card:active{ cursor:grabbing; }
+
+@media (prefers-color-scheme: dark){
+  .cl-kanban-col{ background:rgba(255,255,255,.04); }
+  .cl-kanban-card{ background:#1c1c1e; border-color:#333; }
+  .cl-kanban-count{ background:#333; color:#ccc; }
+}

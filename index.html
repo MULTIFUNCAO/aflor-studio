@@ -419,6 +419,7 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="cursos-leads.css">
 </head>
 <body>
 <div id="alert-global" class="alert alert-success"></div>
@@ -1591,6 +1592,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-outline btn-sm" id="cursos-tab-combos" onclick="cursosSetTab('combos')">🧩 Combos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-turmas" onclick="cursosSetTab('turmas')">📅 Turmas</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-alunos" onclick="cursosSetTab('alunos')">👤 Alunos</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-campanhas" onclick="cursosSetTab('campanhas')">📣 Campanhas</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-leads" onclick="cursosSetTab('leads')">🧲 Leads</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
@@ -1598,6 +1601,30 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="table-card" id="combos-list" style="display:none"></div>
       <div class="table-card" id="turmas-list" style="display:none"></div>
       <div class="table-card" id="alunos-list" style="display:none"></div>
+      <div class="table-card" id="campanhas-list" style="display:none"></div>
+      <div id="leads-page" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="tab active" id="cl-view-kanban" onclick="clSetView('kanban')">🗂️ Kanban</button>
+          <button class="tab" id="cl-view-tabela" onclick="clSetView('tabela')">📋 Tabela</button>
+          <div style="flex:1"></div>
+          <select id="cl-filtro-curso" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+          <select id="cl-filtro-campanha" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+          <select id="cl-filtro-etapa" onchange="clAplicarFiltros()" style="font-size:12px">
+            <option value="">Etapa: todas</option>
+            <option value="novo">Novo lead</option>
+            <option value="atendimento">Em atendimento</option>
+            <option value="interessado">Interessado</option>
+            <option value="aguardando_retorno">Aguardando retorno</option>
+            <option value="aguardando_pagamento">Aguardando pagamento</option>
+            <option value="matriculado">Matriculado</option>
+            <option value="nao_fechou">Não fechou</option>
+            <option value="perdido">Perdido</option>
+          </select>
+          <select id="cl-filtro-responsavel" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+        </div>
+        <div id="leads-kanban"></div>
+        <div class="table-card" id="leads-tabela" style="display:none"></div>
+      </div>
     </div>
 
     <!-- PRODUTOS -->
@@ -4551,6 +4578,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </select>
       </div>
       <div class="form-group"><label>Duração (min)</label><input type="number" id="aula-duracao" min="0"/></div>
+      <div class="form-group"><label>Liberar em (opcional)</label><input type="date" id="aula-liberar-em"/></div>
       <div class="form-group full" id="aula-video-area" style="display:none"><label>URL do Vídeo</label><input id="aula-video-url" placeholder="https://..."/></div>
       <div class="form-group full" id="aula-texto-area"><label>Conteúdo em Texto</label><textarea id="aula-texto" style="min-height:100px"></textarea></div>
       <div class="form-group full">
@@ -4587,6 +4615,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group" style="justify-content:flex-end">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="material-permite-download" checked style="width:auto"/> Permitir download</label>
       </div>
+      <div class="form-group full"><label>Liberar em (opcional)</label><input type="date" id="material-liberar-em"/></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-curso-material')">Cancelar</button>
@@ -4624,6 +4653,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <select id="turma-professor"></select>
       </div>
       <div class="form-group"><label>Local</label><input id="turma-local" placeholder="Ex: Unidade Centro"/></div>
+      <div class="form-group"><label>Modalidade</label>
+        <select id="turma-modalidade">
+          <option value="">— Usar a do curso/combo —</option>
+          <option value="presencial">Presencial</option>
+          <option value="online">Online</option>
+          <option value="hibrido">Híbrido</option>
+        </select>
+      </div>
       <div class="form-group"><label>Hora Início *</label><input type="time" id="turma-hora-inicio" value="10:00"/></div>
       <div class="form-group"><label>Hora Fim *</label><input type="time" id="turma-hora-fim" value="13:00"/></div>
       <div class="form-group"><label>Vagas Máximas</label><input type="number" id="turma-vagas" min="0" value="10"/></div>
@@ -4705,8 +4742,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>Vencimento da 1ª Parcela</label><input type="date" id="matricula-primeira-parcela"/></div>
       <div class="form-group full"><label>Status da Matrícula</label>
         <select id="matricula-status">
-          <option value="interessado">Interessado</option>
-          <option value="ficha_enviada">Ficha enviada</option>
           <option value="pagamento_pendente">Pagamento pendente</option>
           <option value="matriculado" selected>Matriculado</option>
           <option value="andamento">Em andamento</option>
@@ -4730,6 +4765,102 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div id="ficha-aluno-corpo" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
     <button class="btn btn-outline btn-sm" onclick="abrirNovaMatriculaDaFicha()" style="width:100%">+ Nova Matrícula</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-campanha">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">📣 Nova Campanha de Curso</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-campanha')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome da Campanha *</label><input id="cc-nome" placeholder="Ex: Turma Julho — Instagram"/></div>
+      <div class="form-group full"><label>Curso ou Combo anunciado</label><select id="cc-curso-combo"></select></div>
+      <div class="form-group full"><label>Descrição do criativo</label><input id="cc-criativo-desc" placeholder="Ex: Carrossel 5 fotos turma julho"/></div>
+      <div class="form-group full"><label>Link do criativo</label><input id="cc-criativo-url" placeholder="https://..."/></div>
+      <div class="form-group"><label>Canal</label><input id="cc-canal" placeholder="Instagram, Google, Indicação..."/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="cc-status">
+          <option value="planejada">Planejada</option>
+          <option value="ativa" selected>Ativa</option>
+          <option value="pausada">Pausada</option>
+          <option value="encerrada">Encerrada</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Início da divulgação</label><input type="date" id="cc-inicio"/></div>
+      <div class="form-group"><label>Fim da divulgação</label><input type="date" id="cc-fim"/></div>
+      <div class="form-group"><label>Data prevista do curso</label><input type="date" id="cc-data-curso"/></div>
+      <div class="form-group"><label>Valor anunciado (R$)</label><input type="number" id="cc-valor" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Orçamento (R$)</label><input type="number" id="cc-orcamento" min="0" step="0.01"/></div>
+      <div class="form-group full"><label>Link externo do anúncio</label><input id="cc-link" placeholder="https://..."/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-campanha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="ccSalvar()">✅ Salvar Campanha</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🧲 Novo Lead</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome completo *</label><input id="cl-nome" placeholder="Nome do interessado"/></div>
+      <div class="form-group"><label>Telefone</label><input id="cl-telefone" placeholder="(00) 00000-0000"/></div>
+      <div class="form-group"><label>WhatsApp</label><input id="cl-whatsapp" placeholder="(00) 00000-0000"/></div>
+      <div class="form-group full"><label>E-mail</label><input id="cl-email" type="email" placeholder="lead@email.com"/></div>
+      <div class="form-group full"><label>Curso ou Combo de interesse</label><select id="cl-curso-combo"></select></div>
+      <div class="form-group full"><label>Campanha de origem</label><select id="cl-campanha"></select></div>
+      <div class="form-group"><label>Responsável comercial</label><select id="cl-responsavel"></select></div>
+      <div class="form-group"><label>Período de preferência</label><input id="cl-periodo" placeholder="Manhã, tarde, fds..."/></div>
+      <div class="form-group"><label>Etapa</label>
+        <select id="cl-etapa">
+          <option value="novo">Novo lead</option>
+          <option value="atendimento">Em atendimento</option>
+          <option value="interessado">Interessado</option>
+          <option value="aguardando_retorno">Aguardando retorno</option>
+          <option value="aguardando_pagamento">Aguardando pagamento</option>
+          <option value="nao_fechou">Não fechou</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data de retorno</label><input type="date" id="cl-data-retorno"/></div>
+      <div class="form-group full"><label>Observações</label><input id="cl-observacoes"/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="clSalvar()">✅ Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead-ficha">
+  <div class="modal" style="width:620px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title" id="cl-ficha-titulo">🧲 Lead</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead-ficha')">✕</button>
+    </div>
+    <div id="cl-ficha-corpo" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
+    <div id="cl-ficha-acoes" style="display:flex;gap:8px"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead-perda">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <span class="modal-title">🚫 Marcar Lead como Perdido</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead-perda')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Motivo da perda *</label><input id="cl-perda-motivo" placeholder="Ex: achou caro, escolheu outro curso..."/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-lead-perda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="clConfirmarPerdido()">Confirmar</button>
+    </div>
   </div>
 </div>
 
@@ -5542,8 +5673,8 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos')};
-  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list')};
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page')};
   var btnNovo=document.getElementById('cursos-btn-novo');
   Object.keys(tabs).forEach(function(k){
     if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
@@ -5558,9 +5689,15 @@ function cursosSetTab(tab){
   }else if(tab==='turmas'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Turma';btnNovo.setAttribute('onclick','abrirNovaTurma()');}
     renderTurmas();
-  }else{
+  }else if(tab==='alunos'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aluno';btnNovo.setAttribute('onclick','abrirNovoAluno()');}
     renderAlunos();
+  }else if(tab==='campanhas'){
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Campanha';btnNovo.setAttribute('onclick','abrirNovaCampanha()');}
+    if(typeof renderCampanhas==='function')renderCampanhas();
+  }else{
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Lead';btnNovo.setAttribute('onclick','clAbrirNovoLead()');}
+    if(typeof renderLeads==='function')renderLeads();
   }
 }
 
@@ -5950,7 +6087,7 @@ function renderConteudoCurso(){
       var ai=cursoAulasAtuais.indexOf(a);
       return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
         +'<span style="margin-right:8px">'+(a.tipo_conteudo==='video'?'🎥':'📄')+'</span>'
-        +'<span style="flex:1">'+escHtml(a.titulo)+(a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'')+'</span>'
+        +'<span style="flex:1">'+escHtml(a.titulo)+(a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'')+(a.liberar_em?' <span style="color:#f59e0b;font-size:11px">🔒 libera '+fmtDataBR(a.liberar_em)+'</span>':'')+'</span>'
         +'<button onclick="editarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
         +'<button onclick="deletarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
         +'</div>';
@@ -5959,7 +6096,7 @@ function renderConteudoCurso(){
       var mti=cursoMateriaisAtuais.indexOf(mt);
       return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
         +'<span style="margin-right:8px">📎</span>'
-        +'<span style="flex:1">'+escHtml(mt.nome)+' <span style="color:#aaa;font-size:11px">('+mt.tipo+(mt.permite_download?'':' · sem download')+')</span></span>'
+        +'<span style="flex:1">'+escHtml(mt.nome)+' <span style="color:#aaa;font-size:11px">('+mt.tipo+(mt.permite_download?'':' · sem download')+')</span>'+(mt.liberar_em?' <span style="color:#f59e0b;font-size:11px">🔒 libera '+fmtDataBR(mt.liberar_em)+'</span>':'')+'</span>'
         +'<button onclick="editarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
         +'<button onclick="deletarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
         +'</div>';
@@ -6050,6 +6187,7 @@ function abrirNovaAula(moduloId){
   document.getElementById('aula-video-url').value='';
   document.getElementById('aula-texto').value='';
   document.getElementById('aula-duracao').value='';
+  document.getElementById('aula-liberar-em').value='';
   document.getElementById('aula-obrigatoria').checked=true;
   toggleAulaTipoCampos();
   document.querySelector('#modal-curso-aula .modal-title').textContent='+ Nova Aula';
@@ -6066,6 +6204,7 @@ function editarAula(idx){
   document.getElementById('aula-video-url').value=a.video_url||'';
   document.getElementById('aula-texto').value=a.texto_conteudo||'';
   document.getElementById('aula-duracao').value=a.duracao_min||'';
+  document.getElementById('aula-liberar-em').value=a.liberar_em||'';
   document.getElementById('aula-obrigatoria').checked=a.obrigatoria!==false;
   toggleAulaTipoCampos();
   document.querySelector('#modal-curso-aula .modal-title').textContent='✏️ Editar Aula';
@@ -6098,6 +6237,7 @@ function salvarAula(){
     video_url:document.getElementById('aula-video-url').value.trim()||null,
     texto_conteudo:document.getElementById('aula-texto').value.trim()||null,
     duracao_min:document.getElementById('aula-duracao').value?parseInt(document.getElementById('aula-duracao').value):null,
+    liberar_em:document.getElementById('aula-liberar-em').value||null,
     obrigatoria:document.getElementById('aula-obrigatoria').checked,
     modulo_id:moduloId,
     curso_id:cursoConteudoCursoId,
@@ -6136,6 +6276,7 @@ function abrirNovoMaterial(moduloId){
   document.getElementById('material-nome').value='';
   document.getElementById('material-tipo').value='apostila';
   document.getElementById('material-permite-download').checked=true;
+  document.getElementById('material-liberar-em').value='';
   document.getElementById('material-arquivo-url').value='';
   document.getElementById('material-arquivo-status').textContent='Nenhum arquivo enviado ainda.';
   document.getElementById('material-baixar-btn').style.display='none';
@@ -6150,6 +6291,7 @@ function editarMaterial(idx){
   document.getElementById('material-nome').value=m.nome||'';
   document.getElementById('material-tipo').value=m.tipo||'apostila';
   document.getElementById('material-permite-download').checked=m.permite_download!==false;
+  document.getElementById('material-liberar-em').value=m.liberar_em||'';
   document.getElementById('material-arquivo-url').value=m.arquivo_url||'';
   document.getElementById('material-arquivo-status').textContent=m.arquivo_url?('Arquivo atual: '+m.arquivo_url.split('/').pop()):'Nenhum arquivo enviado ainda.';
   document.getElementById('material-baixar-btn').style.display=m.arquivo_url?'inline-block':'none';
@@ -6213,6 +6355,7 @@ function salvarMaterial(){
     tipo:document.getElementById('material-tipo').value,
     arquivo_url:arquivoUrl,
     permite_download:document.getElementById('material-permite-download').checked,
+    liberar_em:document.getElementById('material-liberar-em').value||null,
     modulo_id:moduloId,
     curso_id:cursoConteudoCursoId,
     ordem:materiaisDoModulo.length
@@ -6327,10 +6470,12 @@ function renderTurmas(){
     var periodo=t.data_inicio&&t.data_fim
       ?(fmtDataBR(t.data_inicio)+(t.data_fim!==t.data_inicio?' a '+fmtDataBR(t.data_fim):''))
       :'—';
+    var itemBase=t.curso_id?cursos.find(function(c){return c.id===t.curso_id;}):cursoCombos.find(function(c){return c.id===t.combo_id;});
+    var modalidadeTurma=modalidadeLabel(t.modalidade||(itemBase?itemBase.modalidade:null));
     return '<div class="service-row">'
       +'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">📅</div>'
       +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">'+escHtml(t.nome)+'</div>'
-      +'<div style="font-size:12px;color:#888">'+escHtml(nomeCursoCombo)+' · '+(prof?escHtml(prof.nome):'sem professor')+' · '+periodo+' · '+(t.hora_inicio||'').substring(0,5)+'–'+(t.hora_fim||'').substring(0,5)+'</div></div>'
+      +'<div style="font-size:12px;color:#888">'+escHtml(nomeCursoCombo)+' · '+modalidadeTurma+' · '+(prof?escHtml(prof.nome):'sem professor')+' · '+periodo+' · '+(t.hora_inicio||'').substring(0,5)+'–'+(t.hora_fim||'').substring(0,5)+'</div></div>'
       +'<div style="font-size:12px;color:#888;white-space:nowrap;margin:0 14px">'+(t.vagas_ocupadas||0)+'/'+(t.vagas_maximas||0)+' vagas</div>'
       +turmaStatusBadge(t.status)
       +'<button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="abrirChamadaTurma(\''+t.id+'\')">📋 Chamada</button>'
@@ -6372,6 +6517,7 @@ function abrirNovaTurma(){
   popularSelectProfessorTurma('');
   document.getElementById('turma-nome').value='';
   document.getElementById('turma-local').value='';
+  document.getElementById('turma-modalidade').value='';
   document.getElementById('turma-hora-inicio').value='10:00';
   document.getElementById('turma-hora-fim').value='13:00';
   document.getElementById('turma-vagas').value='10';
@@ -6392,6 +6538,7 @@ async function editarTurma(idx){
   popularSelectProfessorTurma(t.professor_id);
   document.getElementById('turma-nome').value=t.nome||'';
   document.getElementById('turma-local').value=t.local||'';
+  document.getElementById('turma-modalidade').value=t.modalidade||'';
   document.getElementById('turma-hora-inicio').value=(t.hora_inicio||'10:00').substring(0,5);
   document.getElementById('turma-hora-fim').value=(t.hora_fim||'13:00').substring(0,5);
   document.getElementById('turma-vagas').value=t.vagas_maximas||0;
@@ -6428,6 +6575,7 @@ async function salvarTurma(){
     combo_id:tipo==='combo'?id:null,
     professor_id:professorId,
     local:get('turma-local').value.trim(),
+    modalidade:get('turma-modalidade').value||null,
     data_inicio:datasOrdenadas[0],
     data_fim:datasOrdenadas[datasOrdenadas.length-1],
     hora_inicio:horaInicio,
@@ -6686,6 +6834,8 @@ function popularSelectAlunoMatricula(selecionado){
 }
 function abrirNovaMatricula(alunoId){
   window._matriculaAlunoIdContexto=alunoId||null;
+  window._matriculaLeadIdContexto=null;
+  window._matriculaCampanhaIdContexto=null;
   popularSelectAlunoMatricula(alunoId);
   var selCC=document.getElementById('matricula-curso-combo');
   var opts=['<option value="">— Selecione —</option>'];
@@ -6732,7 +6882,9 @@ async function salvarMatricula(){
     forma_pagamento:formaPagamento,
     qtd_parcelas:qtdParcelas,
     percentual_presenca:0,
-    certificado_liberado:false
+    certificado_liberado:false,
+    lead_id:window._matriculaLeadIdContexto||null,
+    campanha_id:window._matriculaCampanhaIdContexto||null
   };
   var matriculaId=await salvarMatriculaSupa(obj);
   if(!matriculaId){alert('Não foi possível salvar a matrícula. Veja o console para detalhes.');return;}
@@ -6741,6 +6893,7 @@ async function salvarMatricula(){
   await gerarParcelas(matriculaId,valorTotal,qtdParcelas,primeiraParcela,formaPagamento);
   await registrarHistoricoMatricula(matriculaId,null,status,'Matrícula criada');
   if(turmaId)await incrementarVagasOcupadas(turmaId,1);
+  if(typeof onMatriculaCriada==='function')onMatriculaCriada(obj);
   renderAlunos();
   renderTurmas();
   renderCursosDashCards();
@@ -7118,7 +7271,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -16831,5 +16984,7 @@ if('serviceWorker' in navigator){
     Equipe
   </button>
 </div>
+<script src="cursos-campanhas.js"></script>
+<script src="cursos-leads.js"></script>
 </body>
 </html>
