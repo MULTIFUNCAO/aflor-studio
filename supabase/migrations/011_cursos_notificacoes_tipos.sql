@@ -1,3 +1,6 @@
+-- SUPERADA — rodou "sem erro" mas não pegou: mesmo problema de ownership do
+-- 008 (curso_notificacoes era de cursos_migrator). Ver 012, que reaplica
+-- isso depois do fix de ownership — já aplicada.
 -- Módulo "Gestão de Cursos" — Fase 3 (Prioridade 3, frente 1): Notificações.
 -- curso_notificacoes já existe (migration 005), mas o CHECK de tipo_evento só
 -- previa eventos automáticos que ainda não existem (ex: exercicio_corrigido,

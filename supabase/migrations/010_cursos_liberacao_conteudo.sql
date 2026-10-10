@@ -1,3 +1,6 @@
+-- SUPERADA — rodou "sem erro" mas não pegou: mesmo problema de ownership do
+-- 008 (curso_aulas/curso_materiais eram de cursos_migrator). Ver 012, que
+-- reaplica isso depois do fix de ownership — já aplicada.
 -- Módulo "Gestão de Cursos" — Fase 2 (Prioridade 2): liberação programada de
 -- conteúdo (curso híbrido / "Programar a liberação de conteúdos").
 -- 100% aditivo: 2 colunas nullable, sem default, sem afetar nenhuma linha

@@ -1,3 +1,7 @@
+-- SUPERADA — o ALTER TABLE curso_matriculas abaixo falhou por ownership
+-- (curso_matriculas era de cursos_migrator, sessão do SQL Editor é postgres)
+-- e derrubou a transação inteira, incluindo as 3 tabelas novas. Ver 008a
+-- (as 3 tabelas) + 008b (fix de ownership + lead_id/campanha_id) — já aplicadas.
 -- Módulo "Gestão de Cursos" — Fase 1 (Prioridade 1): Campanhas e Leads comerciais.
 -- 100% aditivo: cria 2 tabelas novas (curso_campanhas, curso_leads) + 1 tabela de
 -- histórico (curso_lead_historico) + 2 colunas novas opcionais em curso_matriculas
