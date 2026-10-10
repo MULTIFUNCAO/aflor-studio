@@ -419,6 +419,7 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="cursos-leads.css">
 </head>
 <body>
@@ -1596,6 +1597,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-outline btn-sm" id="cursos-tab-leads" onclick="cursosSetTab('leads')">🧲 Leads</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-notificacoes" onclick="cursosSetTab('notificacoes')">🔔 Notificações</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-correcoes" onclick="cursosSetTab('correcoes')">✅ Correções</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-certificados" onclick="cursosSetTab('certificados')">🎓 Certificados</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
@@ -1606,6 +1608,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="table-card" id="campanhas-list" style="display:none"></div>
       <div class="table-card" id="notificacoes-list" style="display:none"></div>
       <div class="table-card" id="correcoes-list" style="display:none"></div>
+      <div class="table-card" id="certificados-list" style="display:none"></div>
       <div id="leads-page" style="display:none">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
           <button class="tab active" id="cl-view-kanban" onclick="clSetView('kanban')">🗂️ Kanban</button>
@@ -5845,8 +5848,8 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads'),notificacoes:document.getElementById('cursos-tab-notificacoes'),correcoes:document.getElementById('cursos-tab-correcoes')};
-  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page'),notificacoes:document.getElementById('notificacoes-list'),correcoes:document.getElementById('correcoes-list')};
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads'),notificacoes:document.getElementById('cursos-tab-notificacoes'),correcoes:document.getElementById('cursos-tab-correcoes'),certificados:document.getElementById('cursos-tab-certificados')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page'),notificacoes:document.getElementById('notificacoes-list'),correcoes:document.getElementById('correcoes-list'),certificados:document.getElementById('certificados-list')};
   var btnNovo=document.getElementById('cursos-btn-novo');
   Object.keys(tabs).forEach(function(k){
     if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
@@ -5873,9 +5876,12 @@ function cursosSetTab(tab){
   }else if(tab==='notificacoes'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aviso';btnNovo.setAttribute('onclick','abrirNovaNotificacao()');}
     if(typeof renderNotificacoes==='function')renderNotificacoes();
-  }else{
+  }else if(tab==='correcoes'){
     if(btnNovo)btnNovo.style.display='none';
     if(typeof renderCorrecoes==='function')renderCorrecoes();
+  }else{
+    if(btnNovo)btnNovo.style.display='none';
+    if(typeof renderCertificadosAdmin==='function')renderCertificadosAdmin();
   }
 }
 
@@ -7465,7 +7471,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();if(typeof carregarCertificadosDadosSupa==='function')carregarCertificadosDadosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -17184,5 +17190,6 @@ if('serviceWorker' in navigator){
 <script src="cursos-leads.js"></script>
 <script src="cursos-notificacoes.js"></script>
 <script src="cursos-atividades.js"></script>
+<script src="cursos-certificados.js"></script>
 </body>
 </html>

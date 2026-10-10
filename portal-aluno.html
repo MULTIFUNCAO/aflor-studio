@@ -837,7 +837,7 @@ async function carregarCertificados(){
         + '<div class="curso-card-status">' + certificadoStatusBadge(c.status) + ' · nº ' + escHtml(c.numero_certificado) + '</div></div>'
         + '</div>'
         + (c.pdf_url
-            ? '<a href="' + c.pdf_url + '" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-top:10px">⬇️ Baixar certificado</a>'
+            ? '<button class="btn-outline" style="display:block;width:100%;margin-top:10px" onclick="baixarCertificado(\'' + c.pdf_url + '\')">⬇️ Baixar certificado</button>'
             : '<div style="font-size:12px;color:var(--gray-600);margin-top:8px">Liberado — o PDF ainda não foi gerado pela escola.</div>')
         + '</div>';
     }).join('');
@@ -845,6 +845,13 @@ async function carregarCertificados(){
     console.log('err carregar certificados', e);
     wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus certificados agora.</div>';
   }
+}
+async function baixarCertificado(path){
+  try{
+    var r = await supa.storage.from('curso-certificados').createSignedUrl(path, 120);
+    if(r.error) throw r.error;
+    window.open(r.data.signedUrl, '_blank');
+  }catch(e){ console.log('err baixar certificado', e); alert('Não foi possível baixar o certificado agora.'); }
 }
 
 // ===== Avisos =====
