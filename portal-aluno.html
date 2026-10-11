@@ -45,7 +45,7 @@ button,input,textarea,select{font-family:inherit}
 .topbar{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10}
 .topbar-title{font-size:16px;font-weight:800}
 .topbar-sair{background:none;border:none;color:#888;font-size:12px;cursor:pointer;font-weight:600}
-.content{padding:16px;max-width:640px;margin:0 auto 80px}
+.content{padding:16px;max-width:720px;margin:0 auto 80px}
 .saudacao{font-size:19px;font-weight:800;margin-bottom:4px}
 .saudacao-sub{font-size:13px;color:var(--gray-600);margin-bottom:18px}
 
@@ -65,22 +65,37 @@ button,input,textarea,select{font-family:inherit}
 .badge-yellow{background:#fef3c7;color:#92400e}
 
 .back-btn{background:none;border:none;color:#888;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.modulo-block{border:1px solid var(--line);border-radius:var(--radius-md);margin-bottom:12px;overflow:hidden}
-.modulo-head{background:var(--gray-50);padding:11px 14px;font-weight:700;font-size:13.5px}
-.item-row{display:flex;align-items:center;padding:11px 14px;border-top:1px solid var(--line-soft);font-size:13px;cursor:pointer}
+.curso-capa-topo{width:100%;height:140px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:14px;background:var(--gray-100)}
+.curso-titulo-topo{font-size:19px;font-weight:800;margin-bottom:10px}
+.modulo-block{margin-bottom:22px}
+.modulo-head{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:10px}
+.item-row{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--paper);border-radius:var(--radius-md);margin-bottom:8px;font-size:13px;cursor:pointer;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft)}
 .item-row:active{background:var(--gray-50)}
-.item-icon{margin-right:10px;font-size:15px}
-.item-check{margin-left:auto;font-size:16px}
+.item-icon-circle{width:34px;height:34px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.item-check{margin-left:auto;font-size:16px;flex-shrink:0}
 
-.item-viewer{position:fixed;inset:0;background:var(--paper);z-index:100;display:none;flex-direction:column}
+.video-embed-wrap{position:relative;padding-top:56.25%;border-radius:var(--radius-md);overflow:hidden;background:#000;margin-bottom:16px}
+.video-embed-wrap video,.video-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+.card-flora{background:var(--paper);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft);margin-bottom:16px}
+
+.btn-concluir{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-block}
+.btn-concluir:disabled{opacity:.55;cursor:default}
+.aula-nav{display:flex;gap:10px;margin-top:22px}
+.aula-nav button{flex:1}
+.aula-nav button:disabled{opacity:.35;cursor:default}
+
+.item-viewer{position:fixed;inset:0;background:var(--ivory);z-index:100;display:none;flex-direction:column}
 .item-viewer.open{display:flex}
-.item-viewer-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px}
+.item-viewer-head{padding:14px 16px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;justify-content:space-between}
+.item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box}
 .item-viewer video, .item-viewer iframe{width:100%;border-radius:var(--radius-sm);border:none}
+
+.badge-red{background:#fee2e2;color:#dc2626}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);display:flex;box-shadow:0 -2px 12px rgba(0,0,0,.04)}
 .bottom-nav button{flex:1;background:none;border:none;padding:10px 0 8px;font-size:10.5px;color:var(--gray-400);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
-.bottom-nav button.active{color:var(--ink)}
+.bottom-nav button.active{color:var(--green)}
 .bottom-nav button .ic{font-size:19px}
 
 .empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px}
@@ -209,13 +224,27 @@ button,input,textarea,select{font-family:inherit}
   </div>
 </div>
 
-<!-- Visualizador de conteúdo (aula / material) -->
+<!-- Visualizador de conteúdo (material / exercício / prova) -->
 <div class="item-viewer" id="item-viewer">
   <div class="item-viewer-head">
-    <div style="font-weight:700;font-size:14px" id="item-viewer-titulo">Conteúdo</div>
-    <button onclick="fecharViewer()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer">✕</button>
+    <button onclick="fecharViewer()" style="background:none;border:none;font-size:20px;color:#333;cursor:pointer">←</button>
+    <div style="flex:1;font-weight:700;font-size:14px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" id="item-viewer-titulo">Conteúdo</div>
+    <div style="width:20px"></div>
   </div>
   <div class="item-viewer-body" id="item-viewer-body"></div>
+</div>
+
+<!-- Tela própria da Aula (vídeo + navegação anterior/próxima) -->
+<div class="item-viewer" id="aula-viewer">
+  <div class="item-viewer-head">
+    <button onclick="fecharAulaViewer()" style="background:none;border:none;font-size:20px;color:#333;cursor:pointer">←</button>
+    <div style="flex:1;overflow:hidden;text-align:center">
+      <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="aula-viewer-titulo">Aula</div>
+      <div style="font-size:11px;color:var(--gray-600)" id="aula-viewer-modulo"></div>
+    </div>
+    <div style="width:20px"></div>
+  </div>
+  <div class="item-viewer-body" id="aula-viewer-body"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -525,9 +554,10 @@ function envioAtualDoExercicio(exercicioId){
 function tentativasDaProva(provaId){
   return (window._tentativasCache||[]).filter(function(t){ return t.prova_id === provaId; });
 }
-function envioStatusBadge(status){
-  var map = { enviado:'Enviado — aguardando correção', em_analise:'Em análise', aprovado:'Aprovado ✅', refazer:'Precisa refazer 🔁' };
-  return map[status] || status;
+function envioStatusBadgeHtml(status){
+  var map = { enviado:'badge-blue', em_analise:'badge-yellow', aprovado:'badge-green', refazer:'badge-red' };
+  var label = { enviado:'Enviado', em_analise:'Em análise', aprovado:'Aprovado', refazer:'Precisa refazer' };
+  return '<span class="badge '+(map[status]||'badge-gray')+'">'+(label[status]||status)+'</span>';
 }
 function itemAindaBloqueado(liberarEm){
   if(!liberarEm) return false;
@@ -535,16 +565,33 @@ function itemAindaBloqueado(liberarEm){
 }
 function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
   var corpo = document.getElementById('curso-detalhe-corpo');
-  if(!modulos.length){ corpo.innerHTML = '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
-  corpo.innerHTML = modulos.map(function(mod){
+  window._progressoPorItemCache = progressoPorItem;
+  var m = matriculaDetalheAtual;
+  var headerHtml = (m && m._capa ? '<img class="curso-capa-topo" src="'+m._capa+'"/>' : '')
+    + '<div class="curso-titulo-topo">' + escHtml(m?m._nome:'Curso') + '</div>'
+    + '<div class="progress-track"><div class="progress-fill" style="width:' + (m?m._progresso:0) + '%"></div></div>'
+    + '<div class="progress-label">Progresso: ' + (m?m._progresso:0) + '%</div>';
+  if(!modulos.length){ corpo.innerHTML = headerHtml + '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
+
+  // Lista plana de aulas na ordem módulo->aula, pra navegação anterior/próxima
+  // na tela dedicada da aula (independe da ordem em que vieram da consulta).
+  var aulasOrdenadas = [];
+  modulos.forEach(function(mod){
+    aulas.filter(function(a){return a.modulo_id === mod.id;}).forEach(function(a){
+      aulasOrdenadas.push(Object.assign({}, a, { _moduloNome: mod.nome }));
+    });
+  });
+  window._aulasOrdenadasCache = aulasOrdenadas;
+
+  corpo.innerHTML = headerHtml + modulos.map(function(mod){
     var aulasDoModulo = aulas.filter(function(a){return a.modulo_id === mod.id;});
-    var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id;});
+    var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id && !mt.aula_id;});
     var aulasHtml = aulasDoModulo.map(function(a){
       var prog = progressoPorItem['aula:'+a.id];
       var feito = prog && prog.status === 'concluido';
       var bloqueado = itemAindaBloqueado(a.liberar_em);
       return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+a.liberar_em+'\')':'abrirAulaViewer(\''+a.id+'\')') + '">'
-        + '<span class="item-icon">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
+        + '<span class="item-icon-circle">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
         + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(a.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
@@ -554,7 +601,7 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
       var feito = prog && prog.status === 'concluido';
       var bloqueado = itemAindaBloqueado(mt.liberar_em);
       return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+mt.liberar_em+'\')':'abrirMaterialViewer(\''+mt.id+'\')') + '">'
-        + '<span class="item-icon">' + (bloqueado?'🔒':'📎') + '</span>'
+        + '<span class="item-icon-circle">' + (bloqueado?'🔒':'📎') + '</span>'
         + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(mt.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
@@ -563,10 +610,9 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
     var provasDoModulo = (window._provasCache||[]).filter(function(p){ return p.modulo_id === mod.id; });
     var exHtml = exDoModulo.map(function(e){
       var envio = envioAtualDoExercicio(e.id);
-      var statusTxt = envio ? envioStatusBadge(envio.status) : '';
       return '<div class="item-row" onclick="abrirExercicio(\''+e.id+'\')">'
-        + '<span class="item-icon">📝</span>'
-        + '<span style="flex:1">' + escHtml(e.titulo) + (statusTxt?' <span style="color:#888;font-size:11px">— '+statusTxt+'</span>':'') + '</span>'
+        + '<span class="item-icon-circle">📝</span>'
+        + '<span style="flex:1">' + escHtml(e.titulo) + (envio?' '+envioStatusBadgeHtml(envio.status):'') + '</span>'
         + '<span class="item-check">' + (envio && envio.status==='aprovado' ? '✅' : '') + '</span>'
         + '</div>';
     }).join('');
@@ -575,7 +621,7 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
       var melhor = tentativas.reduce(function(acc,t){ return (acc===null || (t.percentual||0) > acc) ? (t.percentual||0) : acc; }, null);
       var info = tentativas.length ? (' — melhor nota: '+Math.round(melhor)+'%') : '';
       return '<div class="item-row" onclick="abrirProva(\''+p.id+'\')">'
-        + '<span class="item-icon">🧪</span>'
+        + '<span class="item-icon-circle">🧪</span>'
         + '<span style="flex:1">' + escHtml(p.titulo) + info + '</span>'
         + '<span class="item-check">' + (tentativas.some(function(t){return t.aprovado;}) ? '✅' : '') + '</span>'
         + '</div>';
@@ -593,19 +639,73 @@ function alertConteudoBloqueado(liberarEm){
   alert('Este conteúdo ainda não foi liberado. Disponível a partir de ' + fmtDataBRAluno(liberarEm) + '.');
 }
 function fecharViewer(){ document.getElementById('item-viewer').classList.remove('open'); }
-async function abrirAulaViewer(aulaId){
-  var a = (window._aulasCache||[]).find(function(x){return x.id === aulaId;});
+
+// Detecta o tipo de link de vídeo e devolve o embed certo, sempre num
+// wrapper 16:9 responsivo. Link não reconhecido vira botão "abrir em nova
+// aba" em vez de tentar tocar num <video> que não entende o formato.
+function renderizarVideo(url){
+  if(!url) return '';
+  var yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt){
+    return '<div class="video-embed-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+yt[1]+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+  }
+  var vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vimeo){
+    return '<div class="video-embed-wrap"><iframe src="https://player.vimeo.com/video/'+vimeo[1]+'" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+  }
+  var drive = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(drive){
+    return '<div class="video-embed-wrap"><iframe src="https://drive.google.com/file/d/'+drive[1]+'/preview" allow="autoplay"></iframe></div>';
+  }
+  if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)){
+    return '<div class="video-embed-wrap"><video controls src="'+url+'"></video></div>';
+  }
+  return '<a href="'+url+'" target="_blank" rel="noopener" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-bottom:16px">↗ Abrir vídeo em nova aba</a>';
+}
+
+// Tela dedicada da aula — navegação anterior/próxima dentro de
+// window._aulasOrdenadasCache (módulo->aula, montada em renderCursoDetalhe).
+function abrirAulaViewer(aulaId){
+  var lista = window._aulasOrdenadasCache || [];
+  var idx = lista.findIndex(function(x){ return x.id === aulaId; });
+  if(idx < 0) return;
+  renderAulaViewer(idx);
+  document.getElementById('aula-viewer').classList.add('open');
+}
+function fecharAulaViewer(){ document.getElementById('aula-viewer').classList.remove('open'); }
+function renderAulaViewer(idx){
+  var lista = window._aulasOrdenadasCache || [];
+  var a = lista[idx];
   if(!a) return;
-  document.getElementById('item-viewer-titulo').textContent = a.titulo;
-  var body = document.getElementById('item-viewer-body');
+  window._aulaViewerIdxAtual = idx;
+  document.getElementById('aula-viewer-titulo').textContent = a.titulo;
+  document.getElementById('aula-viewer-modulo').textContent = a._moduloNome || '';
+  var body = document.getElementById('aula-viewer-body');
+  var bloqueado = itemAindaBloqueado(a.liberar_em);
   var html = '';
-  if(a.video_url) html += '<video controls style="width:100%;border-radius:10px;margin-bottom:14px" src="' + a.video_url + '"></video>';
-  if(a.texto_conteudo) html += '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
-  if(!html) html = '<div class="empty-state">Sem conteúdo cadastrado ainda.</div>';
-  html += '<button class="btn-main" style="margin-top:20px" onclick="marcarConcluido(\'aula\',\''+aulaId+'\')">✅ Marcar como concluída</button>';
+  if(bloqueado){
+    html = '<div class="empty-state">🔒 Essa aula libera em ' + fmtDataBRAluno(a.liberar_em) + '.</div>';
+  }else{
+    if(a.video_url) html += renderizarVideo(a.video_url);
+    if(a.texto_conteudo) html += '<div class="card-flora" style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
+    if(!a.video_url && !a.texto_conteudo) html += '<div class="empty-state">Sem conteúdo cadastrado ainda.</div>';
+    var materiaisDaAula = (window._materiaisCache||[]).filter(function(mt){ return mt.aula_id === a.id; });
+    if(materiaisDaAula.length){
+      html += '<div style="font-weight:800;font-size:13px;margin:4px 0 8px">Materiais desta aula</div>';
+      html += materiaisDaAula.map(function(mt){
+        return '<div class="item-row" onclick="abrirMaterialViewer(\''+mt.id+'\')"><span class="item-icon-circle">📎</span><span style="flex:1">'+escHtml(mt.nome)+'</span></div>';
+      }).join('');
+    }
+    var prog = (window._progressoPorItemCache||{})['aula:'+a.id];
+    var feito = prog && prog.status === 'concluido';
+    html += '<button class="btn-concluir" style="margin-top:18px" onclick="marcarConcluido(\'aula\',\''+a.id+'\')" '+(feito?'disabled':'')+'>'+(feito?'✅ Concluída':'✅ Marcar como concluída')+'</button>';
+    registrarAberturaConteudo('aula', a.id);
+  }
+  html += '<div class="aula-nav">'
+    + '<button class="btn-outline" '+(idx<=0?'disabled':'')+' onclick="renderAulaViewer('+(idx-1)+')">◀ Aula anterior</button>'
+    + '<button class="btn-outline" '+(idx>=lista.length-1?'disabled':'')+' onclick="renderAulaViewer('+(idx+1)+')">Próxima aula ▶</button>'
+    + '</div>';
   body.innerHTML = html;
-  document.getElementById('item-viewer').classList.add('open');
-  registrarAberturaConteudo('aula', aulaId);
 }
 async function abrirMaterialViewer(materialId){
   var mt = (window._materiaisCache||[]).find(function(x){return x.id === materialId;});
@@ -632,7 +732,7 @@ async function abrirMaterialViewer(materialId){
   } else {
     html = '<div class="empty-state">Arquivo não disponível.</div>';
   }
-  html += '<button class="btn-main" onclick="marcarConcluido(\'material\',\''+materialId+'\')">✅ Marcar como concluído</button>';
+  html += '<button class="btn-concluir" onclick="marcarConcluido(\'material\',\''+materialId+'\')">✅ Marcar como concluído</button>';
   body.innerHTML = html;
   registrarAberturaConteudo('material', materialId);
 }
@@ -655,17 +755,27 @@ async function marcarConcluido(tipo, id){
     var matriculaId = matriculaDetalheAtual.id;
     var campo = tipo === 'aula' ? 'aula_id' : 'material_id';
     var existente = await supa.from('curso_progresso_conteudo').select('id').eq('matricula_id', matriculaId).eq(campo, id).maybeSingle();
-    if(existente.data){
-      await supa.from('curso_progresso_conteudo').update({ status: 'concluido', concluido_em: new Date().toISOString() }).eq('id', existente.data.id);
+    var registroId = existente.data ? existente.data.id : null;
+    if(registroId){
+      await supa.from('curso_progresso_conteudo').update({ status: 'concluido', concluido_em: new Date().toISOString() }).eq('id', registroId);
     } else {
-      await supa.from('curso_progresso_conteudo').insert([{
+      var rNovo = await supa.from('curso_progresso_conteudo').insert([{
         matricula_id: matriculaId, salao_id: alunoAtual.salao_id, tipo_conteudo: tipo,
         aula_id: tipo==='aula'?id:null, material_id: tipo==='material'?id:null,
         status: 'concluido', aberto_em: new Date().toISOString(), concluido_em: new Date().toISOString()
-      }]);
+      }]).select('id').single();
+      registroId = rNovo.data ? rNovo.data.id : null;
     }
-    fecharViewer();
-    abrirCursoDetalhe(matriculaId);
+    var chave = tipo + ':' + id;
+    if(window._progressoPorItemCache) window._progressoPorItemCache[chave] = { id: registroId, status: 'concluido' };
+    if(tipo === 'aula' && window._aulaViewerIdxAtual != null){
+      // Continua na mesma aula (só atualiza o selo/botão), sem fechar a tela —
+      // deixa o aluno seguir direto pra "Próxima aula" sem precisar reabrir.
+      renderAulaViewer(window._aulaViewerIdxAtual);
+    } else {
+      fecharViewer();
+      abrirCursoDetalhe(matriculaId);
+    }
   }catch(e){ console.log('err marcar concluido', e); }
 }
 
@@ -674,39 +784,49 @@ function opcaoTexto(exercicio, optId){
   var o = (exercicio.opcoes||[]).find(function(x){return x.id === optId;});
   return o ? o.texto : optId;
 }
+function previewImagemExercicio(input){
+  var img = document.getElementById('exec-preview-img');
+  var file = input.files[0];
+  if(!file || !img) return;
+  img.src = URL.createObjectURL(file);
+  img.style.display = 'block';
+}
 function abrirExercicio(exercicioId){
   var e = (window._exerciciosCache||[]).find(function(x){return x.id === exercicioId;});
   if(!e) return;
   document.getElementById('item-viewer-titulo').textContent = e.titulo;
   var body = document.getElementById('item-viewer-body');
   var envio = envioAtualDoExercicio(exercicioId);
-  var html = '<div style="font-size:14px;margin-bottom:16px;white-space:pre-wrap">' + escHtml(e.enunciado||'') + '</div>';
+  var html = '<div class="card-flora"><div style="font-size:14px;white-space:pre-wrap">' + escHtml(e.enunciado||'') + '</div></div>';
   if(envio && envio.status !== 'refazer'){
-    html += '<div style="background:var(--gray-50);border-radius:10px;padding:12px 14px;font-size:13px">'
-      + '<div style="font-weight:700;margin-bottom:6px">' + envioStatusBadge(envio.status) + '</div>'
+    html += '<div class="card-flora" style="font-size:13px">'
+      + '<div style="margin-bottom:8px">' + envioStatusBadgeHtml(envio.status) + '</div>'
       + (envio.resposta_texto ? '<div style="white-space:pre-wrap">'+escHtml(envio.resposta_texto)+'</div>' : '')
       + (envio.resposta_opcao ? '<div>Resposta: '+escHtml(opcaoTexto(e, envio.resposta_opcao))+'</div>' : '')
       + (envio.arquivo_url ? '<div>📎 arquivo enviado</div>' : '')
-      + (envio.comentario_professor ? '<div style="margin-top:8px;color:#555"><b>Comentário:</b> '+escHtml(envio.comentario_professor)+'</div>' : '')
+      + (envio.comentario_professor ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);color:#555"><b>Comentário do professor:</b> '+escHtml(envio.comentario_professor)+'</div>' : '')
       + '</div>';
     body.innerHTML = html;
   }else{
     if(envio && envio.status === 'refazer' && envio.comentario_professor){
-      html += '<div style="background:#fef2f2;border-radius:10px;padding:10px 14px;font-size:13px;color:#b91c1c;margin-bottom:14px"><b>O professor pediu pra refazer:</b> '+escHtml(envio.comentario_professor)+'</div>';
+      html += '<div class="card-flora" style="background:#fef2f2;border-color:#fecaca;color:#b91c1c;font-size:13px"><b>O professor pediu pra refazer:</b> '+escHtml(envio.comentario_professor)+'</div>';
     }
+    html += '<div class="card-flora">';
     if(e.tipo === 'texto'){
-      html += '<textarea id="exec-resposta-texto" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px"></textarea>';
+      html += '<textarea id="exec-resposta-texto" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box"></textarea>';
     }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
       html += (e.opcoes||[]).map(function(o){
         return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
           + '<input type="radio" name="exec-opcao" value="'+o.id+'"/> ' + escHtml(o.texto) + '</label>';
       }).join('');
     }else if(e.tipo === 'envio_imagem'){
-      html += '<input type="file" id="exec-arquivo" accept="image/jpeg,image/png,image/webp"/>';
+      html += '<input type="file" id="exec-arquivo" accept="image/jpeg,image/png,image/webp" onchange="previewImagemExercicio(this)"/>'
+        + '<img id="exec-preview-img" style="display:none;width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:contain;background:var(--gray-50)"/>';
     }else if(e.tipo === 'envio_arquivo'){
       html += '<input type="file" id="exec-arquivo" accept="application/pdf"/>';
     }
-    html += '<button class="btn-main" style="margin-top:16px" onclick="enviarExercicio(\''+exercicioId+'\')">Enviar resposta</button>';
+    html += '</div>';
+    html += '<button class="btn-concluir" onclick="enviarExercicio(\''+exercicioId+'\')">Enviar resposta</button>';
     body.innerHTML = html;
   }
   document.getElementById('item-viewer').classList.add('open');
