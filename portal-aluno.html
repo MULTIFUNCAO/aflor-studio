@@ -106,7 +106,10 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <div class="alert-box" id="login-alert"></div>
       <div class="field"><label>E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
-      <div class="field"><label>Senha</label><input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password"/></div>
+      <div class="field"><label>Senha</label><div style="position:relative">
+        <input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('login-senha',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
       <button class="btn-main" id="btn-login" onclick="fazerLoginAluno()">Entrar</button>
       <div style="text-align:center;margin-top:12px">
         <button type="button" onclick="mostrarRecuperarSenha()" style="background:none;border:none;color:var(--gray-600);font-size:12.5px;cursor:pointer;text-decoration:underline">Esqueci minha senha</button>
@@ -152,8 +155,14 @@ button,input,textarea,select{font-family:inherit}
         <div class="sub">Defina sua nova senha</div>
       </div>
       <div class="alert-box" id="nova-senha-alert"></div>
-      <div class="field"><label>Nova senha</label><input id="nova-senha-1" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
-      <div class="field"><label>Confirme a nova senha</label><input id="nova-senha-2" type="password" placeholder="Repita a senha" autocomplete="new-password"/></div>
+      <div class="field"><label>Nova senha</label><div style="position:relative">
+        <input id="nova-senha-1" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('nova-senha-1',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
+      <div class="field"><label>Confirme a nova senha</label><div style="position:relative">
+        <input id="nova-senha-2" type="password" placeholder="Repita a senha" autocomplete="new-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('nova-senha-2',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
       <button class="btn-main" id="btn-nova-senha" onclick="salvarNovaSenha()">Salvar nova senha</button>
     </div>
   </div>
@@ -268,21 +277,44 @@ async function salvarNovaSenha(){
   if(s1 !== s2){ alertEl.textContent = 'As senhas não coincidem.'; alertEl.className = 'alert-box err'; return; }
   var btn = document.getElementById('btn-nova-senha');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Salvando...';
+  // Watchdog: se updateUser() ou iniciarApp() travarem sem erro nem sucesso
+  // (visto em teste real — senha salvava mas a tela ficava presa em
+  // "Salvando..." quando a conta não tinha curso_alunos vinculado e o
+  // feedback ia pro lugar errado), libera o botão com mensagem em vez de
+  // ficar preso pra sempre.
+  var tempoEsgotado = false;
+  var watchdog = setTimeout(function(){
+    tempoEsgotado = true;
+    alertEl.textContent = 'Isso está demorando mais que o esperado. Se sua senha já foi salva, tente entrar normalmente; senão, peça um novo link de recuperação.';
+    alertEl.className = 'alert-box err';
+    btn.disabled = false; btn.textContent = 'Salvar nova senha';
+  }, 8000);
   try{
     var r = await supa.auth.updateUser({ password: s1 });
+    if(tempoEsgotado) return;
     if(r.error){
+      clearTimeout(watchdog);
       alertEl.textContent = 'Não foi possível salvar a nova senha. Peça um novo link e tente de novo.';
       alertEl.className = 'alert-box err';
       btn.disabled = false; btn.textContent = 'Salvar nova senha';
       return;
     }
-    await iniciarApp();
+    await iniciarApp('nova-senha-alert');
+    clearTimeout(watchdog);
   }catch(e){
+    if(tempoEsgotado) return;
+    clearTimeout(watchdog);
     console.log('err salvar nova senha', e);
     alertEl.textContent = 'Erro inesperado. Tente novamente.';
     alertEl.className = 'alert-box err';
     btn.disabled = false; btn.textContent = 'Salvar nova senha';
   }
+}
+function toggleSenhaVisivel(id, icone){
+  var inp = document.getElementById(id);
+  if(!inp) return;
+  if(inp.type === 'password'){ inp.type = 'text'; icone.textContent = '🙈'; }
+  else { inp.type = 'password'; icone.textContent = '👁'; }
 }
 
 async function fazerLoginAluno(){
@@ -315,23 +347,34 @@ async function sairAluno(){
   document.getElementById('login-senha').value = '';
 }
 
-async function iniciarApp(){
+async function iniciarApp(alertElId){
+  // alertElId: onde mostrar "conta não vinculada" se não houver curso_alunos —
+  // precisa ser configurável porque essa função é chamada tanto do login
+  // normal (tela com #login-alert) quanto de salvarNovaSenha() (tela com
+  // #nova-senha-alert); escrever sempre em #login-alert deixava a tela de
+  // nova senha "presa" sem nenhum feedback quando a conta não tinha vínculo.
+  var idAlvo = alertElId || 'login-alert';
   try{
     var rAluno = await supa.from('curso_alunos').select('*');
     if(rAluno.error || !rAluno.data || !rAluno.data.length){
-      showLoginAlert('Esta conta não está vinculada a nenhum cadastro de aluno.', 'err');
+      var elAlvo = document.getElementById(idAlvo);
+      if(elAlvo){ elAlvo.textContent = 'Esta conta não está vinculada a nenhum cadastro de aluno. Fale com a escola.'; elAlvo.className = 'alert-box err'; }
       await supa.auth.signOut();
-      document.getElementById('btn-login').disabled = false;
-      document.getElementById('btn-login').textContent = 'Entrar';
-      return;
+      var btnLogin = document.getElementById('btn-login');
+      if(btnLogin){ btnLogin.disabled = false; btnLogin.textContent = 'Entrar'; }
+      var btnNovaSenha = document.getElementById('btn-nova-senha');
+      if(btnNovaSenha){ btnNovaSenha.disabled = false; btnNovaSenha.textContent = 'Salvar nova senha'; }
+      return false;
     }
     alunoAtual = rAluno.data[0];
     mostrarTela('screen-app');
     document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
     await carregarMeusCursos();
     carregarAvisos();
+    return true;
   }catch(e){
     console.log('err iniciar app aluno', e);
+    return false;
   }
 }
 
