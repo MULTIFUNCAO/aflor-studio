@@ -7288,7 +7288,9 @@ async function criarAcessoAluno(alunoId){
     var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
     if(aluno)aluno.auth_user_id=data.auth_user_id;
     renderFichaAluno(alunoId);
-    showAlert('Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+    showAlert(data.vinculado_existente
+      ? 'Este e-mail já tinha conta — vinculamos ao cadastro dela. A aluna já pode entrar com a senha que já usa (nenhum e-mail novo foi enviado).'
+      : 'Acesso criado! A aluna recebeu um e-mail para definir a senha.');
   }catch(e){
     console.log('err criar acesso aluno',e);
     alert('Erro ao criar acesso do aluno.');

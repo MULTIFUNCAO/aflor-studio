@@ -73,8 +73,61 @@ serve(async (req: Request) => {
         redirectTo: 'https://floragestao.com.br/portal-aluno.html',
       },
     );
+
     if (inviteErr || !invited?.user) {
-      throw inviteErr ?? new Error('Falha ao convidar aluno');
+      const jaRegistrado = /already.*registered/i.test(inviteErr?.message ?? '');
+      if (!jaRegistrado) throw inviteErr ?? new Error('Falha ao convidar aluno');
+
+      // ── E-mail já tem conta em auth.users (comum: aluna já é aluna/cliente
+      //    deste MESMO salão em outro curso/contexto) — vincula em vez de
+      //    falhar, sem reenviar nenhum e-mail.
+      //
+      //    IMPORTANTE: auth.users é compartilhado por TODOS os salões deste
+      //    projeto Supabase (multi-tenant) — "e-mail já existe" não garante
+      //    que é a mesma pessoa deste salão. Duas proteções antes de vincular:
+      //    1) nunca vincular se o e-mail for a conta de LOGIN de uma dona de
+      //       salão (saloes.id = auth.uid() dela);
+      //    2) curso_alunos.auth_user_id tem UNIQUE — se esse usuário já for
+      //       aluno em QUALQUER outro salão, o UPDATE abaixo falha sozinho
+      //       por violação de unicidade, e tratamos isso como erro amigável
+      //       em vez de deixar estourar.
+      const { data: listaUsuarios, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (listErr) throw listErr;
+      const existente = listaUsuarios.users.find(
+        (u) => u.email?.toLowerCase() === aluno.email!.toLowerCase(),
+      );
+      if (!existente) {
+        return json({
+          error: 'Já existe uma conta com este e-mail, mas não consegui localizá-la pra vincular. Fale com o suporte.',
+        }, 409);
+      }
+
+      const { data: donaSalao } = await supabaseAdmin
+        .from('saloes')
+        .select('id')
+        .eq('id', existente.id)
+        .maybeSingle();
+      if (donaSalao) {
+        return json({
+          error: 'Este e-mail já é a conta de login de uma dona de salão no sistema — não é possível vincular como aluno. Peça pra aluna usar outro e-mail.',
+        }, 409);
+      }
+
+      const { error: updateErr } = await supabaseAdmin
+        .from('curso_alunos')
+        .update({ auth_user_id: existente.id })
+        .eq('id', alunoId);
+      if (updateErr) {
+        const duplicado = /duplicate key|unique constraint/i.test(updateErr.message ?? '');
+        return json({
+          error: duplicado
+            ? 'Este e-mail já é de uma aluna com acesso em outro salão no sistema — não é possível vincular aqui. Peça pra ela usar outro e-mail.'
+            : updateErr.message,
+        }, 409);
+      }
+
+      console.log('[criar-acesso-aluno] vinculado a conta já existente:', existente.id, 'para aluno', alunoId);
+      return json({ auth_user_id: existente.id, email: aluno.email, vinculado_existente: true });
     }
 
     const { error: updateErr } = await supabaseAdmin
