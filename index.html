@@ -517,6 +517,8 @@ tr.row-retorno-vencido td{background:#fff5f5}
 tr.row-retorno-retornou td{background:#f0fff4}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="cursos-leads.css">
 </head>
 <body>
 <div id="alert-global" class="alert alert-success"></div>
@@ -1689,6 +1691,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button class="btn btn-outline btn-sm" id="cursos-tab-combos" onclick="cursosSetTab('combos')">🧩 Combos</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-turmas" onclick="cursosSetTab('turmas')">📅 Turmas</button>
         <button class="btn btn-outline btn-sm" id="cursos-tab-alunos" onclick="cursosSetTab('alunos')">👤 Alunos</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-campanhas" onclick="cursosSetTab('campanhas')">📣 Campanhas</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-leads" onclick="cursosSetTab('leads')">🧲 Leads</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-notificacoes" onclick="cursosSetTab('notificacoes')">🔔 Notificações</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-correcoes" onclick="cursosSetTab('correcoes')">✅ Correções</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-certificados" onclick="cursosSetTab('certificados')">🎓 Certificados</button>
+        <button class="btn btn-outline btn-sm" id="cursos-tab-relatorios" onclick="cursosSetTab('relatorios')">📊 Relatórios</button>
         <div style="flex:1"></div>
         <button class="btn btn-primary btn-sm" id="cursos-btn-novo" onclick="abrirNovoCurso()">+ Novo Curso</button>
       </div>
@@ -1696,6 +1704,49 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="table-card" id="combos-list" style="display:none"></div>
       <div class="table-card" id="turmas-list" style="display:none"></div>
       <div class="table-card" id="alunos-list" style="display:none"></div>
+      <div class="table-card" id="campanhas-list" style="display:none"></div>
+      <div class="table-card" id="notificacoes-list" style="display:none"></div>
+      <div class="table-card" id="correcoes-list" style="display:none"></div>
+      <div class="table-card" id="certificados-list" style="display:none"></div>
+      <div id="relatorios-page" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input type="date" id="rel-filtro-data-inicio" onchange="relAplicarFiltros()" style="font-size:12px" title="Data início"/>
+          <input type="date" id="rel-filtro-data-fim" onchange="relAplicarFiltros()" style="font-size:12px" title="Data fim"/>
+          <select id="rel-filtro-curso" onchange="relAplicarFiltros()" style="font-size:12px"></select>
+          <select id="rel-filtro-campanha" onchange="relAplicarFiltros()" style="font-size:12px"></select>
+          <select id="rel-filtro-turma" onchange="relAplicarFiltros()" style="font-size:12px"></select>
+        </div>
+        <div class="cards-grid" id="relatorios-kpis" style="margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:8px">Leads por campanha</div><div class="table-card" id="relatorios-leads-campanha"></div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:8px">Leads por curso/combo</div><div class="table-card" id="relatorios-leads-curso"></div></div>
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">Turmas — alunos e ocupação</div>
+        <div class="table-card" id="relatorios-turmas"></div>
+      </div>
+      <div id="leads-page" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="tab active" id="cl-view-kanban" onclick="clSetView('kanban')">🗂️ Kanban</button>
+          <button class="tab" id="cl-view-tabela" onclick="clSetView('tabela')">📋 Tabela</button>
+          <div style="flex:1"></div>
+          <select id="cl-filtro-curso" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+          <select id="cl-filtro-campanha" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+          <select id="cl-filtro-etapa" onchange="clAplicarFiltros()" style="font-size:12px">
+            <option value="">Etapa: todas</option>
+            <option value="novo">Novo lead</option>
+            <option value="atendimento">Em atendimento</option>
+            <option value="interessado">Interessado</option>
+            <option value="aguardando_retorno">Aguardando retorno</option>
+            <option value="aguardando_pagamento">Aguardando pagamento</option>
+            <option value="matriculado">Matriculado</option>
+            <option value="nao_fechou">Não fechou</option>
+            <option value="perdido">Perdido</option>
+          </select>
+          <select id="cl-filtro-responsavel" onchange="clAplicarFiltros()" style="font-size:12px"></select>
+        </div>
+        <div id="leads-kanban"></div>
+        <div class="table-card" id="leads-tabela" style="display:none"></div>
+      </div>
     </div>
 
     <!-- PRODUTOS -->
@@ -4802,6 +4853,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </select>
       </div>
       <div class="form-group"><label>Duração (min)</label><input type="number" id="aula-duracao" min="0"/></div>
+      <div class="form-group"><label>Liberar em (opcional)</label><input type="date" id="aula-liberar-em"/></div>
       <div class="form-group full" id="aula-video-area" style="display:none"><label>URL do Vídeo</label><input id="aula-video-url" placeholder="https://..."/></div>
       <div class="form-group full" id="aula-texto-area"><label>Conteúdo em Texto</label><textarea id="aula-texto" style="min-height:100px"></textarea></div>
       <div class="form-group full">
@@ -4838,10 +4890,127 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group" style="justify-content:flex-end">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="material-permite-download" checked style="width:auto"/> Permitir download</label>
       </div>
+      <div class="form-group full"><label>Liberar em (opcional)</label><input type="date" id="material-liberar-em"/></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-curso-material')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarMaterial()">✅ Salvar Material</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-exercicio">
+  <div class="modal" style="width:500px">
+    <div class="modal-header">
+      <span class="modal-title">📝 Novo Exercício</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-exercicio')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título *</label><input id="ex-titulo" placeholder="Ex: Exercício 1 — Diagnóstico"/></div>
+      <div class="form-group full"><label>Enunciado</label><textarea id="ex-enunciado"></textarea></div>
+      <div class="form-group full"><label>Tipo de resposta</label>
+        <select id="ex-tipo" onchange="atvToggleExercicioTipoCampos()">
+          <option value="texto">Resposta em texto</option>
+          <option value="multipla_escolha">Múltipla escolha</option>
+          <option value="verdadeiro_falso">Verdadeiro ou falso</option>
+          <option value="envio_imagem">Envio de imagem</option>
+          <option value="envio_arquivo">Envio de PDF</option>
+        </select>
+      </div>
+      <div class="form-group full" id="ex-opcoes-wrap" style="display:none">
+        <label>Opções (marque a correta)</label>
+        <div id="ex-opcoes-editor"></div>
+      </div>
+      <div class="form-group full" id="ex-vf-wrap" style="display:none">
+        <label>Resposta correta</label>
+        <select id="ex-vf-correta"><option value="v">Verdadeiro</option><option value="f">Falso</option></select>
+      </div>
+      <div class="form-group full">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="ex-obrigatorio" checked style="width:auto"/> Exercício obrigatório</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-exercicio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarExercicio()">✅ Salvar Exercício</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-prova">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">🧪 Nova Prova</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-prova')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título *</label><input id="prova-titulo" placeholder="Ex: Prova Final"/></div>
+      <div class="form-group full"><label>Descrição</label><textarea id="prova-descricao"></textarea></div>
+      <div class="form-group"><label>Nota mínima (%)</label><input type="number" id="prova-nota-minima" min="0" max="100" value="70"/></div>
+      <div class="form-group"><label>Tentativas máximas</label><input type="number" id="prova-tentativas" min="1" value="1"/></div>
+      <div class="form-group"><label>Tempo limite (min, opcional)</label><input type="number" id="prova-tempo-limite" min="0"/></div>
+      <div class="form-group" style="justify-content:flex-end">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="checkbox" id="prova-ativo" checked style="width:auto"/> Ativa</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-prova')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProva()">✅ Salvar Prova</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-prova-perguntas">
+  <div class="modal" style="width:520px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title" id="prova-perguntas-titulo">❓ Perguntas</span>
+      <button class="modal-close" onclick="closeModal('modal-prova-perguntas')">✕</button>
+    </div>
+    <div id="prova-perguntas-lista" style="max-height:65vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-prova-pergunta">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">+ Nova Pergunta</span>
+      <button class="modal-close" onclick="closeModal('modal-prova-pergunta')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Enunciado *</label><textarea id="pg-enunciado"></textarea></div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="pg-tipo" onchange="atvTogglePerguntaTipoCampos()">
+          <option value="multipla_escolha">Múltipla escolha</option>
+          <option value="verdadeiro_falso">Verdadeiro ou falso</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Pontuação</label><input type="number" id="pg-pontuacao" min="0" step="0.5" value="1"/></div>
+      <div class="form-group full" id="pg-opcoes-wrap" style="display:none">
+        <label>Opções (marque a correta)</label>
+        <div id="pg-opcoes-editor"></div>
+      </div>
+      <div class="form-group full" id="pg-vf-wrap" style="display:none">
+        <label>Resposta correta</label>
+        <select id="pg-vf-correta"><option value="v">Verdadeiro</option><option value="f">Falso</option></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-prova-pergunta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPerguntaProva()">✅ Salvar Pergunta</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-correcao-envio">
+  <div class="modal" style="width:520px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title" id="correcao-titulo">✅ Corrigir</span>
+      <button class="modal-close" onclick="closeModal('modal-correcao-envio')">✕</button>
+    </div>
+    <div id="correcao-corpo" style="max-height:45vh;overflow-y:auto;margin-bottom:14px"></div>
+    <div class="form-group full"><label>Comentário pro aluno</label><textarea id="correcao-comentario"></textarea></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-outline" onclick="salvarCorrecao('refazer')">🔁 Pedir pra Refazer</button>
+      <button class="btn btn-primary" onclick="salvarCorrecao('aprovado')">✅ Aprovar</button>
     </div>
   </div>
 </div>
@@ -4875,6 +5044,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <select id="turma-professor"></select>
       </div>
       <div class="form-group"><label>Local</label><input id="turma-local" placeholder="Ex: Unidade Centro"/></div>
+      <div class="form-group"><label>Modalidade</label>
+        <select id="turma-modalidade">
+          <option value="">— Usar a do curso/combo —</option>
+          <option value="presencial">Presencial</option>
+          <option value="online">Online</option>
+          <option value="hibrido">Híbrido</option>
+        </select>
+      </div>
       <div class="form-group"><label>Hora Início *</label><input type="time" id="turma-hora-inicio" value="10:00"/></div>
       <div class="form-group"><label>Hora Fim *</label><input type="time" id="turma-hora-fim" value="13:00"/></div>
       <div class="form-group"><label>Vagas Máximas</label><input type="number" id="turma-vagas" min="0" value="10"/></div>
@@ -4915,7 +5092,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full"><label>Nome do Aluno *</label><input id="aluno-nome" placeholder="Nome completo"/></div>
       <div class="form-group"><label>CPF</label><input id="aluno-cpf" placeholder="000.000.000-00"/></div>
       <div class="form-group"><label>Telefone</label><input id="aluno-tel" placeholder="(00) 00000-0000"/></div>
-      <div class="form-group"><label>E-mail</label><input id="aluno-email" type="email" placeholder="aluno@email.com"/></div>
+      <div class="form-group"><label>E-mail</label><input id="aluno-email" type="email" placeholder="aluno@email.com" autocomplete="off"/></div>
       <div class="form-group"><label>Data de Nascimento</label><input type="date" id="aluno-nasc"/></div>
       <div class="form-group full"><label>Endereço</label><input id="aluno-endereco"/></div>
       <div class="form-group"><label>Status</label>
@@ -4956,8 +5133,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>Vencimento da 1ª Parcela</label><input type="date" id="matricula-primeira-parcela"/></div>
       <div class="form-group full"><label>Status da Matrícula</label>
         <select id="matricula-status">
-          <option value="interessado">Interessado</option>
-          <option value="ficha_enviada">Ficha enviada</option>
           <option value="pagamento_pendente">Pagamento pendente</option>
           <option value="matriculado" selected>Matriculado</option>
           <option value="andamento">Em andamento</option>
@@ -4981,6 +5156,154 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div id="ficha-aluno-corpo" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
     <button class="btn btn-outline btn-sm" onclick="abrirNovaMatriculaDaFicha()" style="width:100%">+ Nova Matrícula</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-campanha">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">📣 Nova Campanha de Curso</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-campanha')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome da Campanha *</label><input id="cc-nome" placeholder="Ex: Turma Julho — Instagram"/></div>
+      <div class="form-group full"><label>Curso ou Combo anunciado</label><select id="cc-curso-combo"></select></div>
+      <div class="form-group full"><label>Descrição do criativo</label><input id="cc-criativo-desc" placeholder="Ex: Carrossel 5 fotos turma julho"/></div>
+      <div class="form-group full"><label>Link do criativo</label><input id="cc-criativo-url" placeholder="https://..."/></div>
+      <div class="form-group"><label>Canal</label><input id="cc-canal" placeholder="Instagram, Google, Indicação..."/></div>
+      <div class="form-group"><label>Status</label>
+        <select id="cc-status">
+          <option value="planejada">Planejada</option>
+          <option value="ativa" selected>Ativa</option>
+          <option value="pausada">Pausada</option>
+          <option value="encerrada">Encerrada</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Início da divulgação</label><input type="date" id="cc-inicio"/></div>
+      <div class="form-group"><label>Fim da divulgação</label><input type="date" id="cc-fim"/></div>
+      <div class="form-group"><label>Data prevista do curso</label><input type="date" id="cc-data-curso"/></div>
+      <div class="form-group"><label>Valor anunciado (R$)</label><input type="number" id="cc-valor" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Orçamento (R$)</label><input type="number" id="cc-orcamento" min="0" step="0.01"/></div>
+      <div class="form-group full"><label>Link externo do anúncio</label><input id="cc-link" placeholder="https://..."/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-campanha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="ccSalvar()">✅ Salvar Campanha</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🧲 Novo Lead</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nome completo *</label><input id="cl-nome" placeholder="Nome do interessado"/></div>
+      <div class="form-group"><label>Telefone</label><input id="cl-telefone" placeholder="(00) 00000-0000"/></div>
+      <div class="form-group"><label>WhatsApp</label><input id="cl-whatsapp" placeholder="(00) 00000-0000"/></div>
+      <div class="form-group full"><label>E-mail</label><input id="cl-email" type="email" placeholder="lead@email.com"/></div>
+      <div class="form-group full"><label>Curso ou Combo de interesse</label><select id="cl-curso-combo"></select></div>
+      <div class="form-group full"><label>Campanha de origem</label><select id="cl-campanha"></select></div>
+      <div class="form-group"><label>Responsável comercial</label><select id="cl-responsavel"></select></div>
+      <div class="form-group"><label>Período de preferência</label><input id="cl-periodo" placeholder="Manhã, tarde, fds..."/></div>
+      <div class="form-group"><label>Etapa</label>
+        <select id="cl-etapa">
+          <option value="novo">Novo lead</option>
+          <option value="atendimento">Em atendimento</option>
+          <option value="interessado">Interessado</option>
+          <option value="aguardando_retorno">Aguardando retorno</option>
+          <option value="aguardando_pagamento">Aguardando pagamento</option>
+          <option value="nao_fechou">Não fechou</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data de retorno</label><input type="date" id="cl-data-retorno"/></div>
+      <div class="form-group full"><label>Observações</label><input id="cl-observacoes"/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="clSalvar()">✅ Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead-ficha">
+  <div class="modal" style="width:620px;max-height:85vh">
+    <div class="modal-header">
+      <span class="modal-title" id="cl-ficha-titulo">🧲 Lead</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead-ficha')">✕</button>
+    </div>
+    <div id="cl-ficha-corpo" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
+    <div id="cl-ficha-acoes" style="display:flex;gap:8px"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-lead-perda">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <span class="modal-title">🚫 Marcar Lead como Perdido</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-lead-perda')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Motivo da perda *</label><input id="cl-perda-motivo" placeholder="Ex: achou caro, escolheu outro curso..."/></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-lead-perda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="clConfirmarPerdido()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-curso-notificacao">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <span class="modal-title">🔔 Novo Aviso</span>
+      <button class="modal-close" onclick="closeModal('modal-curso-notificacao')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Título *</label><input id="cn-titulo" placeholder="Ex: Aula de amanhã confirmada"/></div>
+      <div class="form-group full"><label>Mensagem</label><textarea id="cn-mensagem"></textarea></div>
+      <div class="form-group full"><label>Tipo</label>
+        <select id="cn-tipo" onchange="cnAtualizarCamposEvento()">
+          <option value="comunicado">Aviso geral</option>
+          <option value="aula_amanha">Aula amanhã</option>
+          <option value="alteracao_horario">Alteração de horário</option>
+          <option value="nova_apostila">Novo conteúdo liberado (apostila/vídeo)</option>
+          <option value="live_evento">Live / evento</option>
+          <option value="certificado_disponivel">Certificado disponível</option>
+        </select>
+      </div>
+      <div class="form-group full" id="cn-evento-wrap" style="display:none">
+        <label>Dados da live/evento</label>
+        <div style="display:flex;gap:8px">
+          <input type="date" id="cn-evento-data" style="flex:1"/>
+          <input type="time" id="cn-evento-hora" style="flex:1"/>
+        </div>
+        <input id="cn-evento-link" placeholder="Link da live (opcional)" style="margin-top:8px"/>
+      </div>
+      <div class="form-group full"><label>Enviar para</label>
+        <select id="cn-destino-tipo" onchange="cnAtualizarCamposDestino()">
+          <option value="todos">Todos os alunos com acesso ao Portal</option>
+          <option value="turma">Uma turma</option>
+          <option value="curso">Um curso ou combo</option>
+          <option value="aluno">Um aluno específico</option>
+        </select>
+      </div>
+      <div class="form-group full" id="cn-destino-turma-wrap" style="display:none">
+        <label>Turma</label><select id="cn-destino-turma"></select>
+      </div>
+      <div class="form-group full" id="cn-destino-curso-wrap" style="display:none">
+        <label>Curso ou Combo</label><select id="cn-destino-curso"></select>
+      </div>
+      <div class="form-group full" id="cn-destino-aluno-wrap" style="display:none">
+        <label>Aluno</label><select id="cn-destino-aluno"></select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-curso-notificacao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="cnEnviar()">✅ Enviar Aviso</button>
+    </div>
   </div>
 </div>
 
@@ -5793,8 +6116,8 @@ async function renderCursosDashCards(){
 // ===== CURSOS: tabs =====
 function cursosSetTab(tab){
   cursosTabAtual=tab;
-  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos')};
-  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list')};
+  var tabs={cursos:document.getElementById('cursos-tab-cursos'),combos:document.getElementById('cursos-tab-combos'),turmas:document.getElementById('cursos-tab-turmas'),alunos:document.getElementById('cursos-tab-alunos'),campanhas:document.getElementById('cursos-tab-campanhas'),leads:document.getElementById('cursos-tab-leads'),notificacoes:document.getElementById('cursos-tab-notificacoes'),correcoes:document.getElementById('cursos-tab-correcoes'),certificados:document.getElementById('cursos-tab-certificados'),relatorios:document.getElementById('cursos-tab-relatorios')};
+  var lists={cursos:document.getElementById('cursos-list'),combos:document.getElementById('combos-list'),turmas:document.getElementById('turmas-list'),alunos:document.getElementById('alunos-list'),campanhas:document.getElementById('campanhas-list'),leads:document.getElementById('leads-page'),notificacoes:document.getElementById('notificacoes-list'),correcoes:document.getElementById('correcoes-list'),certificados:document.getElementById('certificados-list'),relatorios:document.getElementById('relatorios-page')};
   var btnNovo=document.getElementById('cursos-btn-novo');
   Object.keys(tabs).forEach(function(k){
     if(tabs[k])tabs[k].className='btn btn-'+(k===tab?'primary':'outline')+' btn-sm';
@@ -5809,9 +6132,27 @@ function cursosSetTab(tab){
   }else if(tab==='turmas'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Turma';btnNovo.setAttribute('onclick','abrirNovaTurma()');}
     renderTurmas();
-  }else{
+  }else if(tab==='alunos'){
     if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aluno';btnNovo.setAttribute('onclick','abrirNovoAluno()');}
     renderAlunos();
+  }else if(tab==='campanhas'){
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Nova Campanha';btnNovo.setAttribute('onclick','abrirNovaCampanha()');}
+    if(typeof renderCampanhas==='function')renderCampanhas();
+  }else if(tab==='leads'){
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Lead';btnNovo.setAttribute('onclick','clAbrirNovoLead()');}
+    if(typeof renderLeads==='function')renderLeads();
+  }else if(tab==='notificacoes'){
+    if(btnNovo){btnNovo.style.display='';btnNovo.textContent='+ Novo Aviso';btnNovo.setAttribute('onclick','abrirNovaNotificacao()');}
+    if(typeof renderNotificacoes==='function')renderNotificacoes();
+  }else if(tab==='correcoes'){
+    if(btnNovo)btnNovo.style.display='none';
+    if(typeof renderCorrecoes==='function')renderCorrecoes();
+  }else if(tab==='certificados'){
+    if(btnNovo)btnNovo.style.display='none';
+    if(typeof renderCertificadosAdmin==='function')renderCertificadosAdmin();
+  }else{
+    if(btnNovo)btnNovo.style.display='none';
+    if(typeof renderRelatorios==='function')renderRelatorios();
   }
 }
 
@@ -6172,6 +6513,7 @@ function abrirConteudoCurso(idx){
   document.getElementById('curso-conteudo-lista').innerHTML='<div style="padding:20px;text-align:center;color:#999;font-size:13px">Carregando...</div>';
   openModal('modal-curso-conteudo');
   carregarConteudoCursoSupa(c.id);
+  if(typeof carregarAtividadesDoCursoSupa==='function')carregarAtividadesDoCursoSupa(c.id);
 }
 async function carregarConteudoCursoSupa(cursoId){
   try{
@@ -6201,7 +6543,7 @@ function renderConteudoCurso(){
       var ai=cursoAulasAtuais.indexOf(a);
       return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
         +'<span style="margin-right:8px">'+(a.tipo_conteudo==='video'?'🎥':'📄')+'</span>'
-        +'<span style="flex:1">'+escHtml(a.titulo)+(a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'')+'</span>'
+        +'<span style="flex:1">'+escHtml(a.titulo)+(a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'')+(a.liberar_em?' <span style="color:#f59e0b;font-size:11px">🔒 libera '+fmtDataBR(a.liberar_em)+'</span>':'')+'</span>'
         +'<button onclick="editarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
         +'<button onclick="deletarAula('+ai+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
         +'</div>';
@@ -6210,7 +6552,7 @@ function renderConteudoCurso(){
       var mti=cursoMateriaisAtuais.indexOf(mt);
       return '<div style="display:flex;align-items:center;padding:7px 0 7px 16px;font-size:13px;border-top:1px solid #f5f5f5">'
         +'<span style="margin-right:8px">📎</span>'
-        +'<span style="flex:1">'+escHtml(mt.nome)+' <span style="color:#aaa;font-size:11px">('+mt.tipo+(mt.permite_download?'':' · sem download')+')</span></span>'
+        +'<span style="flex:1">'+escHtml(mt.nome)+' <span style="color:#aaa;font-size:11px">('+mt.tipo+(mt.permite_download?'':' · sem download')+')</span>'+(mt.liberar_em?' <span style="color:#f59e0b;font-size:11px">🔒 libera '+fmtDataBR(mt.liberar_em)+'</span>':'')+'</span>'
         +'<button onclick="editarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:12px;margin-right:8px">✏️</button>'
         +'<button onclick="deletarMaterial('+mti+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px">🗑️</button>'
         +'</div>';
@@ -6220,11 +6562,13 @@ function renderConteudoCurso(){
       +'<span style="flex:1;font-weight:600;font-size:13.5px">Módulo '+(mi+1)+' — '+escHtml(m.nome)+'</span>'
       +'<button class="btn btn-outline btn-sm" onclick="abrirNovaAula(\''+m.id+'\')" style="margin-right:6px">+ Aula</button>'
       +'<button class="btn btn-outline btn-sm" onclick="abrirNovoMaterial(\''+m.id+'\')" style="margin-right:6px">+ Material</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="abrirNovoExercicioBtn(\''+m.id+'\')" style="margin-right:6px">+ Exercício</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="abrirNovaProvaBtn(\''+m.id+'\')" style="margin-right:6px">+ Prova</button>'
       +'<button onclick="editarModulo('+mi+')" style="background:none;border:none;cursor:pointer;color:#888;font-size:13px;margin-right:8px">✏️</button>'
       +'<button onclick="deletarModulo('+mi+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px">🗑️</button>'
       +'</div>'
-      +aulasHtml+materiaisHtml
-      +(!aulas.length&&!materiais.length?'<div style="padding:8px 16px;font-size:12px;color:#bbb">Vazio — adicione aulas ou materiais.</div>':'')
+      +aulasHtml+materiaisHtml+(typeof atvRenderModuloExtra==='function'?atvRenderModuloExtra(m.id):'')
+      +(!aulas.length&&!materiais.length&&!cursoExerciciosAtuais.filter(function(e){return e.modulo_id===m.id;}).length&&!cursoProvasAtuais.filter(function(p){return p.modulo_id===m.id;}).length?'<div style="padding:8px 16px;font-size:12px;color:#bbb">Vazio — adicione aulas, materiais, exercícios ou provas.</div>':'')
       +'</div>';
   }).join('');
 }
@@ -6252,6 +6596,8 @@ function deletarModulo(idx){
     deletarModuloSupa(m.id);
     cursoAulasAtuais=cursoAulasAtuais.filter(function(a){return a.modulo_id!==m.id;});
     cursoMateriaisAtuais=cursoMateriaisAtuais.filter(function(x){return x.modulo_id!==m.id;});
+    cursoExerciciosAtuais=cursoExerciciosAtuais.filter(function(x){return x.modulo_id!==m.id;});
+    cursoProvasAtuais=cursoProvasAtuais.filter(function(x){return x.modulo_id!==m.id;});
   }
   cursoModulosAtuais.splice(idx,1);
   renderConteudoCurso();
@@ -6289,6 +6635,17 @@ async function deletarModuloSupa(id){
     if(!supa||!id)return;
     await supa.from('curso_materiais').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
     await supa.from('curso_aulas').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    var rExercicios=await supa.from('curso_exercicios').select('id').eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    var idsExercicios=(rExercicios.data||[]).map(function(e){return e.id;});
+    if(idsExercicios.length)await supa.from('curso_exercicio_envios').delete().in('exercicio_id',idsExercicios).eq('salao_id',window.SALAO_ID);
+    await supa.from('curso_exercicios').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    var rProvas=await supa.from('curso_provas').select('id').eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
+    var idsProvas=(rProvas.data||[]).map(function(p){return p.id;});
+    if(idsProvas.length){
+      await supa.from('curso_prova_tentativas').delete().in('prova_id',idsProvas).eq('salao_id',window.SALAO_ID);
+      await supa.from('curso_prova_perguntas').delete().in('prova_id',idsProvas).eq('salao_id',window.SALAO_ID);
+    }
+    await supa.from('curso_provas').delete().eq('modulo_id',id).eq('salao_id',window.SALAO_ID);
     await supa.from('curso_modulos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa modulo delete',e);}
 }
@@ -6301,6 +6658,7 @@ function abrirNovaAula(moduloId){
   document.getElementById('aula-video-url').value='';
   document.getElementById('aula-texto').value='';
   document.getElementById('aula-duracao').value='';
+  document.getElementById('aula-liberar-em').value='';
   document.getElementById('aula-obrigatoria').checked=true;
   toggleAulaTipoCampos();
   document.querySelector('#modal-curso-aula .modal-title').textContent='+ Nova Aula';
@@ -6317,6 +6675,7 @@ function editarAula(idx){
   document.getElementById('aula-video-url').value=a.video_url||'';
   document.getElementById('aula-texto').value=a.texto_conteudo||'';
   document.getElementById('aula-duracao').value=a.duracao_min||'';
+  document.getElementById('aula-liberar-em').value=a.liberar_em||'';
   document.getElementById('aula-obrigatoria').checked=a.obrigatoria!==false;
   toggleAulaTipoCampos();
   document.querySelector('#modal-curso-aula .modal-title').textContent='✏️ Editar Aula';
@@ -6349,6 +6708,7 @@ function salvarAula(){
     video_url:document.getElementById('aula-video-url').value.trim()||null,
     texto_conteudo:document.getElementById('aula-texto').value.trim()||null,
     duracao_min:document.getElementById('aula-duracao').value?parseInt(document.getElementById('aula-duracao').value):null,
+    liberar_em:document.getElementById('aula-liberar-em').value||null,
     obrigatoria:document.getElementById('aula-obrigatoria').checked,
     modulo_id:moduloId,
     curso_id:cursoConteudoCursoId,
@@ -6387,6 +6747,7 @@ function abrirNovoMaterial(moduloId){
   document.getElementById('material-nome').value='';
   document.getElementById('material-tipo').value='apostila';
   document.getElementById('material-permite-download').checked=true;
+  document.getElementById('material-liberar-em').value='';
   document.getElementById('material-arquivo-url').value='';
   document.getElementById('material-arquivo-status').textContent='Nenhum arquivo enviado ainda.';
   document.getElementById('material-baixar-btn').style.display='none';
@@ -6401,6 +6762,7 @@ function editarMaterial(idx){
   document.getElementById('material-nome').value=m.nome||'';
   document.getElementById('material-tipo').value=m.tipo||'apostila';
   document.getElementById('material-permite-download').checked=m.permite_download!==false;
+  document.getElementById('material-liberar-em').value=m.liberar_em||'';
   document.getElementById('material-arquivo-url').value=m.arquivo_url||'';
   document.getElementById('material-arquivo-status').textContent=m.arquivo_url?('Arquivo atual: '+m.arquivo_url.split('/').pop()):'Nenhum arquivo enviado ainda.';
   document.getElementById('material-baixar-btn').style.display=m.arquivo_url?'inline-block':'none';
@@ -6464,6 +6826,7 @@ function salvarMaterial(){
     tipo:document.getElementById('material-tipo').value,
     arquivo_url:arquivoUrl,
     permite_download:document.getElementById('material-permite-download').checked,
+    liberar_em:document.getElementById('material-liberar-em').value||null,
     modulo_id:moduloId,
     curso_id:cursoConteudoCursoId,
     ordem:materiaisDoModulo.length
@@ -6578,10 +6941,12 @@ function renderTurmas(){
     var periodo=t.data_inicio&&t.data_fim
       ?(fmtDataBR(t.data_inicio)+(t.data_fim!==t.data_inicio?' a '+fmtDataBR(t.data_fim):''))
       :'—';
+    var itemBase=t.curso_id?cursos.find(function(c){return c.id===t.curso_id;}):cursoCombos.find(function(c){return c.id===t.combo_id;});
+    var modalidadeTurma=modalidadeLabel(t.modalidade||(itemBase?itemBase.modalidade:null));
     return '<div class="service-row">'
       +'<div style="width:40px;height:40px;border-radius:8px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:18px">📅</div>'
       +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px">'+escHtml(t.nome)+'</div>'
-      +'<div style="font-size:12px;color:#888">'+escHtml(nomeCursoCombo)+' · '+(prof?escHtml(prof.nome):'sem professor')+' · '+periodo+' · '+(t.hora_inicio||'').substring(0,5)+'–'+(t.hora_fim||'').substring(0,5)+'</div></div>'
+      +'<div style="font-size:12px;color:#888">'+escHtml(nomeCursoCombo)+' · '+modalidadeTurma+' · '+(prof?escHtml(prof.nome):'sem professor')+' · '+periodo+' · '+(t.hora_inicio||'').substring(0,5)+'–'+(t.hora_fim||'').substring(0,5)+'</div></div>'
       +'<div style="font-size:12px;color:#888;white-space:nowrap;margin:0 14px">'+(t.vagas_ocupadas||0)+'/'+(t.vagas_maximas||0)+' vagas</div>'
       +turmaStatusBadge(t.status)
       +'<button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="abrirChamadaTurma(\''+t.id+'\')">📋 Chamada</button>'
@@ -6623,6 +6988,7 @@ function abrirNovaTurma(){
   popularSelectProfessorTurma('');
   document.getElementById('turma-nome').value='';
   document.getElementById('turma-local').value='';
+  document.getElementById('turma-modalidade').value='';
   document.getElementById('turma-hora-inicio').value='10:00';
   document.getElementById('turma-hora-fim').value='13:00';
   document.getElementById('turma-vagas').value='10';
@@ -6643,6 +7009,7 @@ async function editarTurma(idx){
   popularSelectProfessorTurma(t.professor_id);
   document.getElementById('turma-nome').value=t.nome||'';
   document.getElementById('turma-local').value=t.local||'';
+  document.getElementById('turma-modalidade').value=t.modalidade||'';
   document.getElementById('turma-hora-inicio').value=(t.hora_inicio||'10:00').substring(0,5);
   document.getElementById('turma-hora-fim').value=(t.hora_fim||'13:00').substring(0,5);
   document.getElementById('turma-vagas').value=t.vagas_maximas||0;
@@ -6679,6 +7046,7 @@ async function salvarTurma(){
     combo_id:tipo==='combo'?id:null,
     professor_id:professorId,
     local:get('turma-local').value.trim(),
+    modalidade:get('turma-modalidade').value||null,
     data_inicio:datasOrdenadas[0],
     data_fim:datasOrdenadas[datasOrdenadas.length-1],
     hora_inicio:horaInicio,
@@ -6858,6 +7226,12 @@ function salvarAluno(){
   var get=function(id){return document.getElementById(id);};
   var nome=get('aluno-nome').value.trim();
   if(!nome){alert('Informe o nome do aluno.');return;}
+  var idx=window._editAlunoIdx;
+  var emailNovo=get('aluno-email').value.trim();
+  if(emailNovo){
+    var duplicado=cursoAlunos.some(function(a,i2){return i2!==idx&&(a.email||'').trim().toLowerCase()===emailNovo.toLowerCase();});
+    if(duplicado){alert('Já existe outro aluno cadastrado com este e-mail neste salão.');return;}
+  }
   var clienteIdx=get('aluno-cliente-vinculo').value;
   var clienteId=(clienteIdx!==''&&typeof clientes!=='undefined'&&clientes[parseInt(clienteIdx)])?(clientes[parseInt(clienteIdx)].id||null):null;
   var obj={
@@ -6865,12 +7239,11 @@ function salvarAluno(){
     cliente_id:clienteId,
     cpf:get('aluno-cpf').value.trim(),
     tel:get('aluno-tel').value.trim(),
-    email:get('aluno-email').value.trim(),
+    email:emailNovo,
     nasc:get('aluno-nasc').value||null,
     endereco:get('aluno-endereco').value.trim(),
     status:get('aluno-status').value
   };
-  var idx=window._editAlunoIdx;
   if(idx>=0&&cursoAlunos[idx]){
     var existente=cursoAlunos[idx];
     Object.assign(existente,obj);
@@ -6937,6 +7310,8 @@ function popularSelectAlunoMatricula(selecionado){
 }
 function abrirNovaMatricula(alunoId){
   window._matriculaAlunoIdContexto=alunoId||null;
+  window._matriculaLeadIdContexto=null;
+  window._matriculaCampanhaIdContexto=null;
   popularSelectAlunoMatricula(alunoId);
   var selCC=document.getElementById('matricula-curso-combo');
   var opts=['<option value="">— Selecione —</option>'];
@@ -6983,7 +7358,9 @@ async function salvarMatricula(){
     forma_pagamento:formaPagamento,
     qtd_parcelas:qtdParcelas,
     percentual_presenca:0,
-    certificado_liberado:false
+    certificado_liberado:false,
+    lead_id:window._matriculaLeadIdContexto||null,
+    campanha_id:window._matriculaCampanhaIdContexto||null
   };
   var matriculaId=await salvarMatriculaSupa(obj);
   if(!matriculaId){alert('Não foi possível salvar a matrícula. Veja o console para detalhes.');return;}
@@ -6992,6 +7369,7 @@ async function salvarMatricula(){
   await gerarParcelas(matriculaId,valorTotal,qtdParcelas,primeiraParcela,formaPagamento);
   await registrarHistoricoMatricula(matriculaId,null,status,'Matrícula criada');
   if(turmaId)await incrementarVagasOcupadas(turmaId,1);
+  if(typeof onMatriculaCriada==='function')onMatriculaCriada(obj);
   renderAlunos();
   renderTurmas();
   renderCursosDashCards();
@@ -7079,12 +7457,34 @@ function renderFichaAluno(alunoId){
   var wrap=document.getElementById('ficha-aluno-corpo');
   if(!wrap)return;
   var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
-  var acessoHtml='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-bottom:14px">'
-    +'<div style="font-size:12.5px;color:#555">'
-    +(aluno&&aluno.auth_user_id?'🔑 Acesso ao Portal do Aluno já criado':'🔒 Aluno ainda não tem acesso ao Portal')
-    +'</div>'
-    +(aluno&&!aluno.auth_user_id?'<button class="btn btn-outline btn-sm" onclick="criarAcessoAluno(\''+alunoId+'\')" id="btn-criar-acesso-aluno">Criar Acesso</button>':'')
-    +'</div>';
+  var acessoHtml;
+  if(aluno&&aluno.auth_user_id){
+    acessoHtml='<div style="background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#555">🔑 Acesso ao Portal do Aluno já criado</div>';
+  }else if(window._acessoCriadoSenha&&window._acessoCriadoSenha.alunoId===alunoId){
+    var cred=window._acessoCriadoSenha;
+    acessoHtml='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:14px">'
+      +'<div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:8px">✅ Acesso criado — copie e envie pro WhatsApp da aluna</div>'
+      +'<div style="font-size:12.5px;margin-bottom:4px"><b>Login:</b> '+escHtml(cred.email)+'</div>'
+      +'<div style="font-size:12.5px;margin-bottom:10px"><b>Senha provisória:</b> '+escHtml(cred.senha)+'</div>'
+      +'<button class="btn btn-outline btn-sm" onclick="copiarCredenciaisAcesso()">📋 Copiar login e senha</button>'
+      +'</div>';
+  }else if(aluno){
+    acessoHtml='<div style="background:var(--gray-50);border-radius:10px;padding:14px;margin-bottom:14px">'
+      +'<div style="font-size:12.5px;color:#555;margin-bottom:10px">🔒 Aluno ainda não tem acesso ao Portal</div>'
+      +'<div style="display:flex;gap:14px;margin-bottom:10px;font-size:12.5px">'
+      +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="acesso-modo" value="senha" checked onchange="atualizarCamposAcessoAluno()"/> Definir senha agora</label>'
+      +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="acesso-modo" value="email" onchange="atualizarCamposAcessoAluno()"/> Enviar convite por e-mail</label>'
+      +'</div>'
+      +'<div id="acesso-senha-wrap" style="margin-bottom:10px">'
+      +'<div style="position:relative">'
+      +'<input id="acesso-senha-provisoria" type="password" placeholder="Senha provisória (mín. 8 caracteres)" style="width:100%;box-sizing:border-box;padding-right:38px"/>'
+      +'<span onclick="toggleSenhaVisivel(\'acesso-senha-provisoria\',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>'
+      +'</div></div>'
+      +'<button class="btn btn-outline btn-sm" onclick="criarAcessoAluno(\''+alunoId+'\')" id="btn-criar-acesso-aluno">Criar Acesso</button>'
+      +'</div>';
+  }else{
+    acessoHtml='';
+  }
   var matriculasDoAluno=cursoMatriculas.filter(function(m){return m.aluno_id===alunoId;});
   if(!matriculasDoAluno.length){wrap.innerHTML=acessoHtml+'<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhuma matrícula ainda.</div>';return;}
   wrap.innerHTML=acessoHtml+matriculasDoAluno.map(function(m){
@@ -7145,16 +7545,39 @@ async function darBaixaParcela(idxP){
     showAlert('Parcela paga e lançada no Fluxo de Caixa!');
   }catch(e){console.log('err dar baixa parcela',e);alert('Erro ao dar baixa na parcela.');}
 }
+function atualizarCamposAcessoAluno(){
+  var modo=(document.querySelector('input[name="acesso-modo"]:checked')||{}).value||'senha';
+  var wrap=document.getElementById('acesso-senha-wrap');
+  if(wrap)wrap.style.display=modo==='senha'?'':'none';
+}
+function copiarCredenciaisAcesso(){
+  var cred=window._acessoCriadoSenha;
+  if(!cred)return;
+  var texto='Login: '+cred.email+'\nSenha provisória: '+cred.senha;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(function(){showAlert('Copiado! Cole no WhatsApp da aluna.');}).catch(function(){alert(texto);});
+  }else{
+    alert(texto);
+  }
+}
 async function criarAcessoAluno(alunoId){
+  var modo=(document.querySelector('input[name="acesso-modo"]:checked')||{}).value||'senha';
+  var senhaProvisoria=null;
+  if(modo==='senha'){
+    senhaProvisoria=(document.getElementById('acesso-senha-provisoria')||{}).value||'';
+    if(senhaProvisoria.length<8){alert('A senha provisória precisa ter pelo menos 8 caracteres.');return;}
+  }
   var btn=document.getElementById('btn-criar-acesso-aluno');
   if(btn){btn.disabled=true;btn.textContent='Criando...';}
   try{
     var sessao=await supa.auth.getSession();
     var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
+    var payload={aluno_id:alunoId};
+    if(senhaProvisoria)payload.senha_provisoria=senhaProvisoria;
     var resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-aluno',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)},
-      body:JSON.stringify({aluno_id:alunoId})
+      body:JSON.stringify(payload)
     });
     var data=await resp.json();
     if(!resp.ok){
@@ -7165,8 +7588,16 @@ async function criarAcessoAluno(alunoId){
     }
     var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
     if(aluno)aluno.auth_user_id=data.auth_user_id;
-    renderFichaAluno(alunoId);
-    showAlert('Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+    if(data.senha_provisoria){
+      window._acessoCriadoSenha={alunoId:alunoId,email:data.email,senha:data.senha_provisoria};
+      renderFichaAluno(alunoId);
+      showAlert('Acesso criado com senha provisória — copie e envie pro WhatsApp da aluna.');
+    }else{
+      renderFichaAluno(alunoId);
+      showAlert(data.vinculado_existente
+        ? 'Este e-mail já tinha conta — vinculamos ao cadastro dela. A aluna já pode entrar com a senha que já usa (nenhum e-mail novo foi enviado).'
+        : 'Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+    }
   }catch(e){
     console.log('err criar acesso aluno',e);
     alert('Erro ao criar acesso do aluno.');
@@ -7369,7 +7800,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
-    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();}
+    if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();if(typeof carregarCertificadosDadosSupa==='function')carregarCertificadosDadosSupa();if(typeof carregarRelatoriosDadosSupa==='function')carregarRelatoriosDadosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
     if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
@@ -8682,6 +9113,8 @@ var cursoConteudoCursoId=null;
 var cursoModulosAtuais=[];
 var cursoAulasAtuais=[];
 var cursoMateriaisAtuais=[];
+var cursoExerciciosAtuais=[];
+var cursoProvasAtuais=[];
 
 var colaboradores=[
   {nome:'Thiago dos Santos',email:'aflorschool@gmail.com',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'blue'},
@@ -17632,5 +18065,11 @@ if('serviceWorker' in navigator){
     Equipe
   </button>
 </div>
+<script src="cursos-campanhas.js"></script>
+<script src="cursos-leads.js"></script>
+<script src="cursos-notificacoes.js"></script>
+<script src="cursos-atividades.js"></script>
+<script src="cursos-certificados.js"></script>
+<script src="cursos-relatorios.js"></script>
 </body>
 </html>

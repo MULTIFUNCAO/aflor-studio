@@ -45,7 +45,7 @@ button,input,textarea,select{font-family:inherit}
 .topbar{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;z-index:10}
 .topbar-title{font-size:16px;font-weight:800}
 .topbar-sair{background:none;border:none;color:#888;font-size:12px;cursor:pointer;font-weight:600}
-.content{padding:16px;max-width:640px;margin:0 auto 80px}
+.content{padding:16px;max-width:720px;margin:0 auto 80px}
 .saudacao{font-size:19px;font-weight:800;margin-bottom:4px}
 .saudacao-sub{font-size:13px;color:var(--gray-600);margin-bottom:18px}
 
@@ -65,22 +65,37 @@ button,input,textarea,select{font-family:inherit}
 .badge-yellow{background:#fef3c7;color:#92400e}
 
 .back-btn{background:none;border:none;color:#888;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.modulo-block{border:1px solid var(--line);border-radius:var(--radius-md);margin-bottom:12px;overflow:hidden}
-.modulo-head{background:var(--gray-50);padding:11px 14px;font-weight:700;font-size:13.5px}
-.item-row{display:flex;align-items:center;padding:11px 14px;border-top:1px solid var(--line-soft);font-size:13px;cursor:pointer}
+.curso-capa-topo{width:100%;height:140px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:14px;background:var(--gray-100)}
+.curso-titulo-topo{font-size:19px;font-weight:800;margin-bottom:10px}
+.modulo-block{margin-bottom:22px}
+.modulo-head{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:10px}
+.item-row{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--paper);border-radius:var(--radius-md);margin-bottom:8px;font-size:13px;cursor:pointer;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft)}
 .item-row:active{background:var(--gray-50)}
-.item-icon{margin-right:10px;font-size:15px}
-.item-check{margin-left:auto;font-size:16px}
+.item-icon-circle{width:34px;height:34px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.item-check{margin-left:auto;font-size:16px;flex-shrink:0}
 
-.item-viewer{position:fixed;inset:0;background:var(--paper);z-index:100;display:none;flex-direction:column}
+.video-embed-wrap{position:relative;padding-top:56.25%;border-radius:var(--radius-md);overflow:hidden;background:#000;margin-bottom:16px}
+.video-embed-wrap video,.video-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+.card-flora{background:var(--paper);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft);margin-bottom:16px}
+
+.btn-concluir{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-block}
+.btn-concluir:disabled{opacity:.55;cursor:default}
+.aula-nav{display:flex;gap:10px;margin-top:22px}
+.aula-nav button{flex:1}
+.aula-nav button:disabled{opacity:.35;cursor:default}
+
+.item-viewer{position:fixed;inset:0;background:var(--ivory);z-index:100;display:none;flex-direction:column}
 .item-viewer.open{display:flex}
-.item-viewer-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px}
+.item-viewer-head{padding:14px 16px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;justify-content:space-between}
+.item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box}
 .item-viewer video, .item-viewer iframe{width:100%;border-radius:var(--radius-sm);border:none}
+
+.badge-red{background:#fee2e2;color:#dc2626}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);display:flex;box-shadow:0 -2px 12px rgba(0,0,0,.04)}
 .bottom-nav button{flex:1;background:none;border:none;padding:10px 0 8px;font-size:10.5px;color:var(--gray-400);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
-.bottom-nav button.active{color:var(--ink)}
+.bottom-nav button.active{color:var(--green)}
 .bottom-nav button .ic{font-size:19px}
 
 .empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px}
@@ -106,8 +121,64 @@ button,input,textarea,select{font-family:inherit}
       </div>
       <div class="alert-box" id="login-alert"></div>
       <div class="field"><label>E-mail</label><input id="login-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
-      <div class="field"><label>Senha</label><input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password"/></div>
+      <div class="field"><label>Senha</label><div style="position:relative">
+        <input id="login-senha" type="password" placeholder="Sua senha" autocomplete="current-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('login-senha',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
       <button class="btn-main" id="btn-login" onclick="fazerLoginAluno()">Entrar</button>
+      <div style="text-align:center;margin-top:12px">
+        <button type="button" onclick="mostrarRecuperarSenha()" style="background:none;border:none;color:var(--gray-600);font-size:12.5px;cursor:pointer;text-decoration:underline">Esqueci minha senha</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECUPERAR SENHA -->
+<div class="screen" id="screen-recuperar">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">
+          <svg width="28" height="32" viewBox="0 0 100 115" fill="none">
+            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+            <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">FLORA</div>
+        <div class="sub">Recuperar senha</div>
+      </div>
+      <div class="alert-box" id="recuperar-alert"></div>
+      <div class="field"><label>E-mail cadastrado</label><input id="recuperar-email" type="email" placeholder="seu@email.com" autocomplete="email"/></div>
+      <button class="btn-main" id="btn-recuperar" onclick="enviarRecuperarSenha()">Enviar link de recuperação</button>
+      <button type="button" class="btn-outline" style="margin-top:10px" onclick="voltarParaLogin()">← Voltar pro login</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEFINIR NOVA SENHA (chegou aqui pelo link do e-mail) -->
+<div class="screen" id="screen-nova-senha">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">
+          <svg width="28" height="32" viewBox="0 0 100 115" fill="none">
+            <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+            <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand">FLORA</div>
+        <div class="sub">Defina sua nova senha</div>
+      </div>
+      <div class="alert-box" id="nova-senha-alert"></div>
+      <div class="field"><label>Nova senha</label><div style="position:relative">
+        <input id="nova-senha-1" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('nova-senha-1',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
+      <div class="field"><label>Confirme a nova senha</label><div style="position:relative">
+        <input id="nova-senha-2" type="password" placeholder="Repita a senha" autocomplete="new-password" style="padding-right:38px"/>
+        <span onclick="toggleSenhaVisivel('nova-senha-2',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
+      </div></div>
+      <button class="btn-main" id="btn-nova-senha" onclick="salvarNovaSenha()">Salvar nova senha</button>
     </div>
   </div>
 </div>
@@ -137,23 +208,43 @@ button,input,textarea,select{font-family:inherit}
 
   <div class="content" id="view-certificados" style="display:none">
     <div class="saudacao" style="font-size:16px">🎓 Certificados</div>
-    <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Ainda não disponível — em breve.</div></div>
+    <div id="certificados-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
+  </div>
+
+  <div class="content" id="view-avisos" style="display:none">
+    <div class="saudacao" style="font-size:16px">🔔 Avisos</div>
+    <div id="avisos-aluno-corpo" style="margin-top:14px"><div class="empty-state">Carregando...</div></div>
   </div>
 
   <div class="bottom-nav">
     <button id="nav-cursos" onclick="mostrarView('cursos')"><span class="ic">📚</span>Cursos</button>
     <button id="nav-turma" onclick="mostrarView('turma')"><span class="ic">📅</span>Turma</button>
+    <button id="nav-avisos" onclick="mostrarView('avisos')" style="position:relative"><span class="ic">🔔</span>Avisos<span id="avisos-badge" style="display:none;position:absolute;top:4px;right:calc(50% - 22px);background:#ef4444;color:#fff;border-radius:999px;font-size:9px;font-weight:800;min-width:15px;height:15px;line-height:15px;text-align:center;padding:0 2px"></span></button>
     <button id="nav-certificados" onclick="mostrarView('certificados')"><span class="ic">🎓</span>Certificados</button>
   </div>
 </div>
 
-<!-- Visualizador de conteúdo (aula / material) -->
+<!-- Visualizador de conteúdo (material / exercício / prova) -->
 <div class="item-viewer" id="item-viewer">
   <div class="item-viewer-head">
-    <div style="font-weight:700;font-size:14px" id="item-viewer-titulo">Conteúdo</div>
-    <button onclick="fecharViewer()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer">✕</button>
+    <button onclick="fecharViewer()" style="background:none;border:none;font-size:20px;color:#333;cursor:pointer">←</button>
+    <div style="flex:1;font-weight:700;font-size:14px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" id="item-viewer-titulo">Conteúdo</div>
+    <div style="width:20px"></div>
   </div>
   <div class="item-viewer-body" id="item-viewer-body"></div>
+</div>
+
+<!-- Tela própria da Aula (vídeo + navegação anterior/próxima) -->
+<div class="item-viewer" id="aula-viewer">
+  <div class="item-viewer-head">
+    <button onclick="fecharAulaViewer()" style="background:none;border:none;font-size:20px;color:#333;cursor:pointer">←</button>
+    <div style="flex:1;overflow:hidden;text-align:center">
+      <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="aula-viewer-titulo">Aula</div>
+      <div style="font-size:11px;color:var(--gray-600)" id="aula-viewer-modulo"></div>
+    </div>
+    <div style="width:20px"></div>
+  </div>
+  <div class="item-viewer-body" id="aula-viewer-body"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -174,6 +265,85 @@ function showLoginAlert(msg, tipo){
   var el = document.getElementById('login-alert');
   el.textContent = msg;
   el.className = 'alert-box ' + tipo;
+}
+function mostrarTela(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+function mostrarRecuperarSenha(){
+  document.getElementById('recuperar-email').value = document.getElementById('login-email').value || '';
+  document.getElementById('recuperar-alert').className = 'alert-box';
+  mostrarTela('screen-recuperar');
+}
+function voltarParaLogin(){ mostrarTela('screen-login'); }
+async function enviarRecuperarSenha(){
+  var email = document.getElementById('recuperar-email').value.trim();
+  var alertEl = document.getElementById('recuperar-alert');
+  if(!email){ alertEl.textContent = 'Informe seu e-mail.'; alertEl.className = 'alert-box err'; return; }
+  var btn = document.getElementById('btn-recuperar');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Enviando...';
+  try{
+    var r = await supa.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    if(r.error){
+      alertEl.textContent = 'Não foi possível enviar o link agora. Tente novamente.';
+      alertEl.className = 'alert-box err';
+    }else{
+      alertEl.textContent = 'Se esse e-mail estiver cadastrado, você vai receber um link pra criar uma nova senha.';
+      alertEl.className = 'alert-box ok';
+    }
+  }catch(e){
+    console.log('err recuperar senha', e);
+    alertEl.textContent = 'Erro inesperado. Tente novamente.';
+    alertEl.className = 'alert-box err';
+  }
+  btn.disabled = false; btn.textContent = 'Enviar link de recuperação';
+}
+async function salvarNovaSenha(){
+  var s1 = document.getElementById('nova-senha-1').value;
+  var s2 = document.getElementById('nova-senha-2').value;
+  var alertEl = document.getElementById('nova-senha-alert');
+  if(!s1 || s1.length < 6){ alertEl.textContent = 'A senha precisa ter pelo menos 6 caracteres.'; alertEl.className = 'alert-box err'; return; }
+  if(s1 !== s2){ alertEl.textContent = 'As senhas não coincidem.'; alertEl.className = 'alert-box err'; return; }
+  var btn = document.getElementById('btn-nova-senha');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>Salvando...';
+  // Watchdog: se updateUser() ou iniciarApp() travarem sem erro nem sucesso
+  // (visto em teste real — senha salvava mas a tela ficava presa em
+  // "Salvando..." quando a conta não tinha curso_alunos vinculado e o
+  // feedback ia pro lugar errado), libera o botão com mensagem em vez de
+  // ficar preso pra sempre.
+  var tempoEsgotado = false;
+  var watchdog = setTimeout(function(){
+    tempoEsgotado = true;
+    alertEl.textContent = 'Isso está demorando mais que o esperado. Se sua senha já foi salva, tente entrar normalmente; senão, peça um novo link de recuperação.';
+    alertEl.className = 'alert-box err';
+    btn.disabled = false; btn.textContent = 'Salvar nova senha';
+  }, 8000);
+  try{
+    var r = await supa.auth.updateUser({ password: s1, data: { must_change_password: false } });
+    if(tempoEsgotado) return;
+    if(r.error){
+      clearTimeout(watchdog);
+      alertEl.textContent = 'Não foi possível salvar a nova senha. Peça um novo link e tente de novo.';
+      alertEl.className = 'alert-box err';
+      btn.disabled = false; btn.textContent = 'Salvar nova senha';
+      return;
+    }
+    await iniciarApp('nova-senha-alert');
+    clearTimeout(watchdog);
+  }catch(e){
+    if(tempoEsgotado) return;
+    clearTimeout(watchdog);
+    console.log('err salvar nova senha', e);
+    alertEl.textContent = 'Erro inesperado. Tente novamente.';
+    alertEl.className = 'alert-box err';
+    btn.disabled = false; btn.textContent = 'Salvar nova senha';
+  }
+}
+function toggleSenhaVisivel(id, icone){
+  var inp = document.getElementById(id);
+  if(!inp) return;
+  if(inp.type === 'password'){ inp.type = 'text'; icone.textContent = '🙈'; }
+  else { inp.type = 'password'; icone.textContent = '👁'; }
 }
 
 async function fazerLoginAluno(){
@@ -206,38 +376,64 @@ async function sairAluno(){
   document.getElementById('login-senha').value = '';
 }
 
-async function iniciarApp(){
+async function iniciarApp(alertElId){
+  // alertElId: onde mostrar "conta não vinculada" se não houver curso_alunos —
+  // precisa ser configurável porque essa função é chamada tanto do login
+  // normal (tela com #login-alert) quanto de salvarNovaSenha() (tela com
+  // #nova-senha-alert); escrever sempre em #login-alert deixava a tela de
+  // nova senha "presa" sem nenhum feedback quando a conta não tinha vínculo.
+  var idAlvo = alertElId || 'login-alert';
   try{
     var rAluno = await supa.from('curso_alunos').select('*');
     if(rAluno.error || !rAluno.data || !rAluno.data.length){
-      showLoginAlert('Esta conta não está vinculada a nenhum cadastro de aluno.', 'err');
+      var elAlvo = document.getElementById(idAlvo);
+      if(elAlvo){ elAlvo.textContent = 'Esta conta não está vinculada a nenhum cadastro de aluno. Fale com a escola.'; elAlvo.className = 'alert-box err'; }
       await supa.auth.signOut();
-      document.getElementById('btn-login').disabled = false;
-      document.getElementById('btn-login').textContent = 'Entrar';
-      return;
+      var btnLogin = document.getElementById('btn-login');
+      if(btnLogin){ btnLogin.disabled = false; btnLogin.textContent = 'Entrar'; }
+      var btnNovaSenha = document.getElementById('btn-nova-senha');
+      if(btnNovaSenha){ btnNovaSenha.disabled = false; btnNovaSenha.textContent = 'Salvar nova senha'; }
+      return false;
     }
     alunoAtual = rAluno.data[0];
-    document.getElementById('screen-login').classList.remove('active');
-    document.getElementById('screen-app').classList.add('active');
+    // Primeiro acesso com senha provisória (criada pelo admin via WhatsApp,
+    // sem convite por e-mail) — obriga trocar antes de entrar no Portal.
+    // Reaproveita a mesma tela/fluxo de "esqueci minha senha", já que
+    // supa.auth.updateUser() funciona igual em qualquer sessão autenticada.
+    var sessaoAtual = await supa.auth.getSession();
+    var metadados = sessaoAtual.data && sessaoAtual.data.session && sessaoAtual.data.session.user
+      ? sessaoAtual.data.session.user.user_metadata : null;
+    if(metadados && metadados.must_change_password){
+      var elAviso = document.getElementById('nova-senha-alert');
+      if(elAviso){ elAviso.textContent = 'Primeiro acesso — defina sua senha definitiva pra continuar.'; elAviso.className = 'alert-box ok'; }
+      mostrarTela('screen-nova-senha');
+      return true;
+    }
+    mostrarTela('screen-app');
     document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
     await carregarMeusCursos();
+    carregarAvisos();
+    return true;
   }catch(e){
     console.log('err iniciar app aluno', e);
+    return false;
   }
 }
 
 function mostrarView(view){
-  ['cursos','curso-detalhe','turma','certificados'].forEach(function(v){
+  ['cursos','curso-detalhe','turma','certificados','avisos'].forEach(function(v){
     var el = document.getElementById('view-' + v);
     if(el) el.style.display = (v === view) ? 'block' : 'none';
   });
-  ['cursos','turma','certificados'].forEach(function(v){
+  ['cursos','turma','certificados','avisos'].forEach(function(v){
     var b = document.getElementById('nav-' + v);
     if(b) b.classList.toggle('active', v === view);
   });
-  var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados' };
+  var titulos = { cursos: 'Meus Cursos', turma: 'Minha Turma', certificados: 'Certificados', avisos: 'Avisos' };
   if(titulos[view]) document.getElementById('topbar-titulo').textContent = titulos[view];
   if(view === 'turma') carregarMinhaTurma();
+  if(view === 'certificados') carregarCertificados();
+  if(view === 'avisos') carregarAvisos();
 }
 
 // ===== Meus Cursos =====
@@ -288,8 +484,9 @@ async function carregarMeusCursos(){
 async function calcularProgresso(matriculaId, cursoIds){
   if(!cursoIds || !cursoIds.length) return 0;
   try{
-    var rAulas = await supa.from('curso_aulas').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
-    var rMats = await supa.from('curso_materiais').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds);
+    var hoje = new Date().toISOString().slice(0,10);
+    var rAulas = await supa.from('curso_aulas').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds).or('liberar_em.is.null,liberar_em.lte.'+hoje);
+    var rMats = await supa.from('curso_materiais').select('id', { count: 'exact', head: true }).in('curso_id', cursoIds).or('liberar_em.is.null,liberar_em.lte.'+hoje);
     var total = (rAulas.count||0) + (rMats.count||0);
     if(total === 0) return 0;
     var rConcl = await supa.from('curso_progresso_conteudo').select('id', { count: 'exact', head: true }).eq('matricula_id', matriculaId).eq('status', 'concluido');
@@ -331,60 +528,184 @@ async function abrirCursoDetalhe(matriculaId){
     var rMod = await supa.from('curso_modulos').select('*').in('curso_id', cursoIds).order('ordem');
     var rAulas = await supa.from('curso_aulas').select('*').in('curso_id', cursoIds).order('ordem');
     var rMats = await supa.from('curso_materiais').select('*').in('curso_id', cursoIds).order('ordem');
+    var rEx = await supa.from('curso_exercicios').select('*').in('curso_id', cursoIds).order('ordem');
+    var rProvas = await supa.from('curso_provas').select('*').in('curso_id', cursoIds).eq('ativo', true).order('ordem');
     var rProg = await supa.from('curso_progresso_conteudo').select('*').eq('matricula_id', matriculaId);
+    var rEnvios = await supa.from('curso_exercicio_envios').select('*').eq('matricula_id', matriculaId).order('criado_em', { ascending:false });
+    var rTentativas = await supa.from('curso_prova_tentativas').select('*').eq('matricula_id', matriculaId).order('numero_tentativa', { ascending:false });
     var progressoPorItem = {};
     (rProg.data||[]).forEach(function(p){
       var chave = (p.aula_id ? 'aula:'+p.aula_id : 'material:'+p.material_id);
       progressoPorItem[chave] = p;
     });
+    window._exerciciosCache = rEx.data || [];
+    window._provasCache = rProvas.data || [];
+    window._enviosCache = rEnvios.data || [];
+    window._tentativasCache = rTentativas.data || [];
     renderCursoDetalhe(rMod.data||[], rAulas.data||[], rMats.data||[], progressoPorItem);
   }catch(e){
     console.log('err abrir curso detalhe', e);
     corpo.innerHTML = '<div class="empty-state">Não foi possível carregar o conteúdo.</div>';
   }
 }
+function envioAtualDoExercicio(exercicioId){
+  return (window._enviosCache||[]).find(function(e){ return e.exercicio_id === exercicioId; }) || null;
+}
+function tentativasDaProva(provaId){
+  return (window._tentativasCache||[]).filter(function(t){ return t.prova_id === provaId; });
+}
+function envioStatusBadgeHtml(status){
+  var map = { enviado:'badge-blue', em_analise:'badge-yellow', aprovado:'badge-green', refazer:'badge-red' };
+  var label = { enviado:'Enviado', em_analise:'Em análise', aprovado:'Aprovado', refazer:'Precisa refazer' };
+  return '<span class="badge '+(map[status]||'badge-gray')+'">'+(label[status]||status)+'</span>';
+}
+function itemAindaBloqueado(liberarEm){
+  if(!liberarEm) return false;
+  return liberarEm > new Date().toISOString().slice(0,10);
+}
 function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
   var corpo = document.getElementById('curso-detalhe-corpo');
-  if(!modulos.length){ corpo.innerHTML = '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
-  corpo.innerHTML = modulos.map(function(mod){
+  window._progressoPorItemCache = progressoPorItem;
+  var m = matriculaDetalheAtual;
+  var headerHtml = (m && m._capa ? '<img class="curso-capa-topo" src="'+m._capa+'"/>' : '')
+    + '<div class="curso-titulo-topo">' + escHtml(m?m._nome:'Curso') + '</div>'
+    + '<div class="progress-track"><div class="progress-fill" style="width:' + (m?m._progresso:0) + '%"></div></div>'
+    + '<div class="progress-label">Progresso: ' + (m?m._progresso:0) + '%</div>';
+  if(!modulos.length){ corpo.innerHTML = headerHtml + '<div class="empty-state">Conteúdo ainda não publicado.</div>'; return; }
+
+  // Lista plana de aulas na ordem módulo->aula, pra navegação anterior/próxima
+  // na tela dedicada da aula (independe da ordem em que vieram da consulta).
+  var aulasOrdenadas = [];
+  modulos.forEach(function(mod){
+    aulas.filter(function(a){return a.modulo_id === mod.id;}).forEach(function(a){
+      aulasOrdenadas.push(Object.assign({}, a, { _moduloNome: mod.nome }));
+    });
+  });
+  window._aulasOrdenadasCache = aulasOrdenadas;
+
+  corpo.innerHTML = headerHtml + modulos.map(function(mod){
     var aulasDoModulo = aulas.filter(function(a){return a.modulo_id === mod.id;});
-    var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id;});
+    var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id && !mt.aula_id;});
     var aulasHtml = aulasDoModulo.map(function(a){
       var prog = progressoPorItem['aula:'+a.id];
       var feito = prog && prog.status === 'concluido';
-      return '<div class="item-row" onclick="abrirAulaViewer(\''+a.id+'\')">'
-        + '<span class="item-icon">' + (a.tipo_conteudo==='video'?'🎥':'📄') + '</span>'
-        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + '</span>'
+      var bloqueado = itemAindaBloqueado(a.liberar_em);
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+a.liberar_em+'\')':'abrirAulaViewer(\''+a.id+'\')') + '">'
+        + '<span class="item-icon-circle">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
+        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(a.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
     var matsHtml = matsDoModulo.map(function(mt){
       var prog = progressoPorItem['material:'+mt.id];
       var feito = prog && prog.status === 'concluido';
-      return '<div class="item-row" onclick="abrirMaterialViewer(\''+mt.id+'\')">'
-        + '<span class="item-icon">📎</span>'
-        + '<span style="flex:1">' + escHtml(mt.nome) + '</span>'
+      var bloqueado = itemAindaBloqueado(mt.liberar_em);
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+mt.liberar_em+'\')':'abrirMaterialViewer(\''+mt.id+'\')') + '">'
+        + '<span class="item-icon-circle">' + (bloqueado?'🔒':'📎') + '</span>'
+        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(mt.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
-    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + '</div>';
+    var exDoModulo = (window._exerciciosCache||[]).filter(function(e){ return e.modulo_id === mod.id; });
+    var provasDoModulo = (window._provasCache||[]).filter(function(p){ return p.modulo_id === mod.id; });
+    var exHtml = exDoModulo.map(function(e){
+      var envio = envioAtualDoExercicio(e.id);
+      return '<div class="item-row" onclick="abrirExercicio(\''+e.id+'\')">'
+        + '<span class="item-icon-circle">📝</span>'
+        + '<span style="flex:1">' + escHtml(e.titulo) + (envio?' '+envioStatusBadgeHtml(envio.status):'') + '</span>'
+        + '<span class="item-check">' + (envio && envio.status==='aprovado' ? '✅' : '') + '</span>'
+        + '</div>';
+    }).join('');
+    var provasHtml = provasDoModulo.map(function(p){
+      var tentativas = tentativasDaProva(p.id);
+      var melhor = tentativas.reduce(function(acc,t){ return (acc===null || (t.percentual||0) > acc) ? (t.percentual||0) : acc; }, null);
+      var info = tentativas.length ? (' — melhor nota: '+Math.round(melhor)+'%') : '';
+      return '<div class="item-row" onclick="abrirProva(\''+p.id+'\')">'
+        + '<span class="item-icon-circle">🧪</span>'
+        + '<span style="flex:1">' + escHtml(p.titulo) + info + '</span>'
+        + '<span class="item-check">' + (tentativas.some(function(t){return t.aprovado;}) ? '✅' : '') + '</span>'
+        + '</div>';
+    }).join('');
+    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + exHtml + provasHtml + '</div>';
   }).join('');
   window._aulasCache = aulas; window._materiaisCache = materiais;
 }
+function fmtDataBRAluno(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function alertConteudoBloqueado(liberarEm){
+  alert('Este conteúdo ainda não foi liberado. Disponível a partir de ' + fmtDataBRAluno(liberarEm) + '.');
+}
 function fecharViewer(){ document.getElementById('item-viewer').classList.remove('open'); }
-async function abrirAulaViewer(aulaId){
-  var a = (window._aulasCache||[]).find(function(x){return x.id === aulaId;});
+
+// Detecta o tipo de link de vídeo e devolve o embed certo, sempre num
+// wrapper 16:9 responsivo. Link não reconhecido vira botão "abrir em nova
+// aba" em vez de tentar tocar num <video> que não entende o formato.
+function renderizarVideo(url){
+  if(!url) return '';
+  var yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+  if(yt){
+    return '<div class="video-embed-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+yt[1]+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+  }
+  var vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vimeo){
+    return '<div class="video-embed-wrap"><iframe src="https://player.vimeo.com/video/'+vimeo[1]+'" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+  }
+  var drive = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(drive){
+    return '<div class="video-embed-wrap"><iframe src="https://drive.google.com/file/d/'+drive[1]+'/preview" allow="autoplay"></iframe></div>';
+  }
+  if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)){
+    return '<div class="video-embed-wrap"><video controls src="'+url+'"></video></div>';
+  }
+  return '<a href="'+url+'" target="_blank" rel="noopener" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-bottom:16px">↗ Abrir vídeo em nova aba</a>';
+}
+
+// Tela dedicada da aula — navegação anterior/próxima dentro de
+// window._aulasOrdenadasCache (módulo->aula, montada em renderCursoDetalhe).
+function abrirAulaViewer(aulaId){
+  var lista = window._aulasOrdenadasCache || [];
+  var idx = lista.findIndex(function(x){ return x.id === aulaId; });
+  if(idx < 0) return;
+  renderAulaViewer(idx);
+  document.getElementById('aula-viewer').classList.add('open');
+}
+function fecharAulaViewer(){ document.getElementById('aula-viewer').classList.remove('open'); }
+function renderAulaViewer(idx){
+  var lista = window._aulasOrdenadasCache || [];
+  var a = lista[idx];
   if(!a) return;
-  document.getElementById('item-viewer-titulo').textContent = a.titulo;
-  var body = document.getElementById('item-viewer-body');
+  window._aulaViewerIdxAtual = idx;
+  document.getElementById('aula-viewer-titulo').textContent = a.titulo;
+  document.getElementById('aula-viewer-modulo').textContent = a._moduloNome || '';
+  var body = document.getElementById('aula-viewer-body');
+  var bloqueado = itemAindaBloqueado(a.liberar_em);
   var html = '';
-  if(a.video_url) html += '<video controls style="width:100%;border-radius:10px;margin-bottom:14px" src="' + a.video_url + '"></video>';
-  if(a.texto_conteudo) html += '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
-  if(!html) html = '<div class="empty-state">Sem conteúdo cadastrado ainda.</div>';
-  html += '<button class="btn-main" style="margin-top:20px" onclick="marcarConcluido(\'aula\',\''+aulaId+'\')">✅ Marcar como concluída</button>';
+  if(bloqueado){
+    html = '<div class="empty-state">🔒 Essa aula libera em ' + fmtDataBRAluno(a.liberar_em) + '.</div>';
+  }else{
+    if(a.video_url) html += renderizarVideo(a.video_url);
+    if(a.texto_conteudo) html += '<div class="card-flora" style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
+    if(!a.video_url && !a.texto_conteudo) html += '<div class="empty-state">Sem conteúdo cadastrado ainda.</div>';
+    var materiaisDaAula = (window._materiaisCache||[]).filter(function(mt){ return mt.aula_id === a.id; });
+    if(materiaisDaAula.length){
+      html += '<div style="font-weight:800;font-size:13px;margin:4px 0 8px">Materiais desta aula</div>';
+      html += materiaisDaAula.map(function(mt){
+        return '<div class="item-row" onclick="abrirMaterialViewer(\''+mt.id+'\')"><span class="item-icon-circle">📎</span><span style="flex:1">'+escHtml(mt.nome)+'</span></div>';
+      }).join('');
+    }
+    var prog = (window._progressoPorItemCache||{})['aula:'+a.id];
+    var feito = prog && prog.status === 'concluido';
+    html += '<button class="btn-concluir" style="margin-top:18px" onclick="marcarConcluido(\'aula\',\''+a.id+'\')" '+(feito?'disabled':'')+'>'+(feito?'✅ Concluída':'✅ Marcar como concluída')+'</button>';
+    registrarAberturaConteudo('aula', a.id);
+  }
+  html += '<div class="aula-nav">'
+    + '<button class="btn-outline" '+(idx<=0?'disabled':'')+' onclick="renderAulaViewer('+(idx-1)+')">◀ Aula anterior</button>'
+    + '<button class="btn-outline" '+(idx>=lista.length-1?'disabled':'')+' onclick="renderAulaViewer('+(idx+1)+')">Próxima aula ▶</button>'
+    + '</div>';
   body.innerHTML = html;
-  document.getElementById('item-viewer').classList.add('open');
-  registrarAberturaConteudo('aula', aulaId);
 }
 async function abrirMaterialViewer(materialId){
   var mt = (window._materiaisCache||[]).find(function(x){return x.id === materialId;});
@@ -411,7 +732,7 @@ async function abrirMaterialViewer(materialId){
   } else {
     html = '<div class="empty-state">Arquivo não disponível.</div>';
   }
-  html += '<button class="btn-main" onclick="marcarConcluido(\'material\',\''+materialId+'\')">✅ Marcar como concluído</button>';
+  html += '<button class="btn-concluir" onclick="marcarConcluido(\'material\',\''+materialId+'\')">✅ Marcar como concluído</button>';
   body.innerHTML = html;
   registrarAberturaConteudo('material', materialId);
 }
@@ -434,18 +755,204 @@ async function marcarConcluido(tipo, id){
     var matriculaId = matriculaDetalheAtual.id;
     var campo = tipo === 'aula' ? 'aula_id' : 'material_id';
     var existente = await supa.from('curso_progresso_conteudo').select('id').eq('matricula_id', matriculaId).eq(campo, id).maybeSingle();
-    if(existente.data){
-      await supa.from('curso_progresso_conteudo').update({ status: 'concluido', concluido_em: new Date().toISOString() }).eq('id', existente.data.id);
+    var registroId = existente.data ? existente.data.id : null;
+    if(registroId){
+      await supa.from('curso_progresso_conteudo').update({ status: 'concluido', concluido_em: new Date().toISOString() }).eq('id', registroId);
     } else {
-      await supa.from('curso_progresso_conteudo').insert([{
+      var rNovo = await supa.from('curso_progresso_conteudo').insert([{
         matricula_id: matriculaId, salao_id: alunoAtual.salao_id, tipo_conteudo: tipo,
         aula_id: tipo==='aula'?id:null, material_id: tipo==='material'?id:null,
         status: 'concluido', aberto_em: new Date().toISOString(), concluido_em: new Date().toISOString()
-      }]);
+      }]).select('id').single();
+      registroId = rNovo.data ? rNovo.data.id : null;
     }
-    fecharViewer();
-    abrirCursoDetalhe(matriculaId);
+    var chave = tipo + ':' + id;
+    if(window._progressoPorItemCache) window._progressoPorItemCache[chave] = { id: registroId, status: 'concluido' };
+    if(tipo === 'aula' && window._aulaViewerIdxAtual != null){
+      // Continua na mesma aula (só atualiza o selo/botão), sem fechar a tela —
+      // deixa o aluno seguir direto pra "Próxima aula" sem precisar reabrir.
+      renderAulaViewer(window._aulaViewerIdxAtual);
+    } else {
+      fecharViewer();
+      abrirCursoDetalhe(matriculaId);
+    }
   }catch(e){ console.log('err marcar concluido', e); }
+}
+
+// ===== Exercícios =====
+function opcaoTexto(exercicio, optId){
+  var o = (exercicio.opcoes||[]).find(function(x){return x.id === optId;});
+  return o ? o.texto : optId;
+}
+function previewImagemExercicio(input){
+  var img = document.getElementById('exec-preview-img');
+  var file = input.files[0];
+  if(!file || !img) return;
+  img.src = URL.createObjectURL(file);
+  img.style.display = 'block';
+}
+function abrirExercicio(exercicioId){
+  var e = (window._exerciciosCache||[]).find(function(x){return x.id === exercicioId;});
+  if(!e) return;
+  document.getElementById('item-viewer-titulo').textContent = e.titulo;
+  var body = document.getElementById('item-viewer-body');
+  var envio = envioAtualDoExercicio(exercicioId);
+  var html = '<div class="card-flora"><div style="font-size:14px;white-space:pre-wrap">' + escHtml(e.enunciado||'') + '</div></div>';
+  if(envio && envio.status !== 'refazer'){
+    html += '<div class="card-flora" style="font-size:13px">'
+      + '<div style="margin-bottom:8px">' + envioStatusBadgeHtml(envio.status) + '</div>'
+      + (envio.resposta_texto ? '<div style="white-space:pre-wrap">'+escHtml(envio.resposta_texto)+'</div>' : '')
+      + (envio.resposta_opcao ? '<div>Resposta: '+escHtml(opcaoTexto(e, envio.resposta_opcao))+'</div>' : '')
+      + (envio.arquivo_url ? '<div>📎 arquivo enviado</div>' : '')
+      + (envio.comentario_professor ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft);color:#555"><b>Comentário do professor:</b> '+escHtml(envio.comentario_professor)+'</div>' : '')
+      + '</div>';
+    body.innerHTML = html;
+  }else{
+    if(envio && envio.status === 'refazer' && envio.comentario_professor){
+      html += '<div class="card-flora" style="background:#fef2f2;border-color:#fecaca;color:#b91c1c;font-size:13px"><b>O professor pediu pra refazer:</b> '+escHtml(envio.comentario_professor)+'</div>';
+    }
+    html += '<div class="card-flora">';
+    if(e.tipo === 'texto'){
+      html += '<textarea id="exec-resposta-texto" style="width:100%;min-height:100px;padding:10px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;box-sizing:border-box"></textarea>';
+    }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
+      html += (e.opcoes||[]).map(function(o){
+        return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
+          + '<input type="radio" name="exec-opcao" value="'+o.id+'"/> ' + escHtml(o.texto) + '</label>';
+      }).join('');
+    }else if(e.tipo === 'envio_imagem'){
+      html += '<input type="file" id="exec-arquivo" accept="image/jpeg,image/png,image/webp" onchange="previewImagemExercicio(this)"/>'
+        + '<img id="exec-preview-img" style="display:none;width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:contain;background:var(--gray-50)"/>';
+    }else if(e.tipo === 'envio_arquivo'){
+      html += '<input type="file" id="exec-arquivo" accept="application/pdf"/>';
+    }
+    html += '</div>';
+    html += '<button class="btn-concluir" onclick="enviarExercicio(\''+exercicioId+'\')">Enviar resposta</button>';
+    body.innerHTML = html;
+  }
+  document.getElementById('item-viewer').classList.add('open');
+}
+async function enviarExercicio(exercicioId){
+  var e = (window._exerciciosCache||[]).find(function(x){return x.id === exercicioId;});
+  if(!e) return;
+  var payload = { exercicio_id: exercicioId, matricula_id: matriculaDetalheAtual.id, salao_id: alunoAtual.salao_id, status: 'enviado' };
+  if(e.tipo === 'texto'){
+    var texto = document.getElementById('exec-resposta-texto').value.trim();
+    if(!texto){ alert('Escreva sua resposta antes de enviar.'); return; }
+    payload.resposta_texto = texto;
+  }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
+    var sel = document.querySelector('input[name="exec-opcao"]:checked');
+    if(!sel){ alert('Selecione uma opção.'); return; }
+    payload.resposta_opcao = sel.value;
+  }else{
+    var fileInput = document.getElementById('exec-arquivo');
+    var file = fileInput.files[0];
+    if(!file){ alert('Selecione um arquivo.'); return; }
+    try{
+      var path = alunoAtual.salao_id + '/' + alunoAtual.id + '/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+      var up = await supa.storage.from('curso-envios').upload(path, file);
+      if(up.error) throw up.error;
+      payload.arquivo_url = path;
+    }catch(err){ console.log('err upload exercicio', err); alert('Não foi possível enviar o arquivo (verifique o tipo e tamanho — só imagem ou PDF, até 10MB).'); return; }
+  }
+  try{
+    var r = await supa.from('curso_exercicio_envios').insert([payload]).select('*').single();
+    if(r.error) throw r.error;
+    window._enviosCache = (window._enviosCache||[]).filter(function(x){return x.exercicio_id !== exercicioId;}).concat([r.data]);
+  }catch(err){ console.log('err enviar exercicio', err); alert('Não foi possível enviar. Tente novamente.'); return; }
+  fecharViewer();
+  abrirCursoDetalhe(matriculaDetalheAtual.id);
+}
+
+// ===== Provas =====
+var provaEmAndamento = null; // {prova, perguntas, respostas:{perguntaId:valor}}
+async function abrirProva(provaId){
+  var p = (window._provasCache||[]).find(function(x){return x.id === provaId;});
+  if(!p) return;
+  var tentativas = tentativasDaProva(provaId);
+  document.getElementById('item-viewer-titulo').textContent = p.titulo;
+  var body = document.getElementById('item-viewer-body');
+  var usadas = tentativas.length;
+  var podeTentar = usadas < p.tentativas_maximas;
+  var html = '<div style="font-size:13.5px;color:var(--gray-600);margin-bottom:12px">' + escHtml(p.descricao||'') + '</div>';
+  html += '<div style="font-size:12.5px;color:var(--gray-600);margin-bottom:16px">Nota mínima: '+p.nota_minima+'% · Tentativas: '+usadas+'/'+p.tentativas_maximas+(p.tempo_limite_min?' · Tempo limite: '+p.tempo_limite_min+' min':'')+'</div>';
+  if(tentativas.length){
+    html += tentativas.map(function(t){
+      return '<div style="background:var(--gray-50);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;display:flex;justify-content:space-between"><span>Tentativa '+t.numero_tentativa+'</span><span>'+Math.round(t.percentual||0)+'% '+(t.aprovado?'✅':'')+'</span></div>';
+    }).join('');
+  }
+  if(podeTentar){
+    html += '<button class="btn-main" style="margin-top:12px" onclick="iniciarProva(\''+provaId+'\')">'+(tentativas.length?'Tentar novamente':'Iniciar prova')+'</button>';
+  }else{
+    html += '<div style="margin-top:12px;color:var(--gray-400);font-size:12.5px">Você já usou todas as tentativas disponíveis.</div>';
+  }
+  body.innerHTML = html;
+  document.getElementById('item-viewer').classList.add('open');
+}
+async function iniciarProva(provaId){
+  var p = (window._provasCache||[]).find(function(x){return x.id === provaId;});
+  if(!p) return;
+  try{
+    var r = await supa.from('curso_prova_perguntas').select('*').eq('prova_id', provaId).order('ordem');
+    var perguntas = r.data || [];
+    if(!perguntas.length){ alert('Esta prova ainda não tem perguntas cadastradas.'); return; }
+    provaEmAndamento = { prova: p, perguntas: perguntas, respostas: {} };
+    renderPerguntaAtualProva(0);
+  }catch(e){ console.log('err iniciar prova', e); alert('Não foi possível carregar a prova.'); }
+}
+function renderPerguntaAtualProva(idx){
+  var pa = provaEmAndamento;
+  if(!pa) return;
+  var pg = pa.perguntas[idx];
+  var body = document.getElementById('item-viewer-body');
+  if(!pg){ finalizarProva(); return; }
+  var respostaAtual = pa.respostas[pg.id];
+  var html = '<div style="font-size:12px;color:var(--gray-400);margin-bottom:6px">Pergunta '+(idx+1)+' de '+pa.perguntas.length+'</div>';
+  html += '<div style="font-size:14px;font-weight:700;margin-bottom:14px">'+escHtml(pg.enunciado)+'</div>';
+  html += (pg.opcoes||[]).map(function(o){
+    return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
+      + '<input type="radio" name="pg-opcao" value="'+o.id+'" '+(respostaAtual===o.id?'checked':'')+' onchange="provaEmAndamento.respostas[\''+pg.id+'\']=this.value"/> ' + escHtml(o.texto) + '</label>';
+  }).join('');
+  html += '<button class="btn-main" style="margin-top:12px" onclick="proximaPerguntaProva('+idx+')">'+(idx+1<pa.perguntas.length?'Próxima':'Finalizar e ver resultado')+'</button>';
+  body.innerHTML = html;
+}
+function proximaPerguntaProva(idxAtual){
+  var pa = provaEmAndamento;
+  var pg = pa.perguntas[idxAtual];
+  if(!pa.respostas[pg.id]){ alert('Selecione uma resposta antes de continuar.'); return; }
+  renderPerguntaAtualProva(idxAtual+1);
+}
+async function finalizarProva(){
+  var pa = provaEmAndamento;
+  if(!pa) return;
+  var pontuacaoMaxima = 0, pontuacaoObtida = 0;
+  var respostasSalvas = pa.perguntas.map(function(pg){
+    var resp = pa.respostas[pg.id];
+    pontuacaoMaxima += Number(pg.pontuacao)||0;
+    var correta = resp === pg.resposta_correta;
+    if(correta) pontuacaoObtida += Number(pg.pontuacao)||0;
+    return { pergunta_id: pg.id, resposta: resp, correta: correta };
+  });
+  var percentual = pontuacaoMaxima > 0 ? (pontuacaoObtida/pontuacaoMaxima*100) : 0;
+  var aprovado = percentual >= (pa.prova.nota_minima||0);
+  var numeroTentativa = tentativasDaProva(pa.prova.id).length + 1;
+  try{
+    var r = await supa.from('curso_prova_tentativas').insert([{
+      prova_id: pa.prova.id, matricula_id: matriculaDetalheAtual.id, salao_id: alunoAtual.salao_id,
+      numero_tentativa: numeroTentativa, respostas: respostasSalvas,
+      pontuacao_obtida: pontuacaoObtida, pontuacao_maxima: pontuacaoMaxima, percentual: percentual,
+      aprovado: aprovado, finalizado_em: new Date().toISOString()
+    }]).select('*').single();
+    if(r.error) throw r.error;
+    window._tentativasCache = (window._tentativasCache||[]).concat([r.data]);
+  }catch(e){ console.log('err finalizar prova', e); alert('Não foi possível registrar sua tentativa.'); return; }
+  var body = document.getElementById('item-viewer-body');
+  body.innerHTML = '<div style="text-align:center;padding:20px 0">'
+    + '<div style="font-size:40px">'+(aprovado?'🎉':'😕')+'</div>'
+    + '<div style="font-size:22px;font-weight:800;margin-top:10px">'+Math.round(percentual)+'%</div>'
+    + '<div style="font-size:13px;color:var(--gray-600);margin-top:6px">'+(aprovado?'Aprovado!':'Não atingiu a nota mínima de '+pa.prova.nota_minima+'%')+'</div>'
+    + '<button class="btn-main" style="margin-top:20px" onclick="fecharViewer();abrirCursoDetalhe(matriculaDetalheAtual.id)">Voltar ao curso</button>'
+    + '</div>';
+  provaEmAndamento = null;
 }
 
 // ===== Minha Turma =====
@@ -481,6 +988,107 @@ async function carregarMinhaTurma(){
   }
 }
 
+// ===== Certificados =====
+function certificadoStatusBadge(status){
+  var map = { liberado:'badge-green', emitido:'badge-blue', revogado:'badge-gray' };
+  var label = { liberado:'Disponível', emitido:'Emitido', revogado:'Indisponível' };
+  return '<span class="badge ' + (map[status]||'badge-gray') + '">' + (label[status]||status) + '</span>';
+}
+async function carregarCertificados(){
+  var wrap = document.getElementById('certificados-aluno-corpo');
+  wrap.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var matriculaIds = matriculasAtuais.map(function(m){ return m.id; });
+    if(!matriculaIds.length){ wrap.innerHTML = '<div class="empty-state">Nenhum certificado disponível ainda.</div>'; return; }
+    var r = await supa.from('curso_certificados').select('*').in('matricula_id', matriculaIds).neq('status', 'revogado').order('emitido_em', { ascending:false });
+    var certificados = r.data || [];
+    if(!certificados.length){ wrap.innerHTML = '<div class="empty-state">Nenhum certificado disponível ainda. Ele aparece aqui quando a escola liberar.</div>'; return; }
+    wrap.innerHTML = certificados.map(function(c){
+      var m = matriculasAtuais.find(function(x){ return x.id === c.matricula_id; });
+      var nome = m ? m._nome : 'Curso';
+      return '<div class="curso-card" style="cursor:default">'
+        + '<div class="curso-card-top">'
+        + '<div class="curso-card-capa">🎓</div>'
+        + '<div style="flex:1"><div class="curso-card-nome">' + escHtml(nome||'Curso') + '</div>'
+        + '<div class="curso-card-status">' + certificadoStatusBadge(c.status) + ' · nº ' + escHtml(c.numero_certificado) + '</div></div>'
+        + '</div>'
+        + (c.pdf_url
+            ? '<button class="btn-outline" style="display:block;width:100%;margin-top:10px" onclick="baixarCertificado(\'' + c.pdf_url + '\')">⬇️ Baixar certificado</button>'
+            : '<div style="font-size:12px;color:var(--gray-600);margin-top:8px">Liberado — o PDF ainda não foi gerado pela escola.</div>')
+        + '</div>';
+    }).join('');
+  }catch(e){
+    console.log('err carregar certificados', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus certificados agora.</div>';
+  }
+}
+async function baixarCertificado(path){
+  try{
+    var r = await supa.storage.from('curso-certificados').createSignedUrl(path, 120);
+    if(r.error) throw r.error;
+    window.open(r.data.signedUrl, '_blank');
+  }catch(e){ console.log('err baixar certificado', e); alert('Não foi possível baixar o certificado agora.'); }
+}
+
+// ===== Avisos =====
+var avisosAtuais = [];
+function avisoIcone(tipo){
+  var map = { aula_amanha:'📅', alteracao_horario:'⏰', nova_apostila:'📎', live_evento:'🔴', exercicio_corrigido:'📝', aprovado_prova:'✅', certificado_disponivel:'🎓' };
+  return map[tipo] || '🔔';
+}
+async function carregarAvisos(){
+  var wrap = document.getElementById('avisos-aluno-corpo');
+  wrap.innerHTML = '<div class="empty-state">Carregando...</div>';
+  try{
+    var r = await supa.from('curso_notificacoes').select('*').eq('destinatario_tipo','aluno').order('criado_em', { ascending:false });
+    avisosAtuais = r.data || [];
+    renderAvisos();
+    atualizarBadgeAvisos();
+  }catch(e){
+    console.log('err carregar avisos', e);
+    wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus avisos agora.</div>';
+  }
+}
+function renderAvisos(){
+  var wrap = document.getElementById('avisos-aluno-corpo');
+  if(!avisosAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum aviso por enquanto.</div>'; return; }
+  wrap.innerHTML = avisosAtuais.map(function(n){
+    var evento = n.entidade_ref && n.entidade_ref.data_evento
+      ? ('<div style="font-size:12px;color:var(--gray-600);margin-top:4px">📅 ' + fmtDataBRAluno(n.entidade_ref.data_evento) + (n.entidade_ref.hora_evento ? ' às ' + n.entidade_ref.hora_evento : '') + '</div>')
+      : '';
+    var link = n.entidade_ref && n.entidade_ref.link
+      ? ('<a href="' + n.entidade_ref.link + '" target="_blank" class="btn-outline" style="display:block;text-align:center;text-decoration:none;margin-top:8px;padding:8px">Abrir link</a>')
+      : '';
+    return '<div class="curso-card" style="cursor:pointer;' + (n.lida ? 'opacity:.65' : 'border-left:3px solid #7c3aed') + '" onclick="abrirAviso(\'' + n.id + '\')">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px">'
+      + '<span style="font-size:18px">' + avisoIcone(n.tipo_evento) + '</span>'
+      + '<div style="flex:1">'
+      + '<div style="font-weight:700;font-size:13.5px">' + escHtml(n.titulo) + '</div>'
+      + (n.mensagem ? '<div style="font-size:12.5px;color:var(--gray-600);margin-top:3px">' + escHtml(n.mensagem) + '</div>' : '')
+      + evento + link
+      + '<div style="font-size:10.5px;color:var(--gray-400);margin-top:6px">' + new Date(n.criado_em).toLocaleString('pt-BR') + '</div>'
+      + '</div>'
+      + (!n.lida ? '<span style="width:8px;height:8px;border-radius:50%;background:#7c3aed;flex-shrink:0;margin-top:4px"></span>' : '')
+      + '</div></div>';
+  }).join('');
+}
+async function abrirAviso(id){
+  var n = avisosAtuais.find(function(x){ return x.id === id; });
+  if(!n || n.lida) return;
+  n.lida = true;
+  renderAvisos();
+  atualizarBadgeAvisos();
+  try{ await supa.from('curso_notificacoes').update({ lida: true }).eq('id', id); }
+  catch(e){ console.log('err marcar aviso lido', e); }
+}
+function atualizarBadgeAvisos(){
+  var badge = document.getElementById('avisos-badge');
+  if(!badge) return;
+  var naoLidos = avisosAtuais.filter(function(n){ return !n.lida; }).length;
+  if(naoLidos > 0){ badge.textContent = naoLidos > 9 ? '9+' : String(naoLidos); badge.style.display = 'block'; }
+  else { badge.style.display = 'none'; }
+}
+
 // ===== Boot =====
 (async function boot(){
   try{
@@ -488,13 +1096,21 @@ async function carregarMinhaTurma(){
     // pelo hash — este client usa storageKey próprio ('flora-aluno-auth'),
     // não enxerga a sessão criada no client do painel do salão sozinho.
     var hash = window.location.hash;
+    var ehRecuperacao = false;
     if(hash && hash.indexOf('access_token=') >= 0){
       var params = new URLSearchParams(hash.slice(1));
       var at = params.get('access_token'), rt = params.get('refresh_token');
+      ehRecuperacao = params.get('type') === 'recovery';
       if(at && rt){
         await supa.auth.setSession({ access_token: at, refresh_token: rt });
         history.replaceState(null, '', window.location.pathname);
       }
+    }
+    if(ehRecuperacao){
+      // Veio do link de "esqueci minha senha" — exige definir senha nova
+      // antes de entrar no app, em vez de logar direto com o token do e-mail.
+      mostrarTela('screen-nova-senha');
+      return;
     }
     var s = await supa.auth.getSession();
     if(s.data && s.data.session){ await iniciarApp(); }
