@@ -4841,7 +4841,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full"><label>Nome do Aluno *</label><input id="aluno-nome" placeholder="Nome completo"/></div>
       <div class="form-group"><label>CPF</label><input id="aluno-cpf" placeholder="000.000.000-00"/></div>
       <div class="form-group"><label>Telefone</label><input id="aluno-tel" placeholder="(00) 00000-0000"/></div>
-      <div class="form-group"><label>E-mail</label><input id="aluno-email" type="email" placeholder="aluno@email.com"/></div>
+      <div class="form-group"><label>E-mail</label><input id="aluno-email" type="email" placeholder="aluno@email.com" autocomplete="off"/></div>
       <div class="form-group"><label>Data de Nascimento</label><input type="date" id="aluno-nasc"/></div>
       <div class="form-group full"><label>Endereço</label><input id="aluno-endereco"/></div>
       <div class="form-group"><label>Status</label>
@@ -6975,6 +6975,12 @@ function salvarAluno(){
   var get=function(id){return document.getElementById(id);};
   var nome=get('aluno-nome').value.trim();
   if(!nome){alert('Informe o nome do aluno.');return;}
+  var idx=window._editAlunoIdx;
+  var emailNovo=get('aluno-email').value.trim();
+  if(emailNovo){
+    var duplicado=cursoAlunos.some(function(a,i2){return i2!==idx&&(a.email||'').trim().toLowerCase()===emailNovo.toLowerCase();});
+    if(duplicado){alert('Já existe outro aluno cadastrado com este e-mail neste salão.');return;}
+  }
   var clienteIdx=get('aluno-cliente-vinculo').value;
   var clienteId=(clienteIdx!==''&&typeof clientes!=='undefined'&&clientes[parseInt(clienteIdx)])?(clientes[parseInt(clienteIdx)].id||null):null;
   var obj={
@@ -6982,12 +6988,11 @@ function salvarAluno(){
     cliente_id:clienteId,
     cpf:get('aluno-cpf').value.trim(),
     tel:get('aluno-tel').value.trim(),
-    email:get('aluno-email').value.trim(),
+    email:emailNovo,
     nasc:get('aluno-nasc').value||null,
     endereco:get('aluno-endereco').value.trim(),
     status:get('aluno-status').value
   };
-  var idx=window._editAlunoIdx;
   if(idx>=0&&cursoAlunos[idx]){
     var existente=cursoAlunos[idx];
     Object.assign(existente,obj);
