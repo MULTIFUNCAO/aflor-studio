@@ -290,7 +290,7 @@ async function salvarNovaSenha(){
     btn.disabled = false; btn.textContent = 'Salvar nova senha';
   }, 8000);
   try{
-    var r = await supa.auth.updateUser({ password: s1 });
+    var r = await supa.auth.updateUser({ password: s1, data: { must_change_password: false } });
     if(tempoEsgotado) return;
     if(r.error){
       clearTimeout(watchdog);
@@ -367,6 +367,19 @@ async function iniciarApp(alertElId){
       return false;
     }
     alunoAtual = rAluno.data[0];
+    // Primeiro acesso com senha provisória (criada pelo admin via WhatsApp,
+    // sem convite por e-mail) — obriga trocar antes de entrar no Portal.
+    // Reaproveita a mesma tela/fluxo de "esqueci minha senha", já que
+    // supa.auth.updateUser() funciona igual em qualquer sessão autenticada.
+    var sessaoAtual = await supa.auth.getSession();
+    var metadados = sessaoAtual.data && sessaoAtual.data.session && sessaoAtual.data.session.user
+      ? sessaoAtual.data.session.user.user_metadata : null;
+    if(metadados && metadados.must_change_password){
+      var elAviso = document.getElementById('nova-senha-alert');
+      if(elAviso){ elAviso.textContent = 'Primeiro acesso — defina sua senha definitiva pra continuar.'; elAviso.className = 'alert-box ok'; }
+      mostrarTela('screen-nova-senha');
+      return true;
+    }
     mostrarTela('screen-app');
     document.getElementById('saudacao-aluno').textContent = 'Olá, ' + (alunoAtual.nome || 'aluna') + '! 🌷';
     await carregarMeusCursos();

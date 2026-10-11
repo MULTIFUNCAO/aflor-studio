@@ -7206,12 +7206,34 @@ function renderFichaAluno(alunoId){
   var wrap=document.getElementById('ficha-aluno-corpo');
   if(!wrap)return;
   var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
-  var acessoHtml='<div style="display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-bottom:14px">'
-    +'<div style="font-size:12.5px;color:#555">'
-    +(aluno&&aluno.auth_user_id?'🔑 Acesso ao Portal do Aluno já criado':'🔒 Aluno ainda não tem acesso ao Portal')
-    +'</div>'
-    +(aluno&&!aluno.auth_user_id?'<button class="btn btn-outline btn-sm" onclick="criarAcessoAluno(\''+alunoId+'\')" id="btn-criar-acesso-aluno">Criar Acesso</button>':'')
-    +'</div>';
+  var acessoHtml;
+  if(aluno&&aluno.auth_user_id){
+    acessoHtml='<div style="background:var(--gray-50);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#555">🔑 Acesso ao Portal do Aluno já criado</div>';
+  }else if(window._acessoCriadoSenha&&window._acessoCriadoSenha.alunoId===alunoId){
+    var cred=window._acessoCriadoSenha;
+    acessoHtml='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:14px">'
+      +'<div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:8px">✅ Acesso criado — copie e envie pro WhatsApp da aluna</div>'
+      +'<div style="font-size:12.5px;margin-bottom:4px"><b>Login:</b> '+escHtml(cred.email)+'</div>'
+      +'<div style="font-size:12.5px;margin-bottom:10px"><b>Senha provisória:</b> '+escHtml(cred.senha)+'</div>'
+      +'<button class="btn btn-outline btn-sm" onclick="copiarCredenciaisAcesso()">📋 Copiar login e senha</button>'
+      +'</div>';
+  }else if(aluno){
+    acessoHtml='<div style="background:var(--gray-50);border-radius:10px;padding:14px;margin-bottom:14px">'
+      +'<div style="font-size:12.5px;color:#555;margin-bottom:10px">🔒 Aluno ainda não tem acesso ao Portal</div>'
+      +'<div style="display:flex;gap:14px;margin-bottom:10px;font-size:12.5px">'
+      +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="acesso-modo" value="senha" checked onchange="atualizarCamposAcessoAluno()"/> Definir senha agora</label>'
+      +'<label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="acesso-modo" value="email" onchange="atualizarCamposAcessoAluno()"/> Enviar convite por e-mail</label>'
+      +'</div>'
+      +'<div id="acesso-senha-wrap" style="margin-bottom:10px">'
+      +'<div style="position:relative">'
+      +'<input id="acesso-senha-provisoria" type="password" placeholder="Senha provisória (mín. 8 caracteres)" style="width:100%;box-sizing:border-box;padding-right:38px"/>'
+      +'<span onclick="toggleSenhaVisivel(\'acesso-senha-provisoria\',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>'
+      +'</div></div>'
+      +'<button class="btn btn-outline btn-sm" onclick="criarAcessoAluno(\''+alunoId+'\')" id="btn-criar-acesso-aluno">Criar Acesso</button>'
+      +'</div>';
+  }else{
+    acessoHtml='';
+  }
   var matriculasDoAluno=cursoMatriculas.filter(function(m){return m.aluno_id===alunoId;});
   if(!matriculasDoAluno.length){wrap.innerHTML=acessoHtml+'<div style="padding:20px;text-align:center;color:#999;font-size:13px">Nenhuma matrícula ainda.</div>';return;}
   wrap.innerHTML=acessoHtml+matriculasDoAluno.map(function(m){
@@ -7272,16 +7294,39 @@ async function darBaixaParcela(idxP){
     showAlert('Parcela paga e lançada no Fluxo de Caixa!');
   }catch(e){console.log('err dar baixa parcela',e);alert('Erro ao dar baixa na parcela.');}
 }
+function atualizarCamposAcessoAluno(){
+  var modo=(document.querySelector('input[name="acesso-modo"]:checked')||{}).value||'senha';
+  var wrap=document.getElementById('acesso-senha-wrap');
+  if(wrap)wrap.style.display=modo==='senha'?'':'none';
+}
+function copiarCredenciaisAcesso(){
+  var cred=window._acessoCriadoSenha;
+  if(!cred)return;
+  var texto='Login: '+cred.email+'\nSenha provisória: '+cred.senha;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(function(){showAlert('Copiado! Cole no WhatsApp da aluna.');}).catch(function(){alert(texto);});
+  }else{
+    alert(texto);
+  }
+}
 async function criarAcessoAluno(alunoId){
+  var modo=(document.querySelector('input[name="acesso-modo"]:checked')||{}).value||'senha';
+  var senhaProvisoria=null;
+  if(modo==='senha'){
+    senhaProvisoria=(document.getElementById('acesso-senha-provisoria')||{}).value||'';
+    if(senhaProvisoria.length<8){alert('A senha provisória precisa ter pelo menos 8 caracteres.');return;}
+  }
   var btn=document.getElementById('btn-criar-acesso-aluno');
   if(btn){btn.disabled=true;btn.textContent='Criando...';}
   try{
     var sessao=await supa.auth.getSession();
     var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
+    var payload={aluno_id:alunoId};
+    if(senhaProvisoria)payload.senha_provisoria=senhaProvisoria;
     var resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-aluno',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)},
-      body:JSON.stringify({aluno_id:alunoId})
+      body:JSON.stringify(payload)
     });
     var data=await resp.json();
     if(!resp.ok){
@@ -7292,10 +7337,16 @@ async function criarAcessoAluno(alunoId){
     }
     var aluno=cursoAlunos.find(function(a){return a.id===alunoId;});
     if(aluno)aluno.auth_user_id=data.auth_user_id;
-    renderFichaAluno(alunoId);
-    showAlert(data.vinculado_existente
-      ? 'Este e-mail já tinha conta — vinculamos ao cadastro dela. A aluna já pode entrar com a senha que já usa (nenhum e-mail novo foi enviado).'
-      : 'Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+    if(data.senha_provisoria){
+      window._acessoCriadoSenha={alunoId:alunoId,email:data.email,senha:data.senha_provisoria};
+      renderFichaAluno(alunoId);
+      showAlert('Acesso criado com senha provisória — copie e envie pro WhatsApp da aluna.');
+    }else{
+      renderFichaAluno(alunoId);
+      showAlert(data.vinculado_existente
+        ? 'Este e-mail já tinha conta — vinculamos ao cadastro dela. A aluna já pode entrar com a senha que já usa (nenhum e-mail novo foi enviado).'
+        : 'Acesso criado! A aluna recebeu um e-mail para definir a senha.');
+    }
   }catch(e){
     console.log('err criar acesso aluno',e);
     alert('Erro ao criar acesso do aluno.');

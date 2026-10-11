@@ -1,7 +1,16 @@
 // Supabase Edge Function — Criar Acesso do Aluno
-// Cria a conta de Supabase Auth de um aluno (curso_alunos) e envia o
-// e-mail de convite para ele definir a própria senha, sem nunca rodar
+// Cria a conta de Supabase Auth de um aluno (curso_alunos), sem nunca rodar
 // signUp() no client (que trocaria a sessão ativa do dono do salão).
+//
+// Dois modos, escolhidos pelo admin na Ficha do Aluno:
+//   - senha_provisoria preenchida: cria a conta já com essa senha
+//     (auth.admin.createUser, email_confirm:true), SEM enviar e-mail nenhum —
+//     pensado pro admin repassar login/senha por WhatsApp enquanto o limite
+//     de e-mail do Supabase (serviço padrão, sem SMTP próprio) estiver
+//     travando os convites. must_change_password:true no user_metadata força
+//     o Portal a pedir troca de senha no primeiro acesso.
+//   - sem senha_provisoria: fluxo de sempre, inviteUserByEmail (convite real
+//     por e-mail) — pra quando um SMTP próprio estiver configurado.
 //
 // Variáveis de ambiente:
 //   SUPABASE_URL         — injetado automaticamente pelo Supabase
@@ -38,10 +47,14 @@ serve(async (req: Request) => {
   const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser();
   if (authErr || !user) return json({ error: 'Unauthorized' }, 401);
 
-  let body: { aluno_id?: string };
+  let body: { aluno_id?: string; senha_provisoria?: string };
   try { body = await req.json(); } catch { return json({ error: 'Bad Request' }, 400); }
   const alunoId = body.aluno_id;
+  const senhaProvisoria = body.senha_provisoria?.trim() || undefined;
   if (!alunoId) return json({ error: 'aluno_id é obrigatório' }, 400);
+  if (senhaProvisoria && senhaProvisoria.length < 8) {
+    return json({ error: 'A senha provisória precisa ter pelo menos 8 caracteres.' }, 400);
+  }
 
   // ── Confirmar que o aluno pertence ao salão de quem chamou, usando o
   //    client com o JWT do chamador — a RLS existente (salao_id = my_salao_id())
@@ -62,21 +75,28 @@ serve(async (req: Request) => {
   );
 
   try {
-    const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      aluno.email,
-      {
-        data: { nome: aluno.nome, tipo_conta: 'aluno' },
-        // Sem isso o convite cai no Site URL padrão do projeto (o painel do
-        // salão, index.html) em vez do Portal do Aluno. index.html também
-        // tem um guard que redireciona sessões de aluno pra cá como segunda
-        // camada — mas o link já apontar certo evita o hop extra.
-        redirectTo: 'https://floragestao.com.br/portal-aluno.html',
-      },
-    );
+    const { data: resultado, error: criarErr } = senhaProvisoria
+      ? await supabaseAdmin.auth.admin.createUser({
+          email: aluno.email,
+          password: senhaProvisoria,
+          email_confirm: true,
+          user_metadata: { nome: aluno.nome, tipo_conta: 'aluno', must_change_password: true },
+        })
+      : await supabaseAdmin.auth.admin.inviteUserByEmail(
+          aluno.email,
+          {
+            data: { nome: aluno.nome, tipo_conta: 'aluno' },
+            // Sem isso o convite cai no Site URL padrão do projeto (o painel do
+            // salão, index.html) em vez do Portal do Aluno. index.html também
+            // tem um guard que redireciona sessões de aluno pra cá como segunda
+            // camada — mas o link já apontar certo evita o hop extra.
+            redirectTo: 'https://floragestao.com.br/portal-aluno.html',
+          },
+        );
 
-    if (inviteErr || !invited?.user) {
-      const jaRegistrado = /already.*registered/i.test(inviteErr?.message ?? '');
-      if (!jaRegistrado) throw inviteErr ?? new Error('Falha ao convidar aluno');
+    if (criarErr || !resultado?.user) {
+      const jaRegistrado = /already.*registered/i.test(criarErr?.message ?? '');
+      if (!jaRegistrado) throw criarErr ?? new Error('Falha ao criar acesso do aluno');
 
       // ── E-mail já tem conta em auth.users (comum: aluna já é aluna/cliente
       //    deste MESMO salão em outro curso/contexto) — vincula em vez de
@@ -132,12 +152,19 @@ serve(async (req: Request) => {
 
     const { error: updateErr } = await supabaseAdmin
       .from('curso_alunos')
-      .update({ auth_user_id: invited.user.id })
+      .update({ auth_user_id: resultado.user.id })
       .eq('id', alunoId);
     if (updateErr) throw updateErr;
 
-    console.log('[criar-acesso-aluno] conta criada:', invited.user.id, 'para aluno', alunoId);
-    return json({ auth_user_id: invited.user.id, email: aluno.email });
+    console.log(
+      '[criar-acesso-aluno] conta criada:', resultado.user.id, 'para aluno', alunoId,
+      senhaProvisoria ? '(senha provisória, sem e-mail)' : '(convite por e-mail)',
+    );
+    return json({
+      auth_user_id: resultado.user.id,
+      email: aluno.email,
+      ...(senhaProvisoria ? { senha_provisoria: senhaProvisoria } : {}),
+    });
   } catch (e) {
     console.error('[criar-acesso-aluno] erro:', e);
     const msg = e instanceof Error ? e.message : String(e);
