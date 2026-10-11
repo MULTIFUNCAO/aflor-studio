@@ -4207,6 +4207,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             </div>
           </div>
           <div id="popup-extras-lista"></div>
+          <div id="popup-produtos-usados-lista"></div>
           <div id="popup-novos-servicos-lista"></div>
           <div style="display:flex;gap:8px;margin:6px 0">
             <button type="button" class="af-link-caps" id="popup-btn-add-svc" style="flex:1;padding:8px" onclick="popupAbrirFormExtra(agEditandoKey)"><span class="material-symbols-outlined" style="font-size:16px">add</span>SERVIÇO</button>
@@ -7791,6 +7792,24 @@ function agAddProduto(){
     +'<button type="button" onclick="this.closest(\'.af-row\').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
   list.appendChild(row);
 }
+// Reabre a edição de um atendimento já com os produtos usados que foram salvos antes
+// (casa pelo nome com o catálogo atual; se o produto não existir mais, o select fica em
+// branco mas o valor salvo continua certo — o total da comanda não depende do select).
+function agPreencherProdutosUsados(lista){
+  (lista||[]).forEach(function(p){
+    agAddProduto();
+    var rows=document.querySelectorAll('#ag-produtos-list .af-row');
+    var row=rows[rows.length-1];
+    if(!row)return;
+    var sel=row.querySelector('select');
+    var inp=row.querySelector('input[type="number"]');
+    if(sel){
+      var opt=Array.prototype.find.call(sel.options,function(o){return o.text===p.nome;});
+      if(opt)sel.value=opt.value;
+    }
+    if(inp){inp.value=(parseFloat(p.valor)||0).toFixed(2);afToggleFilled(inp);}
+  });
+}
 
 var AG_PROF_LISTA=['Ana Flor','Edu','Flora','Jenny','Vi'];
 var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Flora':'Flora','Jenny':'Jenifer','Vi':'Vitoria'};
@@ -9951,6 +9970,18 @@ function popupServicosDoAtendimento(dados){
 function somaServicosAtendimento(dados){
   return popupServicosDoAtendimento(dados).reduce(function(s,sd){return s+sd.valor;},0);
 }
+// Produtos usados (ex: shampoo, tinta) — entram no total a pagar da mesma forma que
+// serviços extras, só que vêm do bloco "Produtos usados (opcional)" do formulário.
+function somaProdutosUsados(dados){
+  return ((dados&&dados.produtosUsados)||[]).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+}
+function produtosUsadosToHtml(dados){
+  var lista=(dados&&dados.produtosUsados)||[];
+  if(!lista.length)return '';
+  return lista.map(function(p){
+    return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#555"><span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">inventory_2</span> '+p.nome+'</span><span style="font-weight:700">'+formatMoedaBR(parseFloat(p.valor)||0)+'</span></div>';
+  }).join('');
+}
 function popupServicosComandaToHtml(key){
   var dados=agendaDiaAtual[key];
   var lista=popupServicosDoAtendimento(dados);
@@ -10361,7 +10392,7 @@ function abrirConfirmarPagamento(key){
   fecharAgendaPopup();
   var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
-  var total=somaServicosAtendimento(dados)+extrasTotal-descontoVal;
+  var total=somaServicosAtendimento(dados)+extrasTotal+somaProdutosUsados(dados)-descontoVal;
   total=Math.max(0,total);
   var sinalInput=lerSinalAgendamento(dados).valor;
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
@@ -11721,7 +11752,7 @@ function renderAgenda(){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id',{headers:h});
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id,produtos_usados',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
@@ -11745,7 +11776,9 @@ function renderAgenda(){
           var durMinPrimario=durFromServico(svcPrimario)||60;
           var detalhes=null;
           try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null};
+          var produtosUsadosRow=[];
+          try{if(a.produtos_usados)produtosUsadosRow=typeof a.produtos_usados==='string'?JSON.parse(a.produtos_usados):a.produtos_usados;}catch(e){}
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -14727,7 +14760,8 @@ function renderizarComandaEdicao(key){
   var servicoValPg=servicosComandaPg.reduce(function(s,sd){return s+sd.valor;},0);
   var abatePg=sinalInfoPg.pago?sinalInfoPg.valor:0;
   var extrasTotalPg=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
-  var totalPagarPg=Math.max(0,servicoValPg+extrasTotalPg-abatePg-popupDescontoValor);
+  var produtosTotalPg=somaProdutosUsados(dados);
+  var totalPagarPg=Math.max(0,servicoValPg+extrasTotalPg+produtosTotalPg-abatePg-popupDescontoValor);
   var stAg=(dados.status||'').toLowerCase();
   var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
 
@@ -14747,6 +14781,9 @@ function renderizarComandaEdicao(key){
 
   var elExtras=document.getElementById('popup-extras-lista');
   if(elExtras)elExtras.innerHTML=popupExtrasToHtml(key);
+
+  var elProdutos=document.getElementById('popup-produtos-usados-lista');
+  if(elProdutos)elProdutos.innerHTML=produtosUsadosToHtml(dados);
 
   var elNovos=document.getElementById('popup-novos-servicos-lista');
   if(elNovos)elNovos.innerHTML=popupNovosServicosToHtml(key);
@@ -14844,6 +14881,8 @@ function abrirAtendimentoEdicao(key,dados){
   afBlocos=agMapDadosParaBlocos(dados);
   afRenderServicoBlocos();
 
+  agPreencherProdutosUsados(dados.produtosUsados);
+
   var elObs=document.getElementById('ag-obs');
   if(elObs){elObs.value=dados.obs||'';afToggleFilled(elObs);}
 
@@ -14876,6 +14915,16 @@ async function afSalvarEdicaoBlocos(){
   if(!cliente||!dataBase){showAlert('Preencha cliente e data.');return;}
   var obs=(document.getElementById('ag-obs')?.value||'').trim();
 
+  var produtosUsados=[];
+  document.querySelectorAll('#ag-produtos-list .af-row').forEach(function(row){
+    var selProd=row.querySelector('select');
+    var inpVal=row.querySelector('input[type="number"]');
+    if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
+      var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
+      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
+    }
+  });
+
   var blocosValidos=afBlocos.filter(function(b){return b.servico&&b.profissional&&b.horario;});
   if(blocosValidos.length!==afBlocos.length||!blocosValidos.length){
     showAlert('Preencha profissional, serviço e horário em todos os blocos de serviço.');
@@ -14901,7 +14950,7 @@ async function afSalvarEdicaoBlocos(){
   var hora=blocosValidos[0].horario;
   var profSupa=mapaNomesInv[blocosValidos[0].profissional]||blocosValidos[0].profissional;
 
-  var patch={cliente:cliente,data:dataBase,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs};
+  var patch={cliente:cliente,data:dataBase,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs,produtos_usados:produtosUsados};
   var btn=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
   if(btn){btn.disabled=true;btn.textContent='SALVANDO...';}
   try{
@@ -14926,7 +14975,8 @@ async function afSalvarEdicaoBlocos(){
   if(!agendamentosPorData[dataKeyNova])agendamentosPorData[dataKeyNova]={};
   var apptBase=Object.assign({},dados,{
     cliente:cliente,servico:servico,hora:hora,valor:valorFmt,obs:obs,
-    duracao:servicosDetalhe[0].duracao_min+' min',servicos_detalhe:servicosDetalhe
+    duracao:servicosDetalhe[0].duracao_min+' min',servicos_detalhe:servicosDetalhe,
+    produtosUsados:produtosUsados
   });
   servicosDetalhe.forEach(function(sd){
     var pAg=agProfParaAgenda(sd.profissional);
@@ -15016,6 +15066,7 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
   var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
   if(!ehPacote)obj.servicos_detalhe=servicosDetalhe;
   if(ctx.serieId)obj.serie_id=ctx.serieId;
+  if(ctx.produtosUsados&&ctx.produtosUsados.length)obj.produtos_usados=ctx.produtosUsados;
   return _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
     return fetch(SUPA_URL+'/rest/v1/agendamentos',{method:'POST',headers:h,body:JSON.stringify(obj)});
   }).then(function(r){
