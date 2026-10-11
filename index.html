@@ -299,6 +299,15 @@ textarea{resize:vertical;min-height:80px}
    mesma do .btn-primary em todo o app). Só vale pro fluxo de CRIAR atendimento —
    clicar num agendamento existente continua abrindo o painel de detalhes de sempre. */
 :root{--af-accent:#15803d;--af-accent-light:#f0fdf4;--af-ink:#1f1f1f;--af-gray:#5f6368;--af-border:#dadce0}
+/* Etapa 3 — modal Atendimento reaproveitado também pra edição (ver abrirAtendimentoEdicao) */
+#modal-agendar.af-modo-edicao #af-tipo-bloco,
+#modal-agendar.af-modo-edicao #af-repetir-bloco,
+#modal-agendar.af-modo-edicao #ag-sinal-criacao-ui{display:none!important}
+#modal-agendar:not(.af-modo-edicao) #af-edit-topo,
+#modal-agendar:not(.af-modo-edicao) #af-edit-sinal-area,
+#modal-agendar:not(.af-modo-edicao) #af-edit-comanda{display:none!important}
+.af-edit-forma-btn{padding:7px 4px;border:1.5px solid var(--af-border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#333;display:flex;align-items:center;justify-content:center;gap:4px}
+.af-edit-forma-btn.ativo{background:var(--af-ink);color:#fff;border-color:var(--af-ink)}
 #modal-agendar{background:#f1f3f4;align-items:center;justify-content:center}
 #modal-agendar .modal.af-card{width:480px;max-width:92vw;max-height:92vh;height:auto;margin:0;border-radius:20px;border:1px solid var(--af-border);box-shadow:0 2px 28px rgba(0,0,0,.12);padding:0;display:flex;flex-direction:column;overflow:hidden;animation:afCardIn .16s ease-out;font-family:var(--font-flora)}
 @keyframes afCardIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
@@ -3955,6 +3964,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
 
     <div class="af-body">
+      <!-- EDIÇÃO: cliente + confirmação (só aparece em modo edição, ver af-modo-edicao) -->
+      <div id="af-edit-topo" style="display:flex;flex-direction:column;gap:12px">
+        <div class="af-row" style="align-items:center">
+          <div id="af-edit-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--af-ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0"></div>
+          <div>
+            <div id="af-edit-nome" style="font-weight:700;font-size:14px;color:var(--af-ink)"></div>
+            <div id="af-edit-tel" style="font-size:12px;color:var(--af-gray);margin-top:2px"></div>
+          </div>
+        </div>
+        <div id="popup-confirmacao-badge"></div>
+      </div>
       <!-- Cliente -->
       <div class="af-row">
         <span class="material-symbols-outlined">person</span>
@@ -3978,8 +3998,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
 
-      <!-- TIPO DE AGENDAMENTO -->
-      <div>
+      <!-- TIPO DE AGENDAMENTO (oculto em edição — edição nunca converte servico<->pacote) -->
+      <div id="af-tipo-bloco">
         <div class="af-row" style="margin-bottom:8px"><span class="material-symbols-outlined">event_note</span><span style="font-size:12.5px;font-weight:700;color:var(--af-gray);margin-top:2px">Tipo de Agendamento</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:30px">
           <label onclick="agSetTipo('servico')" id="ag-tipo-srv" style="flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:9px 12px;border:1.5px solid var(--af-accent);border-radius:10px;cursor:pointer;background:var(--af-accent-light)">
@@ -4044,6 +4064,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- SINAL / ENTRADA (mantido, só restilizado) -->
       <div id="ag-sinal-bloco">
+        <div id="ag-sinal-criacao-ui">
         <div class="af-row" style="margin-bottom:8px">
           <span class="material-symbols-outlined">payments</span>
           <div style="flex:1;display:flex;align-items:center;justify-content:space-between;margin-top:2px">
@@ -4091,6 +4112,28 @@ tr.row-retorno-retornou td{background:#f0fff4}
             </div>
           </div>
         </div>
+        </div><!-- fim ag-sinal-criacao-ui -->
+
+        <!-- EDIÇÃO: status do sinal + confirmar (reaproveita toggleSinalPopup/popupSetFormaSinal) -->
+        <div id="af-edit-sinal-area" style="display:flex;flex-direction:column;gap:10px">
+          <div id="popup-sinal-status"></div>
+          <div class="af-row">
+            <span class="material-symbols-outlined">attach_money</span>
+            <div class="af-field">
+              <input type="number" class="af-input" id="popup-sinal-valor" min="0" step="0.01" placeholder=" " oninput="popupRecalcularComanda(agEditandoKey);afToggleFilled(this)"/>
+              <label>Valor do sinal (R$)</label>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:6px">Forma de pagamento do sinal</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+              <button type="button" onclick="popupSetFormaSinal(this,'Pix')" class="popup-forma-btn af-edit-forma-btn"><span class="material-symbols-outlined" style="font-size:16px">qr_code_2</span>Pix</button>
+              <button type="button" onclick="popupSetFormaSinal(this,'Dinheiro')" class="popup-forma-btn af-edit-forma-btn"><span class="material-symbols-outlined" style="font-size:16px">payments</span>Dinheiro</button>
+              <button type="button" onclick="popupSetFormaSinal(this,'Link')" class="popup-forma-btn af-edit-forma-btn"><span class="material-symbols-outlined" style="font-size:16px">link</span>Link</button>
+            </div>
+          </div>
+          <button type="button" id="popup-sinal-btn" class="af-btn-primary af-btn-wide" onclick="toggleSinalPopup(agEditandoKey)">Confirmar sinal</button>
+        </div>
       </div>
 
       <!-- OBSERVAÇÃO -->
@@ -4102,8 +4145,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
 
-      <!-- REPETIR ATENDIMENTO -->
-      <div>
+      <!-- REPETIR ATENDIMENTO (oculto em edição) -->
+      <div id="af-repetir-bloco">
         <div class="af-row" style="align-items:center">
           <span class="material-symbols-outlined">repeat</span>
           <div class="af-toggle-row" style="flex:1">
@@ -4144,9 +4187,66 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:11px;color:#888" id="af-repetir-texto2">Próxima repetição: —</div>
         </div>
       </div>
+
+      <!-- EDIÇÃO: Comanda do atendimento (reaproveita popupServicosComandaToHtml/popupExtrasToHtml/etc, mesmos ids do painel antigo) -->
+      <div id="af-edit-comanda" style="display:flex;flex-direction:column;gap:12px">
+        <div class="af-section-title"><span class="material-symbols-outlined" style="font-size:16px">receipt_long</span>Comanda do atendimento<span id="af-edit-comanda-badge" style="margin-left:6px"></span></div>
+        <div style="border:1.5px solid var(--af-border);border-radius:12px;padding:14px">
+          <div id="popup-servicos-comanda-lista"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin:6px 0">
+            <span id="af-edit-valor-label" style="color:var(--af-gray);font-weight:700">Valor</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span id="popup-servico-valor" style="font-weight:800"></span>
+              <button type="button" onclick="popupToggleEditarValorPrincipal(agEditandoKey)" style="background:none;border:none;cursor:pointer;color:var(--af-accent);display:flex;align-items:center" title="Editar valor"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
+            </div>
+          </div>
+          <div id="popup-valor-principal-edit" style="display:none;margin-bottom:8px;background:var(--af-accent-light);border-radius:9px;padding:8px">
+            <div class="af-row" style="align-items:center">
+              <div class="af-field" style="flex:1"><input type="number" class="af-input" id="popup-valor-principal-input" min="0" step="0.01" placeholder=" "/><label>Valor cobrado (R$)</label></div>
+              <button type="button" class="af-btn-primary" onclick="popupSalvarValorPrincipal(agEditandoKey)">OK</button>
+            </div>
+          </div>
+          <div id="popup-extras-lista"></div>
+          <div id="popup-novos-servicos-lista"></div>
+          <div style="display:flex;gap:8px;margin:6px 0">
+            <button type="button" class="af-link-caps" id="popup-btn-add-svc" style="flex:1;padding:8px" onclick="popupAbrirFormExtra(agEditandoKey)"><span class="material-symbols-outlined" style="font-size:16px">add</span>SERVIÇO</button>
+            <button type="button" class="af-link-caps" id="popup-btn-add-pkg" style="flex:1;padding:8px" onclick="popupAbrirSeletorPacote(agEditandoKey)"><span class="material-symbols-outlined" style="font-size:16px">redeem</span>PACOTE</button>
+          </div>
+          <div id="popup-form-extra-wrap"></div>
+          <div id="popup-pkg-wrap"></div>
+          <div id="popup-salvar-atendimento-wrap"></div>
+          <div id="popup-linha-sinal-abate" style="display:none;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span style="color:var(--af-gray)">(-) Sinal pago</span><span id="popup-sinal-abate-valor" style="font-weight:700;color:var(--af-accent)"></span>
+          </div>
+          <div style="background:#fafafa;border-radius:10px;padding:10px;margin:8px 0;border:1px solid var(--af-border)">
+            <div style="font-size:11px;font-weight:700;color:var(--af-gray);margin-bottom:8px">DESCONTO</div>
+            <div class="af-row">
+              <span class="material-symbols-outlined" style="font-size:18px">money_off</span>
+              <div class="af-field"><input type="number" class="af-input" id="popup-desconto-valor" min="0" step="0.01" placeholder=" " oninput="popupDescontoChange(agEditandoKey);afToggleFilled(this)"/><label>Valor do desconto (R$)</label></div>
+            </div>
+            <div style="font-size:10px;font-weight:600;color:var(--af-gray);margin:8px 0 4px">Quem absorve o desconto?</div>
+            <div style="display:flex;gap:6px">
+              <button type="button" id="popup-desc-btn-salao" onclick="popupDescontoTipoChange(agEditandoKey,'salao')" class="af-edit-forma-btn" style="flex:1"><span class="material-symbols-outlined" style="font-size:16px">storefront</span>Salão</button>
+              <button type="button" id="popup-desc-btn-comissao" onclick="popupDescontoTipoChange(agEditandoKey,'comissao')" class="af-edit-forma-btn" style="flex:1"><span class="material-symbols-outlined" style="font-size:16px">person</span>Colaborador</button>
+            </div>
+          </div>
+          <div id="popup-linha-desconto" style="display:none;justify-content:space-between;font-size:12px;margin-bottom:6px">
+            <span style="color:#f59e0b">(-) Desconto</span><span id="popup-desconto-exibir" style="font-weight:700;color:#f59e0b"></span>
+          </div>
+          <div style="border-top:1px dashed var(--af-border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:14px;font-weight:800">
+            <span>Total a pagar</span><span id="popup-total-pagar" style="color:var(--af-ink)"></span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button type="button" class="af-btn-primary" style="flex:1" onclick="abrirConfirmarPagamento(agEditandoKey)">Registrar Pagamento</button>
+            <button type="button" class="af-link" onclick="verComandaEspecifica(agEditandoKey)">Ver Comandas</button>
+          </div>
+        </div>
+        <div id="af-edit-cancelar" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
     </div>
 
-    <div class="af-footer">
+    <div class="af-footer" style="justify-content:space-between">
+      <button type="button" class="af-link" onclick="closeModal('modal-agendar')">Fechar</button>
       <button class="af-btn-primary" onclick="afSalvarAtendimento()">SALVAR</button>
     </div>
   </div>
@@ -7326,6 +7426,16 @@ function resetFormAgendar(){
   if((el=get('af-sucesso')))el.classList.remove('open');
   if(typeof agSetTipo==='function')agSetTipo('servico');
   afRenderServicoBlocos();
+  // Etapa 3 — sai do modo edição e limpa os blocos que só existem nele
+  agEditandoKey=null;agEditandoDados=null;agEditandoDataKeyOriginal=null;
+  agendaPopupAtivo=null;
+  if((el=get('modal-agendar')))el.classList.remove('af-modo-edicao');
+  ['popup-confirmacao-badge','popup-servicos-comanda-lista','popup-extras-lista','popup-novos-servicos-lista','popup-form-extra-wrap','popup-pkg-wrap','popup-salvar-atendimento-wrap','af-edit-cancelar','af-edit-comanda-badge'].forEach(function(i){if((el=get(i)))el.innerHTML='';});
+  if((el=get('popup-sinal-valor')))el.value='';
+  if((el=get('popup-desconto-valor')))el.value='';
+  document.querySelectorAll('.popup-forma-btn').forEach(function(b){b.style.background='#fff';b.style.color='#333';b.style.borderColor='var(--af-border)';});
+  popupFormaSinal=null;
+  popupServicosExtras=[];popupNovosServicos=[];popupDescontoValor=0;popupDescontoTipo='salao';
 }
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
@@ -7532,6 +7642,8 @@ function afSelecionarServicoPorNome(nome){
 // ---- Blocos de Serviço (Serviço 1, Serviço 2...) ----
 var afBlocos=[];
 var afBlocoSeq=0;
+// Etapa 3 — edição de atendimento existente reaproveitando o modal #modal-agendar
+var agEditandoKey=null,agEditandoDados=null,agEditandoDataKeyOriginal=null;
 function afNovoBloco(horario){
   afBlocoSeq++;
   return {id:'b'+afBlocoSeq,servico:null,profissional:'',horario:horario||'',duracaoMin:30,preco:0,desconto:0};
@@ -7741,22 +7853,23 @@ function construirTimelineAtendimento(horaPrimaria,durPrimariaMin,servicoPrimari
 }
 // Verifica conflito de horário de todos os blocos de serviço (cada um com seu próprio
 // profissional+horário) contra uma data. Retorna o primeiro conflito encontrado, ou null.
-function afVerificarConflitoBlocos(data,blocos){
+function afVerificarConflitoBlocos(data,blocos,excludeId){
   for(var i=0;i<blocos.length;i++){
     var b=blocos[i];
     if(!b.profissional||!b.horario)continue;
-    var c=agVerificarConflitoHorarioAgenda(data,b.horario,[b.profissional]);
+    var c=agVerificarConflitoHorarioAgenda(data,b.horario,[b.profissional],excludeId);
     if(c)return Object.assign({},c,{bloco:i+1,horario:b.horario});
   }
   return null;
 }
-function agVerificarConflitoHorarioAgenda(data,hora,profs){
+function agVerificarConflitoHorarioAgenda(data,hora,profs,excludeId){
   var partes=data.split('-');
   var dataKey=parseInt(partes[2],10)+'/'+parseInt(partes[1],10)+'/'+partes[0];
   var appts=agendamentosPorData[dataKey]||{};
   for(var i=0;i<profs.length;i++){
     var pAg=agProfParaAgenda(profs[i]);
-    if(appts[pAg+':'+hora])return {prof:profs[i],ocupado:appts[pAg+':'+hora]};
+    var ocupante=appts[pAg+':'+hora];
+    if(ocupante&&(!excludeId||ocupante.id!==excludeId))return {prof:profs[i],ocupado:ocupante};
   }
   return null;
 }
@@ -9116,7 +9229,7 @@ function abrirComandaAgendamentoLista(dataKey,key){
   agendamentosPorData[dataKey][key]=dados;
   agendaDiaAtual=agendamentosPorData[dataKey];agendaDataKeyAtual=dataKey;
   fecharAgendaPopup();
-  abrirAgendaPopup(key,dados,{clientX:Math.min(window.innerWidth/2,400),clientY:120,stopPropagation:function(){}});
+  abrirAtendimentoEdicao(key,dados);
 }
 
 function renderComandas(){
@@ -10503,6 +10616,9 @@ function fecharAgendaPopup(){
   if(p)p.remove();
   agendaPopupAtivo=null;
   window._popupExtraProdOpts=null;
+  // Etapa 3 — cancelar/cancelar série fecham por aqui; se a edição (modal-agendar) estava
+  // aberta pro atendimento que acabou de ser cancelado, fecha ela também.
+  if(agEditandoKey)closeModal('modal-agendar');
 }
 function verComandaEspecifica(key){
   var d=agendaDataAtual;
@@ -11718,7 +11834,7 @@ function renderAgenda(){
       const insetCard=isMultiSlot?'4px 6px 0 6px':`top:4px;left:6px;right:6px;min-height:${slotSpanCard*64-8}px`;
       const posCard=isMultiSlot?`position:absolute;inset:${insetCard}`:`position:absolute;${insetCard}`;
       const slotStyleCard=isMultiSlot?'position:relative;border-bottom:none':'position:relative';
-      const clickHandlerCard=a.tipo==='aula'?`abrirInfoTurmaAgenda('${key}')`:`abrirAgendaPopup('${key}',agendaDiaAtual['${key}'],event)`;
+      const clickHandlerCard=a.tipo==='aula'?`abrirInfoTurmaAgenda('${key}')`:`abrirAtendimentoEdicao('${key}',agendaDiaAtual['${key}'])`;
       return `<div class="slot occupied" style="${slotStyleCard}" onclick="${clickHandlerCard}">
         <div class="agenda-card" style="${posCard};background:${corBloco};border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
           <div style="line-height:1.25">${a.cliente}</div>
@@ -14578,6 +14694,250 @@ function abrirModalAgendar(prof,hora){
   afRenderServicoBlocos();
   openModal('modal-agendar');
 }
+// Etapa 3 — clicar num atendimento existente abre este mesmo modal, preenchido, em modo
+// edição (em vez do antigo painel lateral "Detalhes do Atendimento"). Reaproveita as funções
+// de comanda/sinal/cancelar do painel antigo (mesmos ids), só muda a casca visual.
+function agMapDadosParaBlocos(dados){
+  var lista=(dados.servicos_detalhe&&dados.servicos_detalhe.length)?dados.servicos_detalhe:
+    [{nome:dados.servico,valor:typeof dados.valor_num==='number'?dados.valor_num:parseMoedaBR(dados.valor),profissional:dados.prof,hora:dados.hora,duracao_min:parseInt(dados.duracao,10)||30}];
+  return lista.map(function(sd){
+    var b=afNovoBloco(normalizarHoraAgenda(sd.hora||dados.hora));
+    var svcCat=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===sd.nome;});
+    b.servico={nome:sd.nome,cat:svcCat?svcCat.cat:'',preco:sd.valor,dur:''};
+    b.preco=sd.valor||0;
+    b.duracaoMin=sd.duracao_min||30;
+    b.profissional=agProfParaAgenda(sd.profissional||dados.prof);
+    return b;
+  });
+}
+function atualizarStatusSinalEdicao(sinalInfo){
+  var el=document.getElementById('popup-sinal-status');
+  if(!el)return;
+  el.innerHTML=sinalInfo.pago?
+    '<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">✅ Sinal pago</span>':
+    (sinalInfo.temSinal||sinalInfo.valor>0?
+      '<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">⏳ Sinal pendente</span>':
+      '<span style="background:#f5f5f5;color:#888;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">Sem sinal</span>');
+}
+function renderizarComandaEdicao(key){
+  var dados=agEditandoDados;
+  if(!dados)return;
+  var sinalInfoPg=lerSinalAgendamento(dados);
+  var servicosComandaPg=popupServicosDoAtendimento(dados);
+  var servicoValPg=servicosComandaPg.reduce(function(s,sd){return s+sd.valor;},0);
+  var abatePg=sinalInfoPg.pago?sinalInfoPg.valor:0;
+  var extrasTotalPg=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
+  var totalPagarPg=Math.max(0,servicoValPg+extrasTotalPg-abatePg-popupDescontoValor);
+  var stAg=(dados.status||'').toLowerCase();
+  var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
+
+  var badge=document.getElementById('af-edit-comanda-badge');
+  if(badge)badge.innerHTML=atendConcluido?
+    '<span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px">Paga</span>':
+    '<span style="font-size:10px;font-weight:700;background:#f0f0f0;color:#555;padding:2px 8px;border-radius:20px">Em aberto</span>';
+
+  var lista=document.getElementById('popup-servicos-comanda-lista');
+  if(lista)lista.innerHTML=popupServicosComandaToHtml(key);
+
+  var elValorLabel=document.getElementById('af-edit-valor-label');
+  if(elValorLabel)elValorLabel.textContent=servicosComandaPg.length>1?('Subtotal serviços ('+servicosComandaPg.length+')'):'Valor';
+
+  var elServicoValor=document.getElementById('popup-servico-valor');
+  if(elServicoValor)elServicoValor.textContent=formatMoedaBR(servicoValPg);
+
+  var elExtras=document.getElementById('popup-extras-lista');
+  if(elExtras)elExtras.innerHTML=popupExtrasToHtml(key);
+
+  var elNovos=document.getElementById('popup-novos-servicos-lista');
+  if(elNovos)elNovos.innerHTML=popupNovosServicosToHtml(key);
+
+  var wrapSalvar=document.getElementById('popup-salvar-atendimento-wrap');
+  if(wrapSalvar)wrapSalvar.innerHTML=popupNovosServicos.length?'<button type="button" onclick="popupSalvarAtendimento(\''+key+'\')" class="af-btn-primary af-btn-wide" style="margin-bottom:6px">Salvar serviços adicionados</button>':'';
+
+  var linhaSinal=document.getElementById('popup-linha-sinal-abate');
+  if(linhaSinal)linhaSinal.style.display=(sinalInfoPg.pago&&abatePg>0)?'flex':'none';
+  var elAbateValor=document.getElementById('popup-sinal-abate-valor');
+  if(elAbateValor)elAbateValor.textContent='- '+formatMoedaBR(abatePg);
+
+  var elDescValor=document.getElementById('popup-desconto-valor');
+  if(elDescValor){elDescValor.value=popupDescontoValor>0?popupDescontoValor.toFixed(2):'0.00';afToggleFilled(elDescValor);}
+  var linhaDesc=document.getElementById('popup-linha-desconto');
+  if(linhaDesc)linhaDesc.style.display=popupDescontoValor>0?'flex':'none';
+  var elDescExibir=document.getElementById('popup-desconto-exibir');
+  if(elDescExibir)elDescExibir.textContent='- '+formatMoedaBR(popupDescontoValor);
+
+  var btnSalao=document.getElementById('popup-desc-btn-salao');
+  var btnComissao=document.getElementById('popup-desc-btn-comissao');
+  if(btnSalao){btnSalao.style.background=popupDescontoTipo==='salao'?'#111':'#fff';btnSalao.style.color=popupDescontoTipo==='salao'?'#fff':'#555';btnSalao.style.borderColor=popupDescontoTipo==='salao'?'#111':'#ddd';}
+  if(btnComissao){btnComissao.style.background=popupDescontoTipo==='comissao'?'#111':'#fff';btnComissao.style.color=popupDescontoTipo==='comissao'?'#fff':'#555';btnComissao.style.borderColor=popupDescontoTipo==='comissao'?'#111':'#ddd';}
+
+  var elTotal=document.getElementById('popup-total-pagar');
+  if(elTotal)elTotal.textContent='R$ '+totalPagarPg.toFixed(2).replace('.',',');
+}
+function renderizarCancelarEdicao(key,dados){
+  var wrap=document.getElementById('af-edit-cancelar');
+  if(!wrap)return;
+  var stAg=(dados.status||'').toLowerCase();
+  var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
+  var atendEmAberto=!atendConcluido;
+  var html='';
+  if(atendEmAberto&&dados.serie_id){
+    html+='<button type="button" onclick="afCancelarSerieEdicao(\''+dados.serie_id+'\',\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">event_busy</span>Cancelar esta e as próximas (repetição)</button>';
+  }
+  if(atendEmAberto){
+    html+='<button type="button" onclick="cancelarAtendimentoAgenda(\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">delete</span>Cancelar Atendimento</button>';
+  }
+  wrap.innerHTML=html;
+}
+// cancelarSerieAtendimento() original relê agendaDataAtual (o dia que a grade de FUNDO está
+// mostrando) no momento do clique — funciona bem no painel antigo porque ele é efêmero, mas
+// na tela de edição nova o modal pode ficar aberto um tempo (rolando pra ver Comanda/Sinal),
+// então ancoramos na data que já foi capturada quando ESSA ocorrência foi aberta
+// (agEditandoDataKeyOriginal), em vez de reler o estado "ao vivo" que pode ter mudado.
+function afCancelarSerieEdicao(serieId,key){
+  var dataKeyOriginal=agEditandoDataKeyOriginal||agendaDataKeyAtual;
+  var p=(dataKeyOriginal||'').split('/');
+  if(p.length!==3){cancelarSerieAtendimento(serieId,key);return;}
+  var dataISO=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+  var dataBr=p[0].padStart(2,'0')+'/'+p[1].padStart(2,'0')+'/'+p[2];
+  showConfirmBotoes('Cancelar este e todos os próximos atendimentos dessa repetição (a partir de '+dataBr+')? Sinais já pagos no caixa não são estornados automaticamente — confira o Fluxo de Caixa se precisar.',[
+    {label:'Sim, cancelar todos',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp==='sim')executarCancelamentoSerie(serieId,dataISO);
+  });
+}
+function abrirAtendimentoEdicao(key,dados){
+  if(!dados)return;
+  // Sem exigir caixa aberto pra só visualizar/editar — igual o painel antigo. Ações que mexem
+  // com dinheiro (confirmar sinal, registrar pagamento) continuam checando isso por conta própria.
+  resetFormAgendar();
+  agEditandoKey=key;
+  agEditandoDados=dados;
+  agEditandoDataKeyOriginal=agendaDataKeyAtual;
+  agendaPopupAtivo=key;
+  var modal=document.getElementById('modal-agendar');
+  if(modal)modal.classList.add('af-modo-edicao');
+
+  var elCli=document.getElementById('ag-cliente');
+  if(elCli){elCli.value=dados.cliente||'';afToggleFilled(elCli);}
+
+  var clienteObj=(typeof clientes!=='undefined'?clientes:[]).find(function(c){return c.nome===dados.cliente;});
+  var tel=(clienteObj&&clienteObj.tel)||dados.tel||'(11) 99999-9999';
+  var elAvatar=document.getElementById('af-edit-avatar');
+  if(elAvatar)elAvatar.textContent=(dados.cliente||'').split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
+  var elNome=document.getElementById('af-edit-nome');
+  if(elNome)elNome.textContent=dados.cliente||'';
+  var elTel=document.getElementById('af-edit-tel');
+  if(elTel)elTel.textContent=tel;
+
+  var badge=document.getElementById('popup-confirmacao-badge');
+  if(badge)badge.innerHTML=dados.confirmado
+    ?'<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:5px"><span class="material-symbols-outlined" style="font-size:15px">check_circle</span>Confirmado via WhatsApp</span>'
+    :'<div style="display:flex;align-items:center;justify-content:space-between;background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:9px 12px"><span style="font-size:11px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:15px">pending</span>Confirmação pendente</span><button type="button" onclick="confirmarAgendamentoWpp(\''+key+'\')" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Confirmar</button></div>';
+
+  var d=agendaDataAtual;
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var elData=document.getElementById('ag-data');
+  if(elData){elData.value=iso;afToggleFilled(elData);}
+
+  afBlocos=agMapDadosParaBlocos(dados);
+  afRenderServicoBlocos();
+
+  var elObs=document.getElementById('ag-obs');
+  if(elObs){elObs.value=dados.obs||'';afToggleFilled(elObs);}
+
+  var sinalInfo=lerSinalAgendamento(dados);
+  var elSinalValor=document.getElementById('popup-sinal-valor');
+  if(elSinalValor){elSinalValor.value=sinalInfo.valor.toFixed(2);afToggleFilled(elSinalValor);}
+  atualizarStatusSinalEdicao(sinalInfo);
+  var btnSinal=document.getElementById('popup-sinal-btn');
+  if(btnSinal)btnSinal.textContent=sinalInfo.pago?'Reabrir':'Confirmar sinal';
+
+  popupServicosExtras=[];
+  try{if(dados.servicos_extras){var ex=typeof dados.servicos_extras==='string'?JSON.parse(dados.servicos_extras):dados.servicos_extras;if(Array.isArray(ex))popupServicosExtras=ex;}}catch(e){}
+  popupNovosServicos=[];
+  popupDescontoValor=parseFloat(dados.desconto_valor)||0;
+  popupDescontoTipo=dados.desconto_tipo||'salao';
+  popupServicoSelecionadoIdx=0;
+  popupFormaSinal=null;
+  renderizarComandaEdicao(key);
+  renderizarCancelarEdicao(key,dados);
+
+  openModal('modal-agendar');
+}
+async function afSalvarEdicaoBlocos(){
+  var mapaNomesInv={'Jenny':'Jennifer','Edu':'Eduardo','Vi':'Vitória','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
+  var dados=agEditandoDados;
+  var key=agEditandoKey;
+  if(!dados||!dados.id){showAlert('Não foi possível identificar o atendimento.');return;}
+  var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
+  var dataBase=document.getElementById('ag-data')?.value||'';
+  if(!cliente||!dataBase){showAlert('Preencha cliente e data.');return;}
+  var obs=(document.getElementById('ag-obs')?.value||'').trim();
+
+  var blocosValidos=afBlocos.filter(function(b){return b.servico&&b.profissional&&b.horario;});
+  if(blocosValidos.length!==afBlocos.length||!blocosValidos.length){
+    showAlert('Preencha profissional, serviço e horário em todos os blocos de serviço.');
+    return;
+  }
+  blocosValidos.forEach(function(b){b.horario=normalizarHoraAgenda(b.horario);});
+
+  var conflito=afVerificarConflitoBlocos(dataBase,blocosValidos,dados.id);
+  if(conflito){
+    if(conflito.ocupado&&conflito.ocupado.tipo==='aula'){
+      showAlert('Profissional indisponível. Existe uma aula cadastrada ('+conflito.ocupado.cliente+').');
+    }else{
+      showAlert('Horário '+conflito.horario+' já ocupado para '+conflito.prof+'.');
+    }
+    return;
+  }
+
+  var servicosDetalhe=blocosValidos.map(function(b){
+    return {nome:b.servico.nome,valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,hora:b.horario,duracao_min:b.duracaoMin};
+  });
+  var servico=servicosDetalhe.map(function(sd){return sd.nome;}).join(' + ');
+  var valorFmt='R$ '+servicosDetalhe.reduce(function(s,sd){return s+sd.valor;},0).toFixed(2).replace('.',',');
+  var hora=blocosValidos[0].horario;
+  var profSupa=mapaNomesInv[blocosValidos[0].profissional]||blocosValidos[0].profissional;
+
+  var patch={cliente:cliente,data:dataBase,hora:hora,profissional:profSupa,servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs};
+  var btn=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='SALVANDO...';}
+  try{
+    var h=await _authHeaders({'Content-Type':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+dados.id+'&salao_id=eq.'+window.SALAO_ID,{method:'PATCH',headers:h,body:JSON.stringify(patch)});
+    if(!resp.ok)throw await resp.json().catch(function(){return{};});
+  }catch(e){
+    console.log('err salvar edicao atendimento',e);
+    showAlert('Erro ao salvar o atendimento. Tente novamente.');
+    if(btn){btn.disabled=false;btn.textContent='SALVAR';}
+    return;
+  }
+
+  var dataKeyAntiga=agEditandoDataKeyOriginal||agendaDataKeyAtual;
+  var pD=dataBase.split('-');
+  var dataKeyNova=parseInt(pD[2],10)+'/'+parseInt(pD[1],10)+'/'+pD[0];
+  if(agendamentosPorData[dataKeyAntiga]){
+    Object.keys(agendamentosPorData[dataKeyAntiga]).forEach(function(kk){
+      if(agendamentosPorData[dataKeyAntiga][kk].id===dados.id)delete agendamentosPorData[dataKeyAntiga][kk];
+    });
+  }
+  if(!agendamentosPorData[dataKeyNova])agendamentosPorData[dataKeyNova]={};
+  var apptBase=Object.assign({},dados,{
+    cliente:cliente,servico:servico,hora:hora,valor:valorFmt,obs:obs,
+    duracao:servicosDetalhe[0].duracao_min+' min',servicos_detalhe:servicosDetalhe
+  });
+  servicosDetalhe.forEach(function(sd){
+    var pAg=agProfParaAgenda(sd.profissional);
+    agendamentosPorData[dataKeyNova][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
+  });
+
+  if(btn){btn.disabled=false;btn.textContent='SALVAR';}
+  closeModal('modal-agendar');
+  showAlert('✅ Atendimento atualizado!');
+  renderAgenda();
+}
 function agCadastrarClienteRapido(){
   var nomePreench=(document.getElementById('ag-cliente').value||'').trim();
   var ov=document.getElementById('modal-cadastro-rapido-cliente');
@@ -14710,6 +15070,7 @@ function afFinalizarSalvamento(cliente,datas){
   if(el)el.classList.add('open');
 }
 function afSalvarAtendimento(){
+  if(agEditandoKey){afSalvarEdicaoBlocos();return;}
   var cliente=(document.getElementById('ag-cliente')?.value||'').trim();
   var dataBase=document.getElementById('ag-data')?.value||'';
   var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
