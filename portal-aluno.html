@@ -215,6 +215,7 @@ button,input,textarea,select{font-family:inherit}
     <div id="pull-refresh-indicator" style="display:flex;justify-content:center;align-items:center;height:0;overflow:hidden;transition:height .2s ease;font-size:12.5px;color:var(--gray-600);font-weight:600"></div>
     <div class="saudacao" id="saudacao-aluno">Olá! 🌷</div>
     <div class="saudacao-sub">Seus cursos e progresso</div>
+    <div id="conquistas-host"></div>
     <div id="continuar-card-host"></div>
     <div id="lista-cursos-aluno"><div class="empty-state">Carregando...</div></div>
   </div>
@@ -503,7 +504,7 @@ async function carregarMeusCursos(){
   try{
     var rMat = await supa.from('curso_matriculas').select('*').in('status', ['matriculado','andamento','concluido']);
     matriculasAtuais = rMat.data || [];
-    if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; renderContinuarCard(null); return; }
+    if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; renderContinuarCard(null); renderConquistas(null); return; }
 
     var cursoIds = matriculasAtuais.filter(function(m){return m.curso_id;}).map(function(m){return m.curso_id;});
     var comboIds = matriculasAtuais.filter(function(m){return m.combo_id;}).map(function(m){return m.combo_id;});
@@ -539,6 +540,9 @@ async function carregarMeusCursos(){
     renderMeusCursos();
     var infoContinuar = await carregarContinuarDeOndeParou();
     renderContinuarCard(infoContinuar);
+    var conquistas = await calcularConquistas();
+    renderConquistas(conquistas);
+    verificarNovasConquistas(conquistas);
   }catch(e){
     console.log('err carregar meus cursos', e);
     wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus cursos agora.</div>';
@@ -589,6 +593,114 @@ async function continuarDeOndeParou(){
   await abrirCursoDetalhe(info.matriculaId);
   if(info.itemTipo === 'aula') abrirAulaViewer(info.itemId);
   else abrirMaterialViewer(info.itemId);
+}
+
+// ===== Medalhas e sequência de dias estudando =====
+// Tudo calculado na hora a partir de curso_progresso_conteudo (já existente)
+// — nenhuma tabela nova. "Primeiro módulo" é o único cálculo que precisa de
+// algumas consultas extras (estrutura de módulo/aula/material de todos os
+// cursos do aluno), mas o volume é limitado aos cursos da própria aluna, não
+// é uma varredura pesada.
+async function calcularConquistas(){
+  try{
+    var matriculaIds = matriculasAtuais.map(function(m){ return m.id; });
+    if(!matriculaIds.length) return null;
+
+    var rAulaConcl = await supa.from('curso_progresso_conteudo').select('id', { count:'exact', head:true }).in('matricula_id', matriculaIds).eq('tipo_conteudo','aula').eq('status','concluido');
+    var primeiraAula = (rAulaConcl.count||0) >= 1;
+
+    var primeiroCurso = matriculasAtuais.some(function(m){ return (m._progresso||0) >= 100; });
+
+    var todosCursoIds = Array.from(new Set(matriculasAtuais.reduce(function(acc,m){ return acc.concat(m._cursoIds||[]); }, [])));
+    var primeiroModulo = false;
+    if(todosCursoIds.length){
+      var rMods = await supa.from('curso_modulos').select('id,curso_id').in('curso_id', todosCursoIds);
+      var modulos = rMods.data || [];
+      if(modulos.length){
+        var moduloIds = modulos.map(function(x){ return x.id; });
+        var rAulasTodas = await supa.from('curso_aulas').select('id,modulo_id,liberar_em').in('modulo_id', moduloIds);
+        var rMatsTodas = await supa.from('curso_materiais').select('id,modulo_id,liberar_em').in('modulo_id', moduloIds);
+        var rProgTodas = await supa.from('curso_progresso_conteudo').select('aula_id,material_id').in('matricula_id', matriculaIds).eq('status','concluido');
+        var concluidosAula = {}, concluidosMat = {};
+        (rProgTodas.data||[]).forEach(function(p){ if(p.aula_id) concluidosAula[p.aula_id]=true; if(p.material_id) concluidosMat[p.material_id]=true; });
+        var hoje = new Date().toISOString().slice(0,10);
+        primeiroModulo = modulos.some(function(mod){
+          var aulasDoMod = (rAulasTodas.data||[]).filter(function(a){ return a.modulo_id===mod.id && (!a.liberar_em || a.liberar_em<=hoje); });
+          var matsDoMod = (rMatsTodas.data||[]).filter(function(mt){ return mt.modulo_id===mod.id && (!mt.liberar_em || mt.liberar_em<=hoje); });
+          var total = aulasDoMod.length + matsDoMod.length;
+          if(total === 0) return false;
+          var concl = aulasDoMod.filter(function(a){ return concluidosAula[a.id]; }).length + matsDoMod.filter(function(mt){ return concluidosMat[mt.id]; }).length;
+          return concl === total;
+        });
+      }
+    }
+
+    // Sequência de dias: dias distintos (concluido_em) consecutivos,
+    // terminando hoje ou ontem (senão a sequência já quebrou).
+    var rTodosConcl = await supa.from('curso_progresso_conteudo').select('concluido_em').in('matricula_id', matriculaIds).eq('status','concluido').not('concluido_em','is',null);
+    var diasSet = {};
+    (rTodosConcl.data||[]).forEach(function(p){ diasSet[p.concluido_em.slice(0,10)] = true; });
+    var dias = Object.keys(diasSet).sort().reverse();
+    var streak = 0;
+    if(dias.length){
+      var hojeStr = new Date().toISOString().slice(0,10);
+      var ontemStr = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      if(dias[0] === hojeStr || dias[0] === ontemStr){
+        streak = 1;
+        var cursorData = new Date(dias[0]+'T00:00:00');
+        for(var i=1;i<dias.length;i++){
+          var esperado = new Date(cursorData.getTime()-86400000).toISOString().slice(0,10);
+          if(dias[i] === esperado){ streak++; cursorData = new Date(esperado+'T00:00:00'); }
+          else break;
+        }
+      }
+    }
+
+    return { primeiraAula: primeiraAula, primeiroModulo: primeiroModulo, primeiroCurso: primeiroCurso, streak: streak };
+  }catch(e){ console.log('err calcular conquistas', e); return null; }
+}
+function renderConquistas(c){
+  var host = document.getElementById('conquistas-host');
+  if(!host) return;
+  if(!c){ host.innerHTML = ''; return; }
+  var medalhas = [
+    { emoji:'🥉', label:'1ª Aula', unlocked:c.primeiraAula },
+    { emoji:'🥈', label:'1º Módulo', unlocked:c.primeiroModulo },
+    { emoji:'🏆', label:'1º Curso', unlocked:c.primeiroCurso }
+  ];
+  var medalhasHtml = medalhas.map(function(m){
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;cursor:pointer" onclick="mostrarToast(\''
+      + (m.unlocked ? '🎉 Conquista desbloqueada: ' + m.label : 'Ainda não desbloqueada: ' + m.label) + '\', \'' + (m.unlocked?'ok':'') + '\')">'
+      + '<div style="width:48px;height:48px;border-radius:50%;background:' + (m.unlocked?'#fef3c7':'var(--gray-100)') + ';display:flex;align-items:center;justify-content:center;font-size:22px;opacity:' + (m.unlocked?'1':'.35') + '">' + m.emoji + '</div>'
+      + '<div style="font-size:10px;font-weight:700;color:var(--gray-600);text-align:center">' + m.label + '</div>'
+      + '</div>';
+  }).join('');
+  var streakHtml = c.streak > 0
+    ? '<div style="display:flex;align-items:center;gap:5px;background:#fff7ed;color:#c2410c;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:800;white-space:nowrap">🔥 ' + c.streak + ' dia' + (c.streak>1?'s':'') + ' seguido' + (c.streak>1?'s':'') + '</div>'
+    : '';
+  host.innerHTML = '<div class="card-flora">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<div style="font-size:11.5px;font-weight:800;color:var(--gray-600);text-transform:uppercase;letter-spacing:.3px">🏅 Minhas conquistas</div>'
+    + streakHtml
+    + '</div>'
+    + '<div style="display:flex;gap:6px">' + medalhasHtml + '</div>'
+    + '</div>';
+}
+// Compara com o que já tinha salvo localmente e celebra qualquer medalha
+// nova desde a última vez que o aluno abriu o Portal (localStorage por
+// aluno — puramente cosmético, não afeta nenhum dado real).
+function verificarNovasConquistas(c){
+  if(!c || !alunoAtual) return;
+  var chaveStorage = 'flora_conquistas_' + alunoAtual.id;
+  var anterior = {};
+  try{ anterior = JSON.parse(localStorage.getItem(chaveStorage) || '{}'); }catch(e){}
+  var labels = { primeiraAula:'1ª Aula concluída', primeiroModulo:'1º Módulo completo', primeiroCurso:'1º Curso completo' };
+  ['primeiraAula','primeiroModulo','primeiroCurso'].forEach(function(k){
+    if(c[k] && !anterior[k]){
+      setTimeout(function(){ mostrarToast('🏆 Nova conquista: ' + labels[k] + '!', 'ok'); animarConcluido(); }, 500);
+    }
+  });
+  try{ localStorage.setItem(chaveStorage, JSON.stringify({ primeiraAula:c.primeiraAula, primeiroModulo:c.primeiroModulo, primeiroCurso:c.primeiroCurso })); }catch(e){}
 }
 
 // ===== Pull-to-refresh (gesto de arrastar pra baixo em "Meus Cursos") =====
