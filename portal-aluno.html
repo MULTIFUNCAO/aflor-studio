@@ -34,9 +34,11 @@ button,input,textarea,select{font-family:inherit}
 .field label{font-size:11px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
 .field input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:14px;outline:none;background:var(--gray-50)}
 .field input:focus{border-color:#7c3aed;background:var(--paper)}
-.btn-main{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:999px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-main{width:100%;padding:13px;background:#111;color:#fff;border:none;border-radius:999px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:6px;transition:transform .12s ease}
 .btn-main:disabled{opacity:.6;cursor:not-allowed}
-.btn-outline{width:100%;padding:11px;background:var(--paper);color:#333;border:1.5px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn-main:active{transform:scale(.97)}
+.btn-outline{width:100%;padding:11px;background:var(--paper);color:#333;border:1.5px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;cursor:pointer;transition:transform .12s ease}
+.btn-outline:active{transform:scale(.97)}
 .alert-box{border-radius:10px;padding:10px 13px;font-size:12.5px;font-weight:600;margin-bottom:12px;display:none}
 .alert-box.err{display:block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .alert-box.ok{display:block;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
@@ -46,6 +48,8 @@ button,input,textarea,select{font-family:inherit}
 .topbar-title{font-size:16px;font-weight:800}
 .topbar-sair{background:none;border:none;color:#888;font-size:12px;cursor:pointer;font-weight:600}
 .content{padding:16px;max-width:720px;margin:0 auto 80px}
+.content.view-ativa{animation:fadeInUp .25s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .saudacao{font-size:19px;font-weight:800;margin-bottom:4px}
 .saudacao-sub{font-size:13px;color:var(--gray-600);margin-bottom:18px}
 
@@ -68,9 +72,11 @@ button,input,textarea,select{font-family:inherit}
 .curso-capa-topo{width:100%;height:140px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:14px;background:var(--gray-100)}
 .curso-titulo-topo{font-size:19px;font-weight:800;margin-bottom:10px}
 .modulo-block{margin-bottom:22px}
-.modulo-head{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:10px}
-.item-row{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--paper);border-radius:var(--radius-md);margin-bottom:8px;font-size:13px;cursor:pointer;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft)}
-.item-row:active{background:var(--gray-50)}
+.modulo-head{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:6px}
+.modulo-progress-track{background:var(--gray-100);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px}
+.modulo-progress-fill{background:var(--green);height:100%;border-radius:20px;transition:width .3s}
+.item-row{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--paper);border-radius:var(--radius-md);margin-bottom:8px;font-size:13px;cursor:pointer;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft);transition:transform .12s ease,background .12s ease}
+.item-row:active{background:var(--gray-50);transform:scale(.98)}
 .item-icon-circle{width:34px;height:34px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .item-check{margin-left:auto;font-size:16px;flex-shrink:0}
 
@@ -79,14 +85,28 @@ button,input,textarea,select{font-family:inherit}
 
 .card-flora{background:var(--paper);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-xs);border:1px solid var(--line-soft);margin-bottom:16px}
 
-.btn-concluir{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-block}
+.btn-concluir{background:var(--green);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-block;transition:transform .12s ease}
 .btn-concluir:disabled{opacity:.55;cursor:default}
+.btn-concluir:active:not(:disabled){transform:scale(.97)}
 .aula-nav{display:flex;gap:10px;margin-top:22px}
 .aula-nav button{flex:1}
 .aula-nav button:disabled{opacity:.35;cursor:default}
 
-.item-viewer{position:fixed;inset:0;background:var(--ivory);z-index:100;display:none;flex-direction:column}
-.item-viewer.open{display:flex}
+.item-viewer{position:fixed;inset:0;background:var(--ivory);z-index:100;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.3,.8,.4,1);pointer-events:none}
+.item-viewer.open{transform:translateY(0);pointer-events:auto}
+
+#toast-container{position:fixed;bottom:86px;left:0;right:0;z-index:250;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 16px}
+.toast{background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:var(--shadow-md);max-width:100%;text-align:center;opacity:0;transform:translateY(12px);transition:opacity .25s ease,transform .25s ease}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:#dc2626}
+.toast.ok{background:var(--green)}
+
+#check-pop-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:300;opacity:0;transition:opacity .15s ease}
+#check-pop-overlay.show{opacity:1}
+@keyframes popCheck{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
+.check-pop-icon{font-size:90px;animation:popCheck .5s cubic-bezier(.34,1.56,.64,1)}
+
+.contagem-liberacao{display:inline-block;background:#fef3c7;color:#92400e;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:3px}
 .item-viewer-head{padding:14px 16px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;justify-content:space-between}
 .item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box}
 .item-viewer video, .item-viewer iframe{width:100%;border-radius:var(--radius-sm);border:none}
@@ -96,7 +116,8 @@ button,input,textarea,select{font-family:inherit}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);display:flex;box-shadow:0 -2px 12px rgba(0,0,0,.04)}
 .bottom-nav button{flex:1;background:none;border:none;padding:10px 0 8px;font-size:10.5px;color:var(--gray-400);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
 .bottom-nav button.active{color:var(--green)}
-.bottom-nav button .ic{font-size:19px}
+.bottom-nav button .ic{font-size:19px;transition:transform .15s ease}
+.bottom-nav button:active .ic{transform:scale(.85)}
 
 .empty-state{text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px}
 .spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
@@ -247,6 +268,9 @@ button,input,textarea,select{font-family:inherit}
   <div class="item-viewer-body" id="aula-viewer-body"></div>
 </div>
 
+<div id="toast-container"></div>
+<div id="check-pop-overlay"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
@@ -260,6 +284,30 @@ let matriculasAtuais = [];     // curso_matriculas + dados agregados de progress
 let matriculaDetalheAtual = null;
 
 function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+// ===== Toast — substitui alert() nativo por uma notificação com a cara do Flora =====
+function mostrarToast(mensagem, tipo){
+  var container = document.getElementById('toast-container');
+  if(!container){ return; }
+  var el = document.createElement('div');
+  el.className = 'toast' + (tipo ? ' ' + tipo : '');
+  el.textContent = mensagem;
+  container.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add('show'); });
+  setTimeout(function(){
+    el.classList.remove('show');
+    setTimeout(function(){ el.remove(); }, 260);
+  }, 3200);
+}
+// Pulso de ✅ em tela cheia ao concluir aula/material — feedback rápido,
+// some sozinho, não exige nenhuma ação do aluno.
+function animarConcluido(){
+  var el = document.getElementById('check-pop-overlay');
+  if(!el) return;
+  el.innerHTML = '<div class="check-pop-icon">✅</div>';
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.innerHTML=''; }, 150); }, 600);
+}
 
 function showLoginAlert(msg, tipo){
   var el = document.getElementById('login-alert');
@@ -423,7 +471,18 @@ async function iniciarApp(alertElId){
 function mostrarView(view){
   ['cursos','curso-detalhe','turma','certificados','avisos'].forEach(function(v){
     var el = document.getElementById('view-' + v);
-    if(el) el.style.display = (v === view) ? 'block' : 'none';
+    if(!el) return;
+    if(v === view){
+      el.style.display = 'block';
+      // Retrigger da animação de fade (reaplicar a mesma classe não reinicia
+      // o CSS animation sozinho — precisa de um reflow forçado no meio).
+      el.classList.remove('view-ativa');
+      void el.offsetWidth;
+      el.classList.add('view-ativa');
+    }else{
+      el.style.display = 'none';
+      el.classList.remove('view-ativa');
+    }
   });
   ['cursos','turma','certificados','avisos'].forEach(function(v){
     var b = document.getElementById('nav-' + v);
@@ -563,6 +622,20 @@ function itemAindaBloqueado(liberarEm){
   if(!liberarEm) return false;
   return liberarEm > new Date().toISOString().slice(0,10);
 }
+// liberar_em é granularidade de dia (não timestamp) — por isso a "contagem
+// regressiva" é em dias, não um relógio de horas:minutos:segundos, que
+// passaria uma precisão que o dado não tem.
+function diasParaLiberar(liberarEm){
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var alvo = new Date(liberarEm + 'T00:00:00');
+  return Math.round((alvo - hoje) / 86400000);
+}
+function textoContagemLiberacao(liberarEm){
+  var dias = diasParaLiberar(liberarEm);
+  if(dias <= 0) return 'Libera hoje';
+  if(dias === 1) return 'Libera amanhã';
+  return 'Libera em ' + dias + ' dias';
+}
 function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
   var corpo = document.getElementById('curso-detalhe-corpo');
   window._progressoPorItemCache = progressoPorItem;
@@ -592,7 +665,7 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
       var bloqueado = itemAindaBloqueado(a.liberar_em);
       return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+a.liberar_em+'\')':'abrirAulaViewer(\''+a.id+'\')') + '">'
         + '<span class="item-icon-circle">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
-        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(a.liberar_em)+'</span>':'') + '</span>'
+        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+textoContagemLiberacao(a.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
@@ -602,7 +675,7 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
       var bloqueado = itemAindaBloqueado(mt.liberar_em);
       return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+mt.liberar_em+'\')':'abrirMaterialViewer(\''+mt.id+'\')') + '">'
         + '<span class="item-icon-circle">' + (bloqueado?'🔒':'📎') + '</span>'
-        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?' <span style="color:#aaa;font-size:11px">— libera '+fmtDataBRAluno(mt.liberar_em)+'</span>':'') + '</span>'
+        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+textoContagemLiberacao(mt.liberar_em)+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
@@ -626,7 +699,15 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
         + '<span class="item-check">' + (tentativas.some(function(t){return t.aprovado;}) ? '✅' : '') + '</span>'
         + '</div>';
     }).join('');
-    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + aulasHtml + matsHtml + exHtml + provasHtml + '</div>';
+    var itensLiberadosModulo = aulasDoModulo.filter(function(a){return !itemAindaBloqueado(a.liberar_em);})
+      .concat(matsDoModulo.filter(function(mt){return !itemAindaBloqueado(mt.liberar_em);}));
+    var concluidosModulo = aulasDoModulo.filter(function(a){ var pr=progressoPorItem['aula:'+a.id]; return !itemAindaBloqueado(a.liberar_em) && pr && pr.status==='concluido'; }).length
+      + matsDoModulo.filter(function(mt){ var pr=progressoPorItem['material:'+mt.id]; return !itemAindaBloqueado(mt.liberar_em) && pr && pr.status==='concluido'; }).length;
+    var pctModulo = itensLiberadosModulo.length ? Math.round(concluidosModulo/itensLiberadosModulo.length*100) : 0;
+    var progressoModuloHtml = itensLiberadosModulo.length
+      ? '<div class="modulo-progress-track"><div class="modulo-progress-fill" style="width:'+pctModulo+'%"></div></div>'
+      : '';
+    return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + progressoModuloHtml + aulasHtml + matsHtml + exHtml + provasHtml + '</div>';
   }).join('');
   window._aulasCache = aulas; window._materiaisCache = materiais;
 }
@@ -636,7 +717,7 @@ function fmtDataBRAluno(iso){
   return p[2]+'/'+p[1]+'/'+p[0];
 }
 function alertConteudoBloqueado(liberarEm){
-  alert('Este conteúdo ainda não foi liberado. Disponível a partir de ' + fmtDataBRAluno(liberarEm) + '.');
+  mostrarToast(textoContagemLiberacao(liberarEm) + ' — ainda não disponível.', 'err');
 }
 function fecharViewer(){ document.getElementById('item-viewer').classList.remove('open'); }
 
@@ -684,7 +765,7 @@ function renderAulaViewer(idx){
   var bloqueado = itemAindaBloqueado(a.liberar_em);
   var html = '';
   if(bloqueado){
-    html = '<div class="empty-state">🔒 Essa aula libera em ' + fmtDataBRAluno(a.liberar_em) + '.</div>';
+    html = '<div class="empty-state">🔒 ' + textoContagemLiberacao(a.liberar_em) + ' (' + fmtDataBRAluno(a.liberar_em) + ').</div>';
   }else{
     if(a.video_url) html += renderizarVideo(a.video_url);
     if(a.texto_conteudo) html += '<div class="card-flora" style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + escHtml(a.texto_conteudo) + '</div>';
@@ -768,6 +849,7 @@ async function marcarConcluido(tipo, id){
     }
     var chave = tipo + ':' + id;
     if(window._progressoPorItemCache) window._progressoPorItemCache[chave] = { id: registroId, status: 'concluido' };
+    animarConcluido();
     if(tipo === 'aula' && window._aulaViewerIdxAtual != null){
       // Continua na mesma aula (só atualiza o selo/botão), sem fechar a tela —
       // deixa o aluno seguir direto pra "Próxima aula" sem precisar reabrir.
@@ -837,28 +919,28 @@ async function enviarExercicio(exercicioId){
   var payload = { exercicio_id: exercicioId, matricula_id: matriculaDetalheAtual.id, salao_id: alunoAtual.salao_id, status: 'enviado' };
   if(e.tipo === 'texto'){
     var texto = document.getElementById('exec-resposta-texto').value.trim();
-    if(!texto){ alert('Escreva sua resposta antes de enviar.'); return; }
+    if(!texto){ mostrarToast('Escreva sua resposta antes de enviar.', 'err'); return; }
     payload.resposta_texto = texto;
   }else if(e.tipo === 'multipla_escolha' || e.tipo === 'verdadeiro_falso'){
     var sel = document.querySelector('input[name="exec-opcao"]:checked');
-    if(!sel){ alert('Selecione uma opção.'); return; }
+    if(!sel){ mostrarToast('Selecione uma opção.', 'err'); return; }
     payload.resposta_opcao = sel.value;
   }else{
     var fileInput = document.getElementById('exec-arquivo');
     var file = fileInput.files[0];
-    if(!file){ alert('Selecione um arquivo.'); return; }
+    if(!file){ mostrarToast('Selecione um arquivo.', 'err'); return; }
     try{
       var path = alunoAtual.salao_id + '/' + alunoAtual.id + '/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
       var up = await supa.storage.from('curso-envios').upload(path, file);
       if(up.error) throw up.error;
       payload.arquivo_url = path;
-    }catch(err){ console.log('err upload exercicio', err); alert('Não foi possível enviar o arquivo (verifique o tipo e tamanho — só imagem ou PDF, até 10MB).'); return; }
+    }catch(err){ console.log('err upload exercicio', err); mostrarToast('Não foi possível enviar o arquivo (verifique o tipo e tamanho — só imagem ou PDF, até 10MB).', 'err'); return; }
   }
   try{
     var r = await supa.from('curso_exercicio_envios').insert([payload]).select('*').single();
     if(r.error) throw r.error;
     window._enviosCache = (window._enviosCache||[]).filter(function(x){return x.exercicio_id !== exercicioId;}).concat([r.data]);
-  }catch(err){ console.log('err enviar exercicio', err); alert('Não foi possível enviar. Tente novamente.'); return; }
+  }catch(err){ console.log('err enviar exercicio', err); mostrarToast('Não foi possível enviar. Tente novamente.', 'err'); return; }
   fecharViewer();
   abrirCursoDetalhe(matriculaDetalheAtual.id);
 }
@@ -894,10 +976,10 @@ async function iniciarProva(provaId){
   try{
     var r = await supa.from('curso_prova_perguntas').select('*').eq('prova_id', provaId).order('ordem');
     var perguntas = r.data || [];
-    if(!perguntas.length){ alert('Esta prova ainda não tem perguntas cadastradas.'); return; }
+    if(!perguntas.length){ mostrarToast('Esta prova ainda não tem perguntas cadastradas.', 'err'); return; }
     provaEmAndamento = { prova: p, perguntas: perguntas, respostas: {} };
     renderPerguntaAtualProva(0);
-  }catch(e){ console.log('err iniciar prova', e); alert('Não foi possível carregar a prova.'); }
+  }catch(e){ console.log('err iniciar prova', e); mostrarToast('Não foi possível carregar a prova.', 'err'); }
 }
 function renderPerguntaAtualProva(idx){
   var pa = provaEmAndamento;
@@ -918,7 +1000,7 @@ function renderPerguntaAtualProva(idx){
 function proximaPerguntaProva(idxAtual){
   var pa = provaEmAndamento;
   var pg = pa.perguntas[idxAtual];
-  if(!pa.respostas[pg.id]){ alert('Selecione uma resposta antes de continuar.'); return; }
+  if(!pa.respostas[pg.id]){ mostrarToast('Selecione uma resposta antes de continuar.', 'err'); return; }
   renderPerguntaAtualProva(idxAtual+1);
 }
 async function finalizarProva(){
@@ -944,7 +1026,7 @@ async function finalizarProva(){
     }]).select('*').single();
     if(r.error) throw r.error;
     window._tentativasCache = (window._tentativasCache||[]).concat([r.data]);
-  }catch(e){ console.log('err finalizar prova', e); alert('Não foi possível registrar sua tentativa.'); return; }
+  }catch(e){ console.log('err finalizar prova', e); mostrarToast('Não foi possível registrar sua tentativa.', 'err'); return; }
   var body = document.getElementById('item-viewer-body');
   body.innerHTML = '<div style="text-align:center;padding:20px 0">'
     + '<div style="font-size:40px">'+(aprovado?'🎉':'😕')+'</div>'
@@ -1027,7 +1109,7 @@ async function baixarCertificado(path){
     var r = await supa.storage.from('curso-certificados').createSignedUrl(path, 120);
     if(r.error) throw r.error;
     window.open(r.data.signedUrl, '_blank');
-  }catch(e){ console.log('err baixar certificado', e); alert('Não foi possível baixar o certificado agora.'); }
+  }catch(e){ console.log('err baixar certificado', e); mostrarToast('Não foi possível baixar o certificado agora.', 'err'); }
 }
 
 // ===== Avisos =====
