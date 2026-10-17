@@ -212,8 +212,10 @@ button,input,textarea,select{font-family:inherit}
   </div>
 
   <div class="content" id="view-cursos">
+    <div id="pull-refresh-indicator" style="display:flex;justify-content:center;align-items:center;height:0;overflow:hidden;transition:height .2s ease;font-size:12.5px;color:var(--gray-600);font-weight:600"></div>
     <div class="saudacao" id="saudacao-aluno">Olá! 🌷</div>
     <div class="saudacao-sub">Seus cursos e progresso</div>
+    <div id="continuar-card-host"></div>
     <div id="lista-cursos-aluno"><div class="empty-state">Carregando...</div></div>
   </div>
 
@@ -501,7 +503,7 @@ async function carregarMeusCursos(){
   try{
     var rMat = await supa.from('curso_matriculas').select('*').in('status', ['matriculado','andamento','concluido']);
     matriculasAtuais = rMat.data || [];
-    if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; return; }
+    if(!matriculasAtuais.length){ wrap.innerHTML = '<div class="empty-state">Nenhum curso matriculado ainda.</div>'; renderContinuarCard(null); return; }
 
     var cursoIds = matriculasAtuais.filter(function(m){return m.curso_id;}).map(function(m){return m.curso_id;});
     var comboIds = matriculasAtuais.filter(function(m){return m.combo_id;}).map(function(m){return m.combo_id;});
@@ -535,11 +537,101 @@ async function carregarMeusCursos(){
       m._progresso = prog;
     }
     renderMeusCursos();
+    var infoContinuar = await carregarContinuarDeOndeParou();
+    renderContinuarCard(infoContinuar);
   }catch(e){
     console.log('err carregar meus cursos', e);
     wrap.innerHTML = '<div class="empty-state">Não foi possível carregar seus cursos agora.</div>';
   }
 }
+
+// ===== "Continuar de onde parei" =====
+async function carregarContinuarDeOndeParou(){
+  try{
+    var matriculaIds = matriculasAtuais.map(function(m){return m.id;});
+    if(!matriculaIds.length) return null;
+    var r = await supa.from('curso_progresso_conteudo').select('*').in('matricula_id', matriculaIds).eq('status','em_andamento').order('aberto_em', { ascending:false }).limit(1);
+    if(r.error || !r.data || !r.data.length) return null;
+    var prog = r.data[0];
+    var m = matriculasAtuais.find(function(x){ return x.id === prog.matricula_id; });
+    if(!m) return null;
+    var tipo = prog.aula_id ? 'aula' : 'material';
+    var itemId = prog.aula_id || prog.material_id;
+    var nomeItem = tipo === 'aula' ? 'Aula' : 'Material';
+    if(tipo === 'aula'){
+      var ra = await supa.from('curso_aulas').select('titulo').eq('id', itemId).maybeSingle();
+      if(ra.data) nomeItem = ra.data.titulo;
+    }else{
+      var rm = await supa.from('curso_materiais').select('nome').eq('id', itemId).maybeSingle();
+      if(rm.data) nomeItem = rm.data.nome;
+    }
+    return { matriculaId: m.id, cursoNome: m._nome || 'Curso', itemTipo: tipo, itemId: itemId, itemNome: nomeItem };
+  }catch(e){ console.log('err continuar de onde parou', e); return null; }
+}
+function renderContinuarCard(info){
+  var host = document.getElementById('continuar-card-host');
+  if(!host) return;
+  if(!info){ host.innerHTML = ''; return; }
+  window._continuarInfo = info;
+  host.innerHTML = '<div class="card-flora" style="display:flex;align-items:center;gap:12px;cursor:pointer;border-left:4px solid var(--green)" onclick="continuarDeOndeParou()">'
+    + '<span style="font-size:24px">▶️</span>'
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-size:10.5px;color:var(--gray-600);font-weight:800;text-transform:uppercase;letter-spacing:.3px">Continuar de onde parei</div>'
+    + '<div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(info.itemNome) + '</div>'
+    + '<div style="font-size:12px;color:var(--gray-600)">' + escHtml(info.cursoNome) + '</div>'
+    + '</div>'
+    + '<span style="font-size:20px;color:var(--gray-400)">›</span>'
+    + '</div>';
+}
+async function continuarDeOndeParou(){
+  var info = window._continuarInfo;
+  if(!info) return;
+  await abrirCursoDetalhe(info.matriculaId);
+  if(info.itemTipo === 'aula') abrirAulaViewer(info.itemId);
+  else abrirMaterialViewer(info.itemId);
+}
+
+// ===== Pull-to-refresh (gesto de arrastar pra baixo em "Meus Cursos") =====
+(function configurarPullToRefresh(){
+  var startY = 0, puxando = false, distancia = 0;
+  var LIMIAR = 70;
+  function telaCursosAtiva(){
+    var view = document.getElementById('view-cursos');
+    return view && view.style.display !== 'none' && document.getElementById('screen-app').classList.contains('active');
+  }
+  function onTouchStart(e){
+    if(!telaCursosAtiva()) return;
+    var view = document.getElementById('view-cursos');
+    if(view.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    puxando = true;
+  }
+  function onTouchMove(e){
+    if(!puxando) return;
+    distancia = e.touches[0].clientY - startY;
+    if(distancia <= 0){ distancia = 0; return; }
+    var ind = document.getElementById('pull-refresh-indicator');
+    if(ind){
+      ind.style.height = Math.min(distancia, LIMIAR) + 'px';
+      ind.textContent = distancia > LIMIAR ? '↑ Solte pra atualizar' : '↓ Puxe pra atualizar';
+    }
+  }
+  function onTouchEnd(){
+    if(!puxando) return;
+    puxando = false;
+    var ind = document.getElementById('pull-refresh-indicator');
+    if(distancia > LIMIAR){
+      if(ind) ind.textContent = 'Atualizando...';
+      carregarMeusCursos().then(function(){ if(ind) ind.style.height = '0px'; });
+    }else if(ind){
+      ind.style.height = '0px';
+    }
+    distancia = 0;
+  }
+  document.addEventListener('touchstart', onTouchStart, { passive:true });
+  document.addEventListener('touchmove', onTouchMove, { passive:true });
+  document.addEventListener('touchend', onTouchEnd, { passive:true });
+})();
 async function calcularProgresso(matriculaId, cursoIds){
   if(!cursoIds || !cursoIds.length) return 0;
   try{
@@ -689,14 +781,20 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
         + '<span class="item-check">' + (envio && envio.status==='aprovado' ? '✅' : '') + '</span>'
         + '</div>';
     }).join('');
+    // "Quiz do módulo" reaproveita inteiro o sistema de Provas já existente
+    // (abrirProva/iniciarProva/finalizarProva, zero lógica nova) — só ganha
+    // um visual destacado aqui porque toda prova já é vinculada a um
+    // módulo específico (modulo_id), então é sempre "o quiz deste módulo".
     var provasHtml = provasDoModulo.map(function(p){
       var tentativas = tentativasDaProva(p.id);
       var melhor = tentativas.reduce(function(acc,t){ return (acc===null || (t.percentual||0) > acc) ? (t.percentual||0) : acc; }, null);
-      var info = tentativas.length ? (' — melhor nota: '+Math.round(melhor)+'%') : '';
-      return '<div class="item-row" onclick="abrirProva(\''+p.id+'\')">'
-        + '<span class="item-icon-circle">🧪</span>'
-        + '<span style="flex:1">' + escHtml(p.titulo) + info + '</span>'
-        + '<span class="item-check">' + (tentativas.some(function(t){return t.aprovado;}) ? '✅' : '') + '</span>'
+      var aprovado = tentativas.some(function(t){return t.aprovado;});
+      var subtitulo = tentativas.length ? ('Melhor nota: '+Math.round(melhor)+'%') : 'Ainda não feito';
+      return '<div class="item-row" style="border:1.5px solid var(--green);background:#f0fdf4" onclick="abrirProva(\''+p.id+'\')">'
+        + '<span class="item-icon-circle" style="background:var(--green);color:#fff">🧪</span>'
+        + '<div style="flex:1"><div style="font-weight:700">Quiz do módulo: ' + escHtml(p.titulo) + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-600)">' + subtitulo + '</div></div>'
+        + '<span class="item-check">' + (aprovado ? '✅' : '') + '</span>'
         + '</div>';
     }).join('');
     var itensLiberadosModulo = aulasDoModulo.filter(function(a){return !itemAindaBloqueado(a.liberar_em);})
