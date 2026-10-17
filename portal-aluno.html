@@ -107,6 +107,10 @@ button,input,textarea,select{font-family:inherit}
 .check-pop-icon{font-size:90px;animation:popCheck .5s cubic-bezier(.34,1.56,.64,1)}
 
 .contagem-liberacao{display:inline-block;background:#fef3c7;color:#92400e;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;margin-top:3px}
+
+.confetti-piece{position:absolute;top:-12px;width:8px;height:14px;opacity:.9;animation:confettiFall linear forwards}
+@keyframes confettiFall{to{transform:translateY(112vh) rotate(540deg);opacity:0}}
+#celebracao-overlay{animation:fadeInUp .3s ease}
 .item-viewer-head{padding:14px 16px;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;justify-content:space-between}
 .item-viewer-body{flex:1;overflow-y:auto;padding:18px 16px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box}
 .item-viewer video, .item-viewer iframe{width:100%;border-radius:var(--radius-sm);border:none}
@@ -273,6 +277,10 @@ button,input,textarea,select{font-family:inherit}
 
 <div id="toast-container"></div>
 <div id="check-pop-overlay"></div>
+<div id="confete-host" style="position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden"></div>
+<div id="celebracao-overlay" style="position:fixed;inset:0;background:var(--ivory);z-index:350;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+  <div id="celebracao-corpo" style="max-width:360px"></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -310,6 +318,37 @@ function animarConcluido(){
   el.innerHTML = '<div class="check-pop-icon">✅</div>';
   el.classList.add('show');
   setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.innerHTML=''; }, 150); }, 600);
+}
+
+// ===== Tela de comemoração (confete, sem lib externa) =====
+function dispararConfete(){
+  var host = document.getElementById('confete-host');
+  if(!host) return;
+  host.innerHTML = '';
+  var cores = ['#15803d','#f59e0b','#8b5cf6','#ec4899','#0ea5e9','#dc2626'];
+  for(var i=0;i<60;i++){
+    var p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random()*100) + 'vw';
+    p.style.background = cores[Math.floor(Math.random()*cores.length)];
+    p.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
+    p.style.animationDelay = (Math.random()*0.6) + 's';
+    p.style.transform = 'rotate(' + Math.floor(Math.random()*360) + 'deg)';
+    host.appendChild(p);
+  }
+  setTimeout(function(){ host.innerHTML = ''; }, 4200);
+}
+function mostrarCelebracao(html){
+  var overlay = document.getElementById('celebracao-overlay');
+  var corpo = document.getElementById('celebracao-corpo');
+  if(!overlay || !corpo) return;
+  corpo.innerHTML = html;
+  overlay.style.display = 'flex';
+  dispararConfete();
+}
+function fecharCelebracao(){
+  var overlay = document.getElementById('celebracao-overlay');
+  if(overlay) overlay.style.display = 'none';
 }
 
 function showLoginAlert(msg, tipo){
@@ -527,6 +566,7 @@ async function carregarMeusCursos(){
         (rCsub.data||[]).forEach(function(c){ cursosPorId[c.id] = c; });
       }
     }
+    window._cursosPorIdCache = cursosPorId;
 
     for(var i=0;i<matriculasAtuais.length;i++){
       var m = matriculasAtuais[i];
@@ -793,6 +833,10 @@ async function abrirCursoDetalhe(matriculaId){
     var rMats = await supa.from('curso_materiais').select('*').in('curso_id', cursoIds).order('ordem');
     var rEx = await supa.from('curso_exercicios').select('*').in('curso_id', cursoIds).order('ordem');
     var rProvas = await supa.from('curso_provas').select('*').in('curso_id', cursoIds).eq('ativo', true).order('ordem');
+    var rCursosDetalhe = await supa.from('cursos').select('*').in('id', cursoIds);
+    window._cursosPorIdCache = Object.assign(window._cursosPorIdCache||{}, (function(){
+      var m = {}; (rCursosDetalhe.data||[]).forEach(function(c){ m[c.id] = c; }); return m;
+    })());
     var rProg = await supa.from('curso_progresso_conteudo').select('*').eq('matricula_id', matriculaId);
     var rEnvios = await supa.from('curso_exercicio_envios').select('*').eq('matricula_id', matriculaId).order('criado_em', { ascending:false });
     var rTentativas = await supa.from('curso_prova_tentativas').select('*').eq('matricula_id', matriculaId).order('numero_tentativa', { ascending:false });
@@ -816,6 +860,12 @@ function envioAtualDoExercicio(exercicioId){
 }
 function tentativasDaProva(provaId){
   return (window._tentativasCache||[]).filter(function(t){ return t.prova_id === provaId; });
+}
+function provaAprovada(provaId){
+  return tentativasDaProva(provaId).some(function(t){ return t.aprovado; });
+}
+function alertModuloTravadoPorQuiz(){
+  mostrarToast('Conclua e aprove o quiz do módulo anterior pra continuar.', 'err');
 }
 function envioStatusBadgeHtml(status){
   var map = { enviado:'badge-blue', em_analise:'badge-yellow', aprovado:'badge-green', refazer:'badge-red' };
@@ -860,26 +910,55 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
   });
   window._aulasOrdenadasCache = aulasOrdenadas;
 
+  var cursosPorIdDetalhe = window._cursosPorIdCache || {};
+  // Ordem dos módulos DENTRO de cada curso (um combo tem vários cursos, cada
+  // um com sua própria sequência) — usado só pra achar "o módulo anterior"
+  // quando quiz_modulo_bloqueia_proximo está ligado.
+  var modulosPorCurso = {};
+  modulos.forEach(function(mod){
+    (modulosPorCurso[mod.curso_id] = modulosPorCurso[mod.curso_id] || []).push(mod);
+  });
+  Object.keys(modulosPorCurso).forEach(function(cid){
+    modulosPorCurso[cid].sort(function(a,b){ return (a.ordem||0) - (b.ordem||0); });
+  });
+
   corpo.innerHTML = headerHtml + modulos.map(function(mod){
+    var cursoDoMod = cursosPorIdDetalhe[mod.curso_id] || {};
+    var moduloTravadoPorQuiz = false;
+    if(cursoDoMod.quiz_modulo_bloqueia_proximo){
+      var seq = modulosPorCurso[mod.curso_id] || [];
+      var idxMod = seq.findIndex(function(x){ return x.id === mod.id; });
+      if(idxMod > 0){
+        var modAnterior = seq[idxMod-1];
+        var quizAnterior = (window._provasCache||[]).find(function(p){ return p.modulo_id === modAnterior.id; });
+        if(quizAnterior && !provaAprovada(quizAnterior.id)) moduloTravadoPorQuiz = true;
+      }
+    }
     var aulasDoModulo = aulas.filter(function(a){return a.modulo_id === mod.id;});
     var matsDoModulo = materiais.filter(function(mt){return mt.modulo_id === mod.id && !mt.aula_id;});
     var aulasHtml = aulasDoModulo.map(function(a){
       var prog = progressoPorItem['aula:'+a.id];
       var feito = prog && prog.status === 'concluido';
-      var bloqueado = itemAindaBloqueado(a.liberar_em);
-      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+a.liberar_em+'\')':'abrirAulaViewer(\''+a.id+'\')') + '">'
+      var travadaPorData = itemAindaBloqueado(a.liberar_em);
+      var bloqueado = travadaPorData || moduloTravadoPorQuiz;
+      var motivoHtml = travadaPorData ? textoContagemLiberacao(a.liberar_em) : (moduloTravadoPorQuiz ? 'Conclua o quiz do módulo anterior' : '');
+      var onclickBloqueio = travadaPorData ? ('alertConteudoBloqueado(\''+a.liberar_em+'\')') : 'alertModuloTravadoPorQuiz()';
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?onclickBloqueio:'abrirAulaViewer(\''+a.id+'\')') + '">'
         + '<span class="item-icon-circle">' + (bloqueado?'🔒':(a.tipo_conteudo==='video'?'🎥':'📄')) + '</span>'
-        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+textoContagemLiberacao(a.liberar_em)+'</span>':'') + '</span>'
+        + '<span style="flex:1">' + escHtml(a.titulo) + (a.duracao_min?' <span style="color:#aaa;font-size:11px">('+a.duracao_min+' min)</span>':'') + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+motivoHtml+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
     var matsHtml = matsDoModulo.map(function(mt){
       var prog = progressoPorItem['material:'+mt.id];
       var feito = prog && prog.status === 'concluido';
-      var bloqueado = itemAindaBloqueado(mt.liberar_em);
-      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?'alertConteudoBloqueado(\''+mt.liberar_em+'\')':'abrirMaterialViewer(\''+mt.id+'\')') + '">'
+      var travadaPorData = itemAindaBloqueado(mt.liberar_em);
+      var bloqueado = travadaPorData || moduloTravadoPorQuiz;
+      var motivoHtml = travadaPorData ? textoContagemLiberacao(mt.liberar_em) : (moduloTravadoPorQuiz ? 'Conclua o quiz do módulo anterior' : '');
+      var onclickBloqueio = travadaPorData ? ('alertConteudoBloqueado(\''+mt.liberar_em+'\')') : 'alertModuloTravadoPorQuiz()';
+      return '<div class="item-row" style="' + (bloqueado?'opacity:.5;cursor:default':'') + '" onclick="' + (bloqueado?onclickBloqueio:'abrirMaterialViewer(\''+mt.id+'\')') + '">'
         + '<span class="item-icon-circle">' + (bloqueado?'🔒':'📎') + '</span>'
-        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+textoContagemLiberacao(mt.liberar_em)+'</span>':'') + '</span>'
+        + '<span style="flex:1">' + escHtml(mt.nome) + (bloqueado?'<br><span class="contagem-liberacao">🔒 '+motivoHtml+'</span>':'') + '</span>'
         + '<span class="item-check">' + (feito?'✅':'') + '</span>'
         + '</div>';
     }).join('');
@@ -918,8 +997,49 @@ function renderCursoDetalhe(modulos, aulas, materiais, progressoPorItem){
       ? '<div class="modulo-progress-track"><div class="modulo-progress-fill" style="width:'+pctModulo+'%"></div></div>'
       : '';
     return '<div class="modulo-block"><div class="modulo-head">' + escHtml(mod.nome) + '</div>' + progressoModuloHtml + aulasHtml + matsHtml + exHtml + provasHtml + '</div>';
-  }).join('');
+  }).join('') + renderProvasFinaisHtml(cursosPorIdDetalhe);
   window._aulasCache = aulas; window._materiaisCache = materiais;
+}
+// Prova(s) com modulo_id NULL — convenção pra "prova final do curso" (quiz de
+// módulo é a mesma tabela curso_provas, mas sempre com modulo_id preenchido).
+// Não entram no loop de módulos acima porque não pertencem a nenhum.
+function renderProvasFinaisHtml(cursosPorIdDetalhe){
+  var provasFinais = (window._provasCache||[]).filter(function(p){ return !p.modulo_id; });
+  if(!provasFinais.length) return '';
+  var itensHtml = provasFinais.map(function(p){
+    var cursoDoP = cursosPorIdDetalhe[p.curso_id] || {};
+    var tentativas = tentativasDaProva(p.id);
+    var aprovado = tentativas.some(function(t){return t.aprovado;});
+    var esgotada = !aprovado && p.tentativas_maximas != null && tentativas.length >= p.tentativas_maximas;
+    var travadaPorQuizzes = false;
+    if(cursoDoP.prova_final_exige_quizzes_aprovados){
+      var quizzesDoCurso = (window._provasCache||[]).filter(function(q){ return q.curso_id === p.curso_id && q.modulo_id; });
+      travadaPorQuizzes = quizzesDoCurso.some(function(q){ return !provaAprovada(q.id); });
+    }
+    var melhor = tentativas.reduce(function(acc,t){ return (acc===null || (t.percentual||0) > acc) ? (t.percentual||0) : acc; }, null);
+    if(travadaPorQuizzes){
+      return '<div class="item-row" style="opacity:.5;cursor:default" onclick="mostrarToast(\'Aprove todos os quizzes de módulo pra liberar a prova final.\',\'err\')">'
+        + '<span class="item-icon-circle">🔒</span>'
+        + '<div style="flex:1"><div style="font-weight:700">' + escHtml(p.titulo) + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-600)">Aprove todos os quizzes de módulo pra liberar</div></div>'
+        + '</div>';
+    }
+    if(esgotada){
+      return '<div class="item-row" style="opacity:.6;cursor:default">'
+        + '<span class="item-icon-circle">🚫</span>'
+        + '<div style="flex:1"><div style="font-weight:700">' + escHtml(p.titulo) + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-600)">Tentativas esgotadas — melhor nota: '+Math.round(melhor||0)+'%</div></div>'
+        + '</div>';
+    }
+    var subtitulo = tentativas.length ? ('Melhor nota: '+Math.round(melhor)+'%') : 'Ainda não feita';
+    return '<div class="item-row" style="border:1.5px solid var(--green);background:#f0fdf4" onclick="abrirProva(\''+p.id+'\')">'
+      + '<span class="item-icon-circle" style="background:var(--green);color:#fff">🏆</span>'
+      + '<div style="flex:1"><div style="font-weight:700">' + escHtml(p.titulo) + '</div>'
+      + '<div style="font-size:11px;color:var(--gray-600)">' + subtitulo + '</div></div>'
+      + '<span class="item-check">' + (aprovado ? '✅' : '') + '</span>'
+      + '</div>';
+  }).join('');
+  return '<div class="modulo-block"><div class="modulo-head">Prova final</div>' + itensHtml + '</div>';
 }
 function fmtDataBRAluno(iso){
   if(!iso) return '';
@@ -1060,6 +1180,30 @@ async function marcarConcluido(tipo, id){
     var chave = tipo + ':' + id;
     if(window._progressoPorItemCache) window._progressoPorItemCache[chave] = { id: registroId, status: 'concluido' };
     animarConcluido();
+
+    // Curso acabou de bater 100%? Celebra antes mesmo do certificado existir
+    // (emissão é uma ação separada do admin, que pode vir depois) — o aviso
+    // já deixa claro que o certificado aparece quando a escola liberar.
+    var progressoAntigo = matriculaDetalheAtual._progresso || 0;
+    if(progressoAntigo < 100){
+      calcularProgresso(matriculaId, matriculaDetalheAtual._cursoIds || []).then(function(progressoNovo){
+        matriculaDetalheAtual._progresso = progressoNovo;
+        var mAtualizar = matriculasAtuais.find(function(x){ return x.id === matriculaId; });
+        if(mAtualizar) mAtualizar._progresso = progressoNovo;
+        if(progressoNovo >= 100){
+          setTimeout(function(){
+            mostrarCelebracao(
+              '<div style="font-size:70px;margin-bottom:10px">🎉</div>'
+              + '<div style="font-size:22px;font-weight:800;margin-bottom:8px">Parabéns!</div>'
+              + '<div style="font-size:14px;color:var(--gray-600);margin-bottom:22px">Você concluiu o curso<br><b>' + escHtml(matriculaDetalheAtual._nome||'') + '</b></div>'
+              + '<div style="font-size:12.5px;color:var(--gray-600);margin-bottom:22px">Assim que a escola liberar, seu certificado aparece na aba Certificados.</div>'
+              + '<button class="btn-concluir" onclick="fecharCelebracao()">Continuar</button>'
+            );
+          }, 700);
+        }
+      });
+    }
+
     if(tipo === 'aula' && window._aulaViewerIdxAtual != null){
       // Continua na mesma aula (só atualiza o selo/botão), sem fechar a tela —
       // deixa o aluno seguir direto pra "Próxima aula" sem precisar reabrir.
@@ -1180,14 +1324,27 @@ async function abrirProva(provaId){
   body.innerHTML = html;
   document.getElementById('item-viewer').classList.add('open');
 }
+function embaralharArray(arr){
+  for(var i=arr.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+  }
+  return arr;
+}
 async function iniciarProva(provaId){
   var p = (window._provasCache||[]).find(function(x){return x.id === provaId;});
   if(!p) return;
+  if(p.tentativas_maximas != null && tentativasDaProva(provaId).length >= p.tentativas_maximas){
+    mostrarToast('Você já usou todas as tentativas desta prova.', 'err');
+    return;
+  }
   try{
     var r = await supa.from('curso_prova_perguntas').select('*').eq('prova_id', provaId).order('ordem');
-    var perguntas = r.data || [];
+    var perguntas = (r.data || []).map(function(pg){ return Object.assign({}, pg, { opcoes: (pg.opcoes||[]).slice() }); });
     if(!perguntas.length){ mostrarToast('Esta prova ainda não tem perguntas cadastradas.', 'err'); return; }
-    provaEmAndamento = { prova: p, perguntas: perguntas, respostas: {} };
+    if(p.embaralhar_perguntas) embaralharArray(perguntas);
+    if(p.embaralhar_opcoes) perguntas.forEach(function(pg){ embaralharArray(pg.opcoes); });
+    provaEmAndamento = { prova: p, perguntas: perguntas, respostas: {}, confirmadas: {} };
     renderPerguntaAtualProva(0);
   }catch(e){ console.log('err iniciar prova', e); mostrarToast('Não foi possível carregar a prova.', 'err'); }
 }
@@ -1198,16 +1355,40 @@ function renderPerguntaAtualProva(idx){
   var body = document.getElementById('item-viewer-body');
   if(!pg){ finalizarProva(); return; }
   var respostaAtual = pa.respostas[pg.id];
+  var exigeConfirmacao = !!pa.prova.mostrar_explicacao_apos_responder;
+  var confirmada = !exigeConfirmacao || !!pa.confirmadas[pg.id];
   var html = '<div style="font-size:12px;color:var(--gray-400);margin-bottom:6px">Pergunta '+(idx+1)+' de '+pa.perguntas.length+'</div>';
   html += '<div style="font-size:14px;font-weight:700;margin-bottom:14px">'+escHtml(pg.enunciado)+'</div>';
   html += (pg.opcoes||[]).map(function(o){
-    return '<label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer">'
-      + '<input type="radio" name="pg-opcao" value="'+o.id+'" '+(respostaAtual===o.id?'checked':'')+' onchange="provaEmAndamento.respostas[\''+pg.id+'\']=this.value"/> ' + escHtml(o.texto) + '</label>';
+    var marcada = respostaAtual===o.id;
+    var correta = o.id === pg.resposta_correta;
+    var estilo = 'display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;';
+    estilo += confirmada ? 'cursor:default;' : 'cursor:pointer;';
+    if(confirmada && exigeConfirmacao){
+      if(correta) estilo += 'border-color:var(--green);background:#f0fdf4;';
+      else if(marcada) estilo += 'border-color:#dc2626;background:#fef2f2;';
+    }
+    return '<label style="'+estilo+'">'
+      + '<input type="radio" name="pg-opcao" value="'+o.id+'" '+(marcada?'checked':'')+' '+(confirmada&&exigeConfirmacao?'disabled':'')+' onchange="provaEmAndamento.respostas[\''+pg.id+'\']=this.value"/> ' + escHtml(o.texto) + '</label>';
   }).join('');
-  html += '<button class="btn-main" style="margin-top:12px" onclick="proximaPerguntaProva('+idx+')">'+(idx+1<pa.perguntas.length?'Próxima':'Finalizar e ver resultado')+'</button>';
+  if(confirmada && exigeConfirmacao){
+    var acertou = respostaAtual === pg.resposta_correta;
+    html += '<div style="margin:6px 0 10px;font-size:13px;font-weight:700;color:'+(acertou?'var(--green)':'#dc2626')+'">'+(acertou?'✅ Resposta certa!':'❌ Não foi dessa vez.')+'</div>';
+    if(pg.explicacao) html += '<div style="font-size:12.5px;color:var(--gray-600);background:var(--gray-50);border-radius:8px;padding:10px;margin-bottom:12px">'+escHtml(pg.explicacao)+'</div>';
+    html += '<button class="btn-main" onclick="avancarPerguntaProva('+idx+')">'+(idx+1<pa.perguntas.length?'Próxima':'Ver resultado')+'</button>';
+  } else {
+    html += '<button class="btn-main" style="margin-top:12px" onclick="'+(exigeConfirmacao?'confirmarRespostaProva('+idx+')':'avancarPerguntaProva('+idx+')')+'">'+(exigeConfirmacao?'Responder':(idx+1<pa.perguntas.length?'Próxima':'Finalizar e ver resultado'))+'</button>';
+  }
   body.innerHTML = html;
 }
-function proximaPerguntaProva(idxAtual){
+function confirmarRespostaProva(idx){
+  var pa = provaEmAndamento;
+  var pg = pa.perguntas[idx];
+  if(!pa.respostas[pg.id]){ mostrarToast('Selecione uma resposta antes de continuar.', 'err'); return; }
+  pa.confirmadas[pg.id] = true;
+  renderPerguntaAtualProva(idx);
+}
+function avancarPerguntaProva(idxAtual){
   var pa = provaEmAndamento;
   var pg = pa.perguntas[idxAtual];
   if(!pa.respostas[pg.id]){ mostrarToast('Selecione uma resposta antes de continuar.', 'err'); return; }
@@ -1237,11 +1418,26 @@ async function finalizarProva(){
     if(r.error) throw r.error;
     window._tentativasCache = (window._tentativasCache||[]).concat([r.data]);
   }catch(e){ console.log('err finalizar prova', e); mostrarToast('Não foi possível registrar sua tentativa.', 'err'); return; }
+  var esgotouTentativas = pa.prova.tentativas_maximas != null && numeroTentativa >= pa.prova.tentativas_maximas;
+  var podeVerGabarito = pa.prova.mostrar_gabarito === 'sempre'
+    || (pa.prova.mostrar_gabarito === 'apos_aprovar_ou_esgotar' && (aprovado || esgotouTentativas));
+  var gabaritoHtml = '';
+  if(podeVerGabarito){
+    gabaritoHtml = '<div style="text-align:left;margin-top:18px">' + pa.perguntas.map(function(pg){
+      var respDada = pa.respostas[pg.id];
+      var acertou = respDada === pg.resposta_correta;
+      return '<div style="margin-bottom:10px;padding:10px;border-radius:8px;background:var(--gray-50)">'
+        + '<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+(acertou?'✅':'❌')+' '+escHtml(pg.enunciado)+'</div>'
+        + (pg.explicacao ? '<div style="font-size:12px;color:var(--gray-600)">'+escHtml(pg.explicacao)+'</div>' : '')
+        + '</div>';
+    }).join('') + '</div>';
+  }
   var body = document.getElementById('item-viewer-body');
   body.innerHTML = '<div style="text-align:center;padding:20px 0">'
     + '<div style="font-size:40px">'+(aprovado?'🎉':'😕')+'</div>'
     + '<div style="font-size:22px;font-weight:800;margin-top:10px">'+Math.round(percentual)+'%</div>'
-    + '<div style="font-size:13px;color:var(--gray-600);margin-top:6px">'+(aprovado?'Aprovado!':'Não atingiu a nota mínima de '+pa.prova.nota_minima+'%')+'</div>'
+    + '<div style="font-size:13px;color:var(--gray-600);margin-top:6px">'+(aprovado?'Aprovado!':'Não atingiu a nota mínima de '+pa.prova.nota_minima+'%')+(esgotouTentativas && !aprovado?'<br>Tentativas esgotadas.':'')+'</div>'
+    + gabaritoHtml
     + '<button class="btn-main" style="margin-top:20px" onclick="fecharViewer();abrirCursoDetalhe(matriculaDetalheAtual.id)">Voltar ao curso</button>'
     + '</div>';
   provaEmAndamento = null;
