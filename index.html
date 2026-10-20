@@ -15664,7 +15664,8 @@ function afSucessoAdicionarMais(){
 function afSucessoVerCliente(){
   var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
   closeModal('modal-agendar');
-  if(typeof abrirPerfilCliente==='function'&&afUltimoClienteSalvo)abrirPerfilCliente(afUltimoClienteSalvo);
+  var idx=(typeof clientes!=='undefined'?clientes:[]).findIndex(function(c){return c.nome===afUltimoClienteSalvo;});
+  if(typeof abrirPerfilCliente==='function'&&idx>=0)abrirPerfilCliente(idx);
 }
 function afSucessoNovoAtendimento(){
   var el=document.getElementById('af-sucesso');if(el)el.classList.remove('open');
