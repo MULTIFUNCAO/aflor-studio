@@ -1408,7 +1408,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#22c55e">R$ 0,00</div><div style="font-size:9px;color:#aaa">Receitas</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800;color:#ef4444">R$ 0,00</div><div style="font-size:9px;color:#aaa">Despesas</div></div>
           <div style="text-align:center"><div style="font-size:11px;font-weight:800">R$ 0,00</div><div style="font-size:9px;color:#aaa">Ticket médio</div></div>
-          <div style="text-align:center"><div style="font-size:11px;font-weight:800">57</div><div style="font-size:9px;color:#aaa">Atendimentos</div></div>
+          <div style="text-align:center"><div id="fluxo-kpi-atendimentos-val" style="font-size:11px;font-weight:800">0</div><div style="font-size:9px;color:#aaa">Atendimentos</div></div>
         </div>
       </div>
 
@@ -15030,6 +15030,10 @@ function renderFluxo(){
   if(elKpiR)elKpiR.textContent=fluxoFmtMoeda(kpiR);
   if(elKpiD)elKpiD.textContent=fluxoFmtMoeda(kpiD);
   if(elKpiL){elKpiL.textContent=fluxoFmtMoeda(kpiL);elKpiL.style.color=kpiL>=0?'#111':'#ef4444';}
+  // Atendimentos do mês = nº de lançamentos de receita confirmados (cada um é um
+  // atendimento/comanda pago) — era um "57" fixo no HTML, nunca ligado a dado real.
+  var elKpiAtend=document.getElementById('fluxo-kpi-atendimentos-val');
+  if(elKpiAtend)elKpiAtend.textContent=lancsMesConf.filter(function(l){return l.tipo==='receita';}).length;
   if(elKpiS){
     // Saldo em Caixa = acumulado de TODO o histórico já fechado em fluxo_lancamentos
     // (receita - despesa, não só o mês corrente) + o que está no caixa aberto agora
