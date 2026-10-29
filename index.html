@@ -15201,7 +15201,10 @@ function fluxoLancamentosDoMes(){
 function fluxoAgruparPorCat(lancs,tipo){
   var map={};
   lancs.forEach(function(l){
-    if(l.tipo!==tipo)return;
+    // Usada pelas abas "Categorias" e "DRE" — precisa do mesmo filtro de
+    // confirmado que os cards do topo (renderFluxo) já aplicam, senão um
+    // lançamento pendente apareceria aqui mas não nos cards de cima.
+    if(l.tipo!==tipo||l.status!=='confirmado')return;
     var k=l.cat||'Outros';
     map[k]=(map[k]||0)+(parseFloat(l.val)||0);
   });
@@ -15236,7 +15239,10 @@ function renderFluxoProjecao(totalR,totalD){
   if(elM)elM.textContent='Margem est. '+margem+'%';
 }
 function renderFluxoSemanal(){
-  var lancs=fluxoLancamentosDoMes();
+  // Mesmo filtro de confirmado que os cards do topo e o DRE já aplicam —
+  // sem isso, um lançamento pendente entraria na soma semanal mas não
+  // nos cards principais.
+  var lancs=fluxoLancamentosDoMes().filter(function(l){return l.status==='confirmado';});
   var ano=fluxoMes.getFullYear(),mes=fluxoMes.getMonth();
   var mesNome=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var mesAbrev=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
