@@ -15367,12 +15367,20 @@ function renderFluxo(){
   if(elBarraD)elBarraD.textContent=fluxoFmtMoeda(kpiD);
   if(elBarraSobra){elBarraSobra.textContent=fluxoFmtMoeda(kpiL);elBarraSobra.style.color=kpiL>=0?'#22c55e':'#ef4444';}
   var totalRD=kpiR+kpiD;
-  var pctR=totalRD>0?Math.round(kpiR/totalRD*100):0;
-  var pctD=totalRD>0?100-pctR:0;
-  if(elBarraRPct)elBarraRPct.style.width=pctR+'%';
-  if(elBarraDPct)elBarraDPct.style.width=pctD+'%';
-  if(elBarraRPctTxt)elBarraRPctTxt.textContent=pctR+'% Receitas';
-  if(elBarraDPctTxt)elBarraDPctTxt.textContent=pctD+'% Desp.';
+  if(totalRD>0){
+    var pctR=Math.round(kpiR/totalRD*100);
+    var pctD=100-pctR;
+    if(elBarraRPct){elBarraRPct.style.width=pctR+'%';elBarraRPct.style.background='#22c55e';elBarraRPct.style.display='flex';}
+    if(elBarraDPct){elBarraDPct.style.width=pctD+'%';elBarraDPct.style.background='#ef4444';elBarraDPct.style.display='flex';}
+    if(elBarraRPctTxt){elBarraRPctTxt.textContent=pctR+'% Receitas';elBarraRPctTxt.style.color='#fff';}
+    if(elBarraDPctTxt)elBarraDPctTxt.textContent=pctD+'% Desp.';
+  } else {
+    // Mês sem nenhum lançamento: 0%+0% de largura deixava a barra toda em
+    // branco (sem cor nenhuma). Mostra uma barra cinza neutra em vez disso.
+    if(elBarraRPct){elBarraRPct.style.width='100%';elBarraRPct.style.background='#e5e5e5';elBarraRPct.style.display='flex';}
+    if(elBarraDPct){elBarraDPct.style.width='0%';elBarraDPct.style.display='none';}
+    if(elBarraRPctTxt){elBarraRPctTxt.textContent='Sem lançamentos neste mês';elBarraRPctTxt.style.color='#888';}
+  }
   // Atendimentos do mês = nº de lançamentos de receita confirmados (cada um é um
   // atendimento/comanda pago) — era um "57" fixo no HTML, nunca ligado a dado real.
   var elKpiAtend=document.getElementById('fluxo-kpi-atendimentos-val');
