@@ -12509,7 +12509,13 @@ function renderAgenda(){
 
   // agendamentosPorData global
 
-  if(!agendamentosPorData[dataKey]){
+  // Só busca se o salão já resolveu — no carregamento inicial da página,
+  // renderAgenda() roda antes de window.SALAO_ID ser definido (carregarSalaoAtual
+  // é assíncrono), e disparar a busca com salao_id=eq.null sempre dava erro no
+  // console ("Erro ao carregar agendamentos"). Sem SALAO_ID ainda, não marca o
+  // dia como carregado — carregarAgendamentosSupa() preenche certo assim que o
+  // salão resolver e já chama renderAgenda() de novo sozinho.
+  if(!agendamentosPorData[dataKey]&&window.SALAO_ID){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
