@@ -1218,9 +1218,9 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div class="fdash-destaque-icon">🌷</div>
           <div style="flex:1;min-width:0">
             <div class="dq-title" style="font-size:12px;font-weight:700">Florescimento</div>
-            <div class="dq-track" style="height:5px;border-radius:3px;overflow:hidden;margin-top:6px"><div class="dq-fill" style="height:100%;width:62%;border-radius:3px"></div></div>
+            <div class="dq-track" style="height:5px;border-radius:3px;overflow:hidden;margin-top:6px"><div class="dq-fill" id="dash-florescimento-fill" style="height:100%;width:0%;border-radius:3px"></div></div>
           </div>
-          <div class="dq-pct" style="font-size:12px">62%</div>
+          <div class="dq-pct" id="dash-florescimento-pct" style="font-size:12px">0%</div>
         </div>
         <div class="fdash-destaque-card dq-ia" onclick="showPage('ia')">
           <div class="fdash-destaque-icon" style="color:#fff">🧠</div>
@@ -14285,11 +14285,44 @@ const etapasFlor=[
   {nome:'Jardim',emoji:'🌸',desc:'Florescendo em todas as áreas! Marketing ativo e financeiro organizado.',min:65,max:85,cor:'#ec4899'},
   {nome:'Florescimento Pleno',emoji:'🌷',desc:'Você atingiu o pico! Negócio organizado, lucrativo e escalável.',min:85,max:100,cor:'#111'},
 ];
+// Pontuação real do Florescimento — era um "62%" fixo + checklist inventado
+// (feito:true/false hardcoded), sem ligação com nenhum dado do salão. Agora
+// são 6 critérios simples e verificáveis, peso igual, usando dado já
+// carregado (sem consulta nova ao Supabase).
+function calcularFlorescimento(){
+  var hoje=new Date();
+  var mesAtual=hoje.getMonth(),anoAtual=hoje.getFullYear();
+  var listaFluxo=(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos)?fluxoLancamentos:[];
+  var temServicos=!!(typeof servicos!=='undefined'&&servicos&&servicos.length>0);
+  var temClientes=!!(typeof clientes!=='undefined'&&clientes&&clientes.length>0);
+  var temEquipe=((typeof colaboradores!=='undefined'&&colaboradores)||[]).filter(function(c){return c.status!=='Inativo'&&c.cargo!=='Proprietário(a)';}).length>0;
+  var faturouMes=listaFluxo.some(function(l){
+    if(l.status!=='confirmado'||l.tipo!=='receita')return false;
+    var d=typeof fluxoParseData==='function'?fluxoParseData(l.data):null;
+    return d&&d.getMonth()===mesAtual&&d.getFullYear()===anoAtual;
+  });
+  var fechouCaixaRecente=listaFluxo.some(function(l){
+    if(l.status!=='confirmado')return false;
+    var d=typeof fluxoParseData==='function'?fluxoParseData(l.data):null;
+    return d&&((hoje-d)/86400000)<=30;
+  });
+  var temSocia=!!(typeof prolaboreSocios!=='undefined'&&prolaboreSocios&&prolaboreSocios.length>0);
+  var criterios=[
+    {txt:'Cadastrar seus serviços',feito:temServicos},
+    {txt:'Cadastrar clientes',feito:temClientes},
+    {txt:'Ter um colaborador na equipe, além de você',feito:temEquipe},
+    {txt:'Faturar algo este mês',feito:faturouMes},
+    {txt:'Fechar o caixa nos últimos 30 dias',feito:fechouCaixaRecente},
+    {txt:'Cadastrar sócia no Financeiro Pessoal',feito:temSocia},
+  ];
+  var atendidos=criterios.filter(function(c){return c.feito;}).length;
+  return {score:Math.round(atendidos/criterios.length*100),criterios:criterios};
+}
 function renderFlorescimento(){
   const c=document.getElementById('florescimento-content');
   if(!c)return;
-  // Calcular score fictício baseado em dados
-  const score=62; // % de conclusão geral
+  const calc=calcularFlorescimento();
+  const score=calc.score;
   const etapa=etapasFlor.find(e=>score>=e.min&&score<e.max)||etapasFlor[etapasFlor.length-1];
   const pctProxima=Math.round(((score-etapa.min)/(etapa.max-etapa.min))*100);
   c.innerHTML=`
@@ -14312,19 +14345,11 @@ function renderFlorescimento(){
       </div>`).join('')}
     </div>
     <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📊 Como aumentar sua pontuação</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📊 Como aumentar sua pontuação (${calc.criterios.filter(i=>i.feito).length}/${calc.criterios.length} concluídos)</div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        ${[
-          {txt:'Completar perfil do negócio',pts:'+5pts',feito:true},
-          {txt:'Atingir meta de atendimentos do mês',pts:'+10pts',feito:false},
-          {txt:'Ter 3 treinamentos concluídos pela equipe',pts:'+8pts',feito:false},
-          {txt:'Cadastrar plano de marketing ativo',pts:'+7pts',feito:false},
-          {txt:'Manter fluxo de caixa organizado por 30 dias',pts:'+12pts',feito:false},
-          {txt:'Lançar primeira campanha de reativação',pts:'+8pts',feito:true},
-        ].map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${i.feito?'#f0f0f0':'#fff'};border-radius:8px;border:1px solid #e5e5e5">
+        ${calc.criterios.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${i.feito?'#f0f0f0':'#fff'};border-radius:8px;border:1px solid #e5e5e5">
           <span style="font-size:16px">${i.feito?'✅':'⭕'}</span>
           <span style="font-size:12px;flex:1;${i.feito?'color:#888;text-decoration:line-through':''}">${i.txt}</span>
-          <span style="font-size:11px;font-weight:700;background:#f0f0f0;padding:2px 8px;border-radius:20px">${i.pts}</span>
         </div>`).join('')}
       </div>
     </div>`;
@@ -18199,6 +18224,13 @@ async function renderDashboardCards(){
       carregarColaboradoresSupa();
     }
     if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
+    if(typeof calcularFlorescimento==='function'){
+      var calcFlor=calcularFlorescimento();
+      var elFlorFill=document.getElementById('dash-florescimento-fill');
+      var elFlorPct=document.getElementById('dash-florescimento-pct');
+      if(elFlorFill)elFlorFill.style.width=calcFlor.score+'%';
+      if(elFlorPct)elFlorPct.textContent=calcFlor.score+'%';
+    }
   }catch(e){
     console.log('erro renderDashboardCards',e);
   }
