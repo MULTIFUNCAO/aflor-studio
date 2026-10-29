@@ -1234,7 +1234,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div class="fdash-destaque-icon" style="color:#fff">🔔</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:12px;font-weight:700;color:#7c3a0a">Lembretes de Retorno</div>
-            <div style="font-size:10.5px;color:#92400e"><b>2 hoje</b> · 2 vencidos · 3 pendentes</div>
+            <div id="dash-lembretes-resumo" style="font-size:10.5px;color:#92400e"><b>0 hoje</b> · 0 vencidos · 0 pendentes</div>
           </div>
           <div style="font-size:13px;color:#b45309">→</div>
         </div>
@@ -10378,6 +10378,7 @@ function marcarRetornou(i){
   renderClientes();
   renderRetornos();
   atualizarBadgeNav();
+  if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
   showAlert(`✅ ${clientes[i].nome} marcada como retornou!`);
 }
 
@@ -10489,6 +10490,7 @@ function confirmarRetorno(i){
   syncRetornosToClientes();
   renderClientes();
   atualizarBadgeNav();
+  if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
   showAlert(`✅ ${retornos[i].cliente} confirmada como retornou!`);
 }
 
@@ -10496,10 +10498,11 @@ function reabrirRetorno(i){
   retornos[i].status='pendente';
   renderRetornos();
   atualizarBadgeNav();
+  if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
 }
 
 function deleteRetorno(i){
-  if(confirm('Remover este lembrete?')){retornos.splice(i,1);renderRetornos();atualizarBadgeNav();}
+  if(confirm('Remover este lembrete?')){retornos.splice(i,1);renderRetornos();atualizarBadgeNav();if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();}
 }
 
 function whatsAppRetorno(i){
@@ -10529,7 +10532,7 @@ function addRetorno(){
   const prof=document.getElementById('ret-prof').value;
   const obs=document.getElementById('ret-obs').value;
   // determine status
-  const hoje=new Date('2026-05-26');
+  const hoje=new Date();
   const dr=new Date(dataRetorno);
   let status='pendente';
   if(dr<hoje)status='vencido';
@@ -10540,6 +10543,7 @@ function addRetorno(){
   renderRetornos();
   renderClientes();
   atualizarBadgeNav();
+  if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
   showAlert(`🔔 Lembrete de retorno criado para ${cliente}!`);
 }
 
@@ -18172,9 +18176,20 @@ async function renderDashboardCards(){
     var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
     if(elSaldoSt)elSaldoSt.textContent=cxAberto?'● Caixa aberto · Atualizado agora':'● Caixa fechado';
     if(typeof renderEquipeHoje==='function')renderEquipeHoje();
+    if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
   }catch(e){
     console.log('erro renderDashboardCards',e);
   }
+}
+// Card "Lembretes de Retorno" da Página Principal — era um "2 hoje · 2 vencidos
+// · 3 pendentes" fixo no HTML, nunca ligado aos lembretes de verdade.
+function renderDashLembretesRetorno(){
+  var el=document.getElementById('dash-lembretes-resumo');
+  if(!el||typeof retornos==='undefined')return;
+  var qHoje=retornos.filter(function(r){return r.status==='hoje';}).length;
+  var qVencidos=retornos.filter(function(r){return r.status==='vencido';}).length;
+  var qPendentes=retornos.filter(function(r){return r.status==='pendente';}).length;
+  el.innerHTML='<b>'+qHoje+' hoje</b> · '+qVencidos+' vencidos · '+qPendentes+' pendentes';
 }
 setTimeout(function(){if(typeof renderDashboardCards==='function')renderDashboardCards();},2000);
 setTimeout(function(){if(typeof renderDashProximos==='function')renderDashProximos();},2500);
