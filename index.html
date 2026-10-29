@@ -2334,7 +2334,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:40px">🌷</div>
           <div>
             <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:3px">Olá, <span id="cv-ola-nome">Colaborador</span>!</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.6)">Terça-feira, 26 de Maio de 2026 · FLORA Studio</div>
+            <div id="cv-data-saudacao" style="font-size:13px;color:rgba(255,255,255,.6)">FLORA Studio</div>
           </div>
         </div>
 
@@ -2358,7 +2358,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:14px;font-weight:800">📅 Minha Agenda Hoje</div>
-            <span style="font-size:11px;color:#888">26/Mai/2026</span>
+            <span id="cv-data-agenda" style="font-size:11px;color:#888"></span>
           </div>
           <div id="cv-agenda" style="padding:14px"></div>
         </div>
@@ -2385,7 +2385,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
             <div style="font-size:14px;font-weight:800">💰 Minhas Comissões</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Maio 2026</div>
+            <div id="cv-data-comissoes" style="font-size:11px;color:#888;margin-top:2px"></div>
           </div>
           <div id="cv-comissoes" style="padding:14px"></div>
         </div>
@@ -16845,6 +16845,18 @@ function entrarComoColaborador(nome){
   var nomeCurto=nome.split(' ')[0];
     window.SALAO_RESPONSAVEL=nome;
   var el=document.getElementById('cv-ola-nome');if(el)el.textContent=nomeCurto;
+  // Saudação/Agenda/Comissões mostravam "26 de Maio de 2026" fixo — data de
+  // teste esquecida, nunca atualizada pra data real.
+  var diasSemanaCv=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  var mesesCv=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var mesesAbrevCv=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hojeCv=new Date();
+  var elSaud=document.getElementById('cv-data-saudacao');
+  if(elSaud)elSaud.textContent=diasSemanaCv[hojeCv.getDay()]+', '+hojeCv.getDate()+' de '+mesesCv[hojeCv.getMonth()]+' de '+hojeCv.getFullYear()+' · FLORA Studio';
+  var elAgCv=document.getElementById('cv-data-agenda');
+  if(elAgCv)elAgCv.textContent=String(hojeCv.getDate()).padStart(2,'0')+'/'+mesesAbrevCv[hojeCv.getMonth()]+'/'+hojeCv.getFullYear();
+  var elComCv=document.getElementById('cv-data-comissoes');
+  if(elComCv)elComCv.textContent=mesesCv[hojeCv.getMonth()]+' '+hojeCv.getFullYear();
   var elN=document.getElementById('cv-nome');if(elN)elN.textContent=nome;
   var elC=document.getElementById('cv-cargo');if(elC)elC.textContent=colab?colab.cargo:'Colaborador(a)';
   var elAv=document.getElementById('cv-avatar');
