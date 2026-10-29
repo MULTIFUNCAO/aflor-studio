@@ -368,6 +368,37 @@ select.af-input{padding-top:12px;padding-bottom:12px;cursor:pointer}
 .af-btn-primary:hover{filter:brightness(1.05)}
 .af-btn-wide{width:100%;padding:14px;border-radius:12px}
 
+/* ===== FINANCEIRO PESSOAL (PRÓ-LABORE) — redesign ===== */
+.fp-card{background:#fff;border:1px solid var(--af-border);border-radius:var(--radius-md,14px);padding:16px;box-shadow:var(--shadow-xs,0 1px 2px rgba(0,0,0,.04))}
+.fp-card-title{font-size:13px;font-weight:800;color:var(--af-ink);margin-bottom:10px}
+.fp-section-title{font-size:14px;font-weight:800;color:var(--af-ink);margin-bottom:10px}
+.fp-resumo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.fp-responsive-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:16px}
+.fp-retiradas-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:720px){
+  .fp-resumo-grid{grid-template-columns:repeat(2,1fr)}
+  .fp-responsive-grid{grid-template-columns:1fr}
+  .fp-retiradas-grid{grid-template-columns:1fr}
+}
+.fp-compare{font-size:11px;font-weight:700;margin-top:4px}
+.fp-compare.up{color:var(--af-accent)}
+.fp-compare.down{color:#ef4444}
+.fp-progress-track{height:8px;background:var(--af-accent-light);border-radius:5px;overflow:hidden;margin-top:6px}
+.fp-progress-fill{height:100%;background:var(--af-accent);border-radius:5px;transition:width .2s}
+.fp-progress-fill.over{background:#ef4444}
+.fp-donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.fp-donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;position:relative}
+.fp-donut::after{content:'';position:absolute;inset:18px;background:#fff;border-radius:50%}
+.fp-donut-legend{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px}
+.fp-donut-legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--af-ink)}
+.fp-donut-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.fp-alerta{display:flex;align-items:flex-start;gap:10px;background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:#92400e;line-height:1.4}
+.fp-empty{text-align:center;padding:36px 20px;background:#f8f8f8;border-radius:12px;color:#aaa}
+.fp-empty-steps{display:flex;flex-direction:column;gap:10px;max-width:360px;margin:16px auto 0;text-align:left}
+.fp-empty-step{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:#666}
+.fp-empty-step b{color:var(--af-ink)}
+.fp-empty-step-num{width:22px;height:22px;border-radius:50%;background:var(--af-accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
 /* overlays de seleção (cliente / categoria→serviço) empilhados acima do cartão */
 .af-picker{position:absolute;inset:0;background:#fff;z-index:20;display:none;flex-direction:column;border-radius:inherit}
 .af-picker.open{display:flex}
@@ -2140,13 +2171,39 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- TAB PRÓ-LABORE -->
       <div id="fin-view-prolabore">
+        <div id="prolabore-alerta"></div>
+
         <!-- Cards de resumo -->
-        <div id="prolabore-resumo" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+        <div id="prolabore-resumo" class="fp-resumo-grid"></div>
+
+        <!-- Gráfico de 12 meses + Rosca de divisão do lucro -->
+        <div class="fp-responsive-grid">
+          <div class="fp-card">
+            <div class="fp-card-title">📈 Últimos 12 meses</div>
+            <div id="prolabore-grafico12m"></div>
+          </div>
+          <div class="fp-card">
+            <div class="fp-card-title">🥧 Divisão do lucro entre sócias</div>
+            <div id="prolabore-rosca"></div>
+          </div>
+        </div>
+
+        <!-- Quanto posso retirar -->
+        <div style="margin-bottom:16px">
+          <div class="fp-section-title">💵 Quanto posso retirar este mês</div>
+          <div id="prolabore-retiradas-cards"></div>
+        </div>
+
+        <!-- Meta de reserva -->
+        <div style="margin-bottom:16px">
+          <div class="fp-section-title">🛡️ Meta de reserva do salão</div>
+          <div id="prolabore-reserva-card"></div>
+        </div>
 
         <!-- Config sócios -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="font-size:14px;font-weight:800;color:#111">👥 Sócios e Pró-Labore</div>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-prolabore-socio')">+ Adicionar Sócio</button>
+          <button class="btn btn-primary btn-sm" onclick="abrirNovoSocio()">+ Adicionar Sócio</button>
         </div>
         <div id="prolabore-socios-list"></div>
 
@@ -2206,6 +2263,45 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
           <button class="btn btn-outline" onclick="closeModal('modal-prolabore-socio')">Cancelar</button>
           <button class="btn btn-primary" onclick="salvarSocio()">✅ Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL REGISTRAR RETIRADA DE PRÓ-LABORE -->
+    <div class="modal-overlay" id="modal-prolabore-retirada">
+      <div class="modal" style="width:400px">
+        <div class="modal-header">
+          <span class="modal-title">💵 Registrar retirada</span>
+          <button class="modal-close" onclick="closeModal('modal-prolabore-retirada')">✕</button>
+        </div>
+        <div class="form-grid">
+          <input type="hidden" id="retirada-socio-id"/>
+          <div class="form-group full"><label>Valor (R$) *</label><input type="number" id="retirada-valor" placeholder="0,00" min="0" step="0.01"/></div>
+          <div class="form-group full"><label>Data do pagamento</label><input type="date" id="retirada-data"/></div>
+          <div class="form-group full"><label>Observação</label><input id="retirada-obs" placeholder="Opcional"/></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+          <button class="btn btn-outline" onclick="closeModal('modal-prolabore-retirada')">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarRetirada()">✅ Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL META DE RESERVA DO SALÃO -->
+    <div class="modal-overlay" id="modal-prolabore-reserva">
+      <div class="modal" style="width:400px">
+        <div class="modal-header">
+          <span class="modal-title">🛡️ Meta de reserva do salão</span>
+          <button class="modal-close" onclick="closeModal('modal-prolabore-reserva')">✕</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group full"><label>Meta de reserva (R$)</label><input type="number" id="reserva-meta" placeholder="Ex: 10000" min="0" step="0.01"/></div>
+          <div class="form-group full"><label>Reserva atual (R$)</label><input type="number" id="reserva-atual" placeholder="Quanto já tem guardado" min="0" step="0.01"/></div>
+          <div class="form-group full" style="font-size:11px;color:#888">Esse valor é informado por você — o sistema não acompanha automaticamente uma conta de reserva separada.</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+          <button class="btn btn-outline" onclick="closeModal('modal-prolabore-reserva')">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarMetaReserva()">✅ Salvar</button>
         </div>
       </div>
     </div>
@@ -3177,7 +3273,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <select id="lanc-cat">
           <option>Serviços</option><option>Produtos</option><option>Aluguel</option>
           <option>Contas</option><option>Material</option><option>Comissões</option>
-          <option>Marketing</option><option>Outros</option>
+          <option>Marketing</option><option>Retirada pessoal (sócio)</option><option>Outros</option>
         </select>
       </div>
       <div class="form-group"><label>Forma de pagamento</label>
@@ -7796,7 +7892,7 @@ function showPage(id){
     if(id==='treinamentos')renderTreinamentos();
     if(id==='influenciadoras')renderInfluenciadoras();
     if(id==='florescimento')renderFlorescimento();
-    if(id==='finpessoal'){renderProlabore();}
+    if(id==='finpessoal'){carregarFluxoLancamentosSupa().then(function(){carregarProlaboreSupa();});}
     if(id==='clientes')renderClientes();
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
@@ -7813,15 +7909,6 @@ function showPage(id){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
-  if(id === 'modal-prolabore-socio'){
-    document.getElementById('socio-edit-idx').value='-1';
-    document.getElementById('socio-nome').value='';
-    document.getElementById('socio-participacao').value='';
-    document.getElementById('socio-valor-fixo').value='';
-    document.getElementById('socio-percentual').value='';
-    document.getElementById('modal-socio-titulo').textContent='👤 Adicionar Sócio';
-    setSocioTipo('fixo');
-  }
   if(id === 'modal-servico'){
     var n=document.getElementById('srv-nome'); if(n) n.value='';
     var p=document.getElementById('srv-preco'); if(p) p.value='';
@@ -8433,7 +8520,13 @@ function agVerPacote(selId,infoId,detId,profId){
 // ===== FIM AGENDAMENTO MELHORADO =====
 
 // ===== PRÓ-LABORE =====
-var prolaboreSocios = JSON.parse(localStorage.getItem('flora_socios')||'[]');
+// Lançamentos nessa categoria são retirada pessoal, não despesa operacional do
+// salão — por isso ficam de fora do cálculo de Lucro Líquido/DRE e só entram
+// no alerta de mistura (ver renderProlaboreAlerta/prolaboreUltimos12Meses).
+var PROLABORE_CAT_RETIRADA_PESSOAL = 'Retirada pessoal (sócio)';
+var prolaboreSocios = [];       // carregado da tabela `socios` (Supabase)
+var prolaboreRetiradas = [];    // carregado da tabela `prolabore_retiradas`
+var financeiroConfig = { meta_reserva:0, reserva_atual:0, reserva_atualizada_em:null };
 var _socioTipo = 'fixo';
 
 function switchFinTab(tab, el){
@@ -8443,6 +8536,25 @@ function switchFinTab(tab, el){
   document.getElementById('fin-view-lancamentos').style.display = tab==='lancamentos'?'block':'none';
   if(tab==='prolabore') renderProlabore();
   if(tab==='lancamentos') renderFinPessoal();
+}
+
+async function carregarProlaboreSupa(){
+  try{
+    if(!supa || !window.SALAO_ID){ renderProlabore(); return; }
+    var res = await Promise.all([
+      supa.from('socios').select('*').eq('salao_id',window.SALAO_ID).eq('ativo',true).order('created_at',{ascending:true}),
+      supa.from('prolabore_retiradas').select('*').eq('salao_id',window.SALAO_ID),
+      supa.from('financeiro_config').select('*').eq('salao_id',window.SALAO_ID).maybeSingle()
+    ]);
+    if(res[0] && res[0].data) prolaboreSocios = res[0].data;
+    if(res[1] && res[1].data) prolaboreRetiradas = res[1].data;
+    if(res[2] && res[2].data) financeiroConfig = {
+      meta_reserva: parseFloat(res[2].data.meta_reserva)||0,
+      reserva_atual: parseFloat(res[2].data.reserva_atual)||0,
+      reserva_atualizada_em: res[2].data.reserva_atualizada_em||null
+    };
+  }catch(e){ console.error('Erro ao carregar dados do Financeiro Pessoal:', e); }
+  renderProlabore();
 }
 
 function setSocioTipo(tipo){
@@ -8463,7 +8575,18 @@ function setSocioTipo(tipo){
   }
 }
 
-function salvarSocio(){
+function abrirNovoSocio(){
+  document.getElementById('socio-edit-idx').value='-1';
+  document.getElementById('socio-nome').value='';
+  document.getElementById('socio-participacao').value='';
+  document.getElementById('socio-valor-fixo').value='';
+  document.getElementById('socio-percentual').value='';
+  document.getElementById('modal-socio-titulo').textContent='👤 Adicionar Sócio';
+  setSocioTipo('fixo');
+  openModal('modal-prolabore-socio');
+}
+
+async function salvarSocio(){
   var nome = (document.getElementById('socio-nome').value||'').trim();
   if(!nome){ alert('Informe o nome do sócio.'); return; }
   var tipo = document.getElementById('socio-tipo').value;
@@ -8473,103 +8596,304 @@ function salvarSocio(){
   if(tipo==='fixo' && valorFixo<=0){ alert('Informe o valor fixo.'); return; }
   if(tipo==='percentual' && percentual<=0){ alert('Informe o percentual.'); return; }
 
-  var idx = parseInt(document.getElementById('socio-edit-idx').value);
-  var socio = { nome, tipo, valorFixo, percentual, participacao };
-  if(idx >= 0) prolaboreSocios[idx] = socio;
-  else prolaboreSocios.push(socio);
-  localStorage.setItem('flora_socios', JSON.stringify(prolaboreSocios));
+  var editId = document.getElementById('socio-edit-idx').value;
+  try{
+    if(editId && editId!=='-1'){
+      var r = await supa.from('socios').update({nome:nome,tipo:tipo,valor_fixo:valorFixo,percentual:percentual,participacao:participacao}).eq('id',editId);
+      if(r.error) throw r.error;
+    } else {
+      var r2 = await supa.from('socios').insert({salao_id:window.SALAO_ID,nome:nome,tipo:tipo,valor_fixo:valorFixo,percentual:percentual,participacao:participacao});
+      if(r2.error) throw r2.error;
+    }
+  }catch(e){ console.error('Erro ao salvar sócio:', e); alert('Não foi possível salvar o sócio. Tente de novo.'); return; }
   closeModal('modal-prolabore-socio');
-  renderProlabore();
+  await carregarProlaboreSupa();
 }
 
 function editarSocio(idx){
   var s = prolaboreSocios[idx];
   if(!s) return;
-  document.getElementById('socio-edit-idx').value = idx;
+  document.getElementById('socio-edit-idx').value = s.id;
   document.getElementById('socio-nome').value = s.nome;
   document.getElementById('socio-participacao').value = s.participacao||'';
-  document.getElementById('socio-valor-fixo').value = s.valorFixo||'';
+  document.getElementById('socio-valor-fixo').value = s.valor_fixo||'';
   document.getElementById('socio-percentual').value = s.percentual||'';
   setSocioTipo(s.tipo||'fixo');
   document.getElementById('modal-socio-titulo').textContent = '✏️ Editar Sócio';
   openModal('modal-prolabore-socio');
 }
 
-function removerSocio(idx){
-  if(!confirm('Remover este sócio?')) return;
-  prolaboreSocios.splice(idx,1);
-  localStorage.setItem('flora_socios', JSON.stringify(prolaboreSocios));
-  renderProlabore();
+async function removerSocio(idx){
+  var s = prolaboreSocios[idx];
+  if(!s) return;
+  if(!confirm('Remover '+s.nome+'?')) return;
+  try{
+    var r = await supa.from('socios').update({ativo:false}).eq('id',s.id);
+    if(r.error) throw r.error;
+  }catch(e){ console.error('Erro ao remover sócio:', e); alert('Não foi possível remover. Tente de novo.'); return; }
+  await carregarProlaboreSupa();
 }
 
-function getFaturamentoMes(){
-  // Busca faturamento dos movimentos do caixa
-  var total = 0;
-  try {
-    var cs = JSON.parse(localStorage.getItem('caixaState')||'null');
-    if(cs && cs.movimentos){
-      cs.movimentos.forEach(function(m){ if(m.tipo==='entrada') total+=parseFloat(m.valor)||0; });
-    }
-    if(total===0){
-      var mov = JSON.parse(localStorage.getItem('caixaMovimentos')||'[]');
-      mov.forEach(function(m){ if(m.tipo==='entrada') total+=parseFloat(m.valor)||0; });
-    }
-  } catch(e){}
-  return total;
+function abrirRetiradaModal(socioId){
+  document.getElementById('retirada-socio-id').value = socioId;
+  document.getElementById('retirada-valor').value = '';
+  document.getElementById('retirada-obs').value = '';
+  document.getElementById('retirada-data').value = new Date().toISOString().slice(0,10);
+  openModal('modal-prolabore-retirada');
 }
 
-function getDespesasMes(){
-  var total = 0;
-  try {
-    var cs = JSON.parse(localStorage.getItem('caixaState')||'null');
-    if(cs && cs.movimentos){
-      cs.movimentos.forEach(function(m){ if(m.tipo==='saida'||m.tipo==='saída') total+=parseFloat(m.valor)||0; });
+async function salvarRetirada(){
+  var socioId = document.getElementById('retirada-socio-id').value;
+  var valor = parseFloat(document.getElementById('retirada-valor').value)||0;
+  var data = document.getElementById('retirada-data').value;
+  var obs = (document.getElementById('retirada-obs').value||'').trim();
+  if(valor<=0){ alert('Informe o valor retirado.'); return; }
+  if(!data){ alert('Informe a data.'); return; }
+  var mesRef = data.slice(0,8)+'01';
+  try{
+    var r = await supa.from('prolabore_retiradas').insert({salao_id:window.SALAO_ID,socio_id:socioId,mes_referencia:mesRef,valor:valor,data_pagamento:data,observacao:obs||null});
+    if(r.error) throw r.error;
+  }catch(e){ console.error('Erro ao registrar retirada:', e); alert('Não foi possível registrar a retirada. Tente de novo.'); return; }
+  closeModal('modal-prolabore-retirada');
+  await carregarProlaboreSupa();
+}
+
+function abrirReservaModal(){
+  document.getElementById('reserva-meta').value = financeiroConfig.meta_reserva||'';
+  document.getElementById('reserva-atual').value = financeiroConfig.reserva_atual||'';
+  openModal('modal-prolabore-reserva');
+}
+
+async function salvarMetaReserva(){
+  var meta = parseFloat(document.getElementById('reserva-meta').value)||0;
+  var atual = parseFloat(document.getElementById('reserva-atual').value)||0;
+  try{
+    var r = await supa.from('financeiro_config').upsert({salao_id:window.SALAO_ID,meta_reserva:meta,reserva_atual:atual,reserva_atualizada_em:new Date().toISOString()},{onConflict:'salao_id'});
+    if(r.error) throw r.error;
+  }catch(e){ console.error('Erro ao salvar meta de reserva:', e); alert('Não foi possível salvar. Tente de novo.'); return; }
+  closeModal('modal-prolabore-reserva');
+  await carregarProlaboreSupa();
+}
+
+// Agrupa fluxo_lancamentos (já carregado em `fluxoLancamentos`) nos últimos 12 meses.
+// Pró-labore de meses passados é recalculado com a regra ATUAL dos sócios — não existe
+// histórico de mudança de regra, então é uma aproximação (avisado na tela).
+function prolaboreUltimos12Meses(){
+  var nomesM=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hoje=new Date();
+  var lista=(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos)?fluxoLancamentos:[];
+  var out=[];
+  for(var i=11;i>=0;i--){
+    var ref=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+    var ano=ref.getFullYear(), mes=ref.getMonth();
+    var lancsDoMes=lista.filter(function(l){
+      if(l.status!=='confirmado')return false;
+      var d=fluxoParseData(l.data);
+      return d&&d.getMonth()===mes&&d.getFullYear()===ano;
+    });
+    var receita=lancsDoMes.reduce(function(s,l){return l.tipo==='receita'?s+(l.val||0):s;},0);
+    // Despesa operacional exclui a categoria de retirada pessoal — ela não é
+    // custo do salão, é dinheiro do sócio, e não deve reduzir o Lucro Líquido.
+    var despesa=lancsDoMes.reduce(function(s,l){return (l.tipo==='despesa'&&(l.cat||'')!==PROLABORE_CAT_RETIRADA_PESSOAL)?s+(l.val||0):s;},0);
+    var prolabore=prolaboreSocios.reduce(function(s,so){
+      return s+(so.tipo==='fixo'?(parseFloat(so.valor_fixo)||0):receita*((parseFloat(so.percentual)||0)/100));
+    },0);
+    out.push({ano:ano,mes:mes,label:nomesM[mes]+'/'+String(ano).slice(2),receita:receita,despesa:despesa,prolabore:prolabore,lucro:receita-despesa-prolabore});
+  }
+  return out;
+}
+
+function renderProlaboreGrafico12m(dados){
+  var el=document.getElementById('prolabore-grafico12m');
+  if(!el)return;
+  var W=640,H=180,padL=10,padR=10,padT=10,padB=22;
+  var max=Math.max(1,Math.max.apply(null,dados.map(function(m){return Math.max(m.receita,m.lucro,m.prolabore,1);})));
+  var stepX=(W-padL-padR)/(Math.max(1,dados.length-1));
+  function pt(i,v){
+    var x=padL+stepX*i;
+    var y=padT+(H-padT-padB)*(1-(v/max));
+    return x+','+y;
+  }
+  var linhas=[
+    {campo:'receita',cor:'#15803d',label:'Faturamento'},
+    {campo:'prolabore',cor:'#8b5cf6',label:'Pró-labore'},
+    {campo:'lucro',cor:'#f59e0b',label:'Lucro'}
+  ];
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:180px;display:block" preserveAspectRatio="none">'
+    +linhas.map(function(l){
+      var pts=dados.map(function(m,i){return pt(i,m[l.campo]);}).join(' ');
+      return '<polyline points="'+pts+'" fill="none" stroke="'+l.cor+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    }).join('')
+    +dados.map(function(m,i){
+      if(dados.length>8 && i%2!==0 && i!==dados.length-1) return '';
+      return '<text x="'+(padL+stepX*i)+'" y="'+(H-6)+'" font-size="9" fill="#999" text-anchor="middle">'+m.label+'</text>';
+    }).join('')
+    +'</svg>';
+  var legenda='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">'
+    +linhas.map(function(l){return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666"><span style="width:10px;height:10px;border-radius:50%;background:'+l.cor+';display:inline-block"></span>'+l.label+'</div>';}).join('')
+    +'</div>'
+    +'<div style="font-size:10.5px;color:#aaa;margin-top:6px">Pró-labore de meses passados calculado com a regra atual dos sócios.</div>';
+  el.innerHTML=svg+legenda;
+}
+
+function renderProlaboreRosca(lucroMes){
+  var el=document.getElementById('prolabore-rosca');
+  if(!el)return;
+  var ativos=prolaboreSocios.filter(function(s){return s.ativo!==false;});
+  if(!ativos.length){
+    el.innerHTML='<div style="font-size:12px;color:#aaa;padding:20px;text-align:center">Cadastre sócias pra ver a divisão do lucro.</div>';
+    return;
+  }
+  var somaPart=ativos.reduce(function(s,so){return s+(parseFloat(so.participacao)||0);},0);
+  var aviso='';
+  var fatias;
+  if(somaPart<=0){
+    fatias=ativos.map(function(s){return {nome:s.nome,pct:100/ativos.length};});
+    aviso='<div style="font-size:10.5px;color:#aaa;margin-top:8px">Nenhuma sócia tem participação definida — dividindo o lucro igualmente entre todas.</div>';
+  } else {
+    fatias=ativos.map(function(s){return {nome:s.nome,pct:(parseFloat(s.participacao)||0)/somaPart*100};});
+    if(Math.round(somaPart)!==100){
+      aviso='<div style="font-size:10.5px;color:#aaa;margin-top:8px">As participações somam '+somaPart+'% — dividindo o lucro proporcionalmente entre elas.</div>';
     }
-  } catch(e){}
-  return total;
+  }
+  var cores=['#15803d','#8b5cf6','#f59e0b','#3b82f6','#ef4444','#06b6d4'];
+  var acc=0;
+  var stops=fatias.map(function(f,i){
+    var cor=cores[i%cores.length];
+    var ini=acc,fim=acc+f.pct;
+    acc=fim;
+    return cor+' '+ini.toFixed(2)+'% '+fim.toFixed(2)+'%';
+  }).join(',');
+  var legenda=fatias.map(function(f,i){
+    var cor=cores[i%cores.length];
+    var valor=lucroMes*(f.pct/100);
+    return '<div class="fp-donut-legend-item"><span class="fp-donut-dot" style="background:'+cor+'"></span>'+f.nome+' — '+f.pct.toFixed(0)+'% · R$ '+valor.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>';
+  }).join('');
+  el.innerHTML='<div class="fp-donut-wrap">'
+    +'<div class="fp-donut" style="background:conic-gradient('+stops+')"></div>'
+    +'<div class="fp-donut-legend">'+legenda+'</div>'
+    +'</div>'+aviso;
+}
+
+function prolaboreRetiradasDoMes(socioId,ano,mes){
+  return prolaboreRetiradas.filter(function(r){
+    if(r.socio_id!==socioId)return false;
+    var d=new Date((r.mes_referencia||'')+'T00:00:00');
+    return d.getFullYear()===ano&&d.getMonth()===mes;
+  }).reduce(function(s,r){return s+(parseFloat(r.valor)||0);},0);
+}
+
+function renderProlaboreRetiradasCards(faturamentoMes){
+  var el=document.getElementById('prolabore-retiradas-cards');
+  if(!el)return;
+  var hoje=new Date();
+  var ano=hoje.getFullYear(), mes=hoje.getMonth();
+  var ativos=prolaboreSocios.filter(function(s){return s.ativo!==false;});
+  if(!ativos.length){ el.innerHTML=''; return; }
+  el.innerHTML='<div class="fp-retiradas-grid">'+ativos.map(function(s){
+    var podeRetirar=s.tipo==='fixo'?(parseFloat(s.valor_fixo)||0):faturamentoMes*((parseFloat(s.percentual)||0)/100);
+    var jaRetirado=prolaboreRetiradasDoMes(s.id,ano,mes);
+    var pct=podeRetirar>0?Math.min(100,(jaRetirado/podeRetirar)*100):0;
+    var estourou=jaRetirado>podeRetirar;
+    return '<div class="fp-card">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+        +'<div style="font-size:13px;font-weight:800;color:var(--af-ink)">'+s.nome+'</div>'
+        +'<button class="af-link" style="font-size:11px;white-space:nowrap" onclick="abrirRetiradaModal(\''+s.id+'\')">+ Registrar retirada</button>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--af-gray);margin-top:6px">Pode retirar este mês</div>'
+      +'<div style="font-size:19px;font-weight:900;color:var(--af-ink)">R$ '+podeRetirar.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+      +'<div class="fp-progress-track"><div class="fp-progress-fill'+(estourou?' over':'')+'" style="width:'+pct+'%"></div></div>'
+      +'<div style="font-size:11px;color:var(--af-gray);margin-top:4px">Já retirado: R$ '+jaRetirado.toLocaleString('pt-BR',{minimumFractionDigits:2})+(estourou?' <span style="color:#ef4444;font-weight:700">· acima do calculado</span>':'')+'</div>'
+      +'</div>';
+  }).join('')+'</div>';
+}
+
+function renderProlaboreReservaCard(){
+  var el=document.getElementById('prolabore-reserva-card');
+  if(!el)return;
+  var meta=financeiroConfig.meta_reserva||0;
+  var atual=financeiroConfig.reserva_atual||0;
+  var pct=meta>0?Math.min(100,(atual/meta)*100):0;
+  var atualizadoEm=financeiroConfig.reserva_atualizada_em?new Date(financeiroConfig.reserva_atualizada_em).toLocaleDateString('pt-BR'):null;
+  el.innerHTML='<div class="fp-card">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +'<div style="font-size:12px;color:var(--af-gray)">Reserva atual de <b style="color:var(--af-ink)">R$ '+atual.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</b> de uma meta de <b style="color:var(--af-ink)">R$ '+meta.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</b></div>'
+      +'<button class="af-link" style="font-size:11px;white-space:nowrap" onclick="abrirReservaModal()">✏️ Editar</button>'
+    +'</div>'
+    +'<div class="fp-progress-track"><div class="fp-progress-fill" style="width:'+pct+'%"></div></div>'
+    +(atualizadoEm?'<div style="font-size:10.5px;color:#aaa;margin-top:4px">Reserva atual informada manualmente em '+atualizadoEm+'</div>':'<div style="font-size:10.5px;color:#aaa;margin-top:4px">Informe a reserva atual pra acompanhar o progresso.</div>')
+    +'</div>';
+}
+
+function renderProlaboreAlerta(){
+  var el=document.getElementById('prolabore-alerta');
+  if(!el)return;
+  var hoje=new Date();
+  var mes=hoje.getMonth(), ano=hoje.getFullYear();
+  var lista=(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos)?fluxoLancamentos:[];
+  var total=lista.filter(function(l){
+    if(l.status!=='confirmado'||l.tipo!=='despesa')return false;
+    if((l.cat||'')!==PROLABORE_CAT_RETIRADA_PESSOAL)return false;
+    var d=fluxoParseData(l.data);
+    return d&&d.getMonth()===mes&&d.getFullYear()===ano;
+  }).reduce(function(s,l){return s+(l.val||0);},0);
+  if(total<=0){ el.innerHTML=''; return; }
+  el.innerHTML='<div class="fp-alerta">⚠️<div><b>R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</b> em gasto pessoal foi lançado no caixa do salão este mês (categoria "Retirada pessoal (sócio)"). Considere registrar isso como retirada de pró-labore em vez de despesa do salão.'
+    +'<span style="display:block;margin-top:2px;font-size:10.5px;opacity:.85">Esse alerta só detecta lançamentos feitos com essa categoria a partir de agora.</span></div></div>';
 }
 
 function renderProlabore(){
-  var faturamento = getFaturamentoMes();
-  var despesas = getDespesasMes();
-  var totalProlabore = 0;
+  var meses12 = prolaboreUltimos12Meses();
+  var atual = meses12[meses12.length-1];
+  var anterior = meses12[meses12.length-2] || {receita:0,despesa:0,prolabore:0,lucro:0};
+  var faturamento = atual.receita, despesas = atual.despesa, totalProlabore = atual.prolabore, lucro = atual.lucro;
 
-  // Calcular pró-labore por sócio
-  var sociosComCalc = prolaboreSocios.map(function(s){
-    var pl = s.tipo==='fixo' ? s.valorFixo : (faturamento * (s.percentual/100));
-    totalProlabore += pl;
-    return Object.assign({}, s, { prolaboreMes: pl, prolaboreDia: pl/30 });
-  });
-
-  var lucro = faturamento - despesas - totalProlabore;
+  function deltaHtml(valAtual,valAnterior){
+    if(!valAnterior) return '';
+    var pct = ((valAtual-valAnterior)/Math.abs(valAnterior))*100;
+    var up = pct>=0;
+    return '<div class="fp-compare '+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(pct).toFixed(0)+'% vs mês anterior</div>';
+  }
 
   // Cards de resumo
   var resumoEl = document.getElementById('prolabore-resumo');
   if(resumoEl){
     resumoEl.innerHTML = [
-      {label:'Faturamento Bruto', val:faturamento, cor:'#22c55e', bg:'#dcfce7', emoji:'💰'},
-      {label:'Pró-Labore Total', val:totalProlabore, cor:'#8b5cf6', bg:'#ede9fe', emoji:'👤'},
-      {label:'Despesas', val:despesas, cor:'#ef4444', bg:'#fee2e2', emoji:'📤'},
-      {label:'Lucro Líquido', val:lucro, cor: lucro>=0?'#111':'#ef4444', bg: lucro>=0?'#f5f5f5':'#fee2e2', emoji:'📈'},
+      {label:'Faturamento Bruto', val:faturamento, cor:'#22c55e', bg:'#dcfce7', emoji:'💰', cmp:deltaHtml(faturamento,anterior.receita)},
+      {label:'Pró-Labore Total', val:totalProlabore, cor:'#8b5cf6', bg:'#ede9fe', emoji:'👤', cmp:deltaHtml(totalProlabore,anterior.prolabore)},
+      {label:'Despesas', val:despesas, cor:'#ef4444', bg:'#fee2e2', emoji:'📤', cmp:deltaHtml(despesas,anterior.despesa)},
+      {label:'Lucro Líquido', val:lucro, cor: lucro>=0?'#111':'#ef4444', bg: lucro>=0?'#f5f5f5':'#fee2e2', emoji:'📈', cmp:deltaHtml(lucro,anterior.lucro)},
     ].map(function(c){
       return '<div style="background:'+c.bg+';border-radius:12px;padding:14px;border-left:4px solid '+c.cor+'">'
         +'<div style="font-size:10px;font-weight:700;color:'+c.cor+';text-transform:uppercase;margin-bottom:4px">'+c.emoji+' '+c.label+'</div>'
         +'<div style="font-size:20px;font-weight:900;color:'+c.cor+'">R$ '+c.val.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+        +c.cmp
         +'</div>';
     }).join('');
   }
 
-  // Lista de sócios
+  renderProlaboreAlerta();
+  renderProlaboreGrafico12m(meses12);
+  renderProlaboreRosca(lucro);
+  renderProlaboreRetiradasCards(faturamento);
+  renderProlaboreReservaCard();
+
+  // Lista de sócios (+ estado vazio com passo a passo)
   var listEl = document.getElementById('prolabore-socios-list');
   if(listEl){
-    if(sociosComCalc.length===0){
-      listEl.innerHTML = '<div style="text-align:center;padding:32px;background:#f8f8f8;border-radius:12px;color:#aaa">'
+    if(prolaboreSocios.length===0){
+      listEl.innerHTML = '<div class="fp-empty">'
         +'<div style="font-size:32px;margin-bottom:8px">👤</div>'
-        +'<div style="font-size:14px;font-weight:600;color:#555;margin-bottom:4px">Nenhum sócio cadastrado</div>'
-        +'<div style="font-size:12px">Clique em <b>+ Adicionar Sócio</b> para configurar o pró-labore</div>'
+        +'<div style="font-size:14px;font-weight:700;color:#555;margin-bottom:4px">Nenhuma sócia cadastrada ainda</div>'
+        +'<div class="fp-empty-steps">'
+          +'<div class="fp-empty-step"><span class="fp-empty-step-num">1</span><div>Clique em <b>+ Adicionar Sócio</b> e cadastre cada sócia do salão.</div></div>'
+          +'<div class="fp-empty-step"><span class="fp-empty-step-num">2</span><div>Defina o <b>tipo de retirada</b> de cada uma: valor fixo por mês ou percentual do faturamento.</div></div>'
+          +'<div class="fp-empty-step"><span class="fp-empty-step-num">3</span><div>Volte aqui todo mês pra ver quanto cada sócia pode retirar e registrar o pagamento.</div></div>'
+        +'</div>'
         +'</div>';
     } else {
-      listEl.innerHTML = sociosComCalc.map(function(s,idx){
+      listEl.innerHTML = prolaboreSocios.map(function(s,idx){
+        var pl = s.tipo==='fixo' ? (parseFloat(s.valor_fixo)||0) : (faturamento * ((parseFloat(s.percentual)||0)/100));
         return '<div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:16px;margin-bottom:10px">'
           +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
             +'<div style="display:flex;align-items:center;gap:10px">'
@@ -8587,11 +8911,11 @@ function renderProlabore(){
           +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
             +'<div style="background:#ede9fe;border-radius:8px;padding:10px">'
               +'<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:2px">PRÓL. DIÁRIO (médio)</div>'
-              +'<div style="font-size:18px;font-weight:800;color:#7c3aed">R$ '+s.prolaboreDia.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+              +'<div style="font-size:18px;font-weight:800;color:#7c3aed">R$ '+(pl/30).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
             +'</div>'
             +'<div style="background:#f5f3ff;border-radius:8px;padding:10px">'
               +'<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:2px">PRÓL. MENSAL</div>'
-              +'<div style="font-size:18px;font-weight:800;color:#111">R$ '+s.prolaboreMes.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
+              +'<div style="font-size:18px;font-weight:800;color:#111">R$ '+pl.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>'
             +'</div>'
           +'</div>'
         +'</div>';
@@ -8623,7 +8947,7 @@ function renderProlabore(){
           +'</div>';
       }).join('')
       +'</div>'
-      +'<div style="text-align:center;font-size:11px;color:#aaa;margin-top:8px">Dados baseados nos lançamentos do Controle de Caixa deste mês</div>';
+      +'<div style="text-align:center;font-size:11px;color:#aaa;margin-top:8px">Dados baseados nos lançamentos confirmados do Fluxo de Caixa deste mês · retiradas pessoais (categoria "Retirada pessoal (sócio)") não entram como despesa operacional</div>';
   }
 }
 // ===== FIM PRÓ-LABORE =====
@@ -16841,7 +17165,7 @@ renderMetas();
 
 var caixaState={aberto:false,troco:0,horaAbertura:null,movimentos:[],tipoAtual:'entrada',formaAtual:''};
 var catEntradas=['Servico de cabelo','Manicure/Pedicure','Estetica','Produto vendido','Sinal/Reserva','Outros'];
-var catSaidas=['Compra de material','Aluguel/Conta','Comissao','Alimentacao','Transporte','Outros'];
+var catSaidas=['Compra de material','Aluguel/Conta','Comissao','Alimentacao','Transporte','Retirada pessoal (sócio)','Outros'];
 var movIdCounter=1;
 var modoEdicaoMovimentoId=null;
 var modoEdicaoMovArrayIdx=null;
