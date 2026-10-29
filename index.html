@@ -9537,6 +9537,7 @@ async function carregarColaboradoresSupa(){
         if(newId!=null)colaboradores[i].id=newId;
       }
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
+      window._colabsSupaCarregados=true;
       if(typeof renderColabs==='function')renderColabs();
     }
   }catch(e){console.log('err carregar colaboradores',e);}
@@ -18175,7 +18176,16 @@ async function renderDashboardCards(){
     }
     var elSaldoSt=document.getElementById('dash-saldo-caixa-status');
     if(elSaldoSt)elSaldoSt.textContent=cxAberto?'● Caixa aberto · Atualizado agora':'● Caixa fechado';
-    if(typeof renderEquipeHoje==='function')renderEquipeHoje();
+    // Equipe Hoje não pode desenhar com o array `colaboradores` ainda no valor
+    // inicial de demonstração (contém um "Thiago dos Santos" que não existe de
+    // verdade) — se o carregamento real do Supabase ainda não terminou quando
+    // o dashboard chega aqui, dispara ele em vez de desenhar o dado errado;
+    // carregarColaboradoresSupa() já redesenha esta mesma seção quando termina.
+    if(window._colabsSupaCarregados){
+      if(typeof renderEquipeHoje==='function')renderEquipeHoje();
+    } else if(typeof carregarColaboradoresSupa==='function'){
+      carregarColaboradoresSupa();
+    }
     if(typeof renderDashLembretesRetorno==='function')renderDashLembretesRetorno();
   }catch(e){
     console.log('erro renderDashboardCards',e);
