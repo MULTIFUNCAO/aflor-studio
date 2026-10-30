@@ -8448,7 +8448,7 @@ function agPreencherProdutosUsados(lista){
 }
 
 var AG_PROF_LISTA=['Ana Flor','Edu','Flora','Jenny','Vi'];
-var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana','Edu':'Eduardo','Flora':'Flora','Jenny':'Jenifer','Vi':'Vitoria'};
+var AG_PROF_MAPA_COLAB={'Ana Flor':'Ana Flor','Edu':'Eduardo','Flora':'Flora','Jenny':'Jenifer','Vi':'Vitoria'};
 function agCategoriaDoServico(nomeServico){
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
   return srv?srv.cat:null;
@@ -9579,7 +9579,7 @@ var cursoProvasAtuais=[];
 
 var colaboradores=[
   {nome:'Thiago dos Santos',email:'aflorschool@gmail.com',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'blue'},
-  {nome:'Ana',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'pink'},
+  {nome:'Ana Flor',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'pink'},
   {nome:'Eduardo',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'orange',servicos:['Cabelo']},
   {nome:'Jenifer',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'purple'},
   {nome:'Vitoria',email:'',cargo:'Colaborador',comissao:'50%',status:'Ativo',cor:'teal'},
@@ -9642,6 +9642,7 @@ async function carregarColaboradoresSupa(){
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
       if(typeof renderColabs==='function')renderColabs();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
+      if(typeof renderAgenda==='function'&&document.getElementById('agenda-grid'))renderAgenda();
     }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
       colaboradores=COLABORADORES_PADRAO.map(function(c){
