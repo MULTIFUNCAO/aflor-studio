@@ -1541,6 +1541,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏦 Saldo em Caixa</div>
           <div id="fluxo-kpi-saldo-val" style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
           <div id="dash-saldo-caixa-status" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
+          <div style="margin-top:8px" onclick="event.stopPropagation();abrirModalAjustarSaldo()"><span style="font-size:10px;font-weight:700;color:#fff;text-decoration:underline;cursor:pointer">⚙️ Ajustar saldo</span></div>
         </div>
       </div>
 
@@ -4614,6 +4615,38 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-venda')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveModal('modal-venda','Venda registrada com sucesso!')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-ajustar-saldo">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ Ajustar Saldo em Caixa</span>
+      <button class="modal-close" onclick="closeModal('modal-ajustar-saldo')">✕</button>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.5">
+      Use isto quando o saldo calculado pelo sistema não bate com o dinheiro real do caixa
+      (ex: retirada não lançada, fechamento de ciclo anterior, contagem física). O ajuste
+      é um registro separado — não cria despesa no mês nem muda o DRE.
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Saldo calculado pelo sistema agora</label>
+        <input id="ajuste-saldo-atual-val" type="text" readonly style="background:#f5f5f5;font-weight:700"/>
+      </div>
+      <div class="form-group full">
+        <label>Saldo real do caixa (R$)</label>
+        <input id="ajuste-saldo-novo-input" type="number" step="0.01" placeholder="0,00"/>
+      </div>
+      <div class="form-group full">
+        <label>Motivo do ajuste</label>
+        <input id="ajuste-saldo-motivo" type="text" placeholder="Ex: contagem física do caixa, retirada não lançada..."/>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-ajustar-saldo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarAjusteSaldo()">Confirmar Ajuste</button>
     </div>
   </div>
 </div>
@@ -8007,7 +8040,7 @@ function showPage(id){
     }
     if(id==='ia')renderIA();
     if(id==='marketing'){renderMarketing();carregarTodasEtapasCampanhaSupa();}
-    if(id==='fluxo'){carregarFluxoLancamentosSupa();setTimeout(renderFluxo,50);}
+    if(id==='fluxo'){carregarFluxoLancamentosSupa();carregarCaixaAjustesSupa();setTimeout(renderFluxo,50);}
     if(id==='treinamentos')renderTreinamentos();
     if(id==='influenciadoras')renderInfluenciadoras();
     if(id==='florescimento')renderFlorescimento();
@@ -15230,6 +15263,22 @@ function removerColab(idx){
 // ===== FLUXO DE CAIXA =====
 var fluxoMes=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 var fluxoLancamentos=[];
+// Ajustes manuais de saldo (ver função "Ajustar Saldo") — somam direto no
+// cálculo do Saldo em Caixa, sem passar por fluxo_lancamentos, pra não virar
+// despesa do mês nem entrar no DRE.
+var caixaAjustesTotal=0;
+var caixaAjustesHistorico=[];
+async function carregarCaixaAjustesSupa(){
+  try{
+    if(!window.SALAO_ID)return;
+    var h=await _authHeaders({'Accept':'application/json'});
+    var resp=await fetch(SUPA_URL+'/rest/v1/caixa_ajustes?salao_id=eq.'+window.SALAO_ID+'&order=created_at.desc',{headers:h});
+    if(!resp.ok)throw new Error('caixa_ajustes fetch '+resp.status);
+    caixaAjustesHistorico=(await resp.json())||[];
+    caixaAjustesTotal=caixaAjustesHistorico.reduce(function(s,a){return s+(parseFloat(a.diferenca)||0);},0);
+    if(typeof renderFluxo==='function')renderFluxo();
+  }catch(e){console.error('Erro ao carregar ajustes de caixa:',e);}
+}
 // "Dia comercial" do caixa: a virada só acontece às CAIXA_HORA_CORTE (não à
 // meia-noite) — um caixa aberto ou reaberto de madrugada (ex: pra bater um
 // sinal recebido às 01h30) continua contando pro dia anterior, em vez de
@@ -15557,20 +15606,7 @@ function renderFluxo(){
   var elKpiTicket=document.getElementById('fluxo-kpi-ticket-val');
   if(elKpiTicket)elKpiTicket.textContent=fluxoFmtMoeda(qtdAtendimentosMes>0?(kpiR/qtdAtendimentosMes):0);
   if(elKpiS){
-    // Saldo em Caixa = acumulado de TODO o histórico já fechado em fluxo_lancamentos
-    // (receita - despesa, não só o mês corrente) + o que está no caixa aberto agora
-    // (ainda não fechado/copiado pro Fluxo). Antes só somava caixaState.movimentos —
-    // qualquer ajuste fechado em dia anterior (ex: "Saldo inicial de caixa") sumia do
-    // cálculo assim que saía da sessão aberta. Achado revisando o caixa de 23/09.
-    var fluxoNetAcumulado=fluxoLancamentos.filter(function(l){return l.status==='confirmado';})
-      .reduce(function(s,l){return s+(l.tipo==='receita'?(l.val||0):-(l.val||0));},0);
-    var cxSaldo=fluxoNetAcumulado;
-    if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto){
-      var cxEnt=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(m.valor||0);},0);
-      var cxSai=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(m.valor||0);},0);
-      cxSaldo+=(caixaState.troco||0)+cxEnt-cxSai;
-    }
-    elKpiS.textContent=fluxoFmtMoeda(cxSaldo);
+    elKpiS.textContent=fluxoFmtMoeda(calcularSaldoCaixaAtual());
   }
   var filtered=lancsMes.filter(function(l){
     return(!tipo||l.tipo===tipo)&&(!cat||l.cat===cat);
@@ -15591,6 +15627,64 @@ function renderFluxo(){
   var el=document.getElementById('fluxo-total-val');
   if(el){el.textContent=(saldo>=0?'+ R$ ':'- R$ ')+Math.abs(saldo).toFixed(2).replace('.',',');el.style.color=saldo>=0?'#22c55e':'#ef4444';}
   fluxoRenderAbaAtiva();
+}
+// Saldo em Caixa = acumulado de TODO o histórico já fechado em fluxo_lancamentos
+// (receita - despesa, não só o mês corrente) + ajustes manuais de saldo (ver
+// "Ajustar Saldo") + o que está no caixa aberto agora (ainda não fechado/copiado
+// pro Fluxo). Antes só somava caixaState.movimentos — qualquer ajuste fechado em
+// dia anterior (ex: "Saldo inicial de caixa") sumia do cálculo assim que saía da
+// sessão aberta. Achado revisando o caixa de 23/09.
+function calcularSaldoCaixaAtual(){
+  var fluxoNetAcumulado=fluxoLancamentos.filter(function(l){return l.status==='confirmado';})
+    .reduce(function(s,l){return s+(l.tipo==='receita'?(l.val||0):-(l.val||0));},0);
+  var cxSaldo=fluxoNetAcumulado+(caixaAjustesTotal||0);
+  if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto){
+    var cxEnt=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+(m.valor||0);},0);
+    var cxSai=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+(m.valor||0);},0);
+    cxSaldo+=(caixaState.troco||0)+cxEnt-cxSai;
+  }
+  return cxSaldo;
+}
+// "Ajustar Saldo" — corrige o Saldo em Caixa pra bater com o dinheiro real,
+// sem gerar lançamento de despesa/receita (não toca fluxo_lancamentos) e sem
+// afetar Receitas/Despesas/DRE/Atendimentos/Ticket médio do mês. Cada ajuste
+// é gravado em caixa_ajustes com data (created_at) e usuário responsável.
+function abrirModalAjustarSaldo(){
+  var saldoAtual=calcularSaldoCaixaAtual();
+  var elAtual=document.getElementById('ajuste-saldo-atual-val');
+  if(elAtual)elAtual.value=fluxoFmtMoeda(saldoAtual);
+  var elNovo=document.getElementById('ajuste-saldo-novo-input');
+  if(elNovo)elNovo.value=saldoAtual.toFixed(2);
+  var elMotivo=document.getElementById('ajuste-saldo-motivo');
+  if(elMotivo)elMotivo.value='';
+  openModal('modal-ajustar-saldo');
+}
+async function confirmarAjusteSaldo(){
+  if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
+  var saldoAtual=calcularSaldoCaixaAtual();
+  var saldoNovo=parseFloat(document.getElementById('ajuste-saldo-novo-input')?.value);
+  if(isNaN(saldoNovo)){showAlert('Informe o saldo real do caixa.');return;}
+  var diferenca=saldoNovo-saldoAtual;
+  if(Math.abs(diferenca)<0.005){showAlert('O saldo informado já é igual ao saldo calculado. Nada a ajustar.');closeModal('modal-ajustar-saldo');return;}
+  var motivo=(document.getElementById('ajuste-saldo-motivo')?.value||'').trim()||'Ajuste manual de saldo';
+  var usuario=colaboradorLogado||window.SALAO_RESPONSAVEL||'Admin';
+  try{
+    var r=await supa.from('caixa_ajustes').insert({
+      salao_id:window.SALAO_ID,saldo_anterior:saldoAtual,saldo_novo:saldoNovo,
+      diferenca:diferenca,motivo:motivo,usuario:usuario
+    }).select('id,diferenca,created_at').single();
+    if(r.error)throw r.error;
+    caixaAjustesTotal+=diferenca;
+    caixaAjustesHistorico.unshift(r.data);
+    closeModal('modal-ajustar-saldo');
+    renderFluxo();
+    if(typeof renderDashboardCards==='function')renderDashboardCards();
+    var diffTxt=(diferenca>=0?'+ ':'- ')+fluxoFmtMoeda(Math.abs(diferenca));
+    showAlert('✅ Saldo ajustado para '+fluxoFmtMoeda(saldoNovo)+' ('+diffTxt+', por '+usuario+').');
+  }catch(e){
+    console.error('Erro ao ajustar saldo:',e);
+    showAlert('Não foi possível salvar o ajuste. Tente novamente.');
+  }
 }
 var _tipoLanc='receita';
 function setTipoLanc(t){
@@ -17245,6 +17339,7 @@ function carregarDadosDoSalao(){
   if(!window.SALAO_ID)return;
   carregarClientesSupa();
   carregarFluxoLancamentosSupa();
+  carregarCaixaAjustesSupa();
   carregarRemuneracoesSupa();
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
