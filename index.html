@@ -1982,7 +1982,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline btn-sm" onclick="copiarLinkCadastroCliente()">🔗 Link de cadastro</button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
+          <button class="btn btn-primary btn-sm" id="btn-novo-cliente" onclick="openModal('modal-cliente')">+ Novo Cliente</button>
         </div>
       </div>
       <div class="table-card">
@@ -8056,7 +8056,7 @@ const pages = {
 // deliberadamente por enquanto, mesmo com permissão ativa, pra não vazar
 // financeiro geral/dados de outro profissional. Plano combinado com a
 // usuária: revisar um módulo por vez antes de abrir no menu do colaborador.
-var PERM_MOD_POR_PAGE_ID={agenda:'agenda'};
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes'};
 function showPage(id){
   var IDS_BLOQUEADOS_INICIAL=['remuneracoes','colaboradores','metas','marketing','influenciadoras'];
   var nomesRecursoBloqueado={remuneracoes:'Remunerações',colaboradores:'Colaboradores',metas:'Metas',marketing:'Marketing',influenciadoras:'Influenciadoras'};
@@ -10359,6 +10359,11 @@ function renderServicos(){
 
 function renderClientes(search=''){
   const tb=document.getElementById('clientes-table');
+  // "+ Novo Cliente"/editar só com clientes_cadastrar_editar — colaborador
+  // sem essa sub-permissão só pode visualizar e ver o perfil.
+  var podeEditarCliente=colabPermitido('clientes_cadastrar_editar');
+  var btnNovo=document.getElementById('btn-novo-cliente');
+  if(btnNovo)btnNovo.style.display=podeEditarCliente?'':'none';
   const statusFilter=window._clienteStatusFilter||'todos';
   let filtered=clientes.filter(c=>{
     const s=search.toLowerCase();
@@ -10385,7 +10390,7 @@ function renderClientes(search=''){
       <td style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
         ${c.tel?`<button class="btn btn-sm" onclick="enviarWhatsApp('${c.nome}','${c.tel}','ola')" title="Enviar WhatsApp" style="background:#22c55e;color:#fff;border:none;padding:5px 8px;font-size:12px">📱</button>`:''}
         <button class="btn btn-outline btn-sm" onclick="abrirPerfilCliente(${realIdx})" title="Ver perfil" style="background:#f0f4ff;color:#6366f1;border-color:#c7d7ff">👁</button>
-        <button class="btn btn-outline btn-sm" onclick="editarCliente(${i})" title="Editar cliente">✏️</button>
+        ${podeEditarCliente?`<button class="btn btn-outline btn-sm" onclick="editarCliente(${i})" title="Editar cliente">✏️</button>`:''}
         <button class="btn btn-outline btn-sm" onclick="abrirRetornoRapido(${i})" title="Lembrete de retorno">🔔</button>
         ${rs&&rs!=='retornou'?`<button class="btn btn-outline btn-sm" onclick="marcarRetornou(${i})" title="Marcar como retornou" style="color:var(--green);border-color:var(--green)">✓</button>`:''}
       </td>
@@ -10394,6 +10399,7 @@ function renderClientes(search=''){
 }
 
 function editarCliente(i){
+  if(!colabPermitido('clientes_cadastrar_editar')){showAlert('Você não tem permissão para editar clientes.');return;}
   var c=clientes[i];
   var m=document.getElementById('modal-editar-cliente');
   if(!m){m=document.createElement('div');m.id='modal-editar-cliente';m.className='modal-overlay';m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});document.body.appendChild(m);}
@@ -10447,8 +10453,14 @@ function abrirPerfilCliente(ci){
   });
   var grupos=Object.keys(gruposMap).map(function(k){return gruposMap[k];});
   grupos.sort(function(a,b){return(b.data_compra||'').localeCompare(a.data_compra||'');});
+  // Histórico de pacotes/procedimentos e a edição de dados são gateados
+  // por sub-permissão quando é sessão de colaborador — admin vê tudo.
+  var vePacotes=colabPermitido('clientes_historico_fichas');
+  var podeEditar=colabPermitido('clientes_cadastrar_editar');
   var pacotesHtml='';
-  if(grupos.length){
+  if(!vePacotes){
+    pacotesHtml='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Você não tem permissão para ver o histórico de pacotes/procedimentos.</div>';
+  } else if(grupos.length){
     pacotesHtml=grupos.map(function(g){
       var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
       var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
@@ -10489,17 +10501,18 @@ function abrirPerfilCliente(ci){
     +'<div style="padding:20px 24px;background:#fff;max-height:65vh;overflow-y:auto">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
     +'<div style="font-size:11px;font-weight:800;color:#111;letter-spacing:.5px">📦 PACOTES</div>'
-    +'<button onclick="abrirVenderPacoteParaCliente('+ci+')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">＋ Vender Pacote</button>'
+    +(vePacotes?'<button onclick="abrirVenderPacoteParaCliente('+ci+')" style="padding:5px 12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">＋ Vender Pacote</button>':'')
     +'</div>'
     +pacotesHtml
-    +'<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0">'
+    +(podeEditar?'<div style="margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0">'
     +'<button onclick="editarCliente('+ci+');document.getElementById(\'modal-perfil-cliente\').classList.remove(\'open\')" style="width:100%;padding:10px;background:#f5f5f5;color:#333;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">✏️ Editar Dados da Cliente</button>'
-    +'</div>'
+    +'</div>':'')
     +'</div></div>';
   m.classList.add('open');
 }
 
 function abrirVenderPacoteParaCliente(ci){
+  if(!colabPermitido('clientes_historico_fichas')){showAlert('Você não tem permissão para vender pacotes.');return;}
   var c=clientes[ci];
   if(!c)return;
   var m=document.getElementById('modal-vender-pkg-cliente');
@@ -15076,6 +15089,15 @@ function temPermissao(colab,subId){
     if(m&&m.ativo&&m.subs&&m.subs[subId])return true;
   }
   return false;
+}
+// Atalho pra gatear botões/seções dentro de páginas reaproveitadas da dona:
+// admin (sem colaboradorLogado) sempre pode; colaborador só se tiver a
+// sub-permissão específica. Mesma ideia de temPermissao(), mas já resolve
+// sozinho "é admin ou é colaborador" sem repetir esse find() em cada tela.
+function colabPermitido(subId){
+  if(typeof colaboradorLogado==='undefined'||!colaboradorLogado)return true;
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.nome===colaboradorLogado;});
+  return !!(c&&temPermissao(c,subId));
 }
 function renderPermissoesUI(container,permissoes){
   if(!container)return;
