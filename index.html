@@ -6023,6 +6023,10 @@ async function carregarAgendamentosSupa(){
         tel:row.tel||'',
         servico:row.servico||'',
         prof:profNome,
+        // Id real do colaborador (coluna profissional_id) — quando existe,
+        // é a fonte preferida pra bater comissão; nome vira reserva só
+        // pros agendamentos antigos que nunca tiveram o id ligado.
+        profissionalId:row.profissional_id||null,
         hora:horaSlot,
         duracao:durMinPrimario+' min',
         valor:valFmt,
@@ -6045,7 +6049,11 @@ async function carregarAgendamentosSupa(){
         var timelineMes=construirTimelineAtendimento(horaSlot,durMinPrimario,row.servico||'',profNome,detalhes);
         timelineMes.slice(1).forEach(function(item){
           var pSdMes=agProfParaAgenda(item.prof);
-          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min'});
+          // Cada serviço extra pode ter um profissional diferente do
+          // principal — busca o profissional_id DESSE item específico,
+          // não herda o do atendimento inteiro.
+          var detalheItem=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
+          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null});
         });
       }
     });
@@ -8683,6 +8691,13 @@ function colaboradoresAtivosOrdenados(){
     .slice()
     .sort(function(a,b){return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');});
 }
+// Busca o id real do colaborador pelo nome escolhido no seletor — usado
+// na hora de gravar agendamentos.profissional_id junto com o nome.
+function colaboradorIdPorNome(nome){
+  if(!nome)return null;
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.nome===nome;});
+  return c?c.id:null;
+}
 function colaboradoresOptionsHtml(valorSelecionado){
   return colaboradoresAtivosOrdenados().map(function(c){
     var nome=typeof escHtml==='function'?escHtml(c.nome):c.nome;
@@ -9811,7 +9826,7 @@ function parcelasRelevantesColab(colab,refData){
         salarioIncluso:parseFloat(fechada.salario_fixo_incluso||0),status:fechada.status,pagoEm:fechada.pago_em,formaPagamento:fechada.forma_pagamento,fechadaId:fechada.id,
         colaboradorId:colab.id,colaboradorNome:colab.nome,comissaoPct:pct};
     }
-    var calc=calcularComissaoPeriodo(colab.nome,pct,p.inicio,p.fim);
+    var calc=calcularComissaoPeriodo(colab.nome,pct,p.inicio,p.fim,colab.id);
     var valorParcela=calc.comissaoVal*p.pct/100+salarioPorParcela;
     // "status" aqui é só pra exibição (não existe linha nenhuma ainda em
     // comissao_parcelas): 'aberta' = período ainda rolando; 'aguardando'
@@ -9853,7 +9868,7 @@ function periodosRelevantesColab(colab,refData){
   var salarioMensal=cfg.salario_fixo?parseFloat(cfg.salario_fixo):0;
   var periodos=ordem.map(function(chave){
     var g=gruposMap[chave];
-    var calc=calcularComissaoPeriodo(colab.nome,pct,g.inicio,g.fim);
+    var calc=calcularComissaoPeriodo(colab.nome,pct,g.inicio,g.fim,colab.id);
     var emAndamento=refData>=g.inicio&&refData<=g.fim;
     var temFechadaNoBanco=false;
     var parcelas=g.brutas.map(function(p){
@@ -9896,7 +9911,7 @@ function dataKeyParaDate(dk){
 // Soma, pro colaborador dado, os atendimentos Concluído dentro de
 // [dataInicio,dataFim] (inclusive) — mesma regra usada no painel do
 // colaborador, reaproveitada aqui pra tela da dona e pro fechamento.
-function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim){
+function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim,colaboradorId){
   var itens=[];
   if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
     Object.keys(agendamentosPorData).forEach(function(dk){
@@ -9906,7 +9921,12 @@ function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim){
       Object.keys(diaObj).forEach(function(k){
         var a=diaObj[k];
         if(!a||a.status!=='Concluído')return;
-        if(!profAgendaIgual(a.prof,nomeColab))return;
+        // Prefere bater por profissional_id (à prova de apelido/nome
+        // trocado) — nome só é usado pra agendamento antigo sem id ligado.
+        var bate=(colaboradorId!=null&&a.profissionalId!=null)
+          ?(a.profissionalId===colaboradorId)
+          :profAgendaIgual(a.prof,nomeColab);
+        if(!bate)return;
         itens.push(Object.assign({},a,{_dataAgenda:d}));
       });
     });
@@ -13483,7 +13503,7 @@ function renderAgenda(){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id,produtos_usados',{headers:h});
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,profissional_id,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id,produtos_usados',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
@@ -13509,7 +13529,7 @@ function renderAgenda(){
           try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
           var produtosUsadosRow=[];
           try{if(a.produtos_usados)produtosUsadosRow=typeof a.produtos_usados==='string'?JSON.parse(a.produtos_usados):a.produtos_usados;}catch(e){}
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -13518,7 +13538,8 @@ function renderAgenda(){
             var timeline=construirTimelineAtendimento(horaSlot,durMinPrimario,a.servico||'',profNome,detalhes);
             timeline.slice(1).forEach(function(item){
               var pSd=agProfParaAgenda(item.prof);
-              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min'});
+              var detalheItemRA=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
+              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null});
             });
           }
         });
@@ -16989,14 +17010,14 @@ async function afSalvarEdicaoBlocos(){
   }
 
   var servicosDetalhe=blocosValidos.map(function(b){
-    return {nome:b.servico.nome,valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,hora:b.horario,duracao_min:b.duracaoMin};
+    return {nome:b.servico.nome,valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,profissional_id:colaboradorIdPorNome(b.profissional),hora:b.horario,duracao_min:b.duracaoMin};
   });
   var servico=servicosDetalhe.map(function(sd){return sd.nome;}).join(' + ');
   var valorFmt='R$ '+servicosDetalhe.reduce(function(s,sd){return s+sd.valor;},0).toFixed(2).replace('.',',');
   var hora=blocosValidos[0].horario;
-  // Nome real do colaborador, nunca o apelido — mesma razão de
+  // Nome real do colaborador (+ id), nunca o apelido — mesma razão de
   // afInserirAtendimentoUmaData.
-  var patch={cliente:cliente,data:dataBase,hora:hora,profissional:blocosValidos[0].profissional,servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs,produtos_usados:produtosUsados};
+  var patch={cliente:cliente,data:dataBase,hora:hora,profissional:blocosValidos[0].profissional,profissional_id:colaboradorIdPorNome(blocosValidos[0].profissional),servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs,produtos_usados:produtosUsados};
   var btn=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
   if(btn){btn.disabled=true;btn.textContent='SALVANDO...';}
   try{
@@ -17026,7 +17047,7 @@ async function afSalvarEdicaoBlocos(){
   });
   servicosDetalhe.forEach(function(sd){
     var pAg=agProfParaAgenda(sd.profissional);
-    agendamentosPorData[dataKeyNova][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
+    agendamentosPorData[dataKeyNova][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,profissionalId:sd.profissional_id||null,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
   });
 
   if(btn){btn.disabled=false;btn.textContent='SALVAR';}
@@ -17102,14 +17123,16 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
     prof=ctx.blocosServico[0].profissional;
     hora=ctx.blocosServico[0].horario;
     servicosDetalhe=ctx.blocosServico.map(function(b){
-      return {nome:b.servico?b.servico.nome:'',valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,hora:b.horario,duracao_min:b.duracaoMin};
+      return {nome:b.servico?b.servico.nome:'',valor:Math.max(0,(b.preco||0)-(b.desconto||0)),profissional:b.profissional,profissional_id:colaboradorIdPorNome(b.profissional),hora:b.horario,duracao_min:b.duracaoMin};
     });
     servico=servicosDetalhe.map(function(sd){return sd.nome;}).join(' + ');
     valorFmt='R$ '+servicosDetalhe.reduce(function(s,sd){return s+sd.valor;},0).toFixed(2).replace('.',',');
   }
   // Grava o nome real do colaborador, nunca o apelido interno da Agenda
   // (ex: "Edu") — é isso que faz o atendimento contar na comissão dele.
-  var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:prof,servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
+  // profissional_id também vai junto, quando dá pra resolver — é a fonte
+  // preferida do cálculo de comissão daqui pra frente.
+  var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:prof,profissional_id:colaboradorIdPorNome(prof),servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
   if(!ehPacote)obj.servicos_detalhe=servicosDetalhe;
   if(ctx.serieId)obj.serie_id=ctx.serieId;
   if(ctx.produtosUsados&&ctx.produtosUsados.length)obj.produtos_usados=ctx.produtosUsados;
@@ -17140,11 +17163,11 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
         var pAg=agProfParaAgenda(sd.profissional);
         if(!pAg)return;
         if(!primeiroProf)primeiroProf=pAg;
-        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
+        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,profissionalId:sd.profissional_id||null,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
       });
     }else{
       primeiroProf=agProfParaAgenda(prof);
-      agendamentosPorData[dataKey][primeiroProf+':'+hora]=Object.assign({},apptBase,{prof:primeiroProf});
+      agendamentosPorData[dataKey][primeiroProf+':'+hora]=Object.assign({},apptBase,{prof:primeiroProf,profissionalId:obj.profissional_id||null});
     }
     if(ctx.sinalAtivo&&ctx.sinalStatus==='pago'&&ctx.sinalValNum>0){
       var chaveSinal=primeiroProf+':'+hora;
@@ -18274,10 +18297,13 @@ function entrarComoColaborador(nome){
     if(colab&&temPermissao(colab,'agenda_visualizar_todas')){
       meusAppts=Object.values(apptsDia);
     }else{
-      // profAgendaIgual (não comparação crua de string) — carregarAgendamentosSupa
-      // grava a.prof com o apelido da Agenda (ex: "Eduardo"->"Edu"), que nunca bate
-      // com colaboradores.nome ("Eduardo") numa comparação direta.
-      meusAppts=Object.values(apptsDia).filter(function(a){return profAgendaIgual(a.prof,nome);});
+      // Prefere bater por profissional_id (à prova de apelido/nome
+      // trocado); profAgendaIgual (não comparação crua) cobre só os
+      // agendamentos antigos sem id ligado ainda.
+      meusAppts=Object.values(apptsDia).filter(function(a){
+        if(colab&&colab.id!=null&&a.profissionalId!=null)return a.profissionalId===colab.id;
+        return profAgendaIgual(a.prof,nome);
+      });
     }
     if(!meusAppts.length){
       agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>';
