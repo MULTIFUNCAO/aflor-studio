@@ -951,6 +951,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Remunerações
     </div>
+    <div class="nav-item" onclick="showPage('comissoes-pagar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Comissões a Pagar
+    </div>
     <div class="nav-item" onclick="showPage('despesas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
       Despesas
@@ -1263,6 +1267,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <p>Veja como está o seu negócio hoje. <span data-nome-salao style="color:rgba(255,255,255,.7)">FLORA / STUDIO</span></p>
             <p id="dash-hero-resumo" style="margin-top:8px">Carregando...</p>
             <div style="font-size:11.5px;color:rgba(255,255,255,.7);margin-top:10px"><span id="dash-clientes-ativos">0</span> clientes ativos · <span id="dash-header-atend-hoje">0 atendimentos hoje</span> · <span id="dash-badge-caixa" style="cursor:pointer;font-weight:700;color:#d9f3df" onclick="showPage('caixa')">Caixa Aberto</span></div>
+            <div id="dash-aviso-comissao" style="display:none;margin-top:10px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.18);border-radius:8px;padding:8px 12px;cursor:pointer" onclick="showPage('comissoes-pagar')"></div>
           </div>
           <div class="fdash-hero-meta" id="dash-meta-mensal-card">Carregando...</div>
         </div>
@@ -1813,6 +1818,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <table>
           <thead><tr><th>Profissional</th><th>Valor Total (R$)</th><th>Valor Pago (R$)</th><th>Pendente Pgto (R$)</th><th>Vales Pendentes (R$)</th><th>Ações</th></tr></thead>
           <tbody id="remuneracoes-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMISSÕES A PAGAR -->
+    <div class="page" id="page-comissoes-pagar">
+      <div id="comissoes-pagar-resumo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Colaborador</th><th>Período</th><th>Atendimentos</th><th>Faturamento</th><th>%</th><th>Comissão</th><th>Pagamento</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="comissoes-pagar-table"></tbody>
         </table>
       </div>
     </div>
@@ -2877,7 +2893,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
 
         <!-- Comissões e Gorjetas -->
-        <div class="config-item" onclick="openModal('modal-cfg-comissoes')">
+        <div class="config-item" onclick="preencherFormComissaoConfigSalao();openModal('modal-cfg-comissoes')">
           <div class="config-icon" style="background:#dcfce7">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           </div>
@@ -3694,6 +3710,53 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <button class="modal-close" onclick="closeModal('modal-cfg-comissoes')">✕</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-card" style="padding:16px">
+        <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--gray-600)">PAGAMENTO DE COMISSÃO — PADRÃO DO SALÃO</h4>
+        <div style="font-size:11px;color:#888;margin-bottom:12px">Aplicado a todo colaborador novo. Qualquer colaborador pode ter um modelo próprio, editável no cadastro dele (sobrepõe este padrão só pra ele).</div>
+        <div class="form-group full" style="margin-bottom:10px">
+          <label>Modelo</label>
+          <select id="cfgsalao-pagto-modelo" onchange="toggleCamposPagamentoModeloSalao()">
+            <option value="quinzenal">Quinzenal (1-15 e 16-fim do mês)</option>
+            <option value="mensal_2x">Mensal em 2 parcelas</option>
+            <option value="mensal_1x">Mensal em 1 parcela</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div id="cfgsalao-pagto-wrap-quinzenal" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;flex:1">1ª quinzena fecha no dia</span>
+            <input type="number" id="cfgsalao-pagto-quinz-fechamento" style="width:60px;text-align:center" min="1" max="28"/>
+            <span style="font-size:12px">e paga</span>
+            <input type="number" id="cfgsalao-pagto-quinz-dias" style="width:60px;text-align:center" min="0"/>
+            <span style="font-size:12px">dias depois</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;flex:1">Se o pagamento cair em fim de semana/feriado</span>
+            <select id="cfgsalao-pagto-quinz-ajuste" style="width:170px"><option value="antecipar">Antecipar</option><option value="adiar">Adiar</option></select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;flex:1">2ª quinzena paga no</span>
+            <input type="number" id="cfgsalao-pagto-quinz-diautil2" style="width:60px;text-align:center" min="1" max="20"/>
+            <span style="font-size:12px">º dia útil do mês seguinte</span>
+          </div>
+        </div>
+        <div id="cfgsalao-pagto-wrap-mensal" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;flex:1">Parcela 1 (%) — paga no</span>
+            <input type="number" id="cfgsalao-pagto-mensal-pct1" style="width:60px;text-align:center" min="0" max="100"/>
+            <span style="font-size:12px">%</span>
+            <input type="number" id="cfgsalao-pagto-mensal-diautil1" style="width:50px;text-align:center" min="1" max="20"/>
+            <span style="font-size:12px">º dia útil do mês seguinte</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;flex:1">Parcela 2 (resto) — paga no dia fixo</span>
+            <input type="number" id="cfgsalao-pagto-mensal-diafixo2" style="width:60px;text-align:center" min="1" max="28"/>
+            <span style="font-size:12px">do mês seguinte</span>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:10px"><input type="checkbox" id="cfgsalao-pagto-sabado"/> Contar sábado como dia útil</label>
+        <button class="btn btn-primary btn-sm" onclick="salvarComissaoConfigSalao()">Salvar regra padrão</button>
+      </div>
       <div class="form-card" style="padding:16px">
         <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--gray-600)">REGRAS DE COMISSÃO</h4>
         <div style="display:flex;flex-direction:column;gap:10px">
@@ -5585,6 +5648,27 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-pagar-comissao">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Marcar comissão como paga</span>
+      <button class="modal-close" onclick="closeModal('modal-pagar-comissao')">✕</button>
+    </div>
+    <div id="modal-pagar-comissao-info" style="font-size:13px;color:#555;margin-bottom:14px;background:#f8f8f8;border-radius:8px;padding:10px"></div>
+    <div class="form-group full">
+      <label>Forma de pagamento</label>
+      <select id="pagar-comissao-forma">
+        <option value="dinheiro">Dinheiro (sai do caixa de hoje)</option>
+        <option value="pix">Pix</option>
+        <option value="transferencia">Transferência</option>
+      </select>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal('modal-pagar-comissao')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarPagamentoParcela()">Confirmar pagamento</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-despesa">
   <div class="modal">
     <div class="modal-header">
@@ -5954,6 +6038,7 @@ async function carregarAgendamentosSupa(){
     if(typeof renderComandas==='function')renderComandas();
     if(typeof renderDashProximos==='function')renderDashProximos();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
   }catch(e){
     console.log('err carregar agendamentos',e);
     window._debugAgenda=Object.assign({salaoId:window.SALAO_ID,erro:(e&&e.message)||String(e)},window._debugAgenda||{});
@@ -8046,7 +8131,7 @@ function abrirInfoTurmaAgenda(key){
 const pages = {
   'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Vendas',
   'comandas':'Comandas','fluxo':'Fluxo de Caixa','caixa':'Controle de Caixa',
-  'remuneracoes':'Remunerações','despesas':'Despesas','finpessoal':'💝 Financeiro Pessoal',
+  'remuneracoes':'Remunerações','comissoes-pagar':'Comissões a Pagar','despesas':'Despesas','finpessoal':'💝 Financeiro Pessoal',
   'servicos':'Serviços','produtos':'Produtos','pacotes':'Pacotes','cursos':'🎓 Cursos',
   'clientes':'Clientes','retornos':'Lembretes de Retorno','colaboradores':'Colaboradores',
   'metas':'Metas e Tarefas',
@@ -8140,6 +8225,7 @@ function showPage(id){
     if(id==='agenda')renderAgenda();
     if(id==='vendas'){renderVendas();renderMetasCards();}
     if(id==='comandas')renderComandas();
+    if(id==='comissoes-pagar')renderComissoesAPagar();
   },10);
 }
 
@@ -9527,6 +9613,475 @@ async function atualizarRemuneracaoSupa(r){
     }).eq('id',r.id).eq('salao_id',window.SALAO_ID);
   }catch(e){console.log('err supa remuneracao update',e);}
 }
+// ===== COMISSÃO POR QUINZENA =====
+// 1ª quinzena: dia 1 até fechamento_dia_q1 (padrão 15); paga
+// dias_pagamento_q1 dias corridos depois (padrão 2 -> dia 17), com ajuste
+// se cair em fim de semana/feriado. 2ª quinzena: fechamento_dia_q1+1 até o
+// último dia do mês; paga no dia_util_pagamento_q2-ésimo dia útil (padrão
+// 5º) do mês seguinte. Enquanto a quinzena não é "fechada" pela dona, o
+// valor mostrado é sempre calculado ao vivo (agendamentos Concluído x %),
+// nunca um valor congelado — só vira linha em comissao_quinzenas quando
+// fechada, e só ali é seguro contra edição de atendimento antigo.
+// Regra por COLABORADOR (não é única do salão) — cada um pode ter um
+// modelo diferente. comissaoConfigPorColab é indexado por colaborador_id;
+// colaborador sem linha própria usa CONFIG_COMISSAO_PADRAO (quinzenal,
+// parâmetros padrão do sistema).
+var CONFIG_COMISSAO_PADRAO={modelo:'quinzenal',quinz_fechamento_dia1:15,quinz_dias_pagamento_q1:2,quinz_ajuste_fim_semana:'antecipar',quinz_dia_util_pagamento_q2:5,mensal_pct_parcela1:50,mensal_dia_util_parcela1:5,mensal_dia_fixo_parcela2:20,sabado_conta_dia_util:false};
+var comissaoConfigSalao=null; // regra padrão do salão (Configurações > Financeiro) — null até carregar
+var comissaoConfigPorColab={};
+var comissaoParcelas=[];
+// Cadeia de resolução: regra própria do colaborador > padrão do salão >
+// padrão do sistema. Salário fixo é sempre por colaborador (nunca entra
+// no padrão do salão).
+function configComissaoDoColab(colaboradorId){
+  return comissaoConfigPorColab[colaboradorId]||comissaoConfigSalao||CONFIG_COMISSAO_PADRAO;
+}
+
+function pascoaData(ano){
+  var a=ano%19,b=Math.floor(ano/100),c=ano%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return new Date(ano,mes-1,dia);
+}
+var _feriadosCache={};
+function feriadosNacionais(ano){
+  if(_feriadosCache[ano])return _feriadosCache[ano];
+  var pascoa=pascoaData(ano);
+  function addDias(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+  function chave(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  var lista=[
+    new Date(ano,0,1),new Date(ano,3,21),new Date(ano,4,1),new Date(ano,8,7),
+    new Date(ano,9,12),new Date(ano,10,2),new Date(ano,10,15),new Date(ano,11,25),
+    addDias(pascoa,-2),addDias(pascoa,60)
+  ].map(chave);
+  _feriadosCache[ano]=lista;
+  return lista;
+}
+function ehFeriadoNacional(data){
+  var chave=data.getFullYear()+'-'+String(data.getMonth()+1).padStart(2,'0')+'-'+String(data.getDate()).padStart(2,'0');
+  return feriadosNacionais(data.getFullYear()).indexOf(chave)>=0;
+}
+function ehDiaUtilComissao(data,contarSabado){
+  var dow=data.getDay();
+  if(dow===0)return false;
+  if(dow===6)return !!contarSabado;
+  return !ehFeriadoNacional(data);
+}
+function proximoDiaUtilComissao(data,contarSabado){
+  var d=new Date(data);
+  while(!ehDiaUtilComissao(d,contarSabado))d.setDate(d.getDate()+1);
+  return d;
+}
+function diaUtilAnteriorComissao(data,contarSabado){
+  var d=new Date(data);
+  while(!ehDiaUtilComissao(d,contarSabado))d.setDate(d.getDate()-1);
+  return d;
+}
+function nEsimoDiaUtilComissao(ano,mesIdx,n,contarSabado){
+  var d=new Date(ano,mesIdx,1),count=0;
+  while(true){
+    if(ehDiaUtilComissao(d,contarSabado)){count++;if(count===n)return new Date(d);}
+    d.setDate(d.getDate()+1);
+  }
+}
+// Gera as 2 parcelas de um mês pra um colaborador, de acordo com o
+// modelo dele. 'quinzenal': 2 parcelas de 100% cada, sobre períodos
+// DIFERENTES (1ª e 2ª quinzena). 'mensal_2x': 2 parcelas sobre o MESMO
+// período (mês inteiro), pct configurável (padrão 50/50), cada uma com
+// sua própria data de pagamento.
+function gerarParcelasDoMes(cfg,ano,mesIdx){
+  cfg=cfg||CONFIG_COMISSAO_PADRAO;
+  var sab=!!cfg.sabado_conta_dia_util;
+  var mesSeg=mesIdx+1,anoSeg=ano;if(mesSeg>11){mesSeg=0;anoSeg++;}
+  // "Personalizado" usa o mesmo formato de mensal_2x (período = mês
+  // inteiro, até 2 parcelas com % e datas livres) — a diferença é só que
+  // o preset "Mensal 2 parcelas" pré-preenche 50%/5º dia útil/dia 20, e
+  // "Personalizado" deixa a dona digitar qualquer valor nesses mesmos campos.
+  if(cfg.modelo==='mensal_2x'||cfg.modelo==='personalizado'){
+    var ultimoDiaMes=new Date(ano,mesIdx+1,0).getDate();
+    var inicio=new Date(ano,mesIdx,1),fim=new Date(ano,mesIdx,ultimoDiaMes);
+    var pag1=nEsimoDiaUtilComissao(anoSeg,mesSeg,cfg.mensal_dia_util_parcela1||5,sab);
+    var ultimoDiaSeg=new Date(anoSeg,mesSeg+1,0).getDate();
+    var diaFixo2=Math.min(cfg.mensal_dia_fixo_parcela2||20,ultimoDiaSeg);
+    var pag2=new Date(anoSeg,mesSeg,diaFixo2);
+    if(!ehDiaUtilComissao(pag2,sab))pag2=diaUtilAnteriorComissao(pag2,sab);
+    var pct1=cfg.mensal_pct_parcela1!=null?cfg.mensal_pct_parcela1:50;
+    return [
+      {num:1,inicio:inicio,fim:fim,pct:pct1,pagamento:pag1},
+      {num:2,inicio:inicio,fim:fim,pct:100-pct1,pagamento:pag2}
+    ];
+  }
+  if(cfg.modelo==='mensal_1x'){
+    var ultimoDiaMes1=new Date(ano,mesIdx+1,0).getDate();
+    var inicio1=new Date(ano,mesIdx,1),fim1=new Date(ano,mesIdx,ultimoDiaMes1);
+    var pagUnica=nEsimoDiaUtilComissao(anoSeg,mesSeg,cfg.mensal_dia_util_parcela1||5,sab);
+    return [{num:1,inicio:inicio1,fim:fim1,pct:100,pagamento:pagUnica}];
+  }
+  // quinzenal (padrão)
+  var fechQ1=cfg.quinz_fechamento_dia1||15;
+  var diasPagQ1=cfg.quinz_dias_pagamento_q1!=null?cfg.quinz_dias_pagamento_q1:2;
+  var ajusteQ1=cfg.quinz_ajuste_fim_semana||'antecipar';
+  var ultimoDia=new Date(ano,mesIdx+1,0).getDate();
+  var q1Inicio=new Date(ano,mesIdx,1),q1Fim=new Date(ano,mesIdx,fechQ1);
+  var q2Inicio=new Date(ano,mesIdx,fechQ1+1),q2Fim=new Date(ano,mesIdx,ultimoDia);
+  var pagQ1=new Date(ano,mesIdx,fechQ1+diasPagQ1);
+  if(!ehDiaUtilComissao(pagQ1,sab))pagQ1=ajusteQ1==='adiar'?proximoDiaUtilComissao(pagQ1,sab):diaUtilAnteriorComissao(pagQ1,sab);
+  var pagQ2=nEsimoDiaUtilComissao(anoSeg,mesSeg,cfg.quinz_dia_util_pagamento_q2||5,sab);
+  return [
+    {num:1,inicio:q1Inicio,fim:q1Fim,pct:100,pagamento:pagQ1},
+    {num:2,inicio:q2Inicio,fim:q2Fim,pct:100,pagamento:pagQ2}
+  ];
+}
+// Lista as parcelas "relevantes pra mostrar agora" de um colaborador: as
+// do mês atual + as do mês anterior (cobre o caso comum de uma parcela
+// do mês passado ainda não paga, ou vencendo agora), ordenadas por
+// período. Cada item já sai com os valores calculados — ao vivo
+// (agendamentos Concluído x %) se ainda não tiver linha fechada em
+// comissao_parcelas, ou o snapshot congelado se já tiver.
+function parcelasRelevantesColab(colab,refData){
+  refData=refData||new Date();
+  var cfg=configComissaoDoColab(colab.id);
+  var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+  var ano=refData.getFullYear(),mesIdx=refData.getMonth();
+  var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
+  var parcelasAnt=gerarParcelasDoMes(cfg,anoAnt,mesAnt),parcelasAtual=gerarParcelasDoMes(cfg,ano,mesIdx);
+  var brutos=parcelasAnt.concat(parcelasAtual);
+  // Salário fixo (mensal) é dividido em partes iguais entre as parcelas
+  // DO MESMO MÊS — 1 parcela (mensal_1x) leva o salário inteiro, 2
+  // parcelas (quinzenal/mensal_2x/personalizado) levam metade cada.
+  function salarioPorParcelaDoMes(lista){return (cfg.salario_fixo&&lista.length)?(parseFloat(cfg.salario_fixo)/lista.length):0;}
+  var salPorParcelaAnt=salarioPorParcelaDoMes(parcelasAnt),salPorParcelaAtual=salarioPorParcelaDoMes(parcelasAtual);
+  return brutos.map(function(p){
+    var salarioPorParcela=parcelasAnt.indexOf(p)>=0?salPorParcelaAnt:salPorParcelaAtual;
+    var fechada=comissaoParcelas.find(function(cp){
+      return cp.colaborador_id===colab.id&&amostraMesmaData(cp.periodo_inicio,p.inicio)&&amostraMesmaData(cp.periodo_fim,p.fim)&&cp.parcela_num===p.num;
+    });
+    var emAndamento=refData>=p.inicio&&refData<=p.fim;
+    if(fechada){
+      return {num:p.num,inicio:p.inicio,fim:p.fim,pct:p.pct,pagamento:p.pagamento,emAndamento:false,fechadaNoBanco:true,
+        qtd:fechada.qtd_atendimentos,totalBruto:fechada.faturamento,comissaoVal:parseFloat(fechada.valor_comissao),
+        salarioIncluso:parseFloat(fechada.salario_fixo_incluso||0),status:fechada.status,pagoEm:fechada.pago_em,formaPagamento:fechada.forma_pagamento,fechadaId:fechada.id,
+        colaboradorId:colab.id,colaboradorNome:colab.nome,comissaoPct:pct};
+    }
+    var calc=calcularComissaoPeriodo(colab.nome,pct,p.inicio,p.fim);
+    var valorParcela=calc.comissaoVal*p.pct/100+salarioPorParcela;
+    // "status" aqui é só pra exibição (não existe linha nenhuma ainda em
+    // comissao_parcelas): 'aberta' = período ainda rolando; 'aguardando'
+    // = período já terminou mas a dona ainda não clicou "Fechar".
+    return {num:p.num,inicio:p.inicio,fim:p.fim,pct:p.pct,pagamento:p.pagamento,emAndamento:emAndamento,fechadaNoBanco:false,
+      qtd:calc.qtd,totalBruto:calc.totalBruto,comissaoVal:valorParcela,salarioIncluso:salarioPorParcela,
+      status:(p.fim<refData?'aguardando':'aberta'),pagoEm:null,formaPagamento:null,fechadaId:null,detalhamento:calc.detalhamento,
+      colaboradorId:colab.id,colaboradorNome:colab.nome,comissaoPct:pct};
+  });
+}
+function amostraMesmaData(iso,dateObj){
+  if(!iso)return false;
+  return iso===dataIsoDe(dateObj);
+}
+function valorNumAgendamento(a){
+  if(typeof a.valor_num==='number')return a.valor_num;
+  return parseFloat(String(a.valor||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
+}
+function dataKeyParaDate(dk){
+  var p=String(dk||'').split('/');
+  if(p.length!==3)return null;
+  return new Date(parseInt(p[2],10),parseInt(p[1],10)-1,parseInt(p[0],10));
+}
+// Soma, pro colaborador dado, os atendimentos Concluído dentro de
+// [dataInicio,dataFim] (inclusive) — mesma regra usada no painel do
+// colaborador, reaproveitada aqui pra tela da dona e pro fechamento.
+function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim){
+  var itens=[];
+  if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+    Object.keys(agendamentosPorData).forEach(function(dk){
+      var d=dataKeyParaDate(dk);
+      if(!d||d<dataInicio||d>dataFim)return;
+      var diaObj=agendamentosPorData[dk]||{};
+      Object.keys(diaObj).forEach(function(k){
+        var a=diaObj[k];
+        if(!a||a.status!=='Concluído')return;
+        if(!profAgendaIgual(a.prof,nomeColab))return;
+        itens.push(a);
+      });
+    });
+  }
+  var totalBruto=itens.reduce(function(s,a){return s+valorNumAgendamento(a);},0);
+  var porCategoria={};
+  itens.forEach(function(a){
+    var k=(a.servico||'Outros').split('+')[0].trim()||'Outros';
+    porCategoria[k]=(porCategoria[k]||0)+valorNumAgendamento(a);
+  });
+  var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
+  return {qtd:itens.length,totalBruto:totalBruto,comissaoVal:totalBruto*pct/100,detalhamento:detalhamento};
+}
+function fmtDataBR(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+function fmtDataBRCurta(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function dataIsoDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+async function carregarComissaoConfigSalaoSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('comissao_config').select('*').eq('salao_id',window.SALAO_ID).maybeSingle();
+    comissaoConfigSalao=r.data||null;
+    if(typeof preencherFormComissaoConfigSalao==='function')preencherFormComissaoConfigSalao();
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+  }catch(e){console.log('err carregar comissao_config salão',e);}
+}
+function preencherFormComissaoConfigSalao(){
+  var cfg=comissaoConfigSalao||CONFIG_COMISSAO_PADRAO;
+  var map={'cfgsalao-pagto-quinz-fechamento':'quinz_fechamento_dia1','cfgsalao-pagto-quinz-dias':'quinz_dias_pagamento_q1','cfgsalao-pagto-quinz-diautil2':'quinz_dia_util_pagamento_q2','cfgsalao-pagto-mensal-pct1':'mensal_pct_parcela1','cfgsalao-pagto-mensal-diautil1':'mensal_dia_util_parcela1','cfgsalao-pagto-mensal-diafixo2':'mensal_dia_fixo_parcela2'};
+  Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)el.value=cfg[map[id]];});
+  var selModelo=document.getElementById('cfgsalao-pagto-modelo');if(selModelo)selModelo.value=cfg.modelo||'quinzenal';
+  var selAjuste=document.getElementById('cfgsalao-pagto-quinz-ajuste');if(selAjuste)selAjuste.value=cfg.quinz_ajuste_fim_semana||'antecipar';
+  var chkSab=document.getElementById('cfgsalao-pagto-sabado');if(chkSab)chkSab.checked=!!cfg.sabado_conta_dia_util;
+  if(typeof toggleCamposPagamentoModeloSalao==='function')toggleCamposPagamentoModeloSalao();
+}
+function toggleCamposPagamentoModeloSalao(){
+  var modelo=document.getElementById('cfgsalao-pagto-modelo')?.value||'quinzenal';
+  var wrapQuinz=document.getElementById('cfgsalao-pagto-wrap-quinzenal');
+  var wrapMensal=document.getElementById('cfgsalao-pagto-wrap-mensal');
+  if(wrapQuinz)wrapQuinz.style.display=(modelo==='quinzenal')?'':'none';
+  if(wrapMensal)wrapMensal.style.display=(modelo==='mensal_2x'||modelo==='mensal_1x'||modelo==='personalizado')?'':'none';
+}
+async function salvarComissaoConfigSalao(){
+  if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
+  var novo={
+    salao_id:window.SALAO_ID,
+    modelo:document.getElementById('cfgsalao-pagto-modelo')?.value||'quinzenal',
+    quinz_fechamento_dia1:parseInt(document.getElementById('cfgsalao-pagto-quinz-fechamento')?.value,10)||15,
+    quinz_dias_pagamento_q1:parseInt(document.getElementById('cfgsalao-pagto-quinz-dias')?.value,10)||2,
+    quinz_ajuste_fim_semana:document.getElementById('cfgsalao-pagto-quinz-ajuste')?.value||'antecipar',
+    quinz_dia_util_pagamento_q2:parseInt(document.getElementById('cfgsalao-pagto-quinz-diautil2')?.value,10)||5,
+    mensal_pct_parcela1:parseFloat(document.getElementById('cfgsalao-pagto-mensal-pct1')?.value)||50,
+    mensal_dia_util_parcela1:parseInt(document.getElementById('cfgsalao-pagto-mensal-diautil1')?.value,10)||5,
+    mensal_dia_fixo_parcela2:parseInt(document.getElementById('cfgsalao-pagto-mensal-diafixo2')?.value,10)||20,
+    sabado_conta_dia_util:!!document.getElementById('cfgsalao-pagto-sabado')?.checked
+  };
+  try{
+    var r=await supa.from('comissao_config').upsert(novo,{onConflict:'salao_id'});
+    if(r.error){showAlert('Erro ao salvar: '+r.error.message);return;}
+    comissaoConfigSalao=novo;
+    closeModal('modal-cfg-comissoes');
+    showAlert('✅ Regra padrão de pagamento de comissão salva!');
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+  }catch(e){showAlert('Erro ao salvar: '+(e&&e.message?e.message:e));}
+}
+async function carregarComissaoConfigColabSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('comissao_colaborador_config').select('*').eq('salao_id',window.SALAO_ID);
+    var mapa={};
+    (r.data||[]).forEach(function(row){mapa[row.colaborador_id]=row;});
+    comissaoConfigPorColab=mapa;
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+    if(typeof preencherFormPagamentoColabAberto==='function')preencherFormPagamentoColabAberto();
+  }catch(e){console.log('err carregar comissao_colaborador_config',e);}
+}
+async function carregarComissaoParcelasSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('comissao_parcelas').select('*').eq('salao_id',window.SALAO_ID);
+    comissaoParcelas=r.data||[];
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+  }catch(e){console.log('err carregar comissao_parcelas',e);}
+}
+// Lê os campos de "Pagamento" do modal Editar Colaborador (colabEditId
+// já resolvido por colabSendoEditado) e salva a regra dele.
+async function salvarComissaoConfigColab(){
+  var c=colabSendoEditado();
+  if(!c||c.id==null){showAlert('Salve o colaborador antes de configurar o pagamento.');return;}
+  if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
+  var modelo=document.getElementById('edit-pagto-modelo')?.value||'quinzenal';
+  var novo={
+    colaborador_id:c.id,salao_id:window.SALAO_ID,modelo:modelo,
+    quinz_fechamento_dia1:parseInt(document.getElementById('edit-pagto-quinz-fechamento')?.value,10)||15,
+    quinz_dias_pagamento_q1:parseInt(document.getElementById('edit-pagto-quinz-dias')?.value,10)||2,
+    quinz_ajuste_fim_semana:document.getElementById('edit-pagto-quinz-ajuste')?.value||'antecipar',
+    quinz_dia_util_pagamento_q2:parseInt(document.getElementById('edit-pagto-quinz-diautil2')?.value,10)||5,
+    mensal_pct_parcela1:parseFloat(document.getElementById('edit-pagto-mensal-pct1')?.value)||50,
+    mensal_dia_util_parcela1:parseInt(document.getElementById('edit-pagto-mensal-diautil1')?.value,10)||5,
+    mensal_dia_fixo_parcela2:parseInt(document.getElementById('edit-pagto-mensal-diafixo2')?.value,10)||20,
+    sabado_conta_dia_util:!!document.getElementById('edit-pagto-sabado')?.checked,
+    salario_fixo:(function(){var v=document.getElementById('edit-pagto-salario')?.value;return v?parseFloat(v):null;})()
+  };
+  try{
+    var r=await supa.from('comissao_colaborador_config').upsert(novo,{onConflict:'colaborador_id'});
+    if(r.error){showAlert('Erro ao salvar regra de pagamento: '+r.error.message);return;}
+    comissaoConfigPorColab[c.id]=novo;
+    showAlert('✅ Regra de pagamento de '+c.nome+' salva!');
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+  }catch(e){showAlert('Erro ao salvar: '+(e&&e.message?e.message:e));}
+}
+// Preenche os campos de "Pagamento" no modal Editar Colaborador com a
+// regra atual dele (ou os padrões do sistema, se nunca configurou).
+function preencherFormPagamentoColab(colab){
+  var cfg=configComissaoDoColab(colab.id);
+  var map={'edit-pagto-quinz-fechamento':'quinz_fechamento_dia1','edit-pagto-quinz-dias':'quinz_dias_pagamento_q1','edit-pagto-quinz-diautil2':'quinz_dia_util_pagamento_q2','edit-pagto-mensal-pct1':'mensal_pct_parcela1','edit-pagto-mensal-diautil1':'mensal_dia_util_parcela1','edit-pagto-mensal-diafixo2':'mensal_dia_fixo_parcela2'};
+  Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)el.value=cfg[map[id]];});
+  var selModelo=document.getElementById('edit-pagto-modelo');if(selModelo)selModelo.value=cfg.modelo;
+  var selAjuste=document.getElementById('edit-pagto-quinz-ajuste');if(selAjuste)selAjuste.value=cfg.quinz_ajuste_fim_semana;
+  var chkSab=document.getElementById('edit-pagto-sabado');if(chkSab)chkSab.checked=!!cfg.sabado_conta_dia_util;
+  var elSal=document.getElementById('edit-pagto-salario');if(elSal)elSal.value=cfg.salario_fixo||'';
+  if(typeof toggleCamposPagamentoModelo==='function')toggleCamposPagamentoModelo();
+}
+function toggleCamposPagamentoModelo(){
+  var modelo=document.getElementById('edit-pagto-modelo')?.value||'quinzenal';
+  var wrapQuinz=document.getElementById('edit-pagto-wrap-quinzenal');
+  var wrapMensal=document.getElementById('edit-pagto-wrap-mensal');
+  if(wrapQuinz)wrapQuinz.style.display=modelo==='quinzenal'?'':'none';
+  if(wrapMensal)wrapMensal.style.display=modelo==='mensal_2x'?'':'none';
+}
+// Tela da dona: Financeiro > Comissões a Pagar. Junta as parcelas
+// relevantes (mês atual + anterior) de todo colaborador ativo, numa
+// lista só, ordenada por data de pagamento.
+function todasParcelasAPagar(){
+  var hoje=new Date();
+  var lista=[];
+  (typeof colaboradores!=='undefined'?colaboradores:[]).filter(function(c){return c.status!=='Inativo';}).forEach(function(c){
+    parcelasRelevantesColab(c,hoje).forEach(function(p){lista.push(p);});
+  });
+  lista.sort(function(a,b){return a.pagamento-b.pagamento;});
+  return lista;
+}
+// Aviso na Página Principal: próxima data de pagamento de comissão com
+// pendência (hoje ou no futuro mais próximo), com o total daquele dia.
+function atualizarAvisoComissaoDashboard(){
+  var el=document.getElementById('dash-aviso-comissao');
+  if(!el)return;
+  if(!window._colabsSupaCarregados){el.style.display='none';return;}
+  var hoje=new Date();hoje.setHours(0,0,0,0);
+  var pendentes=todasParcelasAPagar().filter(function(p){return p.status!=='paga';});
+  if(!pendentes.length){el.style.display='none';return;}
+  var futuras=pendentes.filter(function(p){var pg=new Date(p.pagamento);pg.setHours(0,0,0,0);return pg>=hoje;});
+  var alvo=futuras.length?futuras[0]:pendentes[pendentes.length-1];
+  var pgAlvo=new Date(alvo.pagamento);pgAlvo.setHours(0,0,0,0);
+  var doMesmoDia=pendentes.filter(function(p){var pg=new Date(p.pagamento);pg.setHours(0,0,0,0);return pg.getTime()===pgAlvo.getTime();});
+  var total=doMesmoDia.reduce(function(s,p){return s+p.comissaoVal;},0);
+  var atrasado=pgAlvo<hoje;
+  el.style.display='block';
+  el.textContent=(atrasado?'⚠ Atrasado desde ':(pgAlvo.getTime()===hoje.getTime()?'📅 Hoje: ':'📅 Dia '+fmtDataBRCurta(pgAlvo)+': '))+'pagar R$ '+total.toFixed(2).replace('.',',')+' em comissões ('+doMesmoDia.length+' parcela'+(doMesmoDia.length>1?'s':'')+')';
+}
+function renderComissoesAPagar(){
+  if(typeof atualizarAvisoComissaoDashboard==='function')atualizarAvisoComissaoDashboard();
+  var resumoEl=document.getElementById('comissoes-pagar-resumo');
+  var tbEl=document.getElementById('comissoes-pagar-table');
+  if(!resumoEl||!tbEl)return;
+  if(!window._colabsSupaCarregados){
+    tbEl.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
+    return;
+  }
+  var parcelas=todasParcelasAPagar();
+  var hoje=new Date();hoje.setHours(0,0,0,0);
+  var daqui7=new Date(hoje);daqui7.setDate(daqui7.getDate()+7);
+  var totalHoje=0,totalSemana=0,totalAtrasado=0;
+  parcelas.forEach(function(p){
+    if(p.status==='paga')return;
+    var pg=new Date(p.pagamento);pg.setHours(0,0,0,0);
+    if(pg.getTime()===hoje.getTime())totalHoje+=p.comissaoVal;
+    if(pg>=hoje&&pg<=daqui7)totalSemana+=p.comissaoVal;
+    if(pg<hoje)totalAtrasado+=p.comissaoVal;
+  });
+  resumoEl.innerHTML=
+    '<div style="background:#f8f8f8;border-radius:9px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:900">R$ '+totalHoje.toFixed(2).replace('.',',')+'</div><div style="font-size:11px;color:#888;margin-top:2px">Vence hoje</div></div>'
+    +'<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:900;color:#9a3412">R$ '+totalSemana.toFixed(2).replace('.',',')+'</div><div style="font-size:11px;color:#9a3412;margin-top:2px">Vence essa semana</div></div>'
+    +'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:900;color:#dc2626">R$ '+totalAtrasado.toFixed(2).replace('.',',')+'</div><div style="font-size:11px;color:#dc2626;margin-top:2px">Atrasado</div></div>';
+  if(!parcelas.length){
+    tbEl.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#aaa">Nenhuma parcela de comissão no período.</td></tr>';
+    return;
+  }
+  tbEl.innerHTML=parcelas.map(function(p){
+    var pg=new Date(p.pagamento);pg.setHours(0,0,0,0);
+    var atrasado=p.status!=='paga'&&pg<hoje;
+    var statusHtml=p.status==='paga'
+      ?'<span class="badge badge-green">✅ Pago</span>'
+      :(atrasado?'<span class="badge" style="background:#fef2f2;color:#dc2626">⚠ Atrasado</span>'
+        :(p.status==='aguardando'?'<span class="badge" style="background:#fff7ed;color:#9a3412">Aguardando fechamento</span>'
+          :'<span class="badge badge-gray">Em andamento</span>'));
+    var acoes='';
+    if(p.status==='paga'){
+      acoes='<span style="font-size:11px;color:#888">'+(p.formaPagamento||'')+'</span>';
+    }else if(p.fechadaNoBanco){
+      acoes='<button class="btn btn-primary btn-sm" onclick="abrirModalPagarComissao('+p.fechadaId+')">💰 Marcar como pago</button>';
+    }else if(p.status==='aguardando'){
+      acoes='<button class="btn btn-outline btn-sm" onclick="fecharParcelaComissao(\''+p.colaboradorId+'\',\''+dataIsoDe(p.inicio)+'\',\''+dataIsoDe(p.fim)+'\','+p.num+')">🔒 Fechar parcela</button>';
+    }else{
+      acoes='<span style="font-size:11px;color:#aaa">período em andamento</span>';
+    }
+    return '<tr>'
+      +'<td>'+p.colaboradorNome+'</td>'
+      +'<td>'+fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)+(p.pct<100?' ('+p.pct+'%)':'')+'</td>'
+      +'<td>'+p.qtd+'</td>'
+      +'<td>R$ '+p.totalBruto.toFixed(2).replace('.',',')+'</td>'
+      +'<td>'+p.comissaoPct+'%</td>'
+      +'<td style="font-weight:700">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</td>'
+      +'<td>'+fmtDataBR(p.pagamento)+'</td>'
+      +'<td>'+statusHtml+'</td>'
+      +'<td>'+acoes+'</td>'
+      +'</tr>';
+  }).join('');
+}
+// "Fechar parcela" congela os valores atuais — depois disso, editar um
+// atendimento antigo desse período não muda mais o valor aqui (só fica
+// registrado como divergência, pra conferência manual).
+async function fecharParcelaComissao(colaboradorId,inicioIso,fimIso,num){
+  colaboradorId=parseInt(colaboradorId,10);
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.id===colaboradorId;});
+  if(!c){showAlert('Colaborador não encontrado.');return;}
+  var todas=parcelasRelevantesColab(c,new Date());
+  var p=todas.find(function(x){return dataIsoDe(x.inicio)===inicioIso&&dataIsoDe(x.fim)===fimIso&&x.num===num;});
+  if(!p){showAlert('Parcela não encontrada.');return;}
+  if(!confirm('Fechar a parcela de '+c.nome+' ('+fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)+')? O valor R$ '+p.comissaoVal.toFixed(2).replace('.',',')+' fica congelado — atendimentos editados depois não mudam mais esse total.'))return;
+  try{
+    var linha={
+      salao_id:window.SALAO_ID,colaborador_id:colaboradorId,
+      periodo_inicio:inicioIso,periodo_fim:fimIso,parcela_num:num,parcela_pct:p.pct,
+      data_pagamento_prevista:dataIsoDe(p.pagamento),qtd_atendimentos:p.qtd,faturamento:p.totalBruto,
+      comissao_pct:p.comissaoPct,valor_comissao:p.comissaoVal,salario_fixo_incluso:p.salarioIncluso||0,status:'fechada'
+    };
+    var r=await supa.from('comissao_parcelas').upsert(linha,{onConflict:'colaborador_id,periodo_inicio,periodo_fim,parcela_num'}).select('*').single();
+    if(r.error){showAlert('Erro ao fechar parcela: '+r.error.message);return;}
+    comissaoParcelas.push(r.data);
+    showAlert('🔒 Parcela de '+c.nome+' fechada.');
+    renderComissoesAPagar();
+  }catch(e){showAlert('Erro ao fechar parcela: '+(e&&e.message?e.message:e));}
+}
+function abrirModalPagarComissao(parcelaId){
+  var p=comissaoParcelas.find(function(x){return x.id===parcelaId;});
+  if(!p){showAlert('Parcela não encontrada.');return;}
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.id===p.colaborador_id;});
+  window._parcelaPagamentoAtual=parcelaId;
+  var infoEl=document.getElementById('modal-pagar-comissao-info');
+  if(infoEl)infoEl.innerHTML='<b>'+(c?c.nome:'Colaborador')+'</b> — '+fmtDataBRCurta(new Date(p.periodo_inicio+'T00:00:00'))+' a '+fmtDataBRCurta(new Date(p.periodo_fim+'T00:00:00'))+'<br>Valor: <b>R$ '+parseFloat(p.valor_comissao).toFixed(2).replace('.',',')+'</b>';
+  openModal('modal-pagar-comissao');
+}
+async function confirmarPagamentoParcela(){
+  var parcelaId=window._parcelaPagamentoAtual;
+  var p=comissaoParcelas.find(function(x){return x.id===parcelaId;});
+  if(!p){showAlert('Parcela não encontrada.');return;}
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.id===p.colaborador_id;});
+  var forma=document.getElementById('pagar-comissao-forma')?.value||'pix';
+  var valor=parseFloat(p.valor_comissao)||0;
+  var nomeColab=c?c.nome:('colaborador #'+p.colaborador_id);
+  var periodoTxt=fmtDataBRCurta(new Date(p.periodo_inicio+'T00:00:00'))+' a '+fmtDataBRCurta(new Date(p.periodo_fim+'T00:00:00'));
+  var descricao='Comissão — '+nomeColab+' ('+periodoTxt+')';
+  try{
+    if(forma==='dinheiro'){
+      if(!caixaState||!caixaState.aberto){showAlert('⚠️ Abra o caixa do dia antes de pagar em dinheiro.');return;}
+      inserirMovimentoCaixa({tipo:'saida',categoria:'Comissao',descricao:descricao,valor:valor,forma:'dinheiro',profissional:nomeColab});
+    }else{
+      var hoje=new Date();
+      var dataFmt=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+      var _lanc={tipo:'saida',data:dataFmt,desc:descricao,cat:'Comissao',forma:forma==='pix'?'Pix':'Transferência',val:valor,status:'confirmado',prof:nomeColab};
+      if(typeof fluxoLancamentos!=='undefined')fluxoLancamentos.push(_lanc);
+      if(typeof fluxoInserirSupa==='function')fluxoInserirSupa(_lanc);
+    }
+    var r=await supa.from('comissao_parcelas').update({status:'paga',pago_em:new Date().toISOString(),pago_por:window.SALAO_RESPONSAVEL||'',forma_pagamento:forma}).eq('id',p.id).select('*').single();
+    if(r.error){showAlert('Pagamento registrado no financeiro, mas erro ao marcar a parcela como paga: '+r.error.message);return;}
+    var idx=comissaoParcelas.findIndex(function(x){return x.id===p.id;});
+    if(idx>=0)comissaoParcelas[idx]=r.data;
+    closeModal('modal-pagar-comissao');
+    showAlert('✅ Comissão de '+nomeColab+' marcada como paga ('+forma+').');
+    renderComissoesAPagar();
+  }catch(e){showAlert('Erro ao registrar pagamento: '+(e&&e.message?e.message:e));}
+}
 async function carregarRemuneracoesSupa(){
   try{
     if(!window.SALAO_ID)return;
@@ -9789,6 +10344,7 @@ async function carregarColaboradoresSupa(){
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
       if(typeof renderColabs==='function')renderColabs();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
+      if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
       if(typeof renderAgenda==='function'&&document.getElementById('agenda-grid'))renderAgenda();
     }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
@@ -15435,6 +15991,57 @@ function editarColab(idx){
         <label>Permissões de acesso</label>
         <div id="edit-permissoes-wrap" class="permissoes-wrap" style="margin-top:6px;max-height:320px;overflow-y:auto"></div>
       </div>
+      <!-- Pagamento de comissão -->
+      <div class="form-group full" style="background:#f8f8f8;border-radius:10px;padding:12px">
+        <label style="margin-bottom:8px;display:block">💰 Pagamento de comissão</label>
+        <div style="font-size:11px;color:#888;margin-bottom:8px">Deixe no padrão do salão (Configurações) ou escolha um modelo próprio só pra ${c.nome}.</div>
+        <div class="form-group full" style="margin-bottom:8px">
+          <select id="edit-pagto-modelo" onchange="toggleCamposPagamentoModelo()">
+            <option value="quinzenal">Quinzenal (1-15 e 16-fim do mês)</option>
+            <option value="mensal_2x">Mensal em 2 parcelas</option>
+            <option value="mensal_1x">Mensal em 1 parcela</option>
+            <option value="personalizado">Personalizado</option>
+          </select>
+        </div>
+        <div id="edit-pagto-wrap-quinzenal" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px">1ª quinzena fecha dia</span>
+            <input type="number" id="edit-pagto-quinz-fechamento" style="width:50px;text-align:center" min="1" max="28"/>
+            <span style="font-size:11px">paga</span>
+            <input type="number" id="edit-pagto-quinz-dias" style="width:50px;text-align:center" min="0"/>
+            <span style="font-size:11px">dias depois</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px">Se cair em fim de semana/feriado:</span>
+            <select id="edit-pagto-quinz-ajuste" style="width:130px;font-size:12px"><option value="antecipar">Antecipar</option><option value="adiar">Adiar</option></select>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px">2ª quinzena paga no</span>
+            <input type="number" id="edit-pagto-quinz-diautil2" style="width:45px;text-align:center" min="1" max="20"/>
+            <span style="font-size:11px">º dia útil do mês seguinte</span>
+          </div>
+        </div>
+        <div id="edit-pagto-wrap-mensal" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px">Parcela 1:</span>
+            <input type="number" id="edit-pagto-mensal-pct1" style="width:45px;text-align:center" min="0" max="100"/>
+            <span style="font-size:11px">% no</span>
+            <input type="number" id="edit-pagto-mensal-diautil1" style="width:40px;text-align:center" min="1" max="20"/>
+            <span style="font-size:11px">º dia útil do mês seguinte</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:11px">Parcela 2 (resto) no dia fixo</span>
+            <input type="number" id="edit-pagto-mensal-diafixo2" style="width:45px;text-align:center" min="1" max="28"/>
+            <span style="font-size:11px">do mês seguinte</span>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:8px"><input type="checkbox" id="edit-pagto-sabado"/> Contar sábado como dia útil</label>
+        <div class="form-group full" style="margin-bottom:8px">
+          <label style="font-size:11px">Salário fixo (opcional, R$/mês — somado à comissão)</label>
+          <input type="number" id="edit-pagto-salario" placeholder="Deixe em branco se não tiver" min="0" step="0.01"/>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="salvarComissaoConfigColab()">Salvar regra de pagamento</button>
+      </div>
       <!-- Observações -->
       <div class="form-group full">
         <label>Observações</label>
@@ -15451,6 +16058,7 @@ function editarColab(idx){
   </div>`;
   m.classList.add('open');
   renderPermissoesUI(m.querySelector('#edit-permissoes-wrap'),c.permissoes);
+  preencherFormPagamentoColab(c);
 }
 function editAtualizarIniciais(){
   var nome=document.getElementById('edit-nome')?.value||'';
@@ -17607,75 +18215,45 @@ function entrarComoColaborador(nome){
       }).join('');
     }
   }
-  // Comissões
+  // Comissões — por período (quinzena ou parcelas do mês, de acordo com o
+  // modelo configurado pra esse colaborador). O período "em andamento" é
+  // calculado ao vivo (agendamentos Concluído x %); os demais usam o
+  // snapshot fechado se já existir, senão calculam ao vivo também (dona
+  // ainda não fechou).
   var comEl=document.getElementById('cv-comissoes');
   if(comEl&&colab){
-    // Comissão real, baseada no status do atendimento (não no Fluxo de Caixa):
-    // atendimento Concluído já entra como "previsto/a receber" (valor do
-    // serviço x % do colaborador) assim que a dona marca a comanda como
-    // concluída — não precisa esperar o pagamento ser registrado no caixa.
-    // Antes isso dependia de fluxo_lancamentos confirmado, então um dia cheio
-    // de atendimentos concluídos (e ainda não recebidos no caixa) aparecia
-    // zerado pro colaborador. "Confirmado" (destacado abaixo) é o recorte do
-    // que já foi de fato recebido no caixa — fluxo_lancamentos continua
-    // sendo a fonte certa pra isso.
-    var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
-    function valorNumAppt(a){
-      if(typeof a.valor_num==='number')return a.valor_num;
-      return parseFloat(String(a.valor||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
+    var parcelas=parcelasRelevantesColab(colab,hojeCv).sort(function(a,b){return a.inicio-b.inicio;});
+    var atual=parcelas.filter(function(p){return p.emAndamento;}).pop()||parcelas[parcelas.length-1];
+    var outras=parcelas.filter(function(p){return p!==atual;}).sort(function(a,b){return b.pagamento-a.pagamento;}).slice(0,2);
+    document.getElementById('cv-comissao-mes').textContent=atual?('R$ '+atual.comissaoVal.toFixed(2).replace('.',',')):'R$ 0';
+    function cardStatus(p){
+      if(p.status==='paga')return '<span style="font-size:11px;font-weight:700;color:#15803d">✅ Pago em '+fmtDataBRCurta(new Date(p.pagoEm))+'</span>';
+      var hojeZ=new Date();hojeZ.setHours(0,0,0,0);
+      var atrasado=p.pagamento<hojeZ;
+      return '<span style="font-size:11px;font-weight:700;color:'+(atrasado?'#ef4444':'#9a3412')+'">'+(atrasado?'⚠ Atrasado — devia pagar em ':'⏳ A pagar em ')+fmtDataBR(p.pagamento)+'</span>';
     }
-    var meusConcluidosMes=[];
-    if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
-      Object.keys(agendamentosPorData).forEach(function(dk){
-        var partesDk=dk.split('/');
-        if(partesDk.length!==3)return;
-        var mesDk=parseInt(partesDk[1],10)-1,anoDk=parseInt(partesDk[2],10);
-        if(mesDk!==hojeCv.getMonth()||anoDk!==hojeCv.getFullYear())return;
-        var diaObj=agendamentosPorData[dk]||{};
-        Object.keys(diaObj).forEach(function(k){
-          var a=diaObj[k];
-          if(!a||a.status!=='Concluído')return;
-          if(!profAgendaIgual(a.prof,colab.nome))return;
-          meusConcluidosMes.push(a);
-        });
-      });
+    var html='';
+    if(atual){
+      var diasFaltam=Math.max(0,Math.ceil((atual.pagamento-hojeCv)/86400000));
+      html+='<div style="background:#f8f8f8;border-radius:9px;padding:14px;margin-bottom:10px">'
+        +'<div style="font-size:11px;color:#888;margin-bottom:6px">Período atual: '+fmtDataBRCurta(atual.inicio)+' a '+fmtDataBRCurta(atual.fim)+(atual.pct<100?' ('+atual.pct+'% da parcela '+atual.num+')':'')+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        +'<span style="font-size:20px;font-weight:900">R$ '+atual.comissaoVal.toFixed(2).replace('.',',')+'</span>'
+        +'<span style="font-size:11px;color:#888">'+atual.qtd+' atendimento(s)</span></div>'
+        +'<div style="font-size:12px;color:#555">Você recebe dia <b>'+fmtDataBR(atual.pagamento)+'</b> — faltam '+diasFaltam+' dia(s)</div>'
+        +'</div>';
     }
-    var totalBruto=meusConcluidosMes.reduce(function(s,a){return s+valorNumAppt(a);},0);
-    var porCategoria={};
-    meusConcluidosMes.forEach(function(a){
-      var k=(a.servico||'Outros').split('+')[0].trim()||'Outros';
-      porCategoria[k]=(porCategoria[k]||0)+valorNumAppt(a);
+    outras.forEach(function(p){
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #eee;border-radius:9px;margin-bottom:8px">'
+        +'<div><div style="font-size:12px;font-weight:700">'+fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)+(p.pct<100?' ('+p.pct+'%)':'')+'</div>'+cardStatus(p)+'</div>'
+        +'<span style="font-size:15px;font-weight:800">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</span></div>';
     });
-    var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
-    var comissaoVal=(totalBruto*pct/100).toFixed(2);
-    var diaAtual=hojeCv.getDate();
-    var diasNoMes=new Date(hojeCv.getFullYear(),hojeCv.getMonth()+1,0).getDate();
-    var projecaoComissao=diaAtual>0?((totalBruto/diaAtual)*diasNoMes*pct/100):0;
-    // Confirmado = já recebido no caixa (fluxo_lancamentos), igual era a
-    // conta antiga — mostrado só como referência do que já entrou de fato.
-    var lancsConfirmadosMes=(typeof fluxoLancamentos!=='undefined'?fluxoLancamentos:[]).filter(function(l){
-      if(l.tipo!=='receita'||l.status!=='confirmado')return false;
-      if(!profAgendaIgual(l.prof||'',colab.nome))return false;
-      var d=fluxoParseData(l.data);
-      return d&&d.getMonth()===hojeCv.getMonth()&&d.getFullYear()===hojeCv.getFullYear();
-    });
-    var totalConfirmado=lancsConfirmadosMes.reduce(function(s,l){return s+(parseFloat(l.val)||0);},0);
-    var comissaoConfirmada=(totalConfirmado*pct/100).toFixed(2);
-    document.getElementById('cv-comissao-mes').textContent='R$ '+comissaoVal.replace('.',',');
-    comEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
-      +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">R$ '+totalBruto.toFixed(2).replace('.',',')+'</div><div style="font-size:10px;color:#888;margin-top:2px">Faturamento bruto</div></div>'
-      +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">'+pct+'%</div><div style="font-size:10px;color:#888;margin-top:2px">Sua comissão</div></div>'
-      +'<div style="background:#111;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800;color:#fff">R$ '+comissaoVal.replace('.',',')+'</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">A receber (previsto)</div></div>'
-      +'</div>'
-      +'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
-      +'<span style="font-size:11px;color:#15803d">✅ Já confirmado (recebido no caixa este mês)</span>'
-      +'<span style="font-size:14px;font-weight:800;color:#15803d">R$ '+comissaoConfirmada.replace('.',',')+'</span></div>'
-      +'<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
-      +'<span style="font-size:11px;color:#9a3412">📈 Projeção pro fim do mês (no ritmo atual)</span>'
-      +'<span style="font-size:14px;font-weight:800;color:#9a3412">R$ '+projecaoComissao.toFixed(2).replace('.',',')+'</span></div>'
-      +'<div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">Detalhamento:</div>'
-      +(detalhamento.length?detalhamento.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*pct/100).toFixed(2).replace('.',',')+'</span></div>';}).join('')
-        :'<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum atendimento seu concluído este mês ainda.</div>');
+    if(atual&&atual.detalhamento&&atual.detalhamento.length){
+      html+='<div style="font-size:12px;font-weight:700;color:#333;margin:10px 0 8px">Detalhamento do período atual:</div>'
+        +atual.detalhamento.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*((colab&&parseFloat(String(colab.comissao||'0').replace('%',''))||0)/100)).toFixed(2).replace('.',',')+'</span></div>';}).join('');
+    }
+    if(!atual)html='<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum período de comissão configurado ainda.</div>';
+    comEl.innerHTML=html;
   }
   // Caixa (se permitido)
   var caixaSec=document.getElementById('cv-caixa-section');
@@ -17845,6 +18423,9 @@ function carregarDadosDoSalao(){
   carregarPacotesClientesSupa();
   carregarServicosSupa();
   carregarProdutosSupa();
+  carregarComissaoConfigSalaoSupa();
+  carregarComissaoConfigColabSupa();
+  carregarComissaoParcelasSupa();
   var pColabs=carregarColaboradoresSupa();
   var pAgenda=carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
@@ -18777,6 +19358,7 @@ function removerMovimentoHistorico(histIdx,movIdx,ev){
 }
 
 async function renderDashboardCards(){
+  if(typeof atualizarAvisoComissaoDashboard==='function')atualizarAvisoComissaoDashboard();
   try{
     var agora=new Date();
     var mesAtual=agora.getMonth(), anoAtual=agora.getFullYear();
