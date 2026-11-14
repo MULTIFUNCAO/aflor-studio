@@ -4512,7 +4512,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span>Total a pagar</span><span id="popup-total-pagar" style="color:var(--af-ink)"></span>
           </div>
           <div style="display:flex;gap:8px;margin-top:12px">
-            <button type="button" class="af-btn-primary" style="flex:1" onclick="abrirConfirmarPagamento(agEditandoKey)">Registrar Pagamento</button>
+            <button type="button" id="popup-btn-registrar-pagamento" class="af-btn-primary" style="flex:1" onclick="abrirConfirmarPagamento(agEditandoKey)">Registrar Pagamento</button>
             <button type="button" class="af-link" onclick="verComandaEspecifica(agEditandoKey)">Ver Comandas</button>
           </div>
         </div>
@@ -11326,7 +11326,7 @@ function abrirAgendaPopup(key,dados,event){
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px">
-        <button onclick="abrirConfirmarPagamento('${key}')" style="flex:1;padding:8px;background:#111;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💳 Registrar Pagamento</button>
+        ${colabPermitido('fin_receber_pagamentos')?`<button onclick="abrirConfirmarPagamento('${key}')" style="flex:1;padding:8px;background:#111;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">💳 Registrar Pagamento</button>`:''}
         <button onclick="verComandaEspecifica('${key}')" style="padding:8px 10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:11px;cursor:pointer">Ver Comandas</button>
       </div>
     </div>
@@ -11396,6 +11396,7 @@ function pgRecalcularSaldo(){
 }
 
 function abrirConfirmarPagamento(key){
+  if(!colabPermitido('fin_receber_pagamentos')){showAlert('Você não tem permissão para receber pagamentos.');return;}
   var elSinalInput=document.getElementById('popup-sinal-valor');
   if(elSinalInput)sincronizarSinalLocal(key,parseFloat(elSinalInput.value)||0);
   var dados=agendaDiaAtual[key];
@@ -11507,6 +11508,7 @@ function lancarEntradaCaixaAuto(desc,valor,forma){
 }
 
 function confirmarFechamentoPagamento(){
+  if(!colabPermitido('fin_receber_pagamentos')){showAlert('Você não tem permissão para receber pagamentos.');return;}
   if(!pagamentoCtx){return;}
   pgRecalcularSaldo();
   // partesPagamento: 1 parte (forma única) ou 2 (split), sempre somando ctx.restante —
@@ -16119,6 +16121,8 @@ function abrirAtendimentoEdicao(key,dados){
   var podeAddItem=colabPermitido('comandas_add_itens');
   var btnAddSvc=document.getElementById('popup-btn-add-svc');if(btnAddSvc)btnAddSvc.style.display=podeAddItem?'':'none';
   var btnAddPkg=document.getElementById('popup-btn-add-pkg');if(btnAddPkg)btnAddPkg.style.display=podeAddItem?'':'none';
+  var btnRegPg=document.getElementById('popup-btn-registrar-pagamento');
+  if(btnRegPg)btnRegPg.style.display=colabPermitido('fin_receber_pagamentos')?'':'none';
   agEditandoKey=key;
   agEditandoDados=dados;
   agEditandoDataKeyOriginal=agendaDataKeyAtual;
