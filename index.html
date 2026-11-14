@@ -1198,6 +1198,35 @@ tr.row-retorno-retornou td{background:#f0fff4}
     .fdash-hero-meta-empty{font-size:11.5px;color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .fdash-hero-meta-empty button{flex-shrink:0}
 
+    /* Painel do colaborador — Minhas Comissões */
+    .cv-com-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#123524 0%,#1f7a4d 65%,#2fae68 100%);border-radius:16px;padding:20px;color:#fff;box-shadow:0 10px 24px -12px rgba(31,122,77,.55);margin-bottom:14px}
+    .cv-com-hero-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.75)}
+    .cv-com-hero-valor{font-size:32px;font-weight:900;margin:6px 0;letter-spacing:-.5px;animation:cvComPop .5s ease}
+    @keyframes cvComPop{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .cv-com-hero-sub{font-size:12.5px;color:rgba(255,255,255,.88);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-top:2px}
+    .cv-com-hero-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:4px 10px;font-weight:700;font-size:11px;white-space:nowrap}
+    .cv-com-progress-track{width:100%;background:rgba(0,0,0,.25);border-radius:20px;height:7px;overflow:hidden;margin-top:14px}
+    .cv-com-progress-fill{height:100%;background:linear-gradient(90deg,#fde68a,#fca5a5);border-radius:20px;transition:width .7s ease}
+    .cv-com-progress-labels{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,.72);margin-top:4px}
+    .cv-com-minicards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+    @media(max-width:480px){.cv-com-minicards{grid-template-columns:repeat(2,1fr)}}
+    .cv-com-minicard{background:#f8f8f8;border-radius:10px;padding:10px 6px;text-align:center}
+    .cv-com-minicard-val{font-size:14.5px;font-weight:800;color:#111}
+    .cv-com-minicard-lbl{font-size:9px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+    .cv-com-compare{font-size:11.5px;font-weight:700;margin:-6px 0 14px;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px}
+    .cv-com-compare.up{background:#dcfce7;color:#15803d}
+    .cv-com-compare.down{background:#fef2f2;color:#dc2626}
+    .cv-com-section-title{font-size:12px;font-weight:700;color:#333;margin:4px 0 8px}
+    .cv-com-timeline-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+    .cv-com-timeline-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .cv-com-timeline-dot.pago{background:#22c55e}
+    .cv-com-timeline-dot.pendente{background:#f59e0b}
+    .cv-com-timeline-dot.atrasado{background:#ef4444}
+    .cv-com-timeline-dot.andamento{background:#cbd5e1}
+    .cv-com-atend-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:12px}
+    .cv-com-atend-cliente{font-weight:700;color:#111}
+    .cv-com-atend-meta{color:#888;font-size:10.5px;margin-top:1px}
+
     .fdash-kpi-grid{grid-template-columns:repeat(6,1fr)}
     .fdash-kpi-card.kpi-purple{border-left-color:#7c3aed}
     .fdash-kpi-card.kpi-gray{border-left-color:var(--line)}
@@ -9770,11 +9799,69 @@ function parcelasRelevantesColab(colab,refData){
       qtd:calc.qtd,totalBruto:calc.totalBruto,comissaoVal:valorParcela,salarioIncluso:salarioPorParcela,
       status:(p.fim<refData?'aguardando':'aberta'),pagoEm:null,formaPagamento:null,fechadaId:null,detalhamento:calc.detalhamento,
       colaboradorId:colab.id,colaboradorNome:colab.nome,comissaoPct:pct};
+  }).filter(function(p){
+    // Período já terminado, nada fechado no banco e zero atendimento/valor:
+    // esconde (nunca marca como "atrasado" um período sem nada pra pagar —
+    // cobre tanto um mês parado quanto antes do colaborador existir no
+    // sistema, já que não tem agendamento nenhum atribuído a ele).
+    if(p.emAndamento||p.fechadaNoBanco)return true;
+    return p.qtd>0||p.totalBruto>0;
   });
 }
 function amostraMesmaData(iso,dateObj){
   if(!iso)return false;
   return iso===dataIsoDe(dateObj);
+}
+// Versão agrupada por PERÍODO (não por parcela) pro painel do colaborador:
+// quinzenal tem 2 períodos distintos por mês (1 parcela cada); mensal_2x/
+// mensal_1x/personalizado tem 1 período (mês inteiro) com 1 ou 2 parcelas
+// sobre o MESMO valor total do período.
+function periodosRelevantesColab(colab,refData){
+  refData=refData||new Date();
+  var cfg=configComissaoDoColab(colab.id);
+  var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+  var ano=refData.getFullYear(),mesIdx=refData.getMonth();
+  var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
+  var brutos=gerarParcelasDoMes(cfg,anoAnt,mesAnt).concat(gerarParcelasDoMes(cfg,ano,mesIdx));
+  var gruposMap={},ordem=[];
+  brutos.forEach(function(p){
+    var chave=dataIsoDe(p.inicio)+'_'+dataIsoDe(p.fim);
+    if(!gruposMap[chave]){gruposMap[chave]={inicio:p.inicio,fim:p.fim,brutas:[]};ordem.push(chave);}
+    gruposMap[chave].brutas.push(p);
+  });
+  var salarioMensal=cfg.salario_fixo?parseFloat(cfg.salario_fixo):0;
+  var periodos=ordem.map(function(chave){
+    var g=gruposMap[chave];
+    var calc=calcularComissaoPeriodo(colab.nome,pct,g.inicio,g.fim);
+    var emAndamento=refData>=g.inicio&&refData<=g.fim;
+    var temFechadaNoBanco=false;
+    var parcelas=g.brutas.map(function(p){
+      var fechada=comissaoParcelas.find(function(cp){
+        return cp.colaborador_id===colab.id&&amostraMesmaData(cp.periodo_inicio,g.inicio)&&amostraMesmaData(cp.periodo_fim,g.fim)&&cp.parcela_num===p.num;
+      });
+      var salarioDaParcela=salarioMensal*(p.pct/100);
+      if(fechada){
+        temFechadaNoBanco=true;
+        return {num:p.num,pct:p.pct,pagamento:p.pagamento,fechadaNoBanco:true,
+          comissaoVal:parseFloat(fechada.valor_comissao),salarioIncluso:parseFloat(fechada.salario_fixo_incluso||0),
+          status:fechada.status,pagoEm:fechada.pago_em,formaPagamento:fechada.forma_pagamento,fechadaId:fechada.id};
+      }
+      return {num:p.num,pct:p.pct,pagamento:p.pagamento,fechadaNoBanco:false,
+        comissaoVal:calc.comissaoVal*p.pct/100+salarioDaParcela,salarioIncluso:salarioDaParcela,
+        status:(g.fim<refData?'aguardando':'aberta'),pagoEm:null,formaPagamento:null,fechadaId:null};
+    });
+    var totalComissao=parcelas.reduce(function(s,p){return s+p.comissaoVal;},0);
+    return {inicio:g.inicio,fim:g.fim,emAndamento:emAndamento,qtd:calc.qtd,totalBruto:calc.totalBruto,
+      totalComissao:totalComissao,detalhamento:calc.detalhamento,itens:calc.itens,parcelas:parcelas,
+      temFechadaNoBanco:temFechadaNoBanco,comissaoPct:pct};
+  });
+  // Mesma regra do fix de "atrasado fantasma": período terminado, nada
+  // fechado e zero atividade -> some da lista (cobre antes do colaborador
+  // existir no sistema também).
+  return periodos.filter(function(p){
+    if(p.emAndamento||p.temFechadaNoBanco)return true;
+    return p.qtd>0||p.totalBruto>0;
+  });
 }
 function valorNumAgendamento(a){
   if(typeof a.valor_num==='number')return a.valor_num;
@@ -9799,10 +9886,11 @@ function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim){
         var a=diaObj[k];
         if(!a||a.status!=='Concluído')return;
         if(!profAgendaIgual(a.prof,nomeColab))return;
-        itens.push(a);
+        itens.push(Object.assign({},a,{_dataAgenda:d}));
       });
     });
   }
+  itens.sort(function(a,b){return b._dataAgenda-a._dataAgenda||String(a.hora).localeCompare(String(b.hora));});
   var totalBruto=itens.reduce(function(s,a){return s+valorNumAgendamento(a);},0);
   var porCategoria={};
   itens.forEach(function(a){
@@ -9810,7 +9898,7 @@ function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim){
     porCategoria[k]=(porCategoria[k]||0)+valorNumAgendamento(a);
   });
   var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
-  return {qtd:itens.length,totalBruto:totalBruto,comissaoVal:totalBruto*pct/100,detalhamento:detalhamento};
+  return {qtd:itens.length,totalBruto:totalBruto,comissaoVal:totalBruto*pct/100,detalhamento:detalhamento,itens:itens};
 }
 function fmtDataBR(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
 function fmtDataBRCurta(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
@@ -18223,38 +18311,76 @@ function entrarComoColaborador(nome){
   // ainda não fechou).
   var comEl=document.getElementById('cv-comissoes');
   if(comEl&&colab){
-    var parcelas=parcelasRelevantesColab(colab,hojeCv).sort(function(a,b){return a.inicio-b.inicio;});
-    var atual=parcelas.filter(function(p){return p.emAndamento;}).pop()||parcelas[parcelas.length-1];
-    var outras=parcelas.filter(function(p){return p!==atual;}).sort(function(a,b){return b.pagamento-a.pagamento;}).slice(0,2);
-    document.getElementById('cv-comissao-mes').textContent=atual?('R$ '+atual.comissaoVal.toFixed(2).replace('.',',')):'R$ 0';
-    function cardStatus(p){
-      if(p.status==='paga')return '<span style="font-size:11px;font-weight:700;color:#15803d">✅ Pago em '+fmtDataBRCurta(new Date(p.pagoEm))+'</span>';
-      var hojeZ=new Date();hojeZ.setHours(0,0,0,0);
-      var atrasado=p.pagamento<hojeZ;
-      return '<span style="font-size:11px;font-weight:700;color:'+(atrasado?'#ef4444':'#9a3412')+'">'+(atrasado?'⚠ Atrasado — devia pagar em ':'⏳ A pagar em ')+fmtDataBR(p.pagamento)+'</span>';
-    }
-    var html='';
-    if(atual){
-      var diasFaltam=Math.max(0,Math.ceil((atual.pagamento-hojeCv)/86400000));
-      html+='<div style="background:#f8f8f8;border-radius:9px;padding:14px;margin-bottom:10px">'
-        +'<div style="font-size:11px;color:#888;margin-bottom:6px">Período atual: '+fmtDataBRCurta(atual.inicio)+' a '+fmtDataBRCurta(atual.fim)+(atual.pct<100?' ('+atual.pct+'% da parcela '+atual.num+')':'')+'</div>'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-        +'<span style="font-size:20px;font-weight:900">R$ '+atual.comissaoVal.toFixed(2).replace('.',',')+'</span>'
-        +'<span style="font-size:11px;color:#888">'+atual.qtd+' atendimento(s)</span></div>'
-        +'<div style="font-size:12px;color:#555">Você recebe dia <b>'+fmtDataBR(atual.pagamento)+'</b> — faltam '+diasFaltam+' dia(s)</div>'
+    var periodosCv=periodosRelevantesColab(colab,hojeCv).sort(function(a,b){return a.inicio-b.inicio;});
+    var atualP=periodosCv.filter(function(p){return p.emAndamento;}).pop()||periodosCv[periodosCv.length-1];
+    document.getElementById('cv-comissao-mes').textContent=atualP?('R$ '+atualP.totalComissao.toFixed(2).replace('.',',')):'R$ 0';
+    if(!atualP){
+      comEl.innerHTML='<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum período de comissão configurado ainda.</div>';
+    }else{
+      var anterioresP=periodosCv.filter(function(p){return p!==atualP;}).sort(function(a,b){return b.fim-a.fim;});
+      // Próxima data de pagamento (a parcela não-paga mais próxima do período atual)
+      var proxParcela=atualP.parcelas.filter(function(p){return p.status!=='paga';}).sort(function(a,b){return a.pagamento-b.pagamento;})[0]||atualP.parcelas[0];
+      var diasFaltam=proxParcela?Math.max(0,Math.ceil((proxParcela.pagamento-hojeCv)/86400000)):null;
+      var pctPeriodo=Math.max(0,Math.min(100,Math.round((hojeCv-atualP.inicio)/(atualP.fim-atualP.inicio||1)*100)));
+      var ticketMedio=atualP.qtd>0?(atualP.totalBruto/atualP.qtd):0;
+      // Comparação com o período do mês anterior (mesmo colaborador)
+      var mesAnteriorRef=anterioresP.filter(function(p){return p.inicio.getMonth()!==atualP.inicio.getMonth()||p.inicio.getFullYear()!==atualP.inicio.getFullYear();});
+      var totalMesAnterior=mesAnteriorRef.reduce(function(s,p){return s+p.totalComissao;},0);
+      var compHtml='';
+      if(totalMesAnterior>0){
+        var variacao=((atualP.totalComissao-totalMesAnterior)/totalMesAnterior)*100;
+        var subiu=variacao>=0;
+        compHtml='<div class="cv-com-compare '+(subiu?'up':'down')+'">'+(subiu?'▲':'▼')+' '+Math.abs(variacao).toFixed(0)+'% vs mês anterior</div>';
+      }
+      var html='<div class="cv-com-hero">'
+        +'<div class="cv-com-hero-label">Você vai receber</div>'
+        +'<div class="cv-com-hero-valor">R$ '+atualP.totalComissao.toFixed(2).replace('.',',')+'</div>'
+        +'<div class="cv-com-hero-sub">'
+        +'<span>'+fmtDataBRCurta(atualP.inicio)+' a '+fmtDataBRCurta(atualP.fim)+'</span>'
+        +(proxParcela?('<span class="cv-com-hero-badge">📅 '+fmtDataBR(proxParcela.pagamento)+(diasFaltam!=null?(diasFaltam===0?' · hoje!':' · faltam '+diasFaltam+'d'):'')+'</span>'):'')
+        +'</div>'
+        +'<div class="cv-com-progress-track"><div class="cv-com-progress-fill" style="width:'+pctPeriodo+'%"></div></div>'
+        +'<div class="cv-com-progress-labels"><span>'+pctPeriodo+'% do período</span><span>'+atualP.qtd+' atendimento(s)</span></div>'
+        +'</div>'
+        +compHtml
+        +'<div class="cv-com-minicards">'
+        +'<div class="cv-com-minicard"><div class="cv-com-minicard-val">'+atualP.qtd+'</div><div class="cv-com-minicard-lbl">Atendimentos</div></div>'
+        +'<div class="cv-com-minicard"><div class="cv-com-minicard-val">R$ '+atualP.totalBruto.toFixed(0)+'</div><div class="cv-com-minicard-lbl">Faturamento</div></div>'
+        +'<div class="cv-com-minicard"><div class="cv-com-minicard-val">R$ '+ticketMedio.toFixed(0)+'</div><div class="cv-com-minicard-lbl">Ticket médio</div></div>'
+        +'<div class="cv-com-minicard"><div class="cv-com-minicard-val">'+atualP.comissaoPct+'%</div><div class="cv-com-minicard-lbl">Comissão</div></div>'
         +'</div>';
+      // Linha do tempo: parcelas do período atual + períodos anteriores (até 2)
+      html+='<div class="cv-com-section-title">Recebimentos</div>';
+      function parcelaStatusInfo(p){
+        if(p.status==='paga')return{dot:'pago',txt:'✅ Pago em '+fmtDataBRCurta(new Date(p.pagoEm))};
+        var hojeZ=new Date();hojeZ.setHours(0,0,0,0);
+        if(p.pagamento<hojeZ)return{dot:'atrasado',txt:'⚠ Atrasado — devia pagar em '+fmtDataBR(p.pagamento)};
+        return{dot:'pendente',txt:'⏳ A pagar em '+fmtDataBR(p.pagamento)};
+      }
+      var linhas=[];
+      atualP.parcelas.forEach(function(p){linhas.push({periodo:atualP,parcela:p});});
+      anterioresP.slice(0,2).forEach(function(per){per.parcelas.forEach(function(p){linhas.push({periodo:per,parcela:p});});});
+      html+=linhas.map(function(l){
+        var p=l.parcela,per=l.periodo;
+        var info=per.emAndamento?{dot:'andamento',txt:'Em andamento'}:parcelaStatusInfo(p);
+        return '<div class="cv-com-timeline-item"><span class="cv-com-timeline-dot '+info.dot+'"></span>'
+          +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700">'+fmtDataBRCurta(per.inicio)+' a '+fmtDataBRCurta(per.fim)+(p.pct<100?' · parcela '+p.num+' ('+p.pct+'%)':'')+'</div>'
+          +'<div style="font-size:11px;color:#888">'+info.txt+'</div></div>'
+          +'<span style="font-size:14px;font-weight:800">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</span></div>';
+      }).join('');
+      // Detalhamento: lista dos atendimentos do período atual
+      if(atualP.itens&&atualP.itens.length){
+        html+='<div class="cv-com-section-title" style="margin-top:14px">Atendimentos do período</div>';
+        html+=atualP.itens.map(function(a){
+          var comissaoItem=valorNumAgendamento(a)*atualP.comissaoPct/100;
+          return '<div class="cv-com-atend-item"><div><div class="cv-com-atend-cliente">'+(a.cliente||'—')+'</div>'
+            +'<div class="cv-com-atend-meta">'+fmtDataBRCurta(a._dataAgenda)+' · '+(a.servico||'')+'</div></div>'
+            +'<div style="text-align:right"><div style="font-weight:700">R$ '+valorNumAgendamento(a).toFixed(2).replace('.',',')+'</div>'
+            +'<div class="cv-com-atend-meta">comissão R$ '+comissaoItem.toFixed(2).replace('.',',')+'</div></div></div>';
+        }).join('');
+      }
+      comEl.innerHTML=html;
     }
-    outras.forEach(function(p){
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #eee;border-radius:9px;margin-bottom:8px">'
-        +'<div><div style="font-size:12px;font-weight:700">'+fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)+(p.pct<100?' ('+p.pct+'%)':'')+'</div>'+cardStatus(p)+'</div>'
-        +'<span style="font-size:15px;font-weight:800">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</span></div>';
-    });
-    if(atual&&atual.detalhamento&&atual.detalhamento.length){
-      html+='<div style="font-size:12px;font-weight:700;color:#333;margin:10px 0 8px">Detalhamento do período atual:</div>'
-        +atual.detalhamento.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*((colab&&parseFloat(String(colab.comissao||'0').replace('%',''))||0)/100)).toFixed(2).replace('.',',')+'</span></div>';}).join('');
-    }
-    if(!atual)html='<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum período de comissão configurado ainda.</div>';
-    comEl.innerHTML=html;
   }
   // Caixa (se permitido)
   var caixaSec=document.getElementById('cv-caixa-section');
