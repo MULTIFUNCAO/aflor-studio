@@ -3780,6 +3780,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:10px"><input type="checkbox" id="cfgsalao-pagto-sabado"/> Contar sábado como dia útil</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:10px"><input type="checkbox" id="cfgsalao-comissionar-produtos"/> Comissionar produtos usados (além dos serviços) — padrão desligado</label>
         <button class="btn btn-primary btn-sm" onclick="salvarComissaoConfigSalao()">Salvar regra padrão</button>
       </div>
       <div class="form-card" style="padding:16px">
@@ -6024,6 +6025,12 @@ async function carregarAgendamentosSupa(){
       var durMinPrimario=durFromServico(svcPrimario)||60;
       var detalhes=null;
       try{if(row.servicos_detalhe)detalhes=typeof row.servicos_detalhe==='string'?JSON.parse(row.servicos_detalhe):row.servicos_detalhe;}catch(e){}
+      // Essa pré-carga (a que roda em quase todo acesso — a busca por dia em
+      // renderAgenda só roda se o dia ainda não tiver sido carregado por ela)
+      // nunca lia produtos_usados do banco: todo produto usado "sumia" da
+      // comanda assim que a página recarregava, mesmo já salvo certinho.
+      var produtosUsadosRow=[];
+      try{if(row.produtos_usados)produtosUsadosRow=typeof row.produtos_usados==='string'?JSON.parse(row.produtos_usados):row.produtos_usados;}catch(e){}
       if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
       // Comanda com vários serviços (servicos_detalhe) vira vários cards no
       // calendário (um por serviço além do primeiro, via construirTimelineAtendimento
@@ -6038,6 +6045,15 @@ async function carregarAgendamentosSupa(){
       if(detalhes&&detalhes.length>1){
         var valorDetPrimario=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
         if(valorDetPrimario>0)valorComissaoPrimario=valorDetPrimario;
+      }else{
+        // valor_num de um atendimento de serviço único já inclui os produtos
+        // cobrados do cliente (ver abrirConfirmarPagamento) — tira isso da
+        // base de comissão, a menos que o salão opte por comissionar produtos.
+        var comissionarProdutosCfg=!!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos);
+        if(!comissionarProdutosCfg){
+          var somaProdCobradosRow=(produtosUsadosRow||[]).filter(function(p){return p.cobrar!==false;}).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+          valorComissaoPrimario=Math.max(0,valorComissaoPrimario-somaProdCobradosRow);
+        }
       }
       var apptEntry={
         id:row.id||null,
@@ -6065,7 +6081,8 @@ async function carregarAgendamentosSupa(){
         sinalValor:sinalFmt,
         status:row.status||'Pendente',
         obs:row.obs||'',
-        servicos_detalhe:detalhes||undefined
+        servicos_detalhe:detalhes||undefined,
+        produtosUsados:produtosUsadosRow||[]
       };
       agendamentosPorData[dataKey][k]=apptEntry;
       // Mesma separação por profissional/horário usada na busca do dia em renderAgenda —
@@ -8686,6 +8703,7 @@ function agAddProduto(){
   row.innerHTML = '<span class="material-symbols-outlined">inventory_2</span>'
     +'<div class="af-field" style="flex:2"><select class="af-input af-filled" onchange="var vi=this.closest(\'.af-field\').nextElementSibling.querySelector(\'input\');vi.value=this.value;vi.dispatchEvent(new Event(\'input\'))">'+opts+'</select><label>Produto</label></div>'
     +'<div class="af-field" style="flex:1;margin-left:8px"><input type="number" class="af-input" min="0" step="0.01" placeholder=" " oninput="afToggleFilled(this)"/><label>Valor</label></div>'
+    +'<div style="display:flex;flex-direction:column;align-items:center;margin-left:8px" title="Ligado: soma na comanda e no faturamento. Desligado: só registra o uso (não cobra do cliente)."><label class="toggle-switch"><input type="checkbox" class="ag-prod-cobrar" checked/><span class="toggle-slider"></span></label><span style="font-size:8.5px;color:#888;margin-top:2px;white-space:nowrap">Cobrar</span></div>'
     +'<button type="button" onclick="this.closest(\'.af-row\').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
   list.appendChild(row);
 }
@@ -8705,6 +8723,8 @@ function agPreencherProdutosUsados(lista){
       if(opt)sel.value=opt.value;
     }
     if(inp){inp.value=(parseFloat(p.valor)||0).toFixed(2);afToggleFilled(inp);}
+    var chkCobrar=row.querySelector('.ag-prod-cobrar');
+    if(chkCobrar)chkCobrar.checked=(p.cobrar!==false);
   });
 }
 
@@ -9717,7 +9737,7 @@ async function atualizarRemuneracaoSupa(r){
 // modelo diferente. comissaoConfigPorColab é indexado por colaborador_id;
 // colaborador sem linha própria usa CONFIG_COMISSAO_PADRAO (quinzenal,
 // parâmetros padrão do sistema).
-var CONFIG_COMISSAO_PADRAO={modelo:'quinzenal',quinz_fechamento_dia1:15,quinz_dias_pagamento_q1:2,quinz_ajuste_fim_semana:'antecipar',quinz_dia_util_pagamento_q2:5,mensal_pct_parcela1:50,mensal_dia_util_parcela1:5,mensal_dia_fixo_parcela2:20,sabado_conta_dia_util:false};
+var CONFIG_COMISSAO_PADRAO={modelo:'quinzenal',quinz_fechamento_dia1:15,quinz_dias_pagamento_q1:2,quinz_ajuste_fim_semana:'antecipar',quinz_dia_util_pagamento_q2:5,mensal_pct_parcela1:50,mensal_dia_util_parcela1:5,mensal_dia_fixo_parcela2:20,sabado_conta_dia_util:false,comissionar_produtos:false};
 var comissaoConfigSalao=null; // regra padrão do salão (Configurações > Financeiro) — null até carregar
 var comissaoConfigPorColab={};
 var comissaoParcelas=[];
@@ -9990,6 +10010,7 @@ function preencherFormComissaoConfigSalao(){
   var selModelo=document.getElementById('cfgsalao-pagto-modelo');if(selModelo)selModelo.value=cfg.modelo||'quinzenal';
   var selAjuste=document.getElementById('cfgsalao-pagto-quinz-ajuste');if(selAjuste)selAjuste.value=cfg.quinz_ajuste_fim_semana||'antecipar';
   var chkSab=document.getElementById('cfgsalao-pagto-sabado');if(chkSab)chkSab.checked=!!cfg.sabado_conta_dia_util;
+  var chkComProd=document.getElementById('cfgsalao-comissionar-produtos');if(chkComProd)chkComProd.checked=!!cfg.comissionar_produtos;
   if(typeof toggleCamposPagamentoModeloSalao==='function')toggleCamposPagamentoModeloSalao();
 }
 function toggleCamposPagamentoModeloSalao(){
@@ -10011,7 +10032,8 @@ async function salvarComissaoConfigSalao(){
     mensal_pct_parcela1:parseFloat(document.getElementById('cfgsalao-pagto-mensal-pct1')?.value)||50,
     mensal_dia_util_parcela1:parseInt(document.getElementById('cfgsalao-pagto-mensal-diautil1')?.value,10)||5,
     mensal_dia_fixo_parcela2:parseInt(document.getElementById('cfgsalao-pagto-mensal-diafixo2')?.value,10)||20,
-    sabado_conta_dia_util:!!document.getElementById('cfgsalao-pagto-sabado')?.checked
+    sabado_conta_dia_util:!!document.getElementById('cfgsalao-pagto-sabado')?.checked,
+    comissionar_produtos:!!document.getElementById('cfgsalao-comissionar-produtos')?.checked
   };
   try{
     var r=await supa.from('comissao_config').upsert(novo,{onConflict:'salao_id'});
@@ -11731,14 +11753,22 @@ function somaServicosAtendimento(dados){
 }
 // Produtos usados (ex: shampoo, tinta) — entram no total a pagar da mesma forma que
 // serviços extras, só que vêm do bloco "Produtos usados (opcional)" do formulário.
+// "Cobrar da cliente" (padrão ligado, campo p.cobrar): produto cobrado soma
+// na comanda; produto não cobrado só fica registrado (consumo/uso interno),
+// sem entrar no valor a pagar nem no faturamento.
+function produtoCobradoDaCliente(p){
+  return p&&p.cobrar!==false;
+}
 function somaProdutosUsados(dados){
-  return ((dados&&dados.produtosUsados)||[]).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+  return ((dados&&dados.produtosUsados)||[]).filter(produtoCobradoDaCliente).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
 }
 function produtosUsadosToHtml(dados){
   var lista=(dados&&dados.produtosUsados)||[];
   if(!lista.length)return '';
   return lista.map(function(p){
-    return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#555"><span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">inventory_2</span> '+p.nome+'</span><span style="font-weight:700">'+formatMoedaBR(parseFloat(p.valor)||0)+'</span></div>';
+    var cobrado=produtoCobradoDaCliente(p);
+    var valorTxt=cobrado?formatMoedaBR(parseFloat(p.valor)||0):'<span style="font-weight:600;color:#aaa;font-size:11px">uso interno</span>';
+    return '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#555"><span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">inventory_2</span> Produto: '+p.nome+'</span><span style="font-weight:700">'+valorTxt+'</span></div>';
   }).join('');
 }
 function popupServicosComandaToHtml(key){
@@ -12376,6 +12406,12 @@ function confirmarFechamentoPagamento(){
       var baseComissao=(ctx.descontoTipo||'salao')==='salao'
         ? ctx.total+(ctx.descontoVal||0)
         : ctx.total;
+      // Comissão só sobre serviços — produtos cobrados (já somados em ctx.total
+      // via somaProdutosUsados) saem da base, a menos que o salão opte por
+      // comissionar produtos também (Configurações > Comissões).
+      if(!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos)){
+        baseComissao-=somaProdutosUsados(ctx.dados);
+      }
       baseComissao=Math.max(0,baseComissao);
       lancarComissaoServico(ctx.dados.prof,svcNomeComissao,ctx.dados.cliente,baseComissao);
     }
@@ -13697,6 +13733,12 @@ function renderAgenda(){
           if(detalhes&&detalhes.length>1){
             var valorDetPrimRA=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
             if(valorDetPrimRA>0)valorComissaoPrimRA=valorDetPrimRA;
+          }else{
+            var comissionarProdutosCfgRA=!!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos);
+            if(!comissionarProdutosCfgRA){
+              var somaProdCobradosRA=(produtosUsadosRow||[]).filter(function(p){return p.cobrar!==false;}).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+              valorComissaoPrimRA=Math.max(0,valorComissaoPrimRA-somaProdCobradosRA);
+            }
           }
           var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,valorComissao:valorComissaoPrimRA,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
@@ -17230,7 +17272,8 @@ async function afSalvarEdicaoBlocos(){
     var inpVal=row.querySelector('input[type="number"]');
     if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
       var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
-      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
+      var chkCobrarProd=row.querySelector('.ag-prod-cobrar');
+      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0,cobrar:!chkCobrarProd||chkCobrarProd.checked});
     }
   });
 
@@ -17450,7 +17493,8 @@ function afSalvarAtendimento(){
     var inpVal=row.querySelector('input[type="number"]');
     if(selProd&&selProd.value&&inpVal&&parseFloat(inpVal.value)>0){
       var nomeProd=(selProd.options[selProd.selectedIndex]?.text||'').split(' (')[0];
-      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0});
+      var chkCobrarProd=row.querySelector('.ag-prod-cobrar');
+      produtosUsados.push({nome:nomeProd,valor:parseFloat(inpVal.value)||0,cobrar:!chkCobrarProd||chkCobrarProd.checked});
     }
   });
 
