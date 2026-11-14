@@ -9533,7 +9533,11 @@ async function carregarRemuneracoesSupa(){
       await mesclarRemuneracoesDuplicadas();
       if(typeof renderRemuneracoes==='function')renderRemuneracoes();
     }else if(Array.isArray(data)&&data.length===0){
-      // Primeira vez: semeia os colaboradores padrão no Supabase
+      // Primeira vez: semeia os colaboradores padrão no Supabase — só a
+      // dona pode gravar aqui (RLS de remuneracoes dá só SELECT pra
+      // colaborador, de propósito). Sem essa guarda, uma sessão de
+      // colaborador tentava inserir e tomava 403 em loop.
+      if(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)return;
       for(var i=0;i<remuneracoes.length;i++){
         var newId=await salvarRemuneracaoSupa(remuneracoes[i]);
         if(newId!=null)remuneracoes[i].id=newId;

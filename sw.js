@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aflor-studio-v3';
+const CACHE_NAME = 'aflor-studio-v4';
 
 self.addEventListener('install', function(event) {
   self.skipWaiting();
@@ -36,7 +36,13 @@ self.addEventListener('fetch', function(event) {
       }
       return response;
     }).catch(function() {
-      return caches.match(event.request);
+      // caches.match resolve pra undefined quando não tem nada em cache
+      // (ex: primeira carga numa janela anônima) — respondWith(undefined)
+      // quebra com "Failed to convert value to 'Response'". Response.error()
+      // garante que sempre devolvemos uma Response de verdade.
+      return caches.match(event.request).then(function(cached) {
+        return cached || Response.error();
+      });
     })
   );
 });
