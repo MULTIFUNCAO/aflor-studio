@@ -15,10 +15,10 @@ alter table if exists public.agendamentos
   add column if not exists pago_por text;
 
 alter table if exists public.caixa_movimentos
-  add column if not exists agendamento_id uuid references public.agendamentos(id);
+  add column if not exists agendamento_id uuid references public.agendamentos(id) on delete set null;
 
 alter table if exists public.fluxo_lancamentos
-  add column if not exists agendamento_id uuid references public.agendamentos(id);
+  add column if not exists agendamento_id uuid references public.agendamentos(id) on delete set null;
 
 -- Conferência
 select table_name, column_name, data_type
