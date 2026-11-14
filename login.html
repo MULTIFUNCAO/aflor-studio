@@ -104,11 +104,11 @@ body{min-height:100vh;background:linear-gradient(135deg,#f5f3ff 0%,#ecfdf5 100%)
   <form id="form-login" onsubmit="handleLogin(event)" novalidate>
 
     <div class="field">
-      <label class="field-label" for="f-email">Email</label>
+      <label class="field-label" for="f-email">Email ou usuário</label>
       <span class="field-icon">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
       </span>
-      <input id="f-email" class="inp" type="email" placeholder="seu@email.com" autocomplete="email" required/>
+      <input id="f-email" class="inp" type="text" placeholder="seu@email.com ou usuário" autocomplete="username" required/>
     </div>
 
     <div class="field" style="margin-bottom:8px">
@@ -179,10 +179,15 @@ function toggleVis(){
 async function handleLogin(e){
   e.preventDefault();
   hideAlert();
-  var email=val('f-email').trim();
+  var entrada=val('f-email').trim();
   var senha=val('f-senha');
-  if(!email){showAlert('Informe seu email.','err');document.getElementById('f-email').focus();return;}
+  if(!entrada){showAlert('Informe seu email ou usuário.','err');document.getElementById('f-email').focus();return;}
   if(!senha){showAlert('Informe sua senha.','err');document.getElementById('f-senha').focus();return;}
+
+  // Sem "@": é login de colaborador por usuário — completa com o domínio
+  // interno (usuario@flora.local) antes de autenticar. Com "@": fluxo da
+  // dona do salão, igual sempre foi.
+  var email=entrada.indexOf('@')>=0?entrada:(entrada.toLowerCase()+'@flora.local');
 
   var btn=document.getElementById('btn-entrar');
   btn.disabled=true;
@@ -193,7 +198,7 @@ async function handleLogin(e){
     if(res.error){
       var em=(res.error.message||'').toLowerCase();
       if(em.includes('invalid')||em.includes('credentials')||em.includes('password')){
-        showAlert('Email ou senha incorretos.','err');
+        showAlert('Email/usuário ou senha incorretos.','err');
       }else if(em.includes('email not confirmed')){
         showAlert('Confirme seu email antes de entrar. Verifique sua caixa de entrada.','err');
       }else{
@@ -202,23 +207,50 @@ async function handleLogin(e){
       btn.disabled=false;btn.innerHTML='Entrar na conta';
       return;
     }
-    // Login ok — verificar se tem salão cadastrado
     var user=res.data.user;
+
+    // 1) Dona do salão — fluxo original, intocado.
     var r=await supa.from('saloes').select('id').eq('id',user.id).maybeSingle();
     if((!r||!r.data)&&user.email){
       var re=await supa.from('saloes').select('id').eq('email',user.email).maybeSingle();
       if(re&&re.data)r=re;
     }
-    if(!r||!r.data){
-      // Auth ok mas sem salão — completa cadastro
-      await supa.auth.signOut();
-      window.location.replace('cadastro.html');
+    if(r&&r.data){
+      try{sessionStorage.setItem('flora_salao_id',r.data.id);}catch(e){}
+      window.location.replace('index.html');
       return;
     }
-    try{sessionStorage.setItem('flora_salao_id',r.data.id);}catch(e){}
-    window.location.replace('index.html');
+
+    // 2) Colaborador (login por usuário, sem e-mail) — NUNCA cria linha em
+    //    saloes pra ele nem manda pra cadastro.html. Quem decide o que ele
+    //    vê é o index.html (o guard em ativarApp() já resolve isso sozinho
+    //    a partir do auth_user_id); aqui só barramos o inativo.
+    var rc;
+    try{
+      rc=await supa.from('colaboradores').select('id,status').eq('auth_user_id',user.id).maybeSingle();
+    }catch(errColab){
+      await supa.auth.signOut();
+      showAlert('Erro ao verificar seu acesso: '+(errColab&&errColab.message?errColab.message:errColab),'err');
+      btn.disabled=false;btn.innerHTML='Entrar na conta';
+      return;
+    }
+    if(rc&&rc.data){
+      if(rc.data.status==='Inativo'){
+        await supa.auth.signOut();
+        showAlert('Seu acesso foi desativado. Fale com a administração do salão.','err');
+        btn.disabled=false;btn.innerHTML='Entrar na conta';
+        return;
+      }
+      window.location.replace('index.html');
+      return;
+    }
+
+    // 3) Nem dona, nem colaborador — conta existe no Auth mas sem vínculo
+    //    nenhum (caso original: cadastro de salão incompleto).
+    await supa.auth.signOut();
+    window.location.replace('cadastro.html');
   }catch(err){
-    showAlert('Erro inesperado. Tente novamente.','err');
+    showAlert('Erro inesperado: '+(err&&err.message?err.message:err),'err');
     console.error('login error:',err);
     btn.disabled=false;btn.innerHTML='Entrar na conta';
   }
