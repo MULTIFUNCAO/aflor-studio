@@ -17517,7 +17517,10 @@ function entrarComoColaborador(nome){
     if(colab&&temPermissao(colab,'agenda_visualizar_todas')){
       meusAppts=Object.values(apptsDia);
     }else{
-      meusAppts=Object.values(apptsDia).filter(function(a){return a.prof===nome||a.prof.startsWith(nomeCurto);});
+      // profAgendaIgual (não comparação crua de string) — carregarAgendamentosSupa
+      // grava a.prof com o apelido da Agenda (ex: "Eduardo"->"Edu"), que nunca bate
+      // com colaboradores.nome ("Eduardo") numa comparação direta.
+      meusAppts=Object.values(apptsDia).filter(function(a){return profAgendaIgual(a.prof,nome);});
     }
     if(!meusAppts.length){
       agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>';
