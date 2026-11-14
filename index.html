@@ -4419,7 +4419,9 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div>
         <div class="af-section-title">Resumo</div>
         <div class="af-resumo" style="margin-top:8px">
-          <div class="af-resumo-row"><span>Subtotal</span><span id="af-resumo-subtotal">R$ 0,00</span></div>
+          <div class="af-resumo-row"><span>Serviços</span><span id="af-resumo-subtotal">R$ 0,00</span></div>
+          <div class="af-resumo-row" id="af-resumo-linha-desconto" style="display:none"><span>Desconto</span><span id="af-resumo-desconto" style="color:#f59e0b">- R$ 0,00</span></div>
+          <div class="af-resumo-row" id="af-resumo-linha-produtos" style="display:none"><span>Produtos</span><span id="af-resumo-produtos">R$ 0,00</span></div>
           <div class="af-resumo-row af-resumo-total"><span>Valor total</span><span id="af-resumo-total">R$ 0,00</span></div>
         </div>
       </div>
@@ -8678,14 +8680,36 @@ function afAplicarServicoAoBlocoSemRender(b,servico){
 function afSomaServicos(){
   return afBlocos.reduce(function(s,b){return s+Math.max(0,(b.preco||0)-(b.desconto||0));},0);
 }
+// Soma só os produtos com "Cobrar da cliente" ligado, lendo direto das
+// linhas do formulário (#ag-produtos-list) — usada pelo Resumo ao vivo,
+// antes mesmo de salvar o atendimento (produtosUsados só existe depois).
+function afSomaProdutosFormulario(){
+  var total=0;
+  document.querySelectorAll('#ag-produtos-list .af-row').forEach(function(row){
+    var inpVal=row.querySelector('input[type="number"]');
+    var chkCobrar=row.querySelector('.ag-prod-cobrar');
+    var cobrado=!chkCobrar||chkCobrar.checked;
+    if(cobrado&&inpVal)total+=parseFloat(inpVal.value)||0;
+  });
+  return total;
+}
 function afRecalcularResumo(){
-  var subtotal=afBlocos.reduce(function(s,b){return s+(b.preco||0);},0);
+  var subtotalServicos=afBlocos.reduce(function(s,b){return s+(b.preco||0);},0);
   var totalDesconto=afBlocos.reduce(function(s,b){return s+(b.desconto||0);},0);
-  var total=Math.max(0,subtotal-totalDesconto);
+  var totalProdutos=afSomaProdutosFormulario();
+  var total=Math.max(0,subtotalServicos-totalDesconto)+totalProdutos;
   var elSub=document.getElementById('af-resumo-subtotal');
   var elTot=document.getElementById('af-resumo-total');
-  if(elSub)elSub.textContent='R$ '+subtotal.toFixed(2).replace('.',',');
+  if(elSub)elSub.textContent='R$ '+subtotalServicos.toFixed(2).replace('.',',');
   if(elTot)elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
+  var linhaDesc=document.getElementById('af-resumo-linha-desconto');
+  var elDesc=document.getElementById('af-resumo-desconto');
+  if(linhaDesc)linhaDesc.style.display=totalDesconto>0?'flex':'none';
+  if(elDesc)elDesc.textContent='- R$ '+totalDesconto.toFixed(2).replace('.',',');
+  var linhaProd=document.getElementById('af-resumo-linha-produtos');
+  var elProd=document.getElementById('af-resumo-produtos');
+  if(linhaProd)linhaProd.style.display=totalProdutos>0?'flex':'none';
+  if(elProd)elProd.textContent='R$ '+totalProdutos.toFixed(2).replace('.',',');
   agCalcSinal();
 }
 
@@ -8702,10 +8726,11 @@ function agAddProduto(){
       }).join('');
   row.innerHTML = '<span class="material-symbols-outlined">inventory_2</span>'
     +'<div class="af-field" style="flex:2"><select class="af-input af-filled" onchange="var vi=this.closest(\'.af-field\').nextElementSibling.querySelector(\'input\');vi.value=this.value;vi.dispatchEvent(new Event(\'input\'))">'+opts+'</select><label>Produto</label></div>'
-    +'<div class="af-field" style="flex:1;margin-left:8px"><input type="number" class="af-input" min="0" step="0.01" placeholder=" " oninput="afToggleFilled(this)"/><label>Valor</label></div>'
-    +'<div style="display:flex;flex-direction:column;align-items:center;margin-left:8px" title="Ligado: soma na comanda e no faturamento. Desligado: só registra o uso (não cobra do cliente)."><label class="toggle-switch"><input type="checkbox" class="ag-prod-cobrar" checked/><span class="toggle-slider"></span></label><span style="font-size:8.5px;color:#888;margin-top:2px;white-space:nowrap">Cobrar</span></div>'
-    +'<button type="button" onclick="this.closest(\'.af-row\').remove()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
+    +'<div class="af-field" style="flex:1;margin-left:8px"><input type="number" class="af-input" min="0" step="0.01" placeholder=" " oninput="afToggleFilled(this);afRecalcularResumo()"/><label>Valor</label></div>'
+    +'<div style="display:flex;flex-direction:column;align-items:center;margin-left:8px" title="Ligado: soma na comanda e no faturamento. Desligado: só registra o uso (não cobra do cliente)."><label class="toggle-switch"><input type="checkbox" class="ag-prod-cobrar" checked onchange="afRecalcularResumo()"/><span class="toggle-slider"></span></label><span style="font-size:8.5px;color:#888;margin-top:2px;white-space:nowrap">Cobrar</span></div>'
+    +'<button type="button" onclick="this.closest(\'.af-row\').remove();afRecalcularResumo()" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;margin-left:6px">✕</button>';
   list.appendChild(row);
+  afRecalcularResumo();
 }
 // Reabre a edição de um atendimento já com os produtos usados que foram salvos antes
 // (casa pelo nome com o catálogo atual; se o produto não existir mais, o select fica em
@@ -8726,6 +8751,7 @@ function agPreencherProdutosUsados(lista){
     var chkCobrar=row.querySelector('.ag-prod-cobrar');
     if(chkCobrar)chkCobrar.checked=(p.cobrar!==false);
   });
+  afRecalcularResumo();
 }
 
 // Fonte única pra "quais colaboradores existem" em qualquer seletor de
