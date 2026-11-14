@@ -4882,10 +4882,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>Comissão (%)</label><input type="number" id="colab-comissao" value="50" min="0" max="100" placeholder="50"/></div>
       <div class="form-group"><label>Salário fixo (R$)</label><input type="number" id="colab-salario" placeholder="0,00" value="0"/></div>
       <div class="form-group full">
+        <label>👤 Usuário de acesso</label>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Login do colaborador no sistema (sem e-mail) — ex: eduardo. Precisa ser único entre todos os salões.</div>
+        <input id="colab-usuario" placeholder="Ex: eduardo" autocomplete="off"/>
+      </div>
+      <div class="form-group full">
         <label>🔐 Senha de acesso</label>
-        <div style="font-size:11px;color:#888;margin-bottom:4px">Senha que o colaborador vai usar para entrar no sistema (mínimo 4 caracteres)</div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Senha que o colaborador vai usar para entrar no sistema (mínimo 6 caracteres). Só é criada se "Usuário de acesso" for preenchido.</div>
         <div style="position:relative">
-          <input type="password" id="colab-senha" placeholder="Mínimo 4 caracteres" style="width:100%;box-sizing:border-box;padding-right:38px"/>
+          <input type="password" id="colab-senha" placeholder="Mínimo 6 caracteres" style="width:100%;box-sizing:border-box;padding-right:38px"/>
           <span onclick="toggleSenhaVisivel('colab-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
         </div>
       </div>
