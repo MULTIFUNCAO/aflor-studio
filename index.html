@@ -17324,7 +17324,18 @@ async function carregarSalaoAtual(){
       window.SALAO_CREATED_AT=r.data.created_at||null;
       window.SALAO_PLANO_ATIVO_DESDE=r.data.plano_ativo_desde||null;
     }else{
-      // Sem registro em saloes — cria entry básica e usa user.id
+      // Antes de criar um salão novo pra esse auth.uid(), confirma que ele
+      // não é na verdade um colaborador (login por usuário, sem e-mail) —
+      // sem essa checagem, qualquer corrida/erro no guard de ativarApp()
+      // cai aqui e cria um salão fantasma vazio usando o auth.uid() do
+      // colaborador (aconteceu de verdade: saloes.id virou o uid do
+      // Eduardo, nome "eduardo@flora.local", vazio — apagado manualmente).
+      var rColabCheck=await supa.from('colaboradores').select('*').eq('auth_user_id',user.id).maybeSingle();
+      if(rColabCheck&&rColabCheck.data){
+        if(typeof ativarAppComoColaborador==='function')ativarAppComoColaborador(rColabCheck.data);
+        return;
+      }
+      // Sem registro em saloes nem em colaboradores — cria entry básica e usa user.id
       window.SALAO_ID=user.id;
       supa.from('saloes').insert([{id:user.id,nome_salao:user.email,email:user.email,plano:'trial'}]).catch(function(){});
     }
@@ -17555,18 +17566,7 @@ function entrarComoColaborador(nome){
       meusAppts=Object.values(apptsDia).filter(function(a){return profAgendaIgual(a.prof,nome);});
     }
     if(!meusAppts.length){
-      // Aviso temporário de diagnóstico (remover depois de confirmar que o
-      // painel do colaborador está populando certo em produção) — mostra
-      // quantas entradas brutas existem pra hoje, pra não precisar mais
-      // pedir console.
-      var bruto=Object.keys(apptsDia||{}).length;
-      var chavesExistentes=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData)?Object.keys(agendamentosPorData):[];
-      var dbgAg=(typeof window._debugAgenda!=='undefined'&&window._debugAgenda)?window._debugAgenda:null;
-      var dbgAgTxt=dbgAg?(' | última carga: salao_id='+dbgAg.salaoId+', http='+(dbgAg.httpStatus!=null?dbgAg.httpStatus:'?')+', linhas='+(dbgAg.totalRows!=null?dbgAg.totalRows:'?')+(dbgAg.erro?', erro='+dbgAg.erro:'')+(dbgAg.corpoErro?', corpo='+dbgAg.corpoErro:'')):' | nenhuma carga de agendamentos registrada ainda nesta sessão';
-      var diagCv=bruto>0
-        ?('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: '+bruto+' entrada(s) bruta(s) em "'+todayKeyCv+'", nenhuma bateu no filtro do profissional ("'+nome+'")'+dbgAgTxt+'</div>')
-        :('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: chave "'+todayKeyCv+'" não existe em agendamentosPorData. Chaves que existem ('+chavesExistentes.length+'): '+(chavesExistentes.length?chavesExistentes.join(', '):'(nenhuma — agendamentosPorData está vazio)')+dbgAgTxt+'</div>');
-      agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>'+diagCv;
+      agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>';
     } else {
       agenda.innerHTML=meusAppts.map(function(a){
         return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5">'
@@ -17610,38 +17610,72 @@ function entrarComoColaborador(nome){
   // Comissões
   var comEl=document.getElementById('cv-comissoes');
   if(comEl&&colab){
-    // Comissão real: soma os lançamentos de receita confirmados do mês
-    // atual em fluxo_lancamentos onde o profissional é o próprio colaborador
-    // logado — antes era um array fixo ([{serv:'Manicure Pedicure',val:80}, ...]),
-    // igual pra todo mundo, sem ligação nenhuma com o que a pessoa de fato
-    // atendeu. "Projeção" extrapola o ritmo dos dias já passados do mês.
+    // Comissão real, baseada no status do atendimento (não no Fluxo de Caixa):
+    // atendimento Concluído já entra como "previsto/a receber" (valor do
+    // serviço x % do colaborador) assim que a dona marca a comanda como
+    // concluída — não precisa esperar o pagamento ser registrado no caixa.
+    // Antes isso dependia de fluxo_lancamentos confirmado, então um dia cheio
+    // de atendimentos concluídos (e ainda não recebidos no caixa) aparecia
+    // zerado pro colaborador. "Confirmado" (destacado abaixo) é o recorte do
+    // que já foi de fato recebido no caixa — fluxo_lancamentos continua
+    // sendo a fonte certa pra isso.
     var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
-    var lancsColabMes=fluxoLancamentos.filter(function(l){
-      if(l.tipo!=='receita'||l.status!=='confirmado')return false;
-      if((l.prof||'')!==colab.nome)return false;
-      var d=fluxoParseData(l.data);
-      return d&&d.getMonth()===hojeCv.getMonth()&&d.getFullYear()===hojeCv.getFullYear();
-    });
-    var totalBruto=lancsColabMes.reduce(function(s,l){return s+(parseFloat(l.val)||0);},0);
+    function valorNumAppt(a){
+      if(typeof a.valor_num==='number')return a.valor_num;
+      return parseFloat(String(a.valor||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
+    }
+    var meusConcluidosMes=[];
+    if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+      Object.keys(agendamentosPorData).forEach(function(dk){
+        var partesDk=dk.split('/');
+        if(partesDk.length!==3)return;
+        var mesDk=parseInt(partesDk[1],10)-1,anoDk=parseInt(partesDk[2],10);
+        if(mesDk!==hojeCv.getMonth()||anoDk!==hojeCv.getFullYear())return;
+        var diaObj=agendamentosPorData[dk]||{};
+        Object.keys(diaObj).forEach(function(k){
+          var a=diaObj[k];
+          if(!a||a.status!=='Concluído')return;
+          if(!profAgendaIgual(a.prof,colab.nome))return;
+          meusConcluidosMes.push(a);
+        });
+      });
+    }
+    var totalBruto=meusConcluidosMes.reduce(function(s,a){return s+valorNumAppt(a);},0);
     var porCategoria={};
-    lancsColabMes.forEach(function(l){var k=l.cat||'Outros';porCategoria[k]=(porCategoria[k]||0)+(parseFloat(l.val)||0);});
+    meusConcluidosMes.forEach(function(a){
+      var k=(a.servico||'Outros').split('+')[0].trim()||'Outros';
+      porCategoria[k]=(porCategoria[k]||0)+valorNumAppt(a);
+    });
     var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
     var comissaoVal=(totalBruto*pct/100).toFixed(2);
     var diaAtual=hojeCv.getDate();
     var diasNoMes=new Date(hojeCv.getFullYear(),hojeCv.getMonth()+1,0).getDate();
     var projecaoComissao=diaAtual>0?((totalBruto/diaAtual)*diasNoMes*pct/100):0;
+    // Confirmado = já recebido no caixa (fluxo_lancamentos), igual era a
+    // conta antiga — mostrado só como referência do que já entrou de fato.
+    var lancsConfirmadosMes=(typeof fluxoLancamentos!=='undefined'?fluxoLancamentos:[]).filter(function(l){
+      if(l.tipo!=='receita'||l.status!=='confirmado')return false;
+      if(!profAgendaIgual(l.prof||'',colab.nome))return false;
+      var d=fluxoParseData(l.data);
+      return d&&d.getMonth()===hojeCv.getMonth()&&d.getFullYear()===hojeCv.getFullYear();
+    });
+    var totalConfirmado=lancsConfirmadosMes.reduce(function(s,l){return s+(parseFloat(l.val)||0);},0);
+    var comissaoConfirmada=(totalConfirmado*pct/100).toFixed(2);
     document.getElementById('cv-comissao-mes').textContent='R$ '+comissaoVal.replace('.',',');
     comEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
       +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">R$ '+totalBruto.toFixed(2).replace('.',',')+'</div><div style="font-size:10px;color:#888;margin-top:2px">Faturamento bruto</div></div>'
       +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">'+pct+'%</div><div style="font-size:10px;color:#888;margin-top:2px">Sua comissão</div></div>'
-      +'<div style="background:#111;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800;color:#fff">R$ '+comissaoVal.replace('.',',')+'</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">A receber</div></div>'
+      +'<div style="background:#111;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800;color:#fff">R$ '+comissaoVal.replace('.',',')+'</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">A receber (previsto)</div></div>'
       +'</div>'
+      +'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:11px;color:#15803d">✅ Já confirmado (recebido no caixa este mês)</span>'
+      +'<span style="font-size:14px;font-weight:800;color:#15803d">R$ '+comissaoConfirmada.replace('.',',')+'</span></div>'
       +'<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-size:11px;color:#9a3412">📈 Projeção pro fim do mês (no ritmo atual)</span>'
       +'<span style="font-size:14px;font-weight:800;color:#9a3412">R$ '+projecaoComissao.toFixed(2).replace('.',',')+'</span></div>'
       +'<div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">Detalhamento:</div>'
       +(detalhamento.length?detalhamento.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*pct/100).toFixed(2).replace('.',',')+'</span></div>';}).join('')
-        :'<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum atendimento seu confirmado este mês ainda.</div>');
+        :'<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum atendimento seu concluído este mês ainda.</div>');
   }
   // Caixa (se permitido)
   var caixaSec=document.getElementById('cv-caixa-section');

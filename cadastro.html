@@ -203,6 +203,7 @@ async function handleSubmit(e){
   if(!nomeSalao){showAlert('Informe o nome do salão.','err');document.getElementById('f-salao').focus();return;}
   if(!responsavel){showAlert('Informe o nome do responsável.','err');document.getElementById('f-resp').focus();return;}
   if(!email||!email.includes('@')){showAlert('Informe um email válido.','err');document.getElementById('f-email').focus();return;}
+  if(email.toLowerCase().endsWith('@flora.local')){showAlert('Esse domínio de e-mail é reservado pelo sistema. Use seu e-mail de verdade.','err');document.getElementById('f-email').focus();return;}
   if(senha.length<6){showAlert('A senha precisa ter pelo menos 6 caracteres.','err');document.getElementById('f-senha').focus();return;}
   if(senha!==senha2){showAlert('As senhas não coincidem.','err');document.getElementById('f-senha2').focus();return;}
 
