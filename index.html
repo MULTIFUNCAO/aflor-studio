@@ -1829,7 +1829,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <select class="btn btn-outline btn-sm" id="serv-filtro-cat" onchange="renderServicos()"><option value="">Todas as categorias</option></select>
         <input placeholder="🔍 Procurar por serviço..." style="flex:1" id="serv-busca" oninput="renderServicos()"/>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-servico')">+ Novo Serviço</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirNovoServico()">+ Novo Serviço</button>
       </div>
       <div class="table-card" id="servicos-list"></div>
     </div>
@@ -4943,14 +4943,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full">
         <label>Profissionais e Comissão</label>
         <div id="srv-profs-wrap" style="display:flex;flex-direction:column;gap:6px">
-          <div class="srv-prof-row" style="display:flex;gap:8px;align-items:center">
-            <select style="flex:2;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none">
-              <option value="">— Selecione —</option>
-              <option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option><option>Lara</option><option>Angélica</option>
-            </select>
-            <input type="number" placeholder="%" min="0" max="100" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none" value="50"/>
-            <button onclick="removeSrvProfRow(this)" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px">✕</button>
-          </div>
+          <!-- Linhas geradas por JS (addSrvProfRow), com a equipe ativa real do salão -->
         </div>
         <button onclick="addSrvProfRow()" style="margin-top:8px;background:none;border:1.5px dashed #ddd;border-radius:9px;padding:7px 14px;font-size:12px;color:#888;cursor:pointer;width:100%">+ Adicionar profissional</button>
       </div>
@@ -5621,6 +5614,15 @@ function toggleNovaCategoria(){
   }
 }
 
+// Opções do seletor de profissional — mesma fonte da tela Colaboradores
+// (array `colaboradores`, já carregado do Supabase filtrado por salao_id),
+// só ativos. Antes era uma lista de nomes fixa no HTML, sem ligação com dado real.
+function srvProfsOptionsHtml(){
+  var ativos=(typeof colaboradores!=='undefined'&&colaboradores?colaboradores:[]).filter(function(c){return c.status!=='Inativo';});
+  var html='<option value="">— Selecione —</option>';
+  ativos.forEach(function(c){html+='<option>'+escHtml(c.nome)+'</option>';});
+  return html;
+}
 function addSrvProfRow(){
   var wrap = document.getElementById('srv-profs-wrap');
   if(!wrap) return;
@@ -5628,8 +5630,7 @@ function addSrvProfRow(){
   row.className = 'srv-prof-row';
   row.style.cssText = 'display:flex;gap:8px;align-items:center';
   row.innerHTML = '<select style="flex:2;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none">'
-    +'<option value="">— Selecione —</option>'
-    +'<option>Ana Flor</option><option>Edu</option><option>Jenny</option><option>Vi</option><option>Lara</option><option>Angélica</option>'
+    +srvProfsOptionsHtml()
     +'</select>'
     +'<input type="number" placeholder="%" min="0" max="100" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;outline:none" value="50"/>'
     +'<button onclick="removeSrvProfRow(this)" style="background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:0 4px">✕</button>';
@@ -5666,9 +5667,15 @@ function deletarServico(idx){
 function editarServico(idx){
   var s=servicos[idx];
   if(!s)return;
+  // Guardar índice ANTES de abrir o modal — openModal() só reseta o formulário
+  // quando _editSrvIdx está indefinido (ver openModal), senão qualquer dado
+  // preenchido aqui seria apagado no mesmo clique.
+  window._editSrvIdx=idx;
+  document.querySelector('#modal-servico .modal-title').textContent='✏️ Editar Serviço';
+  openModal('modal-servico');
   // Preencher modal com dados do serviço
   var elNome=document.getElementById('srv-nome');if(elNome)elNome.value=s.nome;
-  var elPreco=document.getElementById('srv-preco');if(elPreco)elPreco.value=parseFloat(s.preco.replace(',','.'));
+  var elPreco=document.getElementById('srv-preco');if(elPreco)elPreco.value=parseFloat(String(s.preco).replace(',','.'));
   var elDur=document.getElementById('srv-dur');if(elDur)elDur.value=s.dur;
   var elCat=document.getElementById('srv-cat');
   if(elCat){
@@ -5681,9 +5688,25 @@ function editarServico(idx){
     }
     elCat.value=s.cat;
   }
-  // Guardar índice para salvar na posição certa
-  window._editSrvIdx=idx;
-  document.querySelector('#modal-servico .modal-title').textContent='✏️ Editar Serviço';
+  // Profissionais e comissão já cadastrados neste serviço
+  var wrap=document.getElementById('srv-profs-wrap');
+  if(wrap){
+    wrap.innerHTML='';
+    var profsList=(Array.isArray(s.profs)&&s.profs.length)?s.profs:[{nome:'',pct:50}];
+    profsList.forEach(function(p){
+      addSrvProfRow();
+      var rows=wrap.querySelectorAll('.srv-prof-row');
+      var lastRow=rows[rows.length-1];
+      var sel=lastRow.querySelector('select');
+      var inp=lastRow.querySelector('input[type="number"]');
+      if(sel)sel.value=p.nome||'';
+      if(inp)inp.value=(p.pct!=null?p.pct:50);
+    });
+  }
+}
+function abrirNovoServico(){
+  window._editSrvIdx=undefined;
+  document.querySelector('#modal-servico .modal-title').textContent='Novo Serviço';
   openModal('modal-servico');
 }
 
@@ -6281,8 +6304,8 @@ async function salvarProdutoSupa(p){try{if(!supa||!window.SALAO_ID)return;var r=
 async function atualizarProdutoSupa(p){try{if(!supa||!p.id)return;await supa.from('produtos').update({nome:p.nome,cat:p.cat,marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,status:p.status}).eq('id',p.id).eq('salao_id',window.SALAO_ID);}catch(e){console.log('err supa produto update',e);}}
 async function deletarProdutoSupa(id){try{if(!supa||!id)return;await supa.from('produtos').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function carregarProdutosSupa(){try{if(!window.SALAO_ID)return;var h=await _authHeaders({'Accept':'application/json'});var resp=await fetch(SUPA_URL+'/rest/v1/produtos?salao_id=eq.'+window.SALAO_ID+'&order=cat,nome',{headers:h});if(!resp.ok)throw new Error('produtos fetch '+resp.status);var data=await resp.json();produtos=Array.isArray(data)?data.map(function(p){return{id:p.id,nome:p.nome,cat:p.cat||'Outros',marca:p.marca||'',custo:p.custo||'0,00',preco:p.preco||'0,00',estoque:p.estoque||0,estoque_minimo:p.estoque_minimo||1,uso:p.uso||'Venda e Uso interno',sku:p.sku||'',status:p.status||'Ativo'};}):[];renderProdutos();}catch(e){console.log('err carregar produtos',e);}}
-async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID}]);}catch(e){console.log('err supa servico',e);}}
-async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor}).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
+async function salvarServicoSupa(s){try{if(supa)await supa.from('servicos_cadastro').insert([{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,profs:s.profs||[],salao_id:window.SALAO_ID}]);}catch(e){console.log('err supa servico',e);}}
+async function atualizarServicoSupa(id,s){try{if(supa)await supa.from('servicos_cadastro').update({nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,profs:s.profs||[]}).eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function deletarServicoSupa(id){try{if(supa)await supa.from('servicos_cadastro').delete().eq('id',id).eq('salao_id',window.SALAO_ID);}catch(e){}}
 async function carregarServicosSupa(){
   try{
@@ -6291,7 +6314,7 @@ async function carregarServicosSupa(){
     var resp=await fetch(SUPA_URL+'/rest/v1/servicos_cadastro?salao_id=eq.'+window.SALAO_ID+'&order=cat,nome',{headers:h});
     if(!resp.ok)throw new Error('servicos fetch '+resp.status);
     var data=await resp.json();
-    servicos=Array.isArray(data)?data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1'};}):[];
+    servicos=Array.isArray(data)?data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur||'1h',preco:s.preco||'0,00',cor:s.cor||'#6366f1',profs:Array.isArray(s.profs)?s.profs:[]};}):[];
     renderServicos();
   }catch(e){console.log('err carregar servicos',e);}
 }
@@ -6304,7 +6327,7 @@ async function seedServicosPadraoSupa(){
     var rows=faltando.map(function(s){return{nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,salao_id:window.SALAO_ID};});
     var r=await supa.from('servicos_cadastro').insert(rows).select('*');
     if(r.data&&r.data.length){
-      var novos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor};});
+      var novos=r.data.map(function(s){return{id:s.id,nome:s.nome,cat:s.cat,dur:s.dur,preco:s.preco,cor:s.cor,profs:Array.isArray(s.profs)?s.profs:[]};});
       servicos=servicos.concat(novos);
       renderServicos();
       console.log('Inseridos '+r.data.length+' servicos padrao no Supabase.');
@@ -8061,13 +8084,17 @@ function showPage(id){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
-  if(id === 'modal-servico'){
+  // Só reseta o formulário de Serviço quando NÃO é edição (_editSrvIdx indefinido).
+  // editarServico() seta _editSrvIdx antes de chamar openModal() — sem esse guard,
+  // esse reset apagava os dados do serviço que editarServico() tinha acabado de
+  // preencher, no mesmo clique (modal de edição sempre abria em branco).
+  if(id === 'modal-servico' && window._editSrvIdx===undefined){
     var n=document.getElementById('srv-nome'); if(n) n.value='';
     var p=document.getElementById('srv-preco'); if(p) p.value='';
     var c=document.getElementById('srv-cat'); if(c) c.value='Cabelo';
     var cn=document.getElementById('srv-cat-nova'); if(cn){cn.style.display='none';cn.value='';}
     var wrap=document.getElementById('srv-profs-wrap');
-    if(wrap){wrap.querySelectorAll('.srv-prof-row').forEach(function(r,i){if(i>0)r.remove();});var first=wrap.querySelector('select');if(first)first.value='';}
+    if(wrap){wrap.innerHTML='';addSrvProfRow();}
   }
   if(id === 'modal-colab'){
     var wrap=document.getElementById('colab-permissoes-wrap');
@@ -8111,6 +8138,10 @@ function resetFormAgendar(){
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
   if(id==='modal-agendar')resetFormAgendar();
+  if(id==='modal-servico'){
+    window._editSrvIdx=undefined;
+    var t=document.querySelector('#modal-servico .modal-title'); if(t)t.textContent='Novo Serviço';
+  }
 }
 function saveModal(id,msg){closeModal(id);showAlert(msg)}
 
