@@ -9704,6 +9704,7 @@ async function carregarColaboradoresSupa(){
         return{id:row.id,nome:row.nome,email:row.email||'',cargo:row.cargo||'Colaborador',
           comissao:row.comissao||'50%',status:row.status||'Ativo',cor:row.cor||'',
           foto:row.foto||'',servicos:row.servicos||undefined,senha:row.senha||'',
+          usuario:row.usuario||'',auth_user_id:row.auth_user_id||null,
           permissoes:row.permissoes?normalizarPermissoes(row.permissoes):getPermissoesDefault()};
       });
       window._colabsSupaCarregados=true;
@@ -15106,6 +15107,35 @@ function toggleSenhaVisivel(id,icone){
 function lerPermissoesDoForm(){
   return lerPermissoesDoRoot(document.getElementById('modal-colab'));
 }
+// Cria/atualiza o login por usuário (sem e-mail) de um colaborador, via edge
+// function criar-acesso-colaborador (service role) — nunca escreve
+// usuario/auth_user_id direto do client, pra não travar o cadastro normal do
+// colaborador se a migration 022 ainda não tiver rodado no Supabase.
+async function chamarCriarAcessoColaborador(colaboradorId,usuario,senha){
+  if(!usuario)return null;
+  try{
+    var sessao=await supa.auth.getSession();
+    var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
+    var payload={colaborador_id:colaboradorId,usuario:usuario};
+    if(senha)payload.senha=senha;
+    var resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-colaborador',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)},
+      body:JSON.stringify(payload)
+    });
+    var data=await resp.json();
+    if(!resp.ok){
+      console.log('err criar acesso colaborador',data);
+      showAlert('Não foi possível criar o acesso de login: '+(data&&data.error?data.error:'erro desconhecido'));
+      return null;
+    }
+    return data;
+  }catch(e){
+    console.log('err criar acesso colaborador',e);
+    showAlert('Erro ao criar o acesso de login do colaborador.');
+    return null;
+  }
+}
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
   if(!nome){showAlert('Preencha o nome do colaborador!');return;}
@@ -15114,19 +15144,28 @@ function salvarColaborador(){
   var comissao=document.getElementById('colab-comissao')?.value||'50';
   var email=document.getElementById('colab-email')?.value||'';
   var senha=document.getElementById('colab-senha')?.value||'';
+  var usuario=document.getElementById('colab-usuario')?.value?.trim()||'';
   var iniciais=nome.split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var novoColab={
     nome:nome, email:email, cargo:cargo,
     comissao:comissao+'%', cor:colabCorAtual,
     foto:colabFotoAtual, status:'Ativo', senha:senha,
+    usuario:usuario,
     permissoes:lerPermissoesDoForm()
   };
   colaboradores.push(novoColab);
-  salvarColaboradorSupa(novoColab).then(function(newId){if(newId!=null)novoColab.id=newId;});
+  salvarColaboradorSupa(novoColab).then(function(newId){
+    if(newId!=null)novoColab.id=newId;
+    if(newId!=null&&usuario){
+      chamarCriarAcessoColaborador(newId,usuario,senha).then(function(data){
+        if(data){novoColab.usuario=data.usuario;novoColab.auth_user_id=data.auth_user_id;}
+      });
+    }
+  });
   renderColabs();
   closeModal('modal-colab');
   // Limpar
-  ['colab-nome','colab-email','colab-wpp','colab-cpf','colab-senha'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['colab-nome','colab-email','colab-wpp','colab-cpf','colab-usuario','colab-senha'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var txt=document.getElementById('colab-avatar-txt');
   var img=document.getElementById('colab-avatar-img');
   var av=document.getElementById('colab-avatar');
@@ -15205,10 +15244,16 @@ function editarColab(idx){
           <option ${c.status==='Férias'?'selected':''}>Férias</option>
         </select>
       </div>
+      <!-- Usuário de acesso -->
+      <div class="form-group full">
+        <label>👤 Usuário de acesso</label>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Login do colaborador no sistema (sem e-mail) — ex: eduardo. Precisa ser único entre todos os salões.</div>
+        <input id="edit-usuario" value="${c.usuario||''}" placeholder="Ex: eduardo" autocomplete="off"/>
+      </div>
       <!-- Senha de acesso -->
       <div class="form-group full">
         <label>🔐 Alterar senha de acesso</label>
-        <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual</div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual. Só é usada se "Usuário de acesso" estiver preenchido.</div>
         <div style="position:relative">
           <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar" style="width:100%;box-sizing:border-box;padding-right:38px"/>
           <span onclick="toggleSenhaVisivel('edit-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
@@ -15268,11 +15313,17 @@ function salvarEdicaoColab(idx){
   c.cargo=editCargoChecks&&editCargoChecks.length>0?Array.from(editCargoChecks).map(function(x){return x.value;}).join(' / '):c.cargo;
   c.comissao=(document.getElementById('edit-comissao')?.value||'50')+'%';
   c.status=document.getElementById('edit-status')?.value||'Ativo';
+  var novoUsuario=document.getElementById('edit-usuario')?.value?.trim()||'';
   var novaSenha=document.getElementById('edit-senha')?.value||'';
   if(novaSenha)c.senha=novaSenha;
   var mEdit=document.getElementById('modal-editar-colab');
   c.permissoes=lerPermissoesDoRoot(mEdit);
   atualizarColaboradorSupa(c);
+  if(novoUsuario&&c.id!=null&&(novoUsuario!==(c.usuario||'')||novaSenha)){
+    chamarCriarAcessoColaborador(c.id,novoUsuario,novaSenha||undefined).then(function(data){
+      if(data){c.usuario=data.usuario;c.auth_user_id=data.auth_user_id;}
+    });
+  }
   renderColabs();
   // Atualizar agenda se estiver visível
   if(document.getElementById('page-agenda')?.classList.contains('active'))renderAgenda();
