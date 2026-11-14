@@ -5,6 +5,10 @@
 -- diferente, ex: Eduardo em "mensal 2x" enquanto o resto do time fica no
 -- padrão quinzenal).
 --
+-- IMPORTANTE: colaboradores.id é uuid (não bigint/serial) — comissao_
+-- colaborador_config.colaborador_id e comissao_parcelas.colaborador_id
+-- são uuid, nunca converter com parseInt/Number no client.
+--
 -- Modelo 'quinzenal': período 1 a quinz_fechamento_dia1 (padrão 15),
 -- pago quinz_dias_pagamento_q1 dias corridos depois (padrão 2 -> dia 17);
 -- período quinz_fechamento_dia1+1 até o último dia do mês, pago no
@@ -53,7 +57,7 @@ create table if not exists public.comissao_config (
 -- padrão quinzenal do salão). Mudar a regra só vale pra períodos ainda
 -- não fechados — comissao_parcelas já fechada/paga nunca é recalculada.
 create table if not exists public.comissao_colaborador_config (
-  colaborador_id bigint primary key references public.colaboradores(id) on delete cascade,
+  colaborador_id uuid primary key references public.colaboradores(id) on delete cascade,
   salao_id uuid not null references public.saloes(id) on delete cascade,
   modelo text not null default 'quinzenal' check (modelo in ('quinzenal','mensal_2x','mensal_1x','personalizado')),
   quinz_fechamento_dia1 int not null default 15,
@@ -71,7 +75,7 @@ create table if not exists public.comissao_colaborador_config (
 create table if not exists public.comissao_parcelas (
   id bigint generated always as identity primary key,
   salao_id uuid not null references public.saloes(id) on delete cascade,
-  colaborador_id bigint not null references public.colaboradores(id) on delete cascade,
+  colaborador_id uuid not null references public.colaboradores(id) on delete cascade,
   periodo_inicio date not null,
   periodo_fim date not null,
   parcela_num int not null default 1 check (parcela_num in (1,2)),
@@ -96,43 +100,46 @@ alter table public.comissao_config enable row level security;
 alter table public.comissao_colaborador_config enable row level security;
 alter table public.comissao_parcelas enable row level security;
 
--- comissao_config (padrão do salão): qualquer autenticado do salão lê;
--- só a dona grava.
+-- comissao_config (padrão do salão, sem colaborador_id pra restringir
+-- por "próprio"): qualquer autenticado do salão lê, só a dona grava.
+-- my_salao_id() retorna text — salao_id (uuid) precisa de cast.
 drop policy if exists "comissao_config_select" on public.comissao_config;
 create policy "comissao_config_select" on public.comissao_config
-  for select to authenticated using (salao_id = my_salao_id());
+  for select to authenticated using (salao_id::text = my_salao_id());
 
 drop policy if exists "comissao_config_dona_write" on public.comissao_config;
 create policy "comissao_config_dona_write" on public.comissao_config
   for all to authenticated
-  using (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
-  with check (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
+  using (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
+  with check (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
 
--- comissao_colaborador_config: colaborador autenticado lê a PRÓPRIA regra
--- (precisa saber quando recebe); só a dona cria/edita regra de qualquer
--- colaborador do salão.
+-- comissao_colaborador_config: colaborador autenticado lê SÓ A PRÓPRIA
+-- linha (colaborador_id ligado ao auth.uid() dele) — nunca a de um
+-- colega. A dona lê/grava qualquer uma via a policy "all" abaixo.
 drop policy if exists "comissao_colab_config_select" on public.comissao_colaborador_config;
 create policy "comissao_colab_config_select" on public.comissao_colaborador_config
-  for select to authenticated using (salao_id = my_salao_id());
+  for select to authenticated
+  using (colaborador_id in (select id from public.colaboradores where auth_user_id = auth.uid()));
 
 drop policy if exists "comissao_colab_config_dona_write" on public.comissao_colaborador_config;
 create policy "comissao_colab_config_dona_write" on public.comissao_colaborador_config
   for all to authenticated
-  using (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
-  with check (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
+  using (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
+  with check (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
 
--- comissao_parcelas: colaborador só LÊ (o app filtra pra ele ver só as
--- próprias linhas); fechar parcela / marcar como pago é só da dona —
--- mesmo nível de caixa_ajustes.
+-- comissao_parcelas: mesma regra — colaborador só lê as PRÓPRIAS
+-- parcelas; fechar parcela / marcar como pago é só da dona (mesmo nível
+-- de caixa_ajustes).
 drop policy if exists "comissao_parcelas_select" on public.comissao_parcelas;
 create policy "comissao_parcelas_select" on public.comissao_parcelas
-  for select to authenticated using (salao_id = my_salao_id());
+  for select to authenticated
+  using (colaborador_id in (select id from public.colaboradores where auth_user_id = auth.uid()));
 
 drop policy if exists "comissao_parcelas_dona_write" on public.comissao_parcelas;
 create policy "comissao_parcelas_dona_write" on public.comissao_parcelas
   for all to authenticated
-  using (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
-  with check (salao_id = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
+  using (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()))
+  with check (salao_id::text = my_salao_id() and not exists (select 1 from public.colaboradores c where c.auth_user_id = auth.uid()));
 
 -- Conferência
 select tablename, policyname, cmd from pg_policies

@@ -10022,7 +10022,8 @@ function renderComissoesAPagar(){
 // atendimento antigo desse período não muda mais o valor aqui (só fica
 // registrado como divergência, pra conferência manual).
 async function fecharParcelaComissao(colaboradorId,inicioIso,fimIso,num){
-  colaboradorId=parseInt(colaboradorId,10);
+  // colaboradores.id é uuid (texto) — nunca converter com parseInt/Number,
+  // isso truncava o uuid num número qualquer e nunca achava o colaborador.
   var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.id===colaboradorId;});
   if(!c){showAlert('Colaborador não encontrado.');return;}
   var todas=parcelasRelevantesColab(c,new Date());
