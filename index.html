@@ -4591,7 +4591,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="border-top:1px dashed var(--af-border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:14px;font-weight:800">
             <span>Total a pagar</span><span id="popup-total-pagar" style="color:var(--af-ink)"></span>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px">
+          <div id="af-edit-pago-resumo" style="display:none;margin-top:12px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px"></div>
+          <div id="af-edit-registrar-pg-wrap" style="display:flex;gap:8px;margin-top:12px">
             <button type="button" id="popup-btn-registrar-pagamento" class="af-btn-primary" style="flex:1" onclick="abrirConfirmarPagamento(agEditandoKey)">Registrar Pagamento</button>
             <button type="button" class="af-link" onclick="verComandaEspecifica(agEditandoKey)">Ver Comandas</button>
           </div>
@@ -6027,6 +6028,9 @@ async function carregarAgendamentosSupa(){
         // é a fonte preferida pra bater comissão; nome vira reserva só
         // pros agendamentos antigos que nunca tiveram o id ligado.
         profissionalId:row.profissional_id||null,
+        pagoEm:row.pago_em||null,
+        formaPagamentoFinal:row.forma_pagamento_final||null,
+        pagoPor:row.pago_por||null,
         hora:horaSlot,
         duracao:durMinPrimario+' min',
         valor:valFmt,
@@ -12221,14 +12225,24 @@ function sincronizarFormaSinalAgenda(key,forma){
     agendamentosPorData[dataKey][key].formaSinal=forma;
   }
 }
-function lancarEntradaCaixaAuto(desc,valor,forma){
+function lancarEntradaCaixaAuto(desc,valor,forma,agendamentoId){
   if(!caixaState.aberto)return null;
-  return inserirMovimentoCaixa({categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaPagamentoParaCaixa(forma)});
+  return inserirMovimentoCaixa({categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaPagamentoParaCaixa(forma),agendamentoId:agendamentoId||null});
 }
 
 function confirmarFechamentoPagamento(){
   if(!colabPermitido('fin_receber_pagamentos')){showAlert('Você não tem permissão para receber pagamentos.');return;}
   if(!pagamentoCtx){return;}
+  // Trava contra pagamento em dobro — mesmo se o botão "Registrar
+  // Pagamento" ficar visível por algum motivo (ex: clique duplo antes da
+  // tela atualizar), a função se recusa a lançar de novo no caixa.
+  var stAtual=(pagamentoCtx.dados&&pagamentoCtx.dados.status||'').toLowerCase();
+  if(stAtual==='concluído'||stAtual==='concluido'||stAtual==='fechado'||stAtual==='finalizado'){
+    showAlert('⚠️ Este atendimento já foi pago. Reabra a comanda antes de registrar de novo.');
+    closeModal('modal-confirmar-pagamento');
+    pagamentoCtx=null;
+    return;
+  }
   pgRecalcularSaldo();
   // partesPagamento: 1 parte (forma única) ou 2 (split), sempre somando ctx.restante —
   // a 2ª parte é sempre o restante da 1ª, então a soma nunca fica errada.
@@ -12254,9 +12268,13 @@ function confirmarFechamentoPagamento(){
   var key=ctx.key;
   var valorTotalFmt='R$ '+ctx.total.toFixed(2).replace('.',',');
 
+  var agoraPg=new Date();
+  var pagoEmIso=agoraPg.toISOString();
+  var quemPagou=(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)||window.SALAO_RESPONSAVEL||'Admin';
+
   function finalizarLocal(){
     var a=agendaDiaAtual[key];
-    if(a){a.status='Concluído';a.sinalPago=true;a.sinal_status='pago';a.valor=valorTotalFmt;}
+    if(a){a.status='Concluído';a.sinalPago=true;a.sinal_status='pago';a.valor=valorTotalFmt;a.pagoEm=pagoEmIso;a.formaPagamentoFinal=forma;a.pagoPor=quemPagou;}
     var d=agendaDataAtual;
     var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
@@ -12264,6 +12282,9 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].sinalPago=true;
       agendamentosPorData[dataKey][key].sinal_status='pago';
       agendamentosPorData[dataKey][key].valor=valorTotalFmt;
+      agendamentosPorData[dataKey][key].pagoEm=pagoEmIso;
+      agendamentosPorData[dataKey][key].formaPagamentoFinal=forma;
+      agendamentosPorData[dataKey][key].pagoPor=quemPagou;
     }
     // Sinal: só lança se ainda não foi registrado ao confirmar o sinal
     if(ctx.sinalAbate>0&&!ctx.dados.sinalMovId){
@@ -12279,7 +12300,7 @@ function confirmarFechamentoPagamento(){
     if(ctx.restante>0){
       var svcNome=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
       partesPagamento.forEach(function(parte){
-        lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,parte.valor,parte.forma);
+        lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,parte.valor,parte.forma,ctx.supaId);
       });
     }
     // Lançar comissão do colaborador
@@ -12309,15 +12330,15 @@ function confirmarFechamentoPagamento(){
       if(pgSplitAtivo&&partesPagamento.length){
         // Sinal (se houver) + 1 linha por parte do saldo dividido — mantém a soma igual a ctx.total
         if(ctx.sinalAbate>0){
-          var _lancSinal={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||'')+' (sinal)',cat:'Serviço',forma:(ctx.dados&&ctx.dados.formaSinal)||'',val:ctx.sinalAbate,status:'confirmado'};
+          var _lancSinal={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||'')+' (sinal)',cat:'Serviço',forma:(ctx.dados&&ctx.dados.formaSinal)||'',val:ctx.sinalAbate,status:'confirmado',agendamento_id:ctx.supaId||null};
           fluxoLancamentos.push(_lancSinal);fluxoInserirSupa(_lancSinal);
         }
         partesPagamento.forEach(function(parte){
-          var _lancParte={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:parte.forma,val:parte.valor,status:'confirmado'};
+          var _lancParte={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:parte.forma,val:parte.valor,status:'confirmado',agendamento_id:ctx.supaId||null};
           fluxoLancamentos.push(_lancParte);fluxoInserirSupa(_lancParte);
         });
       }else{
-        var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado'};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
+        var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado',agendamento_id:ctx.supaId||null};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
       }
     }
     closeModal('modal-confirmar-pagamento');
@@ -12347,7 +12368,7 @@ function confirmarFechamentoPagamento(){
   if(ctx.supaId){
     _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
       return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{method:'PATCH',headers:h,
-        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null})
+        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null,pago_em:pagoEmIso,forma_pagamento_final:forma,pago_por:quemPagou})
       });
     }).catch(function(e){console.warn('Supabase sync:',e);});
   }
@@ -12356,6 +12377,58 @@ function confirmarFechamentoPagamento(){
 function fecharModalSucesso(){
   var m=document.getElementById('modal-pagamento-sucesso');
   if(m)m.style.display='none';
+}
+
+function reabrirComanda(key){
+  if(colaboradorLogado){showAlert('Apenas a dona pode reabrir uma comanda.');return;}
+  var dados=agEditandoDados;
+  if(!dados){return;}
+  showConfirmBotoes('Reabrir esta comanda? O pagamento registrado será estornado do caixa/fluxo e o atendimento volta para "Pendente".',[
+    {label:'Sim, reabrir',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp==='sim')executarReabrirComanda(key,dados);
+  });
+}
+function executarReabrirComanda(key,dados){
+  var supaId=dados.id||null;
+  // Estorna pelo agendamento_id (nunca por descrição "parecida", que pode
+  // acertar o lançamento de outro cliente/atendimento por coincidência).
+  if(supaId){
+    if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto&&caixaState.movimentos){
+      caixaState.movimentos.filter(function(m){return m.agendamentoId===supaId;}).forEach(function(m){removerMovimento(m.id);});
+    }
+    if(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos.length){
+      for(var i=fluxoLancamentos.length-1;i>=0;i--){
+        if(fluxoLancamentos[i].agendamento_id!==supaId)continue;
+        var lRem=fluxoLancamentos[i];
+        fluxoLancamentos.splice(i,1);
+        if(lRem.id&&supa){
+          supa.from('fluxo_lancamentos').delete().eq('id',lRem.id).then(function(r){if(r.error)console.log('err estornar fluxo lancamento',r.error);}).catch(function(e){console.log('err estornar fluxo lancamento',e);});
+        }
+      }
+    }
+  }
+  var a=agendaDiaAtual[key];
+  if(a){a.status='Pendente';a.pagoEm=null;a.formaPagamentoFinal=null;a.pagoPor=null;}
+  var d=agendaDataAtual;
+  var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+    var c=agendamentosPorData[dataKey][key];
+    c.status='Pendente';c.pagoEm=null;c.formaPagamentoFinal=null;c.pagoPor=null;
+  }
+  dados.status='Pendente';dados.pagoEm=null;dados.formaPagamentoFinal=null;dados.pagoPor=null;
+  renderizarComandaEdicao(key);
+  renderizarCancelarEdicao(key,dados);
+  renderAgenda();
+  showAlert('⏳ Comanda reaberta — pagamento estornado do caixa/fluxo.');
+  if(supaId){
+    _authHeaders({'Content-Type':'application/json'}).then(function(h){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{method:'PATCH',headers:h,
+        body:JSON.stringify({status:'Pendente',pago_em:null,forma_pagamento_final:null,pago_por:null})
+      });
+    }).catch(function(e){console.warn('Supabase sync reabrir comanda:',e);});
+  }
 }
 
 function abrirComandaAtendimento(cliente, servico, valor){
@@ -13218,8 +13291,8 @@ function corBlocoAgenda(a){
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  // Verde: concluído/comanda fechada
-  if(concluido) return '#16a34a';
+  // Amarelo (comanda paga/fechada) — recepção vê de longe quem já pagou
+  if(concluido) return '#EAB308';
   // Amarelo vivo: sinal pago, atendimento pendente
   if(sinalPago) return '#facc15';
   // Agendado sem sinal: cor do colaborador (mesmo critério de match do header da agenda)
@@ -13243,10 +13316,12 @@ function corBlocoAgendaPastel(a){
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
+  // Amarelo suave: comanda paga/fechada (checado antes do sinal — uma comanda
+  // concluída quase sempre também tem sinalPago=true, e o status de "paga"
+  // deve vencer o de "sinal pago, ainda pendente")
+  if(concluido) return '#FEF3C7';
   // Dourado suave: sinal pago, atendimento pendente
   if(sinalPago) return '#FBF0DC';
-  // Verde suave: concluído/comanda fechada
-  if(concluido) return '#E6F4EA';
   // Agendado sem sinal: tom suave por serviço (consistente pro mesmo serviço)
   return _pastelByString(a.servico||a.cliente||'');
 }
@@ -13503,7 +13578,7 @@ function renderAgenda(){
     var anoD=d.getFullYear(),mesD=String(d.getMonth()+1).padStart(2,'0'),diaD=String(d.getDate()).padStart(2,'0');
     var dataISO=anoD+'-'+mesD+'-'+diaD;
     _authHeaders().then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,profissional_id,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id,produtos_usados',{headers:h});
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=eq.'+dataISO+'&select=id,cliente,hora,profissional,profissional_id,servico,valor,status,sinal,sinal_status,sinal_valor,obs,confirmado,servicos_detalhe,serie_id,produtos_usados,pago_em,forma_pagamento_final,pago_por',{headers:h});
     }).then(function(r){
       if(!r.ok) return r.json().then(function(err){ throw err; });
       return r.json();
@@ -13529,7 +13604,7 @@ function renderAgenda(){
           try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
           var produtosUsadosRow=[];
           try{if(a.produtos_usados)produtosUsadosRow=typeof a.produtos_usados==='string'?JSON.parse(a.produtos_usados):a.produtos_usados;}catch(e){}
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -13612,6 +13687,9 @@ function renderAgenda(){
       }
       const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
       const corBloco=corBlocoAgendaPastel(a);
+      const stCard=(a.status||'').toLowerCase();
+      const concluidoCard=stCard==='concluído'||stCard==='concluido'||stCard==='fechado'||stCard==='finalizado';
+      const bordaCard=concluidoCard?'border:1.5px solid #EAB308;':'';
       const durMinCard=parseInt((a.duracao||'30 min').replace(/\D/g,''))||30;
       const isMultiSlot=durMinCard>30;
       const slotSpanCard=Math.max(1,Math.round(durMinCard/30));
@@ -13621,7 +13699,7 @@ function renderAgenda(){
       const slotStyleCard=isMultiSlot?'position:relative;border-bottom:none':'position:relative';
       const clickHandlerCard=a.tipo==='aula'?`abrirInfoTurmaAgenda('${key}')`:`abrirAtendimentoEdicao('${key}',agendaDiaAtual['${key}'])`;
       return `<div class="slot occupied" style="${slotStyleCard}" onclick="${clickHandlerCard}">
-        <div class="agenda-card" style="${posCard};background:${corBloco};border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
+        <div class="agenda-card" style="${posCard};background:${corBloco};${bordaCard}border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
           <div style="line-height:1.25">${a.cliente}</div>
           <div style="font-size:11px;opacity:.75;margin-top:1px">${a.servico}</div>
           <div style="font-size:10px;margin-top:4px;display:flex;flex-direction:column;gap:3px">
@@ -16294,7 +16372,7 @@ function diaComercialStr(date){
   var d=diaComercialDate(date);
   return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
 }
-async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
+async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status,agendamento_id:lanc.agendamento_id||null});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
 async function carregarFluxoLancamentosSupa(){
   try{
     if(!window.SALAO_ID)return;
@@ -16828,6 +16906,37 @@ function renderizarComandaEdicao(key){
   if(badge)badge.innerHTML=atendConcluido?
     '<span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:20px">Paga</span>':
     '<span style="font-size:10px;font-weight:700;background:#f0f0f0;color:#555;padding:2px 8px;border-radius:20px">Em aberto</span>';
+
+  // Comanda paga: some "Registrar Pagamento" (evita lançar 2x no caixa),
+  // mostra o resumo de quando/como/quem recebeu, e bloqueia edição de
+  // valor/serviço/desconto — só "Reabrir Comanda" (em renderizarCancelarEdicao)
+  // reabre pra editar de novo.
+  var wrapRegPg=document.getElementById('af-edit-registrar-pg-wrap');
+  var resumoPg=document.getElementById('af-edit-pago-resumo');
+  if(wrapRegPg)wrapRegPg.style.display=atendConcluido?'none':'flex';
+  if(resumoPg){
+    if(atendConcluido){
+      var dtPg=dados.pagoEm?new Date(dados.pagoEm):null;
+      var dtTxt=dtPg&&!isNaN(dtPg)?(dtPg.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+dtPg.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})):'—';
+      var formaTxt=escHtml(dados.formaPagamentoFinal||'—');
+      var porTxt=escHtml(dados.pagoPor||'—');
+      resumoPg.style.display='block';
+      resumoPg.innerHTML='<div style="font-size:12px;font-weight:700;color:#15803d;display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="material-symbols-outlined" style="font-size:16px">check_circle</span>Pago em '+dtTxt+'</div>'+
+        '<div style="font-size:12px;color:#166534">R$ '+totalPagarPg.toFixed(2).replace('.',',')+' — '+formaTxt+' — por '+porTxt+'</div>'+
+        (!colaboradorLogado?'<button type="button" onclick="reabrirComanda(\''+key+'\')" style="margin-top:10px;width:100%;padding:8px;background:#fff;color:#b45309;border:1.5px solid #fde68a;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Reabrir Comanda</button>':'');
+    }else{
+      resumoPg.style.display='none';
+      resumoPg.innerHTML='';
+    }
+  }
+  ['popup-desconto-valor','popup-desc-btn-salao','popup-desc-btn-comissao','popup-btn-add-svc','popup-btn-add-pkg','popup-valor-principal-edit'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el)return;
+    if(atendConcluido){el.setAttribute('disabled','disabled');el.style.opacity='.5';el.style.pointerEvents='none';}
+    else{el.removeAttribute('disabled');el.style.opacity='';el.style.pointerEvents='';}
+  });
+  var btnEditarValor=document.querySelector('button[onclick^="popupToggleEditarValorPrincipal"]');
+  if(btnEditarValor)btnEditarValor.style.display=atendConcluido?'none':'';
 
   var lista=document.getElementById('popup-servicos-comanda-lista');
   if(lista)lista.innerHTML=popupServicosComandaToHtml(key);
@@ -18965,7 +19074,7 @@ async function sincronizarMovimentoCaixaSupa(mov){
     var r=await supa.from('caixa_movimentos').insert([{
       salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
       valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin'),
-      profissional:mov.profissional||null
+      profissional:mov.profissional||null,agendamento_id:mov.agendamentoId||null
     }]).select('id');
     if(r.data&&r.data[0])mov.supaId=r.data[0].id;
   }catch(e){
@@ -19253,7 +19362,7 @@ function inserirMovimentoCaixa(opts){
   if(!caixaState.movimentos)caixaState.movimentos=[];
   var agora=new Date();
   var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
-  var mov={id:movIdCounter++,tipo:opts.tipo||caixaState.tipoAtual||'entrada',categoria:opts.categoria||'Outros',descricao:opts.descricao||'',valor:parseFloat(opts.valor)||0,forma:opts.forma||'pix',hora:horaStr,profissional:opts.profissional||'',supaId:null};
+  var mov={id:movIdCounter++,tipo:opts.tipo||caixaState.tipoAtual||'entrada',categoria:opts.categoria||'Outros',descricao:opts.descricao||'',valor:parseFloat(opts.valor)||0,forma:opts.forma||'pix',hora:horaStr,profissional:opts.profissional||'',agendamentoId:opts.agendamentoId||null,supaId:null};
   caixaState.movimentos.push(mov);
   atualizarTotaisCaixa();
   sincronizarMovimentoCaixaSupa(mov).catch(function(e){console.log(e);});
