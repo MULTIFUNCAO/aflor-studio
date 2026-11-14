@@ -8055,7 +8055,7 @@ const pages = {
 // ficam de fora deliberadamente por enquanto, mesmo com permissão ativa,
 // pra não vazar dado de outro profissional. Plano combinado com a usuária:
 // revisar um módulo por vez antes de abrir no menu do colaborador.
-var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas',fluxo:'financeiro',caixa:'financeiro',relatorios:'relatorios'};
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas',fluxo:'financeiro',caixa:'financeiro',relatorios:'relatorios',metas:'metas'};
 // "financeiro" sozinho é muito largo pra Fluxo de Caixa/Controle de Caixa —
 // cada um tem sua própria sub-permissão de entrada, mais específica, exigida
 // POR CIMA do módulo (ex: só "financeiro" ativo não basta pra ver o Fluxo de
@@ -8122,6 +8122,7 @@ function showPage(id){
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
     if(id==='relatorios')aplicarEscopoRelatoriosColaborador();
+    if(id==='metas')aplicarEscopoMetasColaborador();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();if(typeof carregarCertificadosDadosSupa==='function')carregarCertificadosDadosSupa();if(typeof carregarRelatoriosDadosSupa==='function')carregarRelatoriosDadosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
@@ -14763,12 +14764,34 @@ const metaStatusLabel={
 const prioCor={baixa:'#22c55e',media:'#f59e0b',alta:'#ef4444'};
 const prioEmoji={baixa:'🟢',media:'🟡',alta:'🔴'};
 
+// Sem metas_visualizar_geral: esconde a aba "Administrador" (metas de todo
+// o salão) e trava o seletor da aba "Colaborador" no próprio nome — a
+// própria página já tinha essa separação admin/colaborador, só não
+// respeitava a permissão. "+ Nova Meta" exige metas_estipular por cima.
+function aplicarEscopoMetasColaborador(){
+  if(typeof colaboradorLogado==='undefined'||!colaboradorLogado)return;
+  var temGeral=colabPermitido('metas_visualizar_geral');
+  var temEstipular=colabPermitido('metas_estipular');
+  var tabAdmin=document.getElementById('tab-meta-admin');
+  if(tabAdmin)tabAdmin.style.display=temGeral?'':'none';
+  var btnNova=document.getElementById('btn-nova-meta');
+  if(!temGeral){
+    var tabColab=document.getElementById('tab-meta-colab');
+    if(tabColab)switchMetaView('colab',tabColab);
+    var sel=document.getElementById('meta-colab-select');
+    if(sel){sel.innerHTML='<option>'+colaboradorLogado+'</option>';sel.disabled=true;}
+    if(btnNova)btnNova.style.display='none';
+  } else if(btnNova){
+    btnNova.style.display=temEstipular?'':'none';
+  }
+}
 function switchMetaView(v,el){
+  if(v==='admin'&&!colabPermitido('metas_visualizar_geral')){showAlert('Você não tem permissão para ver as metas de todo o salão.');return;}
   document.querySelectorAll('#page-metas .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('metas-admin-view').style.display=v==='admin'?'block':'none';
   document.getElementById('metas-colab-view').style.display=v==='colab'?'block':'none';
-  document.getElementById('btn-nova-meta').style.display=v==='admin'?'':'none';
+  document.getElementById('btn-nova-meta').style.display=(v==='admin'&&colabPermitido('metas_estipular'))?'':'none';
   if(v==='colab')renderMetasColab();
 }
 
@@ -14860,7 +14883,7 @@ function renderMetas(){
             ${m.recompensa?`<span style="font-size:11px;font-weight:600;color:#d97706">${m.recompensa}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;min-width:116px">
+        ${colabPermitido('metas_estipular')?`<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;min-width:116px">
           ${m.tipo==='meta'?`<button onclick="atualizarProgresso(${m.id})" style="background:#f5f5f5;color:#333;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">Atualizar</button>`:''}
           <select onchange="mudarStatusMeta(${m.id},this.value)" style="font-size:11px;padding:7px 8px;border:1.5px solid #ebebeb;border-radius:8px;cursor:pointer;background:#fff;font-weight:600;outline:none;color:#333">
             <option value="pendente" ${m.status==='pendente'?'selected':''}>Pendente</option>
@@ -14869,7 +14892,7 @@ function renderMetas(){
             <option value="atrasada" ${m.status==='atrasada'?'selected':''}>Atrasada</option>
           </select>
           <button onclick="deletarMeta(${m.id})" style="background:none;color:#ef4444;border:1.5px solid #fee2e2;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">Excluir</button>
-        </div>
+        </div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -14948,11 +14971,13 @@ function renderMetasColab(){
 }
 
 function mudarStatusMeta(id,status){
+  if(!colabPermitido('metas_estipular')){showAlert('Você não tem permissão para editar metas.');return;}
   const m=metasList.find(m=>m.id===id);
   if(m){m.status=status;renderMetas();}
 }
 
 function deletarMeta(id){
+  if(!colabPermitido('metas_estipular')){showAlert('Você não tem permissão para excluir metas.');return;}
   if(confirm('Excluir esta meta/tarefa?')){
     metasList=metasList.filter(m=>m.id!==id);
     renderMetas();
@@ -14966,6 +14991,7 @@ function marcarTarefaConcluida(id){
 }
 
 function atualizarProgresso(id){
+  if(!colabPermitido('metas_estipular')){showAlert('Você não tem permissão para editar metas.');return;}
   const m=metasList.find(m=>m.id===id);
   if(!m)return;
   const novo=prompt(`Progresso atual de "${m.titulo}":\nMeta: ${m.alvo} ${m.unidade}\nAtual: ${m.atual}\n\nDigite o novo valor:`,m.atual);
@@ -14979,6 +15005,7 @@ function atualizarProgresso(id){
 }
 
 function salvarMeta(){
+  if(!colabPermitido('metas_estipular')){showAlert('Você não tem permissão para criar metas.');return;}
   const titulo=document.getElementById('meta-titulo')?.value;
   if(!titulo){showAlert('Preencha o título!');return;}
   const tipo=document.querySelector('input[name="meta-tipo"]:checked')?.value||'tarefa';
