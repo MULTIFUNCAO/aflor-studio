@@ -16650,10 +16650,25 @@ function fluxoParseData(str){
 }
 function fluxoLancamentosDoMes(){
   var mes=fluxoMes.getMonth(),ano=fluxoMes.getFullYear();
-  return fluxoLancamentos.filter(function(l){
+  var doMes=fluxoLancamentos.filter(function(l){
     var d=fluxoParseData(l.data);
     return d&&d.getMonth()===mes&&d.getFullYear()===ano;
   });
+  // O caixa de hoje só vira fluxo_lancamentos quando é FECHADO (evita
+  // duplicar receita quando o fechamento copia pro Fluxo). Sem isso,
+  // "Receitas do Mês"/Lançamentos/Semanal/Categorias/DRE ficavam zerados
+  // o dia inteiro até alguém fechar o caixa — soma aqui, só quando o mês
+  // visto é o mês atual, pra não sumir de novo depois do fechamento.
+  if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto&&caixaState.movimentos&&caixaState.movimentos.length){
+    var hoje=new Date();
+    if(mes===hoje.getMonth()&&ano===hoje.getFullYear()){
+      var dataFmtHoje=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+      doMes=doMes.concat(caixaState.movimentos.map(function(m){
+        return {tipo:m.tipo==='entrada'?'receita':'despesa',data:dataFmtHoje,desc:m.descricao||(m.tipo==='entrada'?'Entrada caixa':'Saída caixa'),cat:m.categoria||'Outros',forma:m.forma||'',val:m.valor||0,status:'confirmado'};
+      }));
+    }
+  }
+  return doMes;
 }
 function fluxoAgruparPorCat(lancs,tipo){
   var map={};
@@ -19416,7 +19431,15 @@ function atualizarTotaisCaixa(){
 function fmtProfMovHtml(m){
   var p=m&&m.profissional;
   if(!p||p==='Não informado')return '';
-  return '<div style="font-size:10px;color:#888;margin-top:2px">Profissional: '+p+'</div>';
+  // Lançamentos antigos guardaram o apelido interno da Agenda (ex: "Edu")
+  // em vez do nome real — mostra sempre o nome ATUAL do colaborador ativo
+  // que bate com esse apelido/nome, não o texto cru salvo na hora.
+  var nomeAtual=p;
+  if(typeof colaboradores!=='undefined'&&colaboradores&&typeof profAgendaIgual==='function'){
+    var colabMov=colaboradores.find(function(c){return profAgendaIgual(c.nome,p);});
+    if(colabMov&&colabMov.nome)nomeAtual=colabMov.nome;
+  }
+  return '<div style="font-size:10px;color:#888;margin-top:2px">Profissional: '+nomeAtual+'</div>';
 }
 function popularSelectProfMovimento(selecionado){
   var sel=document.getElementById('mov-profissional');
