@@ -2520,7 +2520,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="page" id="page-relatorios">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('financeiro')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="table-card" id="rel-card-financeiro" style="cursor:pointer" onclick="abrirRelatorio('financeiro')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="badge badge-green">Novo</span></div>
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">💰 Relatório Financeiro</h3>
@@ -2534,7 +2534,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <p style="font-size:13px;color:var(--gray-400)">Detalhes dos atendimentos, produtos e serviços por período</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('colaboradores')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="table-card" id="rel-card-colaboradores" style="cursor:pointer" onclick="abrirRelatorio('colaboradores')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">👥 Colaboradores</h3>
             <p style="font-size:13px;color:var(--gray-400)">Confira os colaboradores mais rentáveis para seu negócio</p>
@@ -2558,7 +2558,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <p style="font-size:13px;color:var(--gray-400)">Confira os clientes que realizaram compras recentemente</p>
           </div>
         </div>
-        <div class="table-card" style="cursor:pointer" onclick="abrirRelatorio('servicos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="table-card" id="rel-card-servicos" style="cursor:pointer" onclick="abrirRelatorio('servicos')" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="padding:20px">
             <h3 style="font-size:15px;font-weight:700;margin-bottom:6px">✂️ Serviços</h3>
             <p style="font-size:13px;color:var(--gray-400)">Veja os serviços mais realizados e sua receita</p>
@@ -8055,7 +8055,7 @@ const pages = {
 // ficam de fora deliberadamente por enquanto, mesmo com permissão ativa,
 // pra não vazar dado de outro profissional. Plano combinado com a usuária:
 // revisar um módulo por vez antes de abrir no menu do colaborador.
-var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas',fluxo:'financeiro',caixa:'financeiro'};
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas',fluxo:'financeiro',caixa:'financeiro',relatorios:'relatorios'};
 // "financeiro" sozinho é muito largo pra Fluxo de Caixa/Controle de Caixa —
 // cada um tem sua própria sub-permissão de entrada, mais específica, exigida
 // POR CIMA do módulo (ex: só "financeiro" ativo não basta pra ver o Fluxo de
@@ -8121,6 +8121,7 @@ function showPage(id){
     if(id==='clientes')renderClientes();
     if(id==='retornos'){renderRetornos();atualizarBadgeNav();}
     if(id==='colaboradores')renderColabs();
+    if(id==='relatorios')aplicarEscopoRelatoriosColaborador();
     if(id==='servicos'){renderServicos();carregarServicosSupa();}
     if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();if(typeof carregarCertificadosDadosSupa==='function')carregarCertificadosDadosSupa();if(typeof carregarRelatoriosDadosSupa==='function')carregarRelatoriosDadosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
@@ -9274,7 +9275,24 @@ function mostrarEtapaFlor(nome){
 // ===== FIM FLORESCIMENTO ETAPAS =====
 
 // ===== RELATÓRIOS =====
+// Dos 8 relatórios, só 3 têm sub-permissão própria que bate com algo
+// sensível de verdade: Financeiro mostra dinheiro do salão (mesmo critério
+// de fin_faturamento_total), Colaboradores mostra a % de comissão de cada
+// colega (rel_desempenho_profissional), Serviços é o único que casa com
+// "relatórios de serviços/produtos" (rel_servicos_mais_vendidos). Os outros
+// 5 (Atendimentos e Pacotes são só placeholder "em desenvolvimento";
+// Clientes/Sumidos/Ativos não têm sub-permissão própria) ficam liberados
+// com o módulo "relatorios" sozinho.
+var REL_PERM_EXTRA={financeiro:'fin_faturamento_total',colaboradores:'rel_desempenho_profissional',servicos:'rel_servicos_mais_vendidos'};
+function aplicarEscopoRelatoriosColaborador(){
+  if(typeof colaboradorLogado==='undefined'||!colaboradorLogado)return;
+  Object.keys(REL_PERM_EXTRA).forEach(function(tipo){
+    var el=document.getElementById('rel-card-'+tipo);
+    if(el)el.style.display=colabPermitido(REL_PERM_EXTRA[tipo])?'':'none';
+  });
+}
 function abrirRelatorio(tipo){
+  if(REL_PERM_EXTRA[tipo]&&!colabPermitido(REL_PERM_EXTRA[tipo])){showAlert('Você não tem permissão para ver esse relatório.');return;}
   var titulo = '';
   var html = '';
   var hoje = new Date();
