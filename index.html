@@ -6025,6 +6025,20 @@ async function carregarAgendamentosSupa(){
       var detalhes=null;
       try{if(row.servicos_detalhe)detalhes=typeof row.servicos_detalhe==='string'?JSON.parse(row.servicos_detalhe):row.servicos_detalhe;}catch(e){}
       if(!agendamentosPorData[dataKey])agendamentosPorData[dataKey]={};
+      // Comanda com vários serviços (servicos_detalhe) vira vários cards no
+      // calendário (um por serviço além do primeiro, via construirTimelineAtendimento
+      // logo abaixo) — todos com o MESMO id do agendamento e o MESMO valor_num/valor
+      // (o total da comanda inteira), porque cada card ainda representa "a comanda".
+      // Mas pra COMISSÃO isso dobra/triplica o valor por profissional (ex: o card do
+      // profissional principal conta o total, e o card de um serviço extra dele conta
+      // o total DE NOVO) — valorComissao guarda só o valor do serviço daquele card
+      // específico (lido de servicos_detalhe[i].valor), e valorNumAgendamento() prefere
+      // esse campo quando ele existe, sem mexer no valor/valor_num "oficial" da comanda.
+      var valorComissaoPrimario=valNum;
+      if(detalhes&&detalhes.length>1){
+        var valorDetPrimario=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
+        if(valorDetPrimario>0)valorComissaoPrimario=valorDetPrimario;
+      }
       var apptEntry={
         id:row.id||null,
         cliente:row.cliente||'',
@@ -6042,6 +6056,7 @@ async function carregarAgendamentosSupa(){
         duracao:durMinPrimario+' min',
         valor:valFmt,
         valor_num:valNum,
+        valorComissao:valorComissaoPrimario,
         cls:cls,
         sinal:!!row.sinal,
         sinalPago:(row.sinal_status||'')==='pago',
@@ -6064,7 +6079,7 @@ async function carregarAgendamentosSupa(){
           // principal — busca o profissional_id DESSE item específico,
           // não herda o do atendimento inteiro.
           var detalheItem=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null});
+          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:parseFloat(detalheItem&&detalheItem.valor)||0});
         });
       }
     });
@@ -9911,6 +9926,9 @@ function periodosRelevantesColab(colab,refData){
   });
 }
 function valorNumAgendamento(a){
+  // valorComissao (valor do serviço individual, não da comanda inteira) tem
+  // prioridade pra comissão — ver comentário em carregarAgendamentosSupa.
+  if(a&&typeof a.valorComissao==='number')return a.valorComissao;
   if(typeof a.valor_num==='number')return a.valor_num;
   return parseFloat(String(a.valor||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
 }
@@ -12314,6 +12332,24 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].formaPagamentoFinal=forma;
       agendamentosPorData[dataKey][key].pagoPor=quemPagou;
     }
+    // Comanda com vários serviços (servicos_detalhe) vira vários cards no
+    // calendário — todos com o MESMO ctx.supaId (ver carregarAgendamentosSupa).
+    // Sem isso, só o card em que o modal foi aberto virava "Paga"; os outros
+    // ficavam presos em "Pendente" pra sempre. Cada um mantém o PRÓPRIO
+    // valor/valorComissao (valor do serviço dele) — só o status/pagamento é
+    // propagado, nunca o valor total.
+    if(ctx.supaId){
+      [agendaDiaAtual,agendamentosPorData[dataKey]].forEach(function(dict){
+        if(!dict)return;
+        Object.keys(dict).forEach(function(kk){
+          if(kk===key)return;
+          var ent=dict[kk];
+          if(!ent||ent.id!==ctx.supaId)return;
+          ent.status='Concluído';ent.sinalPago=true;ent.sinal_status='pago';
+          ent.pagoEm=pagoEmIso;ent.formaPagamentoFinal=forma;ent.pagoPor=quemPagou;
+        });
+      });
+    }
     // Sinal: só lança se ainda não foi registrado ao confirmar o sinal
     if(ctx.sinalAbate>0&&!ctx.dados.sinalMovId){
       var formaSinalCtx=(ctx.dados&&ctx.dados.formaSinal)||popupFormaSinal||'Pix';
@@ -12444,6 +12480,19 @@ function executarReabrirComanda(key,dados){
   if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
     var c=agendamentosPorData[dataKey][key];
     c.status='Pendente';c.pagoEm=null;c.formaPagamentoFinal=null;c.pagoPor=null;
+  }
+  // Comanda com vários serviços tem vários cards com o MESMO id — reabrir
+  // reverte todos juntos (mesma lógica do pagamento, ver confirmarFechamentoPagamento).
+  if(supaId){
+    [agendaDiaAtual,agendamentosPorData[dataKey]].forEach(function(dict){
+      if(!dict)return;
+      Object.keys(dict).forEach(function(kk){
+        if(kk===key)return;
+        var ent=dict[kk];
+        if(!ent||ent.id!==supaId)return;
+        ent.status='Pendente';ent.pagoEm=null;ent.formaPagamentoFinal=null;ent.pagoPor=null;
+      });
+    });
   }
   dados.status='Pendente';dados.pagoEm=null;dados.formaPagamentoFinal=null;dados.pagoPor=null;
   renderizarComandaEdicao(key);
@@ -13641,7 +13690,15 @@ function renderAgenda(){
           try{if(a.servicos_detalhe)detalhes=typeof a.servicos_detalhe==='string'?JSON.parse(a.servicos_detalhe):a.servicos_detalhe;}catch(e){}
           var produtosUsadosRow=[];
           try{if(a.produtos_usados)produtosUsadosRow=typeof a.produtos_usados==='string'?JSON.parse(a.produtos_usados):a.produtos_usados;}catch(e){}
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
+          // valorComissao: mesmo motivo do loader principal (carregarAgendamentosSupa) —
+          // cada card de uma comanda com vários serviços guarda o valor individual DELE,
+          // pra comissão não contar o total da comanda em cada card.
+          var valorComissaoPrimRA=valNum;
+          if(detalhes&&detalhes.length>1){
+            var valorDetPrimRA=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
+            if(valorDetPrimRA>0)valorComissaoPrimRA=valorDetPrimRA;
+          }
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,valorComissao:valorComissaoPrimRA,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -13651,7 +13708,7 @@ function renderAgenda(){
             timeline.slice(1).forEach(function(item){
               var pSd=agProfParaAgenda(item.prof);
               var detalheItemRA=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null});
+              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:parseFloat(detalheItemRA&&detalheItemRA.valor)||0});
             });
           }
         });
