@@ -602,10 +602,17 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <!-- Selecionar colaborador (aparece só quando perfil=colaborador) -->
         <div id="select-colaborador" style="display:none;margin-bottom:11px">
-          <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:5px">Selecione seu nome</label>
-          <select id="login-colab-sel" class="ob-inp" style="padding-left:11px">
-            <option value="">-- Selecione --</option>
-          </select>
+          <div id="login-colab-nome-wrap">
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:5px">Selecione seu nome</label>
+            <select id="login-colab-sel" class="ob-inp" style="padding-left:11px">
+              <option value="">-- Selecione --</option>
+            </select>
+          </div>
+          <div id="login-colab-usuario-wrap" style="display:none">
+            <label style="font-size:11px;font-weight:700;color:#333;display:block;margin-bottom:5px">Usuário</label>
+            <input id="login-colab-usuario" class="ob-inp" placeholder="Ex: eduardo" autocomplete="off"/>
+          </div>
+          <div id="lnk-login-colab-usuario" onclick="toggleLoginColabModo()" style="font-size:11px;color:#888;margin-top:6px;cursor:pointer;text-decoration:underline">Prefere entrar com usuário e senha?</div>
         </div>
         <!-- Email (só para Administrador) -->
         <div id="login-email-wrap" class="ob-iw">
@@ -16892,6 +16899,23 @@ function obGo(screen){
 // ===== SISTEMA DE PERFIS E PERMISSÕES =====
 var perfilLogin='admin';
 var colaboradorLogado=null;
+var _loginColabModoUsuario=false;
+
+function toggleLoginColabModo(){
+  _loginColabModoUsuario=!_loginColabModoUsuario;
+  var nomeWrap=document.getElementById('login-colab-nome-wrap');
+  var userWrap=document.getElementById('login-colab-usuario-wrap');
+  var lnk=document.getElementById('lnk-login-colab-usuario');
+  if(_loginColabModoUsuario){
+    if(nomeWrap)nomeWrap.style.display='none';
+    if(userWrap)userWrap.style.display='block';
+    if(lnk)lnk.textContent='Prefere selecionar seu nome?';
+  }else{
+    if(nomeWrap)nomeWrap.style.display='';
+    if(userWrap)userWrap.style.display='none';
+    if(lnk)lnk.textContent='Prefere entrar com usuário e senha?';
+  }
+}
 
 function setPerfilLogin(perfil){
   perfilLogin=perfil;
@@ -16935,9 +16959,27 @@ function setPerfilLogin(perfil){
 
 function fazerLogin(){
   if(perfilLogin==='colaborador'){
+    var senhaDigitada=document.getElementById('login-senha')?.value||'';
+    if(_loginColabModoUsuario){
+      var usuarioDigitado=(document.getElementById('login-colab-usuario')?.value||'').trim();
+      if(!usuarioDigitado){showAlertOb('Informe seu usuário!');return;}
+      if(!senhaDigitada){showAlertOb('Informe sua senha de acesso!');return;}
+      if(!supa){showAlertOb('Erro de conexão. Tente novamente.');return;}
+      showAlertOb('Entrando...');
+      supa.auth.signInWithPassword({email:usuarioDigitado.toLowerCase()+'@flora.local',password:senhaDigitada}).then(function(res){
+        if(res.error){
+          var em=((res.error.message)||'').toLowerCase();
+          showAlert((em.includes('credentials')||em.includes('invalid')||!em)?'Usuário ou senha incorretos':'Não foi possível entrar. Verifique usuário e senha.');
+          return;
+        }
+        entrarComoColaboradorPorAuth();
+      }).catch(function(){
+        showAlert('Não foi possível entrar. Verifique usuário e senha.');
+      });
+      return;
+    }
     var sel=document.getElementById('login-colab-sel')?.value;
     if(!sel){showAlertOb('Selecione seu nome!');return;}
-    var senhaDigitada=document.getElementById('login-senha')?.value||'';
     var colabObj=colaboradores.find(function(c){return c.nome===sel;});
     if(!colabObj){
       try{
@@ -17167,6 +17209,40 @@ function aplicarPermissoesAdmin(){
   showPage('dashboard');
 }
 
+// Login de colaborador por usuário+senha (sem e-mail, conta real no
+// Supabase Auth) — funciona em qualquer dispositivo, sem precisar que o
+// administrador já tenha aberto o app ali antes (diferente do fluxo antigo
+// de selecionar o nome, que depende de window.SALAO_ID já estar definido).
+function ativarAppComoColaborador(colab){
+  var overlay=document.getElementById('aflor-overlay');
+  if(overlay)overlay.classList.add('hidden');
+  window.SALAO_ID=colab.salao_id;
+  window.SALAO_RESPONSAVEL=colab.nome;
+  colaboradorLogado=colab.nome;
+  try{
+    localStorage.setItem('aflor_logado','colab_'+colab.nome);
+    localStorage.setItem('aflor_ultimo_salao_id',window.SALAO_ID);
+    sessionStorage.setItem('flora_salao_id',window.SALAO_ID);
+  }catch(e){}
+  carregarDadosDoSalao().then(function(){entrarComoColaborador(colab.nome);});
+}
+async function entrarComoColaboradorPorAuth(){
+  try{
+    var sessao=await supa.auth.getSession();
+    var user=sessao.data&&sessao.data.session?sessao.data.session.user:null;
+    if(!user){showAlertOb('Não foi possível confirmar sua sessão.');return;}
+    var r=await supa.from('colaboradores').select('*').eq('auth_user_id',user.id).maybeSingle();
+    if(!r||!r.data||r.data.status==='Inativo'){
+      showAlertOb('Seu acesso não está ativo. Fale com a administração do salão.');
+      supa.auth.signOut();
+      return;
+    }
+    ativarAppComoColaborador(r.data);
+  }catch(e){
+    console.log('err entrar colaborador por auth',e);
+    showAlertOb('Erro ao entrar. Tente novamente.');
+  }
+}
 function entrarComoColaborador(nome){
   // Esconder o app principal
   document.getElementById('page-colaborador-view').style.display='block';
@@ -17423,7 +17499,7 @@ function obFinish(){
 }
 
 function carregarDadosDoSalao(){
-  if(!window.SALAO_ID)return;
+  if(!window.SALAO_ID)return Promise.resolve();
   carregarClientesSupa();
   carregarFluxoLancamentosSupa();
   carregarCaixaAjustesSupa();
@@ -17432,9 +17508,10 @@ function carregarDadosDoSalao(){
   carregarPacotesClientesSupa();
   carregarServicosSupa();
   carregarProdutosSupa();
-  carregarColaboradoresSupa();
-  carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
+  var pColabs=carregarColaboradoresSupa();
+  var pAgenda=carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
+  return Promise.all([pColabs,pAgenda]);
 }
 async function carregarClientesSupa(){
   try{
@@ -17494,8 +17571,24 @@ function copiarLinkCadastroCliente(){
           window.location.replace('portal-aluno.html#access_token='+encodeURIComponent(sessAtual.access_token)+'&refresh_token='+encodeURIComponent(sessAtual.refresh_token));
           return;
         }
+        // Mesmo guard, pro login de colaborador por usuário (sem e-mail):
+        // sem isso, reabrir o app com a sessão dele já salva cairia direto
+        // no fluxo de admin — carregarSalaoAtual() não acha nada em saloes
+        // pra esse auth.uid() e CRIA um salão vazio novo com o id dele.
+        var checkColab=await supa.from('colaboradores').select('*').eq('auth_user_id',sessAtual.user.id).maybeSingle();
+        if(checkColab.data){
+          if(_appAtivo)return;
+          _appAtivo=true;
+          if(checkColab.data.status==='Inativo'){
+            try{localStorage.removeItem('aflor_logado');}catch(e){}
+            supa.auth.signOut();
+            return;
+          }
+          ativarAppComoColaborador(checkColab.data);
+          return;
+        }
       }
-    }catch(e){console.log('err checar sessao aluno',e);}
+    }catch(e){console.log('err checar sessao aluno/colaborador',e);}
     if(_appAtivo)return;
     _appAtivo=true;
     try{localStorage.setItem('aflor_logado','admin');}catch(e){}
