@@ -5884,10 +5884,16 @@ async function carregarAgendamentosSupa(){
     var dataInicio=fmtISO(dInicio);
     var dataFim=fmtISO(dFim);
     var h=await _authHeaders({'Accept':'application/json'});
-    var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=gte.'+dataInicio+'&data=lte.'+dataFim,{headers:h});
-    if(!resp.ok)throw new Error('agendamentos fetch '+resp.status);
+    var urlAgendamentos=SUPA_URL+'/rest/v1/agendamentos?salao_id=eq.'+window.SALAO_ID+'&data=gte.'+dataInicio+'&data=lte.'+dataFim;
+    var resp=await fetch(urlAgendamentos,{headers:h});
+    if(!resp.ok){
+      var corpoErro=await resp.text().catch(function(){return '';});
+      window._debugAgenda={salaoId:window.SALAO_ID,url:urlAgendamentos,httpStatus:resp.status,corpoErro:corpoErro,totalRows:null};
+      throw new Error('agendamentos fetch '+resp.status+' '+corpoErro);
+    }
     var rows=await resp.json();
     if(!Array.isArray(rows))rows=[];
+    window._debugAgenda={salaoId:window.SALAO_ID,url:urlAgendamentos,httpStatus:resp.status,totalRows:rows.length,erro:null};
     var mapaNomes={'Jennifer':'Jenny','Eduardo':'Edu','Vitória':'Vi','Victoria':'Vi','Vitoria':'Vi','Ana Flor':'Ana Flor','Lara':'Lara','Angélica':'Angélica'};
     rows.forEach(function(row){
       if(!row.data)return;
@@ -5948,7 +5954,10 @@ async function carregarAgendamentosSupa(){
     if(typeof renderComandas==='function')renderComandas();
     if(typeof renderDashProximos==='function')renderDashProximos();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
-  }catch(e){console.log('err carregar agendamentos',e);}
+  }catch(e){
+    console.log('err carregar agendamentos',e);
+    window._debugAgenda=Object.assign({salaoId:window.SALAO_ID,erro:(e&&e.message)||String(e)},window._debugAgenda||{});
+  }
 }
 
 // Mescla curso_turma_aulas em agendamentosPorData como um "ocupante" sintético
@@ -17551,7 +17560,12 @@ function entrarComoColaborador(nome){
       // quantas entradas brutas existem pra hoje, pra não precisar mais
       // pedir console.
       var bruto=Object.keys(apptsDia||{}).length;
-      var diagCv=bruto>0?('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: '+bruto+' entrada(s) bruta(s) em "'+todayKeyCv+'", nenhuma bateu no filtro do profissional</div>'):('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: "'+todayKeyCv+'" sem nenhuma entrada carregada ainda</div>');
+      var chavesExistentes=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData)?Object.keys(agendamentosPorData):[];
+      var dbgAg=(typeof window._debugAgenda!=='undefined'&&window._debugAgenda)?window._debugAgenda:null;
+      var dbgAgTxt=dbgAg?(' | última carga: salao_id='+dbgAg.salaoId+', http='+(dbgAg.httpStatus!=null?dbgAg.httpStatus:'?')+', linhas='+(dbgAg.totalRows!=null?dbgAg.totalRows:'?')+(dbgAg.erro?', erro='+dbgAg.erro:'')+(dbgAg.corpoErro?', corpo='+dbgAg.corpoErro:'')):' | nenhuma carga de agendamentos registrada ainda nesta sessão';
+      var diagCv=bruto>0
+        ?('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: '+bruto+' entrada(s) bruta(s) em "'+todayKeyCv+'", nenhuma bateu no filtro do profissional ("'+nome+'")'+dbgAgTxt+'</div>')
+        :('<div style="margin-top:8px;font-size:10px;color:#f59e0b">⚠ debug: chave "'+todayKeyCv+'" não existe em agendamentosPorData. Chaves que existem ('+chavesExistentes.length+'): '+(chavesExistentes.length?chavesExistentes.join(', '):'(nenhuma — agendamentosPorData está vazio)')+dbgAgTxt+'</div>');
       agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>'+diagCv;
     } else {
       agenda.innerHTML=meusAppts.map(function(a){
