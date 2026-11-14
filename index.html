@@ -1507,7 +1507,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-comandas">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
         <input placeholder="🔍 Buscar comanda ou cliente..." style="flex:1;min-width:200px;max-width:300px"/>
-        <button class="btn btn-primary btn-sm" onclick="abrirModalComanda()">+ Nova Comanda</button>
+        <button class="btn btn-primary btn-sm" id="btn-nova-comanda" onclick="abrirModalComanda()">+ Nova Comanda</button>
       </div>
       <div class="table-card">
         <table>
@@ -4493,7 +4493,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="popup-linha-sinal-abate" style="display:none;justify-content:space-between;font-size:12px;margin-bottom:6px">
             <span style="color:var(--af-gray)">(-) Sinal pago</span><span id="popup-sinal-abate-valor" style="font-weight:700;color:var(--af-accent)"></span>
           </div>
-          <div style="background:#fafafa;border-radius:10px;padding:10px;margin:8px 0;border:1px solid var(--af-border)">
+          <div id="popup-desconto-wrap" style="background:#fafafa;border-radius:10px;padding:10px;margin:8px 0;border:1px solid var(--af-border)">
             <div style="font-size:11px;font-weight:700;color:var(--af-gray);margin-bottom:8px">DESCONTO</div>
             <div class="af-row">
               <span class="material-symbols-outlined" style="font-size:18px">money_off</span>
@@ -10231,6 +10231,8 @@ function abrirComandaAgendamentoLista(dataKey,key){
 function renderComandas(){
   const tb=document.getElementById('comandas-table');
   if(!tb)return;
+  var btnNovaCmd=document.getElementById('btn-nova-comanda');
+  if(btnNovaCmd)btnNovaCmd.style.display=colabPermitido('comandas_abrir')?'':'none';
   var deAgenda=listarComandasDeAgendamentos();
   var manuais=(typeof comandas!=='undefined'?comandas:[]).map(function(c,i){
     return {origem:c.origem||'manual',comandaIdx:i,n:c.n||('CMD-'+(i+1)),cliente:c.cliente||'',data:c.data||'',total:c.total||'',pgto:c.pgto||'—',status:c.status||'Aberta',sinal:!!c.sinal,sinalStatus:c.sinalStatus||'pendente',sinalValor:c.sinal||''};
@@ -16085,6 +16087,10 @@ function abrirAtendimentoEdicao(key,dados){
   // Sem exigir caixa aberto pra só visualizar/editar — igual o painel antigo. Ações que mexem
   // com dinheiro (confirmar sinal, registrar pagamento) continuam checando isso por conta própria.
   resetFormAgendar();
+  // Campo de desconto da comanda só pra quem tem comandas_aplicar_desconto —
+  // esse popup é o mesmo usado pela Agenda e pela lista de Comandas.
+  var descWrap=document.getElementById('popup-desconto-wrap');
+  if(descWrap)descWrap.style.display=colabPermitido('comandas_aplicar_desconto')?'':'none';
   agEditandoKey=key;
   agEditandoDados=dados;
   agEditandoDataKeyOriginal=agendaDataKeyAtual;
@@ -16842,6 +16848,10 @@ function cmdPreencherSinalDeComanda(c){
 }
 function abrirModalComanda(editIdx){
   var isVer=typeof editIdx==='number'&&editIdx>=0;
+  // "+ Nova Comanda" (isVer=false) é gateado por comandas_abrir; abrir uma
+  // comanda já existente pra só ver ("Ver"/verComandaManual) não é — isso já
+  // está coberto pelo módulo "comandas" estar ativo pra essa pessoa.
+  if(!isVer&&!colabPermitido('comandas_abrir')){showAlert('Você não tem permissão para abrir novas comandas.');return;}
   document.getElementById('cmd-modo').value=isVer?'ver':'criar';
   document.getElementById('cmd-edit-idx').value=isVer?editIdx:-1;
   document.getElementById('cmd-modal-titulo').textContent=isVer?'Detalhes da Comanda':'Nova Comanda';
