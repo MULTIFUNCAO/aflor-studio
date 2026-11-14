@@ -15163,6 +15163,7 @@ function salvarColaborador(){
   var email=document.getElementById('colab-email')?.value||'';
   var senha=document.getElementById('colab-senha')?.value||'';
   var usuario=document.getElementById('colab-usuario')?.value?.trim()||'';
+  if(usuario&&senha&&senha.length<6){showAlert('A senha de acesso precisa ter pelo menos 6 caracteres.');return;}
   var iniciais=nome.split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var novoColab={
     nome:nome, email:email, cargo:cargo,
@@ -15286,7 +15287,7 @@ function editarColab(idx){
       <!-- Senha de acesso -->
       <div class="form-group full">
         <label>🔐 Alterar senha de acesso</label>
-        <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual. Só é usada se "Usuário de acesso" estiver preenchido.</div>
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Deixe em branco para não alterar a senha atual (mínimo 6 caracteres se preencher). Só é usada se "Usuário de acesso" estiver preenchido.</div>
         <div style="position:relative">
           <input type="password" id="edit-senha" placeholder="Deixe em branco para não alterar" style="width:100%;box-sizing:border-box;padding-right:38px"/>
           <span onclick="toggleSenhaVisivel('edit-senha',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:15px;color:#888;user-select:none">👁</span>
@@ -15351,6 +15352,7 @@ function salvarEdicaoColab(idx){
   c.status=document.getElementById('edit-status')?.value||'Ativo';
   var novoUsuario=document.getElementById('edit-usuario')?.value?.trim()||'';
   var novaSenha=document.getElementById('edit-senha')?.value||'';
+  if(novaSenha&&novaSenha.length<6){showAlert('A senha de acesso precisa ter pelo menos 6 caracteres.');return;}
   if(novaSenha)c.senha=novaSenha;
   var mEdit=document.getElementById('modal-editar-colab');
   c.permissoes=lerPermissoesDoRoot(mEdit);
