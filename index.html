@@ -1486,7 +1486,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#6b7280">
-        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1px solid #E5E7EB;border-left:3px solid #111"></span>Agendado</div>
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#F5F3FF;border:1.5px solid #A78BFA;border-left:3px solid #111"></span>Agendado</div>
         <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#DBEAFE;border:1.5px solid #3B82F6"></span>Confirmado</div>
         <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#FEF3C7;border:1.5px solid #EAB308"></span>Sinal pago</div>
         <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#DCFCE7;border:1.5px solid #22C55E"></span>Paga</div>
@@ -13332,8 +13332,14 @@ function corBlocoAgenda(a){
   if(concluido) return '#22C55E';
   if(sinalPago) return '#EAB308';
   if(a.confirmado) return '#3B82F6';
-  // Agendado sem sinal: cor do colaborador (mesmo critério de match do header da agenda)
-  var profNomeBloco=(a.prof||'').split(' ')[0];
+  // Agendado sem sinal: lilás — a faixa à esquerda (cor do colaborador) é
+  // calculada à parte, em corFaixaProfissionalAgenda.
+  return '#A78BFA';
+}
+// Cor da faixa fina à esquerda do card "Agendado" — identifica quem vai
+// atender, separado da cor de fundo/borda (lilás) do status.
+function corFaixaProfissionalAgenda(a){
+  var profNomeBloco=(a&&a.prof||'').split(' ')[0];
   var colabBloco=typeof colaboradores!=='undefined'&&colaboradores?colaboradores.find(function(c){return c.nome.startsWith(profNomeBloco);}):null;
   return (colabBloco&&colabBloco.cor)?colabBloco.cor:'#111111';
 }
@@ -13353,9 +13359,8 @@ function corBlocoAgendaPastel(a){
   if(concluido) return '#DCFCE7';
   if(sinalPago) return '#FEF3C7';
   if(a.confirmado) return '#DBEAFE';
-  // Agendado sem sinal: branco — a faixa à esquerda (cor do profissional) já
-  // identifica quem vai atender, sem precisar colorir o fundo inteiro.
-  return '#FFFFFF';
+  // Agendado sem sinal: lilás claro.
+  return '#F5F3FF';
 }
 
 function toggleBuscaAgenda(){
@@ -13722,9 +13727,9 @@ function renderAgenda(){
           var sinalPagoB=!!bloqAppt.sinalPago||(bloqAppt.sinal_status||'')==='pago';
           var isAulaB=bloqAppt.tipo==='aula';
           var agendadoSimplesB=!isAulaB&&!concluidoB&&!sinalPagoB&&!bloqAppt.confirmado;
-          var temBordaCheiaB=!isAulaB&&!agendadoSimplesB;
+          var temBordaCheiaB=!isAulaB;
           var bordaLRB=temBordaCheiaB?('1.5px solid '+corAccentB):'none';
-          var bordaEsqB=agendadoSimplesB?('3px solid '+corAccentB):bordaLRB;
+          var bordaEsqB=agendadoSimplesB?('3px solid '+corFaixaProfissionalAgenda(bloqAppt)):bordaLRB;
           var bordaBottomB=(temBordaCheiaB&&isUltimoBloq)?('1.5px solid '+corAccentB):'none';
           var estiloBordaB='border-top:none;border-right:'+bordaLRB+';border-bottom:'+bordaBottomB+';border-left:'+bordaEsqB+';';
           return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="${slotStyleB}"><div class="agenda-card" style="position:absolute;inset:${insetB};background:${corBlocoB};${estiloBordaB}box-shadow:none;border-radius:${raioB}"></div></div>`;
@@ -13742,7 +13747,7 @@ function renderAgenda(){
       // Agendado "simples" (sem sinal/confirmação/pagamento/cancelamento) só leva a
       // faixa fina colorida à esquerda — as outras cores levam uma borda cheia.
       const agendadoSimplesCard=!canceladoCard&&!isAulaCard&&!concluidoCard&&!sinalPagoCard&&!a.confirmado;
-      const temBordaCheiaCard=!isAulaCard&&!agendadoSimplesCard;
+      const temBordaCheiaCard=!isAulaCard;
       const durMinCard=parseInt((a.duracao||'30 min').replace(/\D/g,''))||30;
       // Cancelado/Falta sempre ocupa só 1 slot visualmente — o horário logo
       // depois já está livre pra um novo agendamento (ver loop acima).
@@ -13756,7 +13761,7 @@ function renderAgenda(){
       // segmentos de um atendimento de mais de 30min — a de cima fica sem
       // borda/sombra embaixo, a de baixo sem borda/sombra em cima).
       const bordaLRCard=temBordaCheiaCard?`1.5px solid ${corAccent}`:'none';
-      const bordaEsqCard=agendadoSimplesCard?`3px solid ${corAccent}`:bordaLRCard;
+      const bordaEsqCard=agendadoSimplesCard?`3px solid ${corFaixaProfissionalAgenda(a)}`:bordaLRCard;
       const bordaTopCard=(temBordaCheiaCard&&!isMultiSlot)?`1.5px solid ${corAccent}`:'none';
       const bordaBottomCard=(temBordaCheiaCard&&!isMultiSlot)?`1.5px solid ${corAccent}`:'none';
       const estiloBordaCard=`border-top:${bordaTopCard};border-right:${bordaLRCard};border-bottom:${bordaBottomCard};border-left:${bordaEsqCard};`;
@@ -13771,8 +13776,8 @@ function renderAgenda(){
           <div style="font-size:11px;opacity:.75;margin-top:1px;${riscadoStyle}">${a.servico}</div>
           <div style="font-size:10px;margin-top:4px;display:flex;flex-direction:column;gap:3px">
             ${tagCanceladoHtml}
-            ${(!canceladoCard&&a.sinal)?`<span style="opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
-            ${(!canceladoCard&&!a.confirmado)?`<div style="display:flex;align-items:center;gap:4px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:10px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
+            ${(!canceladoCard&&!concluidoCard&&a.sinal)?`<span style="opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
+            ${(!canceladoCard&&!concluidoCard&&!a.confirmado)?`<div style="display:flex;align-items:center;gap:4px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:10px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
             ${verDetalhesCanceladoHtml}
             <span style="opacity:.5">${a.hora}</span>
           </div>
