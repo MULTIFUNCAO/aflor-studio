@@ -1485,6 +1485,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </button>
         </div>
       </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#6b7280">
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#fff;border:1px solid #E5E7EB;border-left:3px solid #111"></span>Agendado</div>
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#DBEAFE;border:1.5px solid #3B82F6"></span>Confirmado</div>
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#FEF3C7;border:1.5px solid #EAB308"></span>Sinal pago</div>
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#DCFCE7;border:1.5px solid #22C55E"></span>Paga</div>
+        <div style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:4px;background:#F1F5F9;border:1.5px solid #94A3B8"></span>Cancelado/Falta</div>
+      </div>
       <div class="calendar-container">
         <div id="agenda-scroll" style="overflow:auto;max-height:480px">
           <div id="agenda-grid"></div>
@@ -11774,31 +11781,31 @@ function cancelarComandaVinculada(cliente){
   });
   if(typeof renderComandas==='function')renderComandas();
 }
-function excluirAgendamentoLocal(key){
-  delete agendaDiaAtual[key];
-  var dataKey=agendaGetDataKey();
-  if(agendamentosPorData[dataKey])delete agendamentosPorData[dataKey][key];
-}
-function excluirAgendamentoSupa(supaId){
-  if(!supaId)return Promise.resolve();
-  return _authHeaders().then(function(h){
-    return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{method:'DELETE',headers:h});
-  }).then(function(r){if(!r.ok)throw new Error('delete failed');});
-}
-function finalizarCancelamentoAtendimento(key,a){
+// Cancelar/Marcar falta é "soft": mantém o registro (só muda o status) em vez
+// de apagar, pra manter histórico e deixar o card cinza/riscado na Agenda —
+// mas o horário fica livre pra um novo agendamento (ver agendaStatusCancelado
+// no loop de bloqueio/renderização da Agenda) e sai de comissão/faturamento
+// automaticamente (calcularComissaoPeriodo só soma status==='Concluído').
+function finalizarCancelamentoAtendimento(key,a,novoStatus,msgSucesso){
   cancelarComandaVinculada(a.cliente);
   var supaId=a.id||null;
-  excluirAgendamentoLocal(key);
+  a.status=novoStatus;
+  var dataKey=agendaGetDataKey();
+  if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
+    agendamentosPorData[dataKey][key].status=novoStatus;
+  }
   fecharAgendaPopup();
   renderAgenda();
   if(supaId){
-    excluirAgendamentoSupa(supaId).catch(function(){
-      showAlert('Atendimento removido localmente. Erro ao excluir no servidor.');
+    _authHeaders({'Content-Type':'application/json'}).then(function(h){
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+supaId,{method:'PATCH',headers:h,body:JSON.stringify({status:novoStatus})});
+    }).catch(function(){
+      showAlert(msgSucesso+' localmente. Erro ao sincronizar no servidor.');
     });
   }
-  showAlert('Atendimento cancelado.');
+  showAlert(msgSucesso+'.');
 }
-function executarCancelamentoAtendimento(key,estornarSinal){
+function executarCancelamentoAtendimento(key,estornarSinal,novoStatus,msgSucesso){
   var a=agendaDiaAtual[key]||agendaAppts[key];
   if(!a){showAlert('Agendamento não encontrado.');return;}
   if(estornarSinal)estornarSinalAgendamento(a);
@@ -11806,7 +11813,7 @@ function executarCancelamentoAtendimento(key,estornarSinal){
   if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]&&estornarSinal){
     estornarSinalAgendamento(agendamentosPorData[dataKey][key]);
   }
-  finalizarCancelamentoAtendimento(key,a);
+  finalizarCancelamentoAtendimento(key,a,novoStatus,msgSucesso);
 }
 function cancelarAtendimentoAgenda(key){
   var a=agendaDiaAtual[key];
@@ -11823,10 +11830,31 @@ function cancelarAtendimentoAgenda(key){
         {label:'Sim, estornar',valor:'estornar',primario:true},
         {label:'Não, manter no caixa',valor:'manter'}
       ],function(esc){
-        if(esc==='estornar')executarCancelamentoAtendimento(key,true);
-        else if(esc==='manter')executarCancelamentoAtendimento(key,false);
+        if(esc==='estornar')executarCancelamentoAtendimento(key,true,'Cancelada','Atendimento cancelado');
+        else if(esc==='manter')executarCancelamentoAtendimento(key,false,'Cancelada','Atendimento cancelado');
       });
-    }else executarCancelamentoAtendimento(key,false);
+    }else executarCancelamentoAtendimento(key,false,'Cancelada','Atendimento cancelado');
+  });
+}
+function marcarFaltaAtendimento(key){
+  var a=agendaDiaAtual[key];
+  if(!a){showAlert('Agendamento não encontrado.');return;}
+  if(atendimentoConcluido(a)){showAlert('Este atendimento já foi pago integralmente.');return;}
+  showConfirmBotoes('Marcar falta do cliente nesse atendimento? O horário fica livre pra um novo agendamento.',[
+    {label:'Sim, marcar falta',valor:'sim',primario:true},
+    {label:'Não',valor:'nao'}
+  ],function(resp){
+    if(resp!=='sim')return;
+    var sinal=lerSinalAgendamento(a);
+    if(sinal.pago&&sinal.valor>0){
+      showConfirmBotoes('Sinal de '+formatMoedaBR(sinal.valor)+' já foi pago. Estornar o sinal do Caixa?',[
+        {label:'Sim, estornar',valor:'estornar',primario:true},
+        {label:'Não, manter no caixa',valor:'manter'}
+      ],function(esc){
+        if(esc==='estornar')executarCancelamentoAtendimento(key,true,'Faltou','Falta registrada');
+        else if(esc==='manter')executarCancelamentoAtendimento(key,false,'Faltou','Falta registrada');
+      });
+    }else executarCancelamentoAtendimento(key,false,'Faltou','Falta registrada');
   });
 }
 // Cancela esta ocorrência e todas as futuras da mesma série de "Repetir atendimento"
@@ -13285,16 +13313,25 @@ document.addEventListener('click',function(e){
 
 var agendaAppts={};
 
+// Cancelado/Falta é um estado terminal "fora do fluxo": não bloqueia o
+// horário pra um novo agendamento, não entra em comissão nem faturamento
+// (calcularComissaoPeriodo só soma status==='Concluído') — então é checado
+// ANTES de qualquer outra cor/prioridade.
+function agendaStatusCancelado(a){
+  var st=(a&&a.status||'').toLowerCase();
+  return st==='cancelada'||st==='cancelado'||st==='faltou';
+}
 function corBlocoAgenda(a){
   if(!a) return '#111111';
   if(a.tipo==='aula') return '#8b5cf6';
+  if(agendaStatusCancelado(a)) return '#94A3B8';
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  // Amarelo (comanda paga/fechada) — recepção vê de longe quem já pagou
-  if(concluido) return '#EAB308';
-  // Amarelo vivo: sinal pago, atendimento pendente
-  if(sinalPago) return '#facc15';
+  // Prioridade: Paga > Sinal pago > Confirmado > Agendado
+  if(concluido) return '#22C55E';
+  if(sinalPago) return '#EAB308';
+  if(a.confirmado) return '#3B82F6';
   // Agendado sem sinal: cor do colaborador (mesmo critério de match do header da agenda)
   var profNomeBloco=(a.prof||'').split(' ')[0];
   var colabBloco=typeof colaboradores!=='undefined'&&colaboradores?colaboradores.find(function(c){return c.nome.startsWith(profNomeBloco);}):null;
@@ -13302,28 +13339,23 @@ function corBlocoAgenda(a){
 }
 function corTextoBlocoAgenda(cor){
   // Amarelo precisa de texto escuro
-  if(cor==='#facc15') return '#111111';
+  if(cor==='#EAB308') return '#111111';
   return '#ffffff';
-}
-var _pastelPaletteAgenda=['#FBE7EC','#EFEAFB','#E7F1FB','#FBF0DC','#E6F4EA'];
-function _pastelByString(s){
-  var h=0;for(var i=0;i<(s||'').length;i++)h=(h*31+s.charCodeAt(i))>>>0;
-  return _pastelPaletteAgenda[h%_pastelPaletteAgenda.length];
 }
 function corBlocoAgendaPastel(a){
   if(!a) return '#F1F0EC';
   if(a.tipo==='aula') return '#EFEAFB';
+  if(agendaStatusCancelado(a)) return '#F1F5F9';
   var st=(a.status||'').toLowerCase();
   var concluido=st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado';
   var sinalPago=!!a.sinalPago||(a.sinal_status||'')==='pago';
-  // Amarelo suave: comanda paga/fechada (checado antes do sinal — uma comanda
-  // concluída quase sempre também tem sinalPago=true, e o status de "paga"
-  // deve vencer o de "sinal pago, ainda pendente")
-  if(concluido) return '#FEF3C7';
-  // Dourado suave: sinal pago, atendimento pendente
-  if(sinalPago) return '#FBF0DC';
-  // Agendado sem sinal: tom suave por serviço (consistente pro mesmo serviço)
-  return _pastelByString(a.servico||a.cliente||'');
+  // Prioridade: Paga (verde) > Sinal pago (amarelo) > Confirmado (azul) > Agendado (branco)
+  if(concluido) return '#DCFCE7';
+  if(sinalPago) return '#FEF3C7';
+  if(a.confirmado) return '#DBEAFE';
+  // Agendado sem sinal: branco — a faixa à esquerda (cor do profissional) já
+  // identifica quem vai atender, sem precisar colorir o fundo inteiro.
+  return '#FFFFFF';
 }
 
 function toggleBuscaAgenda(){
@@ -13655,6 +13687,8 @@ function renderAgenda(){
         for(var k2 in apptsDiaFull){
           var a2=apptsDiaFull[k2];
           if(!a2)continue;
+          // Cancelado/Falta não bloqueia o horário — libera pra um novo agendamento.
+          if(agendaStatusCancelado(a2))continue;
           var p2=normalizeProfAgenda(a2.prof||k2.split(':')[0]);
           if(p2!==pn)continue;
           var hIni=normalizarHoraAgenda(a2.hora||k2.split(':')[1]||'');
@@ -13681,30 +13715,65 @@ function renderAgenda(){
           var raioB=isUltimoBloq?'0 0 14px 14px':'0';
           var insetB=isUltimoBloq?'0 6px 4px 6px':'0 6px 0 6px';
           var slotStyleB=isUltimoBloq?'position:relative;cursor:not-allowed':'position:relative;cursor:not-allowed;border-bottom:none';
-          return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="${slotStyleB}"><div class="agenda-card" style="position:absolute;inset:${insetB};background:${corBlocoAgendaPastel(bloqAppt)};border-radius:${raioB}"></div></div>`;
+          var corBlocoB=corBlocoAgendaPastel(bloqAppt);
+          var corAccentB=corBlocoAgenda(bloqAppt);
+          var stB=(bloqAppt.status||'').toLowerCase();
+          var concluidoB=stB==='concluído'||stB==='concluido'||stB==='fechado'||stB==='finalizado';
+          var sinalPagoB=!!bloqAppt.sinalPago||(bloqAppt.sinal_status||'')==='pago';
+          var isAulaB=bloqAppt.tipo==='aula';
+          var agendadoSimplesB=!isAulaB&&!concluidoB&&!sinalPagoB&&!bloqAppt.confirmado;
+          var temBordaCheiaB=!isAulaB&&!agendadoSimplesB;
+          var bordaLRB=temBordaCheiaB?('1.5px solid '+corAccentB):'none';
+          var bordaEsqB=agendadoSimplesB?('3px solid '+corAccentB):bordaLRB;
+          var bordaBottomB=(temBordaCheiaB&&isUltimoBloq)?('1.5px solid '+corAccentB):'none';
+          var estiloBordaB='border-top:none;border-right:'+bordaLRB+';border-bottom:'+bordaBottomB+';border-left:'+bordaEsqB+';';
+          return `<div class="slot bloqueado" title="${bloqCliente} em atendimento até ${bloqFim}" style="${slotStyleB}"><div class="agenda-card" style="position:absolute;inset:${insetB};background:${corBlocoB};${estiloBordaB}box-shadow:none;border-radius:${raioB}"></div></div>`;
         }
         return `<div class="slot" onclick="abrirModalAgendar('${p}','${h}')" title="Agendar ${p} às ${h}" style="cursor:pointer"></div>`;
       }
       const sinalIcon=a.sinal?(a.sinalPago?'✅':'⏳'):'';
       const corBloco=corBlocoAgendaPastel(a);
+      const corAccent=corBlocoAgenda(a);
+      const canceladoCard=agendaStatusCancelado(a);
       const stCard=(a.status||'').toLowerCase();
       const concluidoCard=stCard==='concluído'||stCard==='concluido'||stCard==='fechado'||stCard==='finalizado';
-      const bordaCard=concluidoCard?'border:1.5px solid #EAB308;':'';
+      const sinalPagoCard=!!a.sinalPago||(a.sinal_status||'')==='pago';
+      const isAulaCard=a.tipo==='aula';
+      // Agendado "simples" (sem sinal/confirmação/pagamento/cancelamento) só leva a
+      // faixa fina colorida à esquerda — as outras cores levam uma borda cheia.
+      const agendadoSimplesCard=!canceladoCard&&!isAulaCard&&!concluidoCard&&!sinalPagoCard&&!a.confirmado;
+      const temBordaCheiaCard=!isAulaCard&&!agendadoSimplesCard;
       const durMinCard=parseInt((a.duracao||'30 min').replace(/\D/g,''))||30;
-      const isMultiSlot=durMinCard>30;
+      // Cancelado/Falta sempre ocupa só 1 slot visualmente — o horário logo
+      // depois já está livre pra um novo agendamento (ver loop acima).
+      const isMultiSlot=!canceladoCard&&durMinCard>30;
       const slotSpanCard=Math.max(1,Math.round(durMinCard/30));
       const raioCard=isMultiSlot?'14px 14px 0 0':'14px';
       const insetCard=isMultiSlot?'4px 6px 0 6px':`top:4px;left:6px;right:6px;min-height:${slotSpanCard*64-8}px`;
       const posCard=isMultiSlot?`position:absolute;inset:${insetCard}`:`position:absolute;${insetCard}`;
       const slotStyleCard=isMultiSlot?'position:relative;border-bottom:none':'position:relative';
-      const clickHandlerCard=a.tipo==='aula'?`abrirInfoTurmaAgenda('${key}')`:`abrirAtendimentoEdicao('${key}',agendaDiaAtual['${key}'])`;
+      // Uma borda só em volta do card inteiro (sem linha de emenda entre os
+      // segmentos de um atendimento de mais de 30min — a de cima fica sem
+      // borda/sombra embaixo, a de baixo sem borda/sombra em cima).
+      const bordaLRCard=temBordaCheiaCard?`1.5px solid ${corAccent}`:'none';
+      const bordaEsqCard=agendadoSimplesCard?`3px solid ${corAccent}`:bordaLRCard;
+      const bordaTopCard=(temBordaCheiaCard&&!isMultiSlot)?`1.5px solid ${corAccent}`:'none';
+      const bordaBottomCard=(temBordaCheiaCard&&!isMultiSlot)?`1.5px solid ${corAccent}`:'none';
+      const estiloBordaCard=`border-top:${bordaTopCard};border-right:${bordaLRCard};border-bottom:${bordaBottomCard};border-left:${bordaEsqCard};`;
+      const sombraCard=isMultiSlot?'box-shadow:none;':'';
+      const riscadoStyle=canceladoCard?'text-decoration:line-through;':'';
+      const tagCanceladoHtml=canceladoCard?`<span style="font-size:9px;font-weight:800;background:#E2E8F0;color:#475569;padding:2px 6px;border-radius:20px;text-decoration:none;display:inline-block">${stCard==='faltou'?'Faltou':'Cancelado'}</span>`:'';
+      const verDetalhesCanceladoHtml=canceladoCard?`<button onclick="event.stopPropagation();abrirAtendimentoEdicao('${key}',agendaDiaAtual['${key}'])" style="align-self:flex-start;background:none;border:none;color:#64748B;text-decoration:underline;font-size:9px;cursor:pointer;padding:0">Ver detalhes</button>`:'';
+      const clickHandlerCard=canceladoCard?`abrirModalAgendar('${p}','${h}')`:(isAulaCard?`abrirInfoTurmaAgenda('${key}')`:`abrirAtendimentoEdicao('${key}',agendaDiaAtual['${key}'])`);
       return `<div class="slot occupied" style="${slotStyleCard}" onclick="${clickHandlerCard}">
-        <div class="agenda-card" style="${posCard};background:${corBloco};${bordaCard}border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:#17160F;cursor:pointer">
-          <div style="line-height:1.25">${a.cliente}</div>
-          <div style="font-size:11px;opacity:.75;margin-top:1px">${a.servico}</div>
+        <div class="agenda-card" style="${posCard};background:${corBloco};${estiloBordaCard}${sombraCard}border-radius:${raioCard};padding:7px 9px;font-size:12px;font-weight:700;color:${canceladoCard?'#64748B':'#17160F'};cursor:pointer">
+          <div style="line-height:1.25;${riscadoStyle}">${a.cliente}</div>
+          <div style="font-size:11px;opacity:.75;margin-top:1px;${riscadoStyle}">${a.servico}</div>
           <div style="font-size:10px;margin-top:4px;display:flex;flex-direction:column;gap:3px">
-            ${a.sinal?`<span style="opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
-            ${!a.confirmado?`<div style="display:flex;align-items:center;gap:4px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:10px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
+            ${tagCanceladoHtml}
+            ${(!canceladoCard&&a.sinal)?`<span style="opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sinalIcon} ${a.sinalPago?'Sinal pago':'Sinal pend.'}</span>`:''}
+            ${(!canceladoCard&&!a.confirmado)?`<div style="display:flex;align-items:center;gap:4px"><span style="flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.55;font-size:10px">Confirmar cliente:</span><button onclick="event.stopPropagation();confirmarAgendamentoWpp('${key}')" style="flex-shrink:0;background:#fff;color:#ea580c;border:1px solid rgba(234,88,12,.4);border-radius:10px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap">📲 Confirmar</button></div>`:''}
+            ${verDetalhesCanceladoHtml}
             <span style="opacity:.5">${a.hora}</span>
           </div>
         </div>
@@ -16984,12 +17053,14 @@ function renderizarCancelarEdicao(key,dados){
   if(!wrap)return;
   var stAg=(dados.status||'').toLowerCase();
   var atendConcluido=stAg==='concluído'||stAg==='concluido'||stAg==='fechado'||stAg==='finalizado';
-  var atendEmAberto=!atendConcluido;
+  var atendCancelado=typeof agendaStatusCancelado==='function'&&agendaStatusCancelado(dados);
+  var atendEmAberto=!atendConcluido&&!atendCancelado;
   var html='';
   if(atendEmAberto&&dados.serie_id){
     html+='<button type="button" onclick="afCancelarSerieEdicao(\''+dados.serie_id+'\',\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">event_busy</span>Cancelar esta e as próximas (repetição)</button>';
   }
   if(atendEmAberto){
+    html+='<button type="button" onclick="marcarFaltaAtendimento(\''+key+'\')" style="width:100%;padding:10px;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">event_busy</span>Marcar Falta</button>';
     html+='<button type="button" onclick="cancelarAtendimentoAgenda(\''+key+'\')" style="width:100%;padding:10px;background:#fef2f2;color:#ef4444;border:1px solid #fecaca;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px">delete</span>Cancelar Atendimento</button>';
   }
   wrap.innerHTML=html;
@@ -19664,7 +19735,7 @@ async function renderDashboardCards(){
         var partes=dk.split('/');
         if(partes.length===3){
           var mesDk=parseInt(partes[1],10)-1, anoDk=parseInt(partes[2],10);
-          var qtd=Object.keys(agendamentosPorData[dk]||{}).filter(function(k){return agendamentosPorData[dk][k]&&agendamentosPorData[dk][k].cliente;}).length;
+          var qtd=Object.keys(agendamentosPorData[dk]||{}).filter(function(k){return agendamentosPorData[dk][k]&&agendamentosPorData[dk][k].cliente&&!agendaStatusCancelado(agendamentosPorData[dk][k]);}).length;
           if(mesDk===mesAtual&&anoDk===anoAtual) atendimentosMes+=qtd;
           if(dk===diaKeyHoje){atendimentosHoje=qtd;diaDataHoje=agendamentosPorData[dk];}
         }
