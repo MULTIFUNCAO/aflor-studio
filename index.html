@@ -920,11 +920,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Principal</div>
-    <div class="nav-item active" onclick="showPage('dashboard')">
+    <div class="nav-item active" id="nav-inicio" onclick="irParaInicio()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Página principal
     </div>
-    <div class="nav-item" onclick="showPage('agenda')">
+    <div class="nav-item" data-perm-mod="agenda" onclick="showPage('agenda')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       Atendimentos
     </div>
@@ -932,18 +932,18 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 01-8 0"/></svg>
       Vendas
     </div>
-    <div class="nav-item" onclick="showPage('comandas')">
+    <div class="nav-item" data-perm-mod="comandas" onclick="showPage('comandas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
       Comandas
     </div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Financeiro</div>
-    <div class="nav-item" onclick="showPage('fluxo')">
+    <div class="nav-item" data-perm-mod="financeiro" onclick="showPage('fluxo')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       Fluxo de Caixa
     </div>
-    <div class="nav-item" onclick="showPage('caixa')">
+    <div class="nav-item" data-perm-mod="financeiro" onclick="showPage('caixa')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
       Controle de Caixa
     </div>
@@ -974,7 +974,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
       Pacotes
     </div>
-    <div class="nav-item" onclick="showPage('clientes')">
+    <div class="nav-item" data-perm-mod="clientes" onclick="showPage('clientes')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Clientes
     </div>
@@ -987,7 +987,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Colaboradores
     </div>
-    <div class="nav-item" onclick="showPage('metas')">
+    <div class="nav-item" data-perm-mod="metas" onclick="showPage('metas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
       Metas e Tarefas
       <span class="nav-badge" id="nav-badge-metas">3</span>
@@ -1026,7 +1026,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Análises</div>
-    <div class="nav-item" onclick="showPage('relatorios')">
+    <div class="nav-item" data-perm-mod="relatorios" onclick="showPage('relatorios')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Relatórios
     </div>
@@ -8047,6 +8047,16 @@ const pages = {
   'relatorios':'Relatórios','plano':'Plano e Pagamento','configuracoes':'Configurações','termos':'Termos e Privacidade'
 };
 
+// Mapa página→módulo de permissão, usado só para sessão de colaborador
+// (admin sempre vê tudo). SÓ entra aqui um page-id depois de eu revisar e
+// aplicar o escopo de dados certo dentro daquela página (ex: Agenda já
+// respeita "visualizar própria" vs "todas" — ver renderAgenda). Os outros 5
+// módulos (Clientes/Comandas/Financeiro/Relatórios/Metas) ainda mostram
+// dado de admin sem filtro nenhum por dentro — por isso ficam de fora
+// deliberadamente por enquanto, mesmo com permissão ativa, pra não vazar
+// financeiro geral/dados de outro profissional. Plano combinado com a
+// usuária: revisar um módulo por vez antes de abrir no menu do colaborador.
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda'};
 function showPage(id){
   var IDS_BLOQUEADOS_INICIAL=['remuneracoes','colaboradores','metas','marketing','influenciadoras'];
   var nomesRecursoBloqueado={remuneracoes:'Remunerações',colaboradores:'Colaboradores',metas:'Metas',marketing:'Marketing',influenciadoras:'Influenciadoras'};
@@ -8057,7 +8067,20 @@ function showPage(id){
     else alert('Esse recurso é exclusivo do plano Profissional.');
     return;
   }
-  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');if(p.id!=='page-colaborador-view')p.style.display='none';});
+  // Blindagem de servidor-nenhum: mesmo que o item do menu esteja escondido,
+  // uma sessão de colaborador não entra numa página fora dos 6 módulos (ou
+  // sem a permissão ativa pro módulo correspondente) nem chamando showPage()
+  // direto. Admin (colaboradorLogado vazio) nunca passa por essa checagem.
+  if(id!=='colaborador-view'&&typeof colaboradorLogado!=='undefined'&&colaboradorLogado){
+    var _modPg=PERM_MOD_POR_PAGE_ID[id];
+    var _colabPg=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===colaboradorLogado;});
+    var _temModulo=_modPg&&_colabPg&&_colabPg.permissoes&&_colabPg.permissoes[_modPg]&&_colabPg.permissoes[_modPg].ativo;
+    if(!_temModulo){
+      showAlert('Você não tem permissão para acessar essa área.');
+      return;
+    }
+  }
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   try{if(typeof renderDashboardCards==='function')renderDashboardCards();}catch(e){}
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   var pg=document.getElementById('page-'+id);
@@ -12671,6 +12694,16 @@ function renderAgenda(){
     ?agendaProfs.filter(function(p){return profAgendaIgual(p,filtro);})
     :agendaProfs.slice();
   if(filtro&&!profNames.length)profNames=[normalizeProfAgenda(filtro)];
+  // Colaborador sem "Visualizar agenda de todos" só pode ver a própria
+  // coluna — aplicado por último, depois do filtro de busca, pra nenhum
+  // nome digitado na busca conseguir contornar essa restrição.
+  if(typeof colaboradorLogado!=='undefined'&&colaboradorLogado){
+    var _colabAg=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===colaboradorLogado;});
+    if(_colabAg&&!temPermissao(_colabAg,'agenda_visualizar_todas')){
+      profNames=profNames.filter(function(p){return profAgendaIgual(p,colaboradorLogado);});
+      if(!profNames.length)profNames=[colaboradorLogado];
+    }
+  }
   const grid=document.getElementById('agenda-grid');
   const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
   const profs=profNames;
@@ -17242,6 +17275,32 @@ function aplicarPermissoesAdmin(){
   document.querySelectorAll('.sidebar-section,.nav-item').forEach(function(el){el.style.display='';});
   showPage('dashboard');
 }
+// Mostra só os itens da sidebar cujo módulo (ver PERM_MOD_POR_PAGE_ID) está
+// ativo nas permissões do colaborador — o resto (Vendas, Remunerações,
+// Despesas, Financeiro Pessoal, Cadastros administrativos, Cursos, IA,
+// Marketing, Config...) fica escondido pra qualquer colaborador, sempre,
+// porque não faz parte dos 6 módulos do sistema de permissões (Agenda,
+// Clientes, Comandas, Financeiro, Relatórios, Metas).
+function aplicarPermissoesColaborador(colab){
+  var p=colab&&colab.permissoes?colab.permissoes:{};
+  // Só libera o item da sidebar se o módulo além de "ativo" nas permissões
+  // também já estiver na lista de páginas com escopo revisado
+  // (PERM_MOD_POR_PAGE_ID) — a tag data-perm-mod sozinha no HTML não basta,
+  // senão um módulo marcado no cadastro do colaborador mas cuja tela ainda
+  // não foi revisada apareceria no menu mostrando dado sem filtro.
+  var modulosProntos={};
+  Object.keys(PERM_MOD_POR_PAGE_ID).forEach(function(pid){modulosProntos[PERM_MOD_POR_PAGE_ID[pid]]=true;});
+  document.querySelectorAll('.nav-item').forEach(function(el){
+    if(el.id==='nav-inicio'||el.getAttribute('onclick')==='fazerLogout()'){el.style.display='';return;}
+    var mod=el.getAttribute('data-perm-mod');
+    var liberado=mod&&modulosProntos[mod]&&p[mod]&&p[mod].ativo;
+    el.style.display=liberado?'':'none';
+  });
+}
+function irParaInicio(){
+  if(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)showPage('colaborador-view');
+  else showPage('dashboard');
+}
 
 // Login de colaborador por usuário+senha (sem e-mail, conta real no
 // Supabase Auth) — funciona em qualquer dispositivo, sem precisar que o
@@ -17278,11 +17337,17 @@ async function entrarComoColaboradorPorAuth(){
   }
 }
 function entrarComoColaborador(nome){
-  // Esconder o app principal
-  document.getElementById('page-colaborador-view').style.display='block';
   // Preencher dados
   var colab=colaboradores.find(function(c){return c.nome===nome;});
   if(colab)colab.permissoes=normalizarPermissoes(colab.permissoes);
+  // Sidebar filtrada pelas permissões reais do colaborador — só os 6 módulos
+  // do sistema de permissões (Agenda/Clientes/Comandas/Financeiro/
+  // Relatórios/Metas), e só quando o módulo está ativo pra esse colaborador.
+  document.querySelectorAll('.sidebar-section,.nav-item').forEach(function(el){el.style.display='';});
+  aplicarPermissoesColaborador(colab);
+  // "Página principal" do colaborador é o próprio painel completo do
+  // profissional (page-colaborador-view), não o dashboard da dona.
+  showPage('colaborador-view');
   var ini=nome.split(' ').slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var nomeCurto=nome.split(' ')[0];
     window.SALAO_RESPONSAVEL=nome;
@@ -17361,18 +17426,38 @@ function entrarComoColaborador(nome){
   // Comissões
   var comEl=document.getElementById('cv-comissoes');
   if(comEl&&colab){
-    var pct=parseFloat(colab.comissao)||50;
-    var totalVendas=[{serv:'Manicure Pedicure',val:80},{serv:'Pedicure',val:50}];
-    var totalBruto=totalVendas.reduce(function(s,v){return s+v.val;},0);
+    // Comissão real: soma os lançamentos de receita confirmados do mês
+    // atual em fluxo_lancamentos onde o profissional é o próprio colaborador
+    // logado — antes era um array fixo ([{serv:'Manicure Pedicure',val:80}, ...]),
+    // igual pra todo mundo, sem ligação nenhuma com o que a pessoa de fato
+    // atendeu. "Projeção" extrapola o ritmo dos dias já passados do mês.
+    var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+    var lancsColabMes=fluxoLancamentos.filter(function(l){
+      if(l.tipo!=='receita'||l.status!=='confirmado')return false;
+      if((l.prof||'')!==colab.nome)return false;
+      var d=fluxoParseData(l.data);
+      return d&&d.getMonth()===hojeCv.getMonth()&&d.getFullYear()===hojeCv.getFullYear();
+    });
+    var totalBruto=lancsColabMes.reduce(function(s,l){return s+(parseFloat(l.val)||0);},0);
+    var porCategoria={};
+    lancsColabMes.forEach(function(l){var k=l.cat||'Outros';porCategoria[k]=(porCategoria[k]||0)+(parseFloat(l.val)||0);});
+    var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
     var comissaoVal=(totalBruto*pct/100).toFixed(2);
+    var diaAtual=hojeCv.getDate();
+    var diasNoMes=new Date(hojeCv.getFullYear(),hojeCv.getMonth()+1,0).getDate();
+    var projecaoComissao=diaAtual>0?((totalBruto/diaAtual)*diasNoMes*pct/100):0;
     document.getElementById('cv-comissao-mes').textContent='R$ '+comissaoVal.replace('.',',');
     comEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
       +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">R$ '+totalBruto.toFixed(2).replace('.',',')+'</div><div style="font-size:10px;color:#888;margin-top:2px">Faturamento bruto</div></div>'
       +'<div style="background:#f8f8f8;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800">'+pct+'%</div><div style="font-size:10px;color:#888;margin-top:2px">Sua comissão</div></div>'
       +'<div style="background:#111;border-radius:9px;padding:12px;text-align:center"><div style="font-size:18px;font-weight:800;color:#fff">R$ '+comissaoVal.replace('.',',')+'</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">A receber</div></div>'
       +'</div>'
+      +'<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:11px;color:#9a3412">📈 Projeção pro fim do mês (no ritmo atual)</span>'
+      +'<span style="font-size:14px;font-weight:800;color:#9a3412">R$ '+projecaoComissao.toFixed(2).replace('.',',')+'</span></div>'
       +'<div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">Detalhamento:</div>'
-      +totalVendas.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*pct/100).toFixed(2).replace('.',',')+'</span></div>';}).join('');
+      +(detalhamento.length?detalhamento.map(function(v){return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:12px"><span>'+v.serv+'</span><span style="font-weight:700">R$ '+(v.val*pct/100).toFixed(2).replace('.',',')+'</span></div>';}).join('')
+        :'<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum atendimento seu confirmado este mês ainda.</div>');
   }
   // Caixa (se permitido)
   var caixaSec=document.getElementById('cv-caixa-section');
