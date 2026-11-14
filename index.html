@@ -8056,7 +8056,7 @@ const pages = {
 // deliberadamente por enquanto, mesmo com permissão ativa, pra não vazar
 // financeiro geral/dados de outro profissional. Plano combinado com a
 // usuária: revisar um módulo por vez antes de abrir no menu do colaborador.
-var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes'};
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas'};
 function showPage(id){
   var IDS_BLOQUEADOS_INICIAL=['remuneracoes','colaboradores','metas','marketing','influenciadoras'];
   var nomesRecursoBloqueado={remuneracoes:'Remunerações',colaboradores:'Colaboradores',metas:'Metas',marketing:'Marketing',influenciadoras:'Influenciadoras'};
@@ -11789,7 +11789,7 @@ function popupExtrasToHtml(key){
       +'<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
       +_catLabel
       +'<input type="number" value="'+e.valor.toFixed(2)+'" min="0" step="0.01" oninput="popupEditarValorExtra(\''+key+'\','+i+',this.value)" title="Catálogo: '+formatMoedaBR(_catPreco)+'" style="width:72px;padding:3px 6px;border:1.5px solid #e5e5e5;border-radius:6px;font-size:12px;font-weight:700;text-align:right;outline:none;color:#111"/>'
-      +'<button onclick="popupRemoverExtra(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>'
+      +(colabPermitido('comandas_excluir_itens')?'<button onclick="popupRemoverExtra(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>':'')
       +'</div></div>'
       +prodsHtml
       +'</div>';
@@ -11806,7 +11806,7 @@ function popupNovosServicosToHtml(key){
       +'<span style="font-size:10px;color:#888;display:block">👤 '+e.profissional+' · 🕐 '+e.hora+'–'+fim+'</span></div>'
       +'<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">'
       +'<span style="font-size:12px;font-weight:700;color:#111">'+formatMoedaBR(e.valor)+'</span>'
-      +'<button onclick="popupRemoverNovoServico(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>'
+      +(colabPermitido('comandas_excluir_itens')?'<button onclick="popupRemoverNovoServico(\''+key+'\','+i+')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:13px;line-height:1;padding:0">✕</button>':'')
       +'</div></div></div>';
   }).join('')+'</div>';
 }
@@ -12000,6 +12000,7 @@ function popupAdicionarExtra(key,item){
 }
 
 function popupAbrirSeletorPacote(key){
+  if(!colabPermitido('comandas_add_itens')){showAlert('Você não tem permissão para adicionar itens na comanda.');return;}
   var pkgWrap=document.getElementById('popup-pkg-wrap');
   if(!pkgWrap)return;
   if(pkgWrap.innerHTML){pkgWrap.innerHTML='';return;}
@@ -12126,6 +12127,7 @@ async function popupConfirmarSessaoPacote(key,gi){
 }
 
 function popupRemoverExtra(key,idx){
+  if(!colabPermitido('comandas_excluir_itens')){showAlert('Você não tem permissão para excluir itens da comanda.');return;}
   popupServicosExtras.splice(idx,1);
   sincronizarExtrasDesconto(key);
   atualizarPopupComandaUI(key);
@@ -12168,6 +12170,7 @@ function popupFormExtraUpdateTermino(){
   termEl.textContent=minToHora(totalMin);
 }
 function popupAbrirFormExtra(key){
+  if(!colabPermitido('comandas_add_itens')){showAlert('Você não tem permissão para adicionar itens na comanda.');return;}
   var wrap=document.getElementById('popup-form-extra-wrap');
   if(!wrap)return;
   if(wrap.innerHTML){popupFecharFormExtra();return;}
@@ -12268,6 +12271,7 @@ function popupFormExtraAddProduto(){
 }
 
 function popupConfirmarExtra(key){
+  if(!colabPermitido('comandas_add_itens')){showAlert('Você não tem permissão para adicionar itens na comanda.');return;}
   var selSvc=document.getElementById('popup-add-svc-sel');
   if(!selSvc||!selSvc.value){showAlert('Selecione um serviço.');return;}
   var nome=selSvc.options[selSvc.selectedIndex]?.getAttribute('data-nome')||selSvc.options[selSvc.selectedIndex]?.text.split(' — ')[0]||'';
@@ -12311,6 +12315,7 @@ function popupConfirmarExtra(key){
   if(salvarWrap)salvarWrap.innerHTML='<button onclick="popupSalvarAtendimento(\''+key+'\')" style="width:100%;padding:9px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px">💾 Salvar Atendimento</button>';
 }
 function popupRemoverNovoServico(key,idx){
+  if(!colabPermitido('comandas_excluir_itens')){showAlert('Você não tem permissão para excluir itens da comanda.');return;}
   if(!popupNovosServicos||popupNovosServicos[idx]==null)return;
   popupNovosServicos.splice(idx,1);
   var listaEl=document.getElementById('popup-novos-servicos-lista');
@@ -16087,10 +16092,13 @@ function abrirAtendimentoEdicao(key,dados){
   // Sem exigir caixa aberto pra só visualizar/editar — igual o painel antigo. Ações que mexem
   // com dinheiro (confirmar sinal, registrar pagamento) continuam checando isso por conta própria.
   resetFormAgendar();
-  // Campo de desconto da comanda só pra quem tem comandas_aplicar_desconto —
-  // esse popup é o mesmo usado pela Agenda e pela lista de Comandas.
+  // Desconto/adicionar item da comanda só com a sub-permissão certa — esse
+  // popup é o mesmo usado pela Agenda e pela lista de Comandas.
   var descWrap=document.getElementById('popup-desconto-wrap');
   if(descWrap)descWrap.style.display=colabPermitido('comandas_aplicar_desconto')?'':'none';
+  var podeAddItem=colabPermitido('comandas_add_itens');
+  var btnAddSvc=document.getElementById('popup-btn-add-svc');if(btnAddSvc)btnAddSvc.style.display=podeAddItem?'':'none';
+  var btnAddPkg=document.getElementById('popup-btn-add-pkg');if(btnAddPkg)btnAddPkg.style.display=podeAddItem?'':'none';
   agEditandoKey=key;
   agEditandoDados=dados;
   agEditandoDataKeyOriginal=agendaDataKeyAtual;
@@ -16664,6 +16672,7 @@ function cmdVerPacote(){
 }
 function cmdAddPacoteExtra(){
   agAddPacoteExtra('cmd-pacote-extra-list','cmd-cliente');
+  cmdAplicarPermissoesItens();
 }
 function cmdFiltrarServicos(){
   var catSel=document.getElementById('cmd-cat');
@@ -16699,6 +16708,11 @@ function cmdAtualizarProfServico(){
   if([...selProf.options].some(function(o){return o.value===atual;}))selProf.value=atual;
 }
 function cmdAddServicoExtra(){
+  // Sem guard de permissão aqui de propósito: cmdPreencherDeComanda() reusa
+  // esta mesma função pra reconstruir as linhas de uma comanda já existente
+  // na visualização ("Ver"), então bloquear aqui quebraria isso. A proteção
+  // real é o botão "+ Adicionar serviço" ficar escondido (cmdAplicarPermissoesItens)
+  // e o modo "Ver" já deixar tudo readonly (cmdSetFormReadonly).
   var list=document.getElementById('cmd-servicos-extra-list');
   if(!list)return;
   var row=document.createElement('div');
@@ -16712,6 +16726,7 @@ function cmdAddServicoExtra(){
     +'<button onclick="this.closest(\'div\').remove();cmdCalcTotal()" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   list.appendChild(row);
   cmdCalcTotal();
+  cmdAplicarPermissoesItens();
 }
 function cmdSomaServicos(){
   var total=parseFloat(document.getElementById('cmd-servico')?.value)||0;
@@ -16767,6 +16782,21 @@ function cmdSetFormReadonly(ro){
     var el=document.getElementById(id);
     if(el){el.style.pointerEvents=ro?'none':'';el.style.opacity=ro?'0.65':'1';}
   });
+}
+// Além do readonly de "Ver" (que já esconde tudo), aplica as sub-permissões
+// de item mesmo em modo "criar" — comandas_add_itens/comandas_excluir_itens
+// são mais estreitas que comandas_abrir (abrir uma comanda não garante
+// liberdade de adicionar/excluir qualquer item nela).
+function cmdAplicarPermissoesItens(){
+  var podeAdd=colabPermitido('comandas_add_itens');
+  var podeExcluir=colabPermitido('comandas_excluir_itens');
+  var addServ=document.getElementById('cmd-btn-add-serv');
+  if(addServ&&addServ.style.display!=='none')addServ.style.display=podeAdd?'':'none';
+  var addPac=document.getElementById('cmd-btn-add-pac');
+  if(addPac&&addPac.style.display!=='none')addPac.style.display=podeAdd?'':'none';
+  if(!podeExcluir){
+    document.querySelectorAll('#cmd-servicos-extra-list button,#cmd-pacote-extra-list button').forEach(function(b){b.style.display='none';});
+  }
 }
 function cmdSelecionarServicoLinha(selServ,selProf,det){
   if(!selServ||!det)return;
@@ -16875,6 +16905,7 @@ function abrirModalComanda(editIdx){
     cmdFiltrarServicos();
     cmdResetSinal();
     cmdSetFormReadonly(false);
+    cmdAplicarPermissoesItens();
     var btnSalvar=document.getElementById('cmd-btn-salvar');
     if(btnSalvar){btnSalvar.style.display='';btnSalvar.textContent='Criar Comanda';}
   }else{
@@ -16884,6 +16915,7 @@ function abrirModalComanda(editIdx){
     if(catSel)catSel.innerHTML='<option value="">Todas as categorias</option>';
     cmdPreencherDeComanda(c);
     cmdSetFormReadonly(true);
+    cmdAplicarPermissoesItens();
     var btnSalvar=document.getElementById('cmd-btn-salvar');
     if(btnSalvar)btnSalvar.style.display='none';
   }
