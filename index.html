@@ -15120,28 +15120,39 @@ function lerPermissoesDoForm(){
 // colaborador se a migration 022 ainda não tiver rodado no Supabase.
 async function chamarCriarAcessoColaborador(colaboradorId,usuario,senha){
   if(!usuario)return null;
+  var sessao,token,payload,resp;
   try{
-    var sessao=await supa.auth.getSession();
-    var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
-    var payload={colaborador_id:colaboradorId,usuario:usuario};
+    sessao=await supa.auth.getSession();
+    token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
+    payload={colaborador_id:colaboradorId,usuario:usuario};
     if(senha)payload.senha=senha;
-    var resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-colaborador',{
+  }catch(e){
+    console.log('err criar acesso colaborador (sessão)',e);
+    showAlert('Erro ao criar o acesso de login: não foi possível obter a sessão atual.');
+    return null;
+  }
+  try{
+    resp=await fetch(SUPA_URL+'/functions/v1/criar-acesso-colaborador',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+(token||SUPA_KEY)},
       body:JSON.stringify(payload)
     });
-    var data=await resp.json();
-    if(!resp.ok){
-      console.log('err criar acesso colaborador',data);
-      showAlert('Não foi possível criar o acesso de login: '+(data&&data.error?data.error:'erro desconhecido'));
-      return null;
-    }
-    return data;
-  }catch(e){
-    console.log('err criar acesso colaborador',e);
-    showAlert('Erro ao criar o acesso de login do colaborador.');
+  }catch(netErr){
+    console.log('err criar acesso colaborador (rede/CORS)',netErr);
+    showAlert('Não foi possível conectar à função de acesso (rede/CORS): '+(netErr&&netErr.message?netErr.message:netErr));
     return null;
   }
+  var raw='';
+  try{raw=await resp.text();}catch(e){}
+  var data=null;
+  try{data=raw?JSON.parse(raw):null;}catch(e){}
+  if(!resp.ok){
+    console.log('err criar acesso colaborador',resp.status,raw);
+    var msg=(data&&data.error)?data.error:(raw||('HTTP '+resp.status+' sem corpo de resposta'));
+    showAlert('Não foi possível criar o acesso de login [HTTP '+resp.status+']: '+msg);
+    return null;
+  }
+  return data;
 }
 function salvarColaborador(){
   var nome=document.getElementById('colab-nome')?.value?.trim();
@@ -15183,10 +15194,25 @@ function salvarColaborador(){
   showAlert('✅ "'+nome+'" cadastrado(a) com sucesso!');
 }
 var colabEditIdx=-1;
+var colabEditId=null;
+// Resolve o colaborador sendo editado pelo id (estável), não pela posição no
+// array — colaboradores pode ser recarregado/substituído por completo
+// (carregarColaboradoresSupa) enquanto o modal está aberto; usar só o idx
+// congelado no momento do clique arriscava salvar/alterar o colaborador
+// errado se a ordem mudasse nesse intervalo. idx fica só de fallback, pra
+// colaborador novo que ainda não tenha id (não deveria acontecer na prática).
+function colabSendoEditado(){
+  if(colabEditId!=null){
+    var f=colaboradores.find(function(x){return x.id===colabEditId;});
+    if(f)return f;
+  }
+  return colaboradores[colabEditIdx];
+}
 function editarColab(idx){
   colabEditIdx=idx;
   var c=colaboradores[idx];
   if(!c)return;
+  colabEditId=c.id!=null?c.id:null;
   var m=document.getElementById('modal-editar-colab');
   if(!m){
     m=document.createElement('div');
@@ -15292,13 +15318,14 @@ function editAtualizarIniciais(){
   var nome=document.getElementById('edit-nome')?.value||'';
   var ini=nome.trim().split(' ').filter(function(w){return w.length>0;}).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
   var txt=document.getElementById('edit-colab-av-txt');
-  if(txt&&!colaboradores[colabEditIdx]?.foto)txt.textContent=ini||'?';
+  if(txt&&!colabSendoEditado()?.foto)txt.textContent=ini||'?';
 }
 function editCarregarFoto(input){
   var file=input.files[0];if(!file)return;
+  var c=colabSendoEditado();if(!c)return;
   var reader=new FileReader();
   reader.onload=function(e){
-    colaboradores[colabEditIdx].foto=e.target.result;
+    c.foto=e.target.result;
     var av=document.getElementById('edit-colab-av');
     if(av)av.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"/>';
     // Atualizar lista de colaboradores imediatamente
@@ -15308,12 +15335,14 @@ function editCarregarFoto(input){
   reader.readAsDataURL(file);
 }
 function editSetCor(cor){
-  colaboradores[colabEditIdx].cor=cor;
+  var c=colabSendoEditado();if(!c)return;
+  c.cor=cor;
   var av=document.getElementById('edit-colab-av');
-  if(av&&!colaboradores[colabEditIdx].foto)av.style.background=cor;
+  if(av&&!c.foto)av.style.background=cor;
 }
 function salvarEdicaoColab(idx){
-  var c=colaboradores[idx];
+  var c=colabSendoEditado();
+  if(!c){showAlert('Não foi possível identificar o colaborador — feche e abra a edição de novo.');return;}
   c.nome=document.getElementById('edit-nome')?.value?.trim()||c.nome;
   c.email=document.getElementById('edit-email')?.value||'';
   var editCargoChecks=document.getElementById('edit-cargo')?.querySelectorAll('input:checked');
@@ -15344,10 +15373,13 @@ function salvarEdicaoColab(idx){
   showAlert('✅ '+c.nome+' atualizado(a)! Foto aplicada na agenda.');
 }
 function removerColab(idx){
-  var nome=colaboradores[idx].nome;
-  var id=colaboradores[idx].id;
+  var c=colabSendoEditado();
+  if(!c){showAlert('Não foi possível identificar o colaborador — feche e abra a edição de novo.');return;}
+  var nome=c.nome;
+  var id=c.id;
   if(confirm('Remover '+nome+' da equipe?')){
-    colaboradores.splice(idx,1);
+    var posReal=colaboradores.indexOf(c);
+    if(posReal>=0)colaboradores.splice(posReal,1);
     if(id!=null)deletarColaboradorSupa(id);
     renderColabs();
     document.getElementById('modal-editar-colab').classList.remove('open');
