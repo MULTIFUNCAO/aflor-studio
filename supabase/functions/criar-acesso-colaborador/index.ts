@@ -9,9 +9,12 @@
 // de antemão "de qual salão" é um usuário digitado sem e-mail).
 //
 // Variáveis de ambiente:
-//   SUPABASE_URL          — injetado automaticamente pelo Supabase
-//   SUPABASE_ANON_KEY      — injetado automaticamente pelo Supabase
-//   APP_SERVICE_ROLE_KEY  — injetado automaticamente pelo Supabase
+//   SUPABASE_URL              — injetado automaticamente pelo Supabase
+//   SUPABASE_ANON_KEY          — injetado automaticamente pelo Supabase
+//   APP_SERVICE_ROLE_KEY       — secret próprio, se configurado
+//   SUPABASE_SERVICE_ROLE_KEY  — injetado automaticamente pelo Supabase;
+//     usado como fallback quando APP_SERVICE_ROLE_KEY não está configurado,
+//     pra não depender de criar um secret manualmente.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -58,6 +61,19 @@ serve(async (req: Request) => {
   const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser();
   if (authErr || !user) return json({ error: 'Unauthorized' }, 401);
 
+  // ── Confirmar que quem chamou é a DONA do salão, não um colaborador
+  //    qualquer. Depois da migration de login por usuário, my_salao_id()
+  //    também resolve pra colaboradores autenticados — então só confiar na
+  //    RLS de colaboradores (mais abaixo) não bastava: um colaborador do
+  //    mesmo salão conseguiria criar/trocar o acesso de um colega.
+  const { data: dono } = await supabaseAuth.from('saloes').select('id').eq('id', user.id).maybeSingle();
+  let ehDono = !!dono;
+  if (!ehDono && user.email) {
+    const { data: donoPorEmail } = await supabaseAuth.from('saloes').select('id').eq('email', user.email).maybeSingle();
+    ehDono = !!donoPorEmail;
+  }
+  if (!ehDono) return json({ error: 'Apenas a administração do salão pode criar acesso de colaborador.' }, 403);
+
   let body: { colaborador_id?: number | string; usuario?: string; senha?: string };
   try { body = await req.json(); } catch { return json({ error: 'Bad Request' }, 400); }
   const colaboradorId = body.colaborador_id;
@@ -81,9 +97,10 @@ serve(async (req: Request) => {
   if (colabErr || !colab) return json({ error: 'Colaborador não encontrado ou sem permissão' }, 404);
 
   // ── Cliente com service role — única parte que efetivamente cria/edita a conta ──
+  const serviceRoleKey = Deno.env.get('APP_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('APP_SERVICE_ROLE_KEY')!,
+    serviceRoleKey!,
   );
 
   // ── Usuário único GLOBALMENTE — checa antes de chamar o Auth, pra dar
