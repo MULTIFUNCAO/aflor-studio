@@ -939,11 +939,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Financeiro</div>
-    <div class="nav-item" data-perm-mod="financeiro" onclick="showPage('fluxo')">
+    <div class="nav-item" data-perm-mod="financeiro" data-page="fluxo" onclick="showPage('fluxo')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
       Fluxo de Caixa
     </div>
-    <div class="nav-item" data-perm-mod="financeiro" onclick="showPage('caixa')">
+    <div class="nav-item" data-perm-mod="financeiro" data-page="caixa" onclick="showPage('caixa')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
       Controle de Caixa
     </div>
@@ -1548,7 +1548,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🏦 Saldo em Caixa</div>
           <div id="fluxo-kpi-saldo-val" style="font-size:26px;font-weight:900;color:#fff">R$ 0,00</div>
           <div id="dash-saldo-caixa-status" style="font-size:10px;color:rgba(255,255,255,.4);margin-top:5px">● Caixa aberto · Atualizado agora</div>
-          <div style="margin-top:8px" onclick="event.stopPropagation();abrirModalAjustarSaldo()"><span style="font-size:10px;font-weight:700;color:#fff;text-decoration:underline;cursor:pointer">⚙️ Ajustar saldo</span></div>
+          <div id="link-ajustar-saldo" style="margin-top:8px" onclick="event.stopPropagation();abrirModalAjustarSaldo()"><span style="font-size:10px;font-weight:700;color:#fff;text-decoration:underline;cursor:pointer">⚙️ Ajustar saldo</span></div>
         </div>
       </div>
 
@@ -1699,7 +1699,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             style="flex:1;border:none;background:transparent;font-size:22px;font-weight:700;color:var(--dark);outline:none">
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px" onclick="abrirCaixa()">Abrir Caixa</button>
+      <button class="btn btn-primary" id="btn-abrir-caixa" style="width:100%;font-size:15px;padding:14px" onclick="abrirCaixa()">Abrir Caixa</button>
     </div>
     <!-- HISTÓRICO DE CAIXAS -->
     <div id="caixa-historico-section" style="margin-top:24px">
@@ -8050,13 +8050,21 @@ const pages = {
 // Mapa página→módulo de permissão, usado só para sessão de colaborador
 // (admin sempre vê tudo). SÓ entra aqui um page-id depois de eu revisar e
 // aplicar o escopo de dados certo dentro daquela página (ex: Agenda já
-// respeita "visualizar própria" vs "todas" — ver renderAgenda). Os outros 5
-// módulos (Clientes/Comandas/Financeiro/Relatórios/Metas) ainda mostram
-// dado de admin sem filtro nenhum por dentro — por isso ficam de fora
-// deliberadamente por enquanto, mesmo com permissão ativa, pra não vazar
-// financeiro geral/dados de outro profissional. Plano combinado com a
-// usuária: revisar um módulo por vez antes de abrir no menu do colaborador.
-var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas'};
+// respeita "visualizar própria" vs "todas" — ver renderAgenda). Relatórios e
+// Metas ainda mostram dado de admin sem filtro nenhum por dentro — por isso
+// ficam de fora deliberadamente por enquanto, mesmo com permissão ativa,
+// pra não vazar dado de outro profissional. Plano combinado com a usuária:
+// revisar um módulo por vez antes de abrir no menu do colaborador.
+var PERM_MOD_POR_PAGE_ID={agenda:'agenda',clientes:'clientes',comandas:'comandas',fluxo:'financeiro',caixa:'financeiro'};
+// "financeiro" sozinho é muito largo pra Fluxo de Caixa/Controle de Caixa —
+// cada um tem sua própria sub-permissão de entrada, mais específica, exigida
+// POR CIMA do módulo (ex: só "financeiro" ativo não basta pra ver o Fluxo de
+// Caixa, precisa de fin_faturamento_total). Valor pode ser string (1 sub) ou
+// função (combinação, ex: caixa aceita ver OU agir).
+var PAGE_SUB_PERM_EXTRA={
+  fluxo:'fin_faturamento_total',
+  caixa:function(){return colabPermitido('fin_ver_saldo_caixa');}
+};
 function showPage(id){
   var IDS_BLOQUEADOS_INICIAL=['remuneracoes','colaboradores','metas','marketing','influenciadoras'];
   var nomesRecursoBloqueado={remuneracoes:'Remunerações',colaboradores:'Colaboradores',metas:'Metas',marketing:'Marketing',influenciadoras:'Influenciadoras'};
@@ -8075,6 +8083,13 @@ function showPage(id){
     var _modPg=PERM_MOD_POR_PAGE_ID[id];
     var _colabPg=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===colaboradorLogado;});
     var _temModulo=_modPg&&_colabPg&&_colabPg.permissoes&&_colabPg.permissoes[_modPg]&&_colabPg.permissoes[_modPg].ativo;
+    if(_temModulo){
+      var _extra=PAGE_SUB_PERM_EXTRA[id];
+      if(_extra){
+        var _extraOk=typeof _extra==='function'?_extra():colabPermitido(_extra);
+        if(!_extraOk)_temModulo=false;
+      }
+    }
     if(!_temModulo){
       showAlert('Você não tem permissão para acessar essa área.');
       return;
@@ -8110,7 +8125,7 @@ function showPage(id){
     if(id==='cursos'){cursosSetTab(cursosTabAtual);renderCursosDashCards();carregarCursosSupa();carregarCombosSupa();carregarTurmasSupa();carregarAlunosSupa();carregarMatriculasSupa();if(typeof carregarCampanhasSupa==='function')carregarCampanhasSupa();if(typeof carregarLeadsSupa==='function')carregarLeadsSupa();if(typeof carregarNotificacoesSupa==='function')carregarNotificacoesSupa();if(typeof carregarCorrecoesPendentesSupa==='function')carregarCorrecoesPendentesSupa();if(typeof carregarCertificadosDadosSupa==='function')carregarCertificadosDadosSupa();if(typeof carregarRelatoriosDadosSupa==='function')carregarRelatoriosDadosSupa();}
     if(id==='produtos'){renderProdutos();carregarProdutosSupa();}
     if(id==='pacotes'){carregarPacotesClientesLocal();carregarPacotesClientesSupa();carregarPacotesCatalogoSupa();renderPacotes();}
-    if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();}
+    if(id==='caixa'){renderHistoricoCaixa();if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();aplicarEscopoCaixaColaborador();}
     if(id==='agenda')renderAgenda();
     if(id==='vendas'){renderVendas();renderMetasCards();}
     if(id==='comandas')renderComandas();
@@ -15798,6 +15813,8 @@ function renderFluxo(){
   if(elKpiS){
     elKpiS.textContent=fluxoFmtMoeda(calcularSaldoCaixaAtual());
   }
+  var elLinkAjuste=document.getElementById('link-ajustar-saldo');
+  if(elLinkAjuste)elLinkAjuste.style.display=(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)?'none':'';
   var filtered=lancsMes.filter(function(l){
     return(!tipo||l.tipo===tipo)&&(!cat||l.cat===cat);
   });
@@ -15840,6 +15857,9 @@ function calcularSaldoCaixaAtual(){
 // afetar Receitas/Despesas/DRE/Atendimentos/Ticket médio do mês. Cada ajuste
 // é gravado em caixa_ajustes com data (created_at) e usuário responsável.
 function abrirModalAjustarSaldo(){
+  // Ação restrita à dona — mesmo quem tem fin_faturamento_total (visualizar)
+  // não pode corrigir o saldo registrado do salão.
+  if(typeof colaboradorLogado!=='undefined'&&colaboradorLogado){showAlert('Só a administração do salão pode ajustar o saldo.');return;}
   var saldoAtual=calcularSaldoCaixaAtual();
   var elAtual=document.getElementById('ajuste-saldo-atual-val');
   if(elAtual)elAtual.value=fluxoFmtMoeda(saldoAtual);
@@ -17358,6 +17378,11 @@ function aplicarPermissoesColaborador(colab){
     if(el.id==='nav-inicio'||el.getAttribute('onclick')==='fazerLogout()'){el.style.display='';return;}
     var mod=el.getAttribute('data-perm-mod');
     var liberado=mod&&modulosProntos[mod]&&p[mod]&&p[mod].ativo;
+    if(liberado){
+      var pageId=el.getAttribute('data-page');
+      var extra=pageId&&PAGE_SUB_PERM_EXTRA[pageId];
+      if(extra)liberado=typeof extra==='function'?extra():colabPermitido(extra);
+    }
     el.style.display=liberado?'':'none';
   });
 }
@@ -18143,6 +18168,7 @@ async function sincronizarFechamentoCaixaSupa(){
   }catch(e){console.log('err fechar caixa supa',e);}
 }
 function abrirCaixa(){
+  if(!colabPermitido('fin_fluxo_caixa')){showAlert('Você não tem permissão para abrir o caixa.');return;}
   caixaNavIdx = 0;
   var troco=parseFloat(document.getElementById('caixa-troco-input').value)||0;
   caixaState.aberto=true;caixaState.troco=troco;caixaState.horaAbertura=new Date();caixaState.movimentos=[];
@@ -18185,6 +18211,16 @@ function calcularSinaisHoje(){
     })
     .reduce(function(s,m){return s+m.valor;},0);
   return total;
+}
+// Entrar na página já exige fin_ver_saldo_caixa (PAGE_SUB_PERM_EXTRA), então
+// os valores em si não precisam de máscara aqui — só as AÇÕES (abrir, lançar
+// entrada/saída, fechar, retroativo) dependem de fin_fluxo_caixa à parte.
+function aplicarEscopoCaixaColaborador(){
+  if(typeof colaboradorLogado==='undefined'||!colaboradorLogado)return;
+  if(colabPermitido('fin_fluxo_caixa'))return;
+  var btnAbrir=document.getElementById('btn-abrir-caixa');if(btnAbrir)btnAbrir.style.display='none';
+  var botoesAcao=document.getElementById('caixa-botoes-acao');if(botoesAcao)botoesAcao.style.display='none';
+  var botoesRetro=document.getElementById('caixa-botoes-retroativo');if(botoesRetro)botoesRetro.style.display='none';
 }
 function atualizarTotaisCaixa(){
   if(!caixaState||!caixaState.movimentos)return;
@@ -18231,6 +18267,7 @@ function lerProfissionalMov(){
   return document.getElementById('mov-profissional')?.value||'';
 }
 function abrirModalMovimento(tipo,histIdx){
+  if(!colabPermitido('fin_fluxo_caixa')){showAlert('Você não tem permissão para lançar movimentos no caixa.');return;}
   caixaHistMovIdx=(typeof histIdx==='number'&&histIdx>=0)?histIdx:-1;
   modoEdicaoMovimentoId=null;
   modoEdicaoMovArrayIdx=null;
@@ -18250,6 +18287,7 @@ function abrirModalMovimento(tipo,histIdx){
   modal.style.display='flex';
 }
 function abrirModalMovimentoRetroativo(tipo){
+  if(!colabPermitido('fin_fluxo_caixa')){showAlert('Você não tem permissão para lançar movimentos no caixa.');return;}
   var reg=historicoCaixas[Math.abs(caixaNavIdx)-1];
   if(!reg){showAlert('Dia não encontrado.');return;}
   var m=(reg.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -18423,6 +18461,7 @@ function removerMovimento(id){
   if(mov&&mov.supaId)sincronizarRemocaoMovimentoCaixaSupa(mov.supaId).catch(function(e){console.log(e);});
 }
 function fecharCaixaConfirmar(){
+  if(!colabPermitido('fin_fluxo_caixa')){showAlert('Você não tem permissão para fechar o caixa.');return;}
   var entradas=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var saidas=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).reduce(function(s,m){return s+m.valor;},0);
   var saldo=caixaState.troco+entradas-saidas;
@@ -19091,6 +19130,7 @@ function toggleHistoricoDetalhe(i){
 }
 
 function confirmarFechamentoCaixa(){
+  if(!colabPermitido('fin_fluxo_caixa')){showAlert('Você não tem permissão para fechar o caixa.');return;}
   caixaState.aberto=false;caixaState.movimentos=[];caixaState.troco=0;
   caixaNavIdx=0;
   var elTrocoInput=document.getElementById('caixa-troco-input');
