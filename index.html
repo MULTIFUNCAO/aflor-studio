@@ -11074,22 +11074,47 @@ function comandaStatusAgendamento(dados){
   if(st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado')return 'Paga';
   return 'Em aberto';
 }
+function horaParaMinutosComanda(hora){
+  var p=String(hora||'').split(':');
+  return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
+}
 function listarComandasDeAgendamentos(){
   var lista=[];
   if(typeof agendamentosPorData==='undefined')return lista;
+  // Comanda com vários serviços (servicos_detalhe) vira vários "cards" no
+  // calendário — um por serviço, cada um com o MESMO agendamentos.id (ver
+  // carregarAgendamentosSupa) — mas é só UMA comanda de verdade. Sem essa
+  // deduplicação por id, cada serviço do combo virava uma linha própria
+  // aqui, repetindo o total da comanda inteira em cada uma (ex: comanda de
+  // 6 serviços = 6 linhas de "AG-X", todas com o mesmo valor total).
+  var linhaPorId={};
   Object.keys(agendamentosPorData).forEach(function(dataKey){
     var dia=agendamentosPorData[dataKey];
     if(!dia)return;
     Object.keys(dia).forEach(function(key){
       var a=dia[key];
       if(!a||!(a.servico||'').trim())return;
+      if(a.id&&linhaPorId[a.id]){
+        var existente=linhaPorId[a.id];
+        // Fica com o texto de serviço mais completo (o da entrada principal
+        // do combo) e com o horário mais cedo entre os sub-serviços.
+        if((a.servico||'').length>(existente._servico||'').length)existente._servico=a.servico;
+        if(horaParaMinutosComanda(a.hora)<horaParaMinutosComanda(existente._hora)){
+          existente._hora=a.hora;
+          existente.hora=a.hora;
+          existente.dataKey=dataKey;
+          existente.key=key;
+          existente.data=dataKey+(a.hora?(' '+a.hora):'');
+        }
+        return;
+      }
       var servicoVal=typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):0;
       if(servicoVal<=0&&!(a.servico||'').trim())return;
       var sinal=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{valor:0,pago:false,temSinal:false,abate:0};
       var totalPagar=Math.max(0,servicoVal-sinal.abate);
       var pgto=a.formaSinal||'—';
       if(comandaStatusAgendamento(a)==='Paga'&&pgto==='—')pgto='Pago';
-      lista.push({
+      var item={
         origem:'agenda',
         dataKey:dataKey,
         key:key,
@@ -11101,8 +11126,12 @@ function listarComandasDeAgendamentos(){
         status:comandaStatusAgendamento(a),
         sinal:!!sinal.temSinal||sinal.valor>0,
         sinalStatus:sinal.pago?'pago':'pendente',
-        sinalValor:sinal.valor>0&&typeof formatMoedaBR==='function'?formatMoedaBR(sinal.valor):''
-      });
+        sinalValor:sinal.valor>0&&typeof formatMoedaBR==='function'?formatMoedaBR(sinal.valor):'',
+        _servico:a.servico,
+        _hora:a.hora
+      };
+      if(a.id)linhaPorId[a.id]=item;
+      lista.push(item);
     });
   });
   lista.sort(function(x,y){
