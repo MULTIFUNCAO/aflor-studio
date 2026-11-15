@@ -17095,16 +17095,37 @@ function abrirModalAgendar(prof,hora){
 // Etapa 3 — clicar num atendimento existente abre este mesmo modal, preenchido, em modo
 // edição (em vez do antigo painel lateral "Detalhes do Atendimento"). Reaproveita as funções
 // de comanda/sinal/cancelar do painel antigo (mesmos ids), só muda a casca visual.
+// Resolve o nome ATUAL de um colaborador ativo a partir do id (preferido)
+// ou do nome/apelido salvo (profAgendaIgual cobre "Edu"->Eduardo,
+// "Jennifer"->Jenny etc.) — nunca devolve apelido, só nome real ou, se
+// não achar ninguém ativo, o texto cru salvo (pra não inventar um nome).
+function resolverNomeColaboradorAtual(id,nomeSalvo){
+  if(typeof colaboradores!=='undefined'&&colaboradores){
+    if(id!=null){
+      var porId=colaboradores.find(function(c){return c.id===id;});
+      if(porId&&porId.nome)return porId.nome;
+    }
+    if(nomeSalvo){
+      var porNome=colaboradores.find(function(c){return profAgendaIgual(c.nome,nomeSalvo);});
+      if(porNome&&porNome.nome)return porNome.nome;
+    }
+  }
+  return nomeSalvo||'';
+}
 function agMapDadosParaBlocos(dados){
   var lista=(dados.servicos_detalhe&&dados.servicos_detalhe.length)?dados.servicos_detalhe:
-    [{nome:dados.servico,valor:typeof dados.valor_num==='number'?dados.valor_num:parseMoedaBR(dados.valor),profissional:dados.prof,hora:dados.hora,duracao_min:parseInt(dados.duracao,10)||30}];
+    [{nome:dados.servico,valor:typeof dados.valor_num==='number'?dados.valor_num:parseMoedaBR(dados.valor),profissional:dados.prof,profissional_id:dados.profissionalId,hora:dados.hora,duracao_min:parseInt(dados.duracao,10)||30}];
   return lista.map(function(sd){
     var b=afNovoBloco(normalizarHoraAgenda(sd.hora||dados.hora));
     var svcCat=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===sd.nome;});
     b.servico={nome:sd.nome,cat:svcCat?svcCat.cat:'',preco:sd.valor,dur:''};
     b.preco=sd.valor||0;
     b.duracaoMin=sd.duracao_min||30;
-    b.profissional=agProfParaAgenda(sd.profissional||dados.prof);
+    // Nome ATUAL do colaborador, nunca o apelido salvo — o <select> do
+    // bloco só lista nomes reais (colaboradoresAtivosOrdenados), então um
+    // apelido como "Edu" não casava com nenhuma <option> e o campo ficava
+    // em branco (bug: Karina 19:00, Serviço 2 "Escova M" sem profissional).
+    b.profissional=resolverNomeColaboradorAtual(sd.profissional_id,sd.profissional||dados.prof);
     return b;
   });
 }
@@ -17335,6 +17356,14 @@ async function afSalvarEdicaoBlocos(){
   var blocosValidos=afBlocos.filter(function(b){return b.servico&&b.profissional&&b.horario;});
   if(blocosValidos.length!==afBlocos.length||!blocosValidos.length){
     showAlert('Preencha profissional, serviço e horário em todos os blocos de serviço.');
+    return;
+  }
+  // Trava extra: "profissional" não-vazio mas que não bate com nenhum
+  // colaborador ATIVO (ex: apelido antigo tipo "Edu") nunca pode ser salvo —
+  // isso corrompia servicos_detalhe[i].profissional e perdia o profissional_id.
+  var profInvalidoBloco=blocosValidos.find(function(b){return !colaboradoresAtivosOrdenados().some(function(c){return c.nome===b.profissional;});});
+  if(profInvalidoBloco){
+    showAlert('O profissional "'+profInvalidoBloco.profissional+'" de um dos serviços não é um colaborador ativo. Selecione o profissional de novo antes de salvar.');
     return;
   }
   blocosValidos.forEach(function(b){b.horario=normalizarHoraAgenda(b.horario);});
@@ -17597,6 +17626,14 @@ function afSalvarAtendimento(){
   var blocosValidos=afBlocos.filter(function(b){return b.servico&&b.profissional&&b.horario;});
   if(blocosValidos.length!==afBlocos.length||!blocosValidos.length){
     showAlert('Preencha profissional, serviço e horário em todos os blocos de serviço.');
+    return;
+  }
+  // Trava extra: "profissional" não-vazio mas que não bate com nenhum
+  // colaborador ATIVO (ex: apelido antigo tipo "Edu") nunca pode ser salvo —
+  // isso corrompia servicos_detalhe[i].profissional e perdia o profissional_id.
+  var profInvalidoBloco=blocosValidos.find(function(b){return !colaboradoresAtivosOrdenados().some(function(c){return c.nome===b.profissional;});});
+  if(profInvalidoBloco){
+    showAlert('O profissional "'+profInvalidoBloco.profissional+'" de um dos serviços não é um colaborador ativo. Selecione o profissional de novo antes de salvar.');
     return;
   }
   blocosValidos.forEach(function(b){b.horario=normalizarHoraAgenda(b.horario);});
