@@ -4321,7 +4321,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="af-sucesso-icon"><span class="material-symbols-outlined">check_circle</span></div>
       <div class="af-sucesso-titulo">Atendimento criado com sucesso!</div>
       <div class="af-sucesso-lista">
-        <div class="af-sucesso-item" onclick="afSucessoAdicionarMais()"><span>Adicionar mais serviços</span><span class="material-symbols-outlined">chevron_right</span></div>
+        <div class="af-sucesso-item" onclick="afSucessoAdicionarMais()"><span>Agendar outro atendimento p/ esse cliente</span><span class="material-symbols-outlined">chevron_right</span></div>
         <div class="af-sucesso-item" onclick="afSucessoVerCliente()"><span>Visualizar cliente</span><span class="material-symbols-outlined">chevron_right</span></div>
         <div class="af-sucesso-item" onclick="afSucessoNovoAtendimento()"><span>Novo atendimento</span><span class="material-symbols-outlined">chevron_right</span></div>
       </div>
@@ -10007,11 +10007,15 @@ function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim,colaboradorId)
       Object.keys(diaObj).forEach(function(k){
         var a=diaObj[k];
         if(!a||a.status!=='Concluído')return;
-        // Prefere bater por profissional_id (à prova de apelido/nome
-        // trocado) — nome só é usado pra agendamento antigo sem id ligado.
-        var bate=(colaboradorId!=null&&a.profissionalId!=null)
-          ?(a.profissionalId===colaboradorId)
-          :profAgendaIgual(a.prof,nomeColab);
+        // Bate por profissional_id (à prova de apelido/nome trocado) OU
+        // por nome — nunca só por id: servico extra salvo com
+        // profissional_id errado/antigo (bug real visto em servicos_detalhe
+        // de atendimentos multi-serviço) não pode "esconder" um serviço que
+        // o nome já identifica certo, senão o colaborador que aparece só
+        // como serviço extra (ex: Tiena numa Pedicure dentro do atendimento
+        // de outro cliente/profissional principal) some da comissão dele.
+        var bate=(colaboradorId!=null&&a.profissionalId===colaboradorId)
+          ||profAgendaIgual(a.prof,nomeColab);
         if(!bate)return;
         itens.push(Object.assign({},a,{_dataAgenda:d}));
       });
@@ -10254,6 +10258,22 @@ function comissaoDiariaDoColab(colab,dataRef){
   var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
   var calc=calcularComissaoPeriodo(colab.nome,pct,dataRef,dataRef,colab.id);
   return {valor:calc.comissaoVal,pago:false,pagoEm:null,formaPagamento:null,qtd:calc.qtd};
+}
+// Histórico dia-a-dia pro painel do colaborador no modelo "Diário" — não
+// faz sentido mostrar quinzena/mês pra quem é pago no mesmo dia; aqui é
+// uma lista dos últimos N dias (hoje incluso), cada um com o valor
+// daquele dia (congelado se já tiver parcela, ao vivo se não).
+function historicoDiariaColab(colab,dias){
+  dias=dias||14;
+  var hoje=new Date();hoje.setHours(0,0,0,0);
+  var lista=[];
+  for(var i=0;i<dias;i++){
+    var d=new Date(hoje.getTime());d.setDate(d.getDate()-i);
+    var info=comissaoDiariaDoColab(colab,d);
+    if(i>0&&info.valor<=0&&!info.pago)continue;
+    lista.push(Object.assign({data:d},info));
+  }
+  return lista;
 }
 // Marca a comissão diária de hoje como paga: lança a saída (dinheiro no
 // caixa aberto, ou Pix direto no Fluxo) e congela a parcela do dia em
@@ -17761,9 +17781,18 @@ function afSalvarAtendimento(){
     syncPacotesLegacyStorage();
     var pacPrincipal=pacotes[idxPrincipal];
     var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00'}});
+    // Trava contra duplo-clique: sem isso, 2 cliques em SALVAR antes do 1º
+    // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
+    // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
+    var btnPac=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
+    if(btnPac){btnPac.disabled=true;btnPac.textContent='SALVANDO...';}
     afInserirAtendimentoUmaData(dataBase,ctxPac).then(function(){
+      if(btnPac){btnPac.disabled=false;btnPac.textContent='SALVAR';}
       afFinalizarSalvamento(cliente,[dataBase]);
-    }).catch(function(){showAlert('Erro ao salvar agendamento. Verifique os dados.');});
+    }).catch(function(){
+      if(btnPac){btnPac.disabled=false;btnPac.textContent='SALVAR';}
+      showAlert('Erro ao salvar agendamento. Verifique os dados.');
+    });
     return;
   }
 
@@ -17803,13 +17832,20 @@ function afSalvarAtendimento(){
 
   var serieId=(datas.length>1)?afGerarUUID():null;
   var ctxServ=Object.assign({},ctxBase,{tipo:'servico',blocosServico:blocosValidos,serieId:serieId});
+  // Trava contra duplo-clique: sem isso, 2 cliques em SALVAR antes do 1º
+  // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
+  // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
+  var btnServ=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
+  if(btnServ){btnServ.disabled=true;btnServ.textContent='SALVANDO...';}
   var prom=Promise.resolve();
   datas.forEach(function(d){
     prom=prom.then(function(){return afInserirAtendimentoUmaData(d,ctxServ);});
   });
   prom.then(function(){
+    if(btnServ){btnServ.disabled=false;btnServ.textContent='SALVAR';}
     afFinalizarSalvamento(cliente,datas);
   }).catch(function(){
+    if(btnServ){btnServ.disabled=false;btnServ.textContent='SALVAR';}
     showAlert('Erro ao salvar agendamento. Verifique os dados.');
   });
 }
@@ -18905,7 +18941,28 @@ function entrarComoColaborador(nome){
   // snapshot fechado se já existir, senão calculam ao vivo também (dona
   // ainda não fechou).
   var comEl=document.getElementById('cv-comissoes');
-  if(comEl&&colab){
+  if(comEl&&colab&&cfgColabAtualDiaria&&cfgColabAtualDiaria.modelo==='diario'){
+    // Modelo "Diário": não existe quinzena/mês pra fechar — é pago no
+    // mesmo dia. Mostra histórico dia-a-dia (pago/a pagar) em vez da
+    // "Minhas Comissões" por período, que não faz sentido pra freelancer.
+    var histDiaria=historicoDiariaColab(colab,14);
+    var totalMesDiaria=histDiaria.filter(function(h){return h.data.getMonth()===hojeCv.getMonth()&&h.data.getFullYear()===hojeCv.getFullYear();}).reduce(function(s,h){return s+h.valor;},0);
+    var elMesDiaria=document.getElementById('cv-comissao-mes');
+    if(elMesDiaria)elMesDiaria.textContent='R$ '+totalMesDiaria.toFixed(2).replace('.',',');
+    if(!histDiaria.length){
+      comEl.innerHTML='<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum atendimento nos últimos dias.</div>';
+    }else{
+      comEl.innerHTML='<div class="cv-com-section-title">Histórico (pagamento diário)</div>'+histDiaria.map(function(h,idx){
+        var info=idx===0
+          ?{dot:'andamento',txt:h.pago?('✅ Pago hoje'+(h.pagoEm?(' às '+new Date(h.pagoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})):'')):'Hoje — a receber'}
+          :h.pago?{dot:'pago',txt:'✅ Pago em '+fmtDataBRCurta(h.data)}:{dot:'atrasado',txt:'⚠ Não pago'};
+        return '<div class="cv-com-timeline-item"><span class="cv-com-timeline-dot '+info.dot+'"></span>'
+          +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700">'+fmtDataBR(h.data)+' · '+h.qtd+' atendimento(s)</div>'
+          +'<div style="font-size:11px;color:#888">'+info.txt+'</div></div>'
+          +'<span style="font-size:14px;font-weight:800">R$ '+h.valor.toFixed(2).replace('.',',')+'</span></div>';
+      }).join('');
+    }
+  }else if(comEl&&colab){
     var periodosCv=periodosRelevantesColab(colab,hojeCv).sort(function(a,b){return a.inicio-b.inicio;});
     var atualP=periodosCv.filter(function(p){return p.emAndamento;}).pop()||periodosCv[periodosCv.length-1];
     document.getElementById('cv-comissao-mes').textContent=atualP?('R$ '+atualP.totalComissao.toFixed(2).replace('.',',')):'R$ 0';
