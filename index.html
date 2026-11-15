@@ -1826,6 +1826,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div id="caixa-periodo" style="font-size:12px;color:var(--gray-400)"></div>
       </div>
       <div id="caixa-resumo-detalhes" style="padding:20px"></div>
+      <div id="caixa-diaristas-wrap" style="padding:0 20px 16px"></div>
       <div style="padding:16px 20px;display:flex;gap:10px">
         <button class="btn" style="flex:1;background:#f3f4f6;color:#374151" onclick="reabrirCaixa()">Voltar</button>
         <button class="btn btn-primary" style="flex:1" onclick="confirmarFechamentoCaixa()">Confirmar Fechamento</button>
@@ -2521,6 +2522,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:6px">Metas Ativas</div>
             <div style="font-size:28px;font-weight:900" id="cv-metas-count">0</div>
           </div>
+        </div>
+
+        <!-- Pagamento diário (só aparece pra colaborador no modelo "Diário") -->
+        <div id="cv-diaria-wrap" style="display:none;background:#111;border-radius:14px;padding:16px 20px;margin-bottom:20px;align-items:center;justify-content:space-between">
+          <div><div style="font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;font-weight:700">Pagamento diário</div><div style="font-size:13px;color:#fff;margin-top:2px" id="cv-diaria-status">Você recebe hoje</div></div>
+          <div style="font-size:24px;font-weight:900;color:#4ade80" id="cv-diaria-valor">R$ 0,00</div>
         </div>
 
         <!-- Agenda do dia -->
@@ -10228,6 +10235,95 @@ function renderComissoesAPagar(){
       +'</tr>';
   }).join('');
 }
+// Modelo "Diário" (freelancer): comissão do dia (serviços Concluídos que
+// ELE executou, valor individual x %), paga no mesmo dia — reaproveita a
+// mesma tabela comissao_parcelas (período = o dia inteiro, 1 parcela só),
+// então "fechar"/"pagar" funciona igual ao resto do sistema. Se já existe
+// uma parcela dessa data pra esse colaborador (paga manualmente antes,
+// como o caso da Tiena em 14/11), usa o valor congelado em vez de
+// recalcular — não tenta "pagar de novo".
+function comissaoDiariaDoColab(colab,dataRef){
+  dataRef=dataRef||new Date();
+  var hojeIso=dataIsoDe(dataRef);
+  var fechada=comissaoParcelas.find(function(cp){
+    return cp.colaborador_id===colab.id&&cp.periodo_inicio===hojeIso&&cp.periodo_fim===hojeIso&&cp.parcela_num===1;
+  });
+  if(fechada){
+    return {valor:parseFloat(fechada.valor_comissao)||0,pago:fechada.status==='paga',pagoEm:fechada.pago_em,formaPagamento:fechada.forma_pagamento,qtd:fechada.qtd_atendimentos};
+  }
+  var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+  var calc=calcularComissaoPeriodo(colab.nome,pct,dataRef,dataRef,colab.id);
+  return {valor:calc.comissaoVal,pago:false,pagoEm:null,formaPagamento:null,qtd:calc.qtd};
+}
+// Marca a comissão diária de hoje como paga: lança a saída (dinheiro no
+// caixa aberto, ou Pix direto no Fluxo) e congela a parcela do dia em
+// comissao_parcelas — igual ao fluxo de "Fechar parcela" + "Confirmar
+// pagamento" dos outros modelos, só que num passo só (não faz sentido
+// "fechar" um dia que já terminou sem pagar).
+async function pagarComissaoDiaria(colaboradorId,forma){
+  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.id===colaboradorId;});
+  if(!c){showAlert('Colaborador não encontrado.');return;}
+  var hoje=new Date();
+  var hojeIso=dataIsoDe(hoje);
+  var info=comissaoDiariaDoColab(c,hoje);
+  if(info.pago){showAlert('A comissão de hoje de '+c.nome+' já está marcada como paga.');return;}
+  if(info.valor<=0){showAlert('Nenhuma comissão a pagar hoje pra '+c.nome+'.');return;}
+  if(forma==='dinheiro'&&(!caixaState||!caixaState.aberto)){showAlert('⚠️ Abra o caixa do dia antes de pagar em dinheiro.');return;}
+  var descricao='Comissão diária — '+c.nome+' ('+fmtDataBRCurta(hoje)+')';
+  try{
+    if(forma==='dinheiro'){
+      inserirMovimentoCaixa({tipo:'saida',categoria:'Comissao',descricao:descricao,valor:info.valor,forma:'dinheiro',profissional:c.nome});
+    }else{
+      var dataFmt=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+      var _lanc={tipo:'saida',data:dataFmt,desc:descricao,cat:'Comissao',forma:'Pix',val:info.valor,status:'confirmado',prof:c.nome};
+      if(typeof fluxoLancamentos!=='undefined')fluxoLancamentos.push(_lanc);
+      if(typeof fluxoInserirSupa==='function')fluxoInserirSupa(_lanc);
+    }
+    var pct=parseFloat(String(c.comissao||'0').replace('%',''))||0;
+    var linha={
+      salao_id:window.SALAO_ID,colaborador_id:colaboradorId,
+      periodo_inicio:hojeIso,periodo_fim:hojeIso,parcela_num:1,parcela_pct:100,
+      data_pagamento_prevista:hojeIso,qtd_atendimentos:info.qtd,faturamento:info.valor*100/(pct||100),
+      comissao_pct:pct,valor_comissao:info.valor,salario_fixo_incluso:0,status:'paga',
+      pago_em:new Date().toISOString(),pago_por:window.SALAO_RESPONSAVEL||'',forma_pagamento:forma
+    };
+    var r=await supa.from('comissao_parcelas').upsert(linha,{onConflict:'colaborador_id,periodo_inicio,periodo_fim,parcela_num'}).select('*').single();
+    if(r.error){showAlert('Pagamento lançado, mas erro ao marcar a comissão diária como paga: '+r.error.message);return;}
+    var idx=comissaoParcelas.findIndex(function(x){return x.colaborador_id===colaboradorId&&x.periodo_inicio===hojeIso&&x.periodo_fim===hojeIso&&x.parcela_num===1;});
+    if(idx>=0)comissaoParcelas[idx]=r.data;else comissaoParcelas.push(r.data);
+    showAlert('✅ Comissão diária de '+c.nome+' (R$ '+info.valor.toFixed(2).replace('.',',')+') paga e lançada no '+(forma==='dinheiro'?'caixa':'fluxo')+'.');
+    if(typeof renderCaixaDiaristasPendentes==='function')renderCaixaDiaristasPendentes();
+    if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
+  }catch(e){showAlert('Erro ao pagar comissão diária: '+(e&&e.message?e.message:e));}
+}
+// Lista, no resumo do Fechamento de Caixa, cada colaborador no modelo
+// "Diário" com comissão > 0 hoje — paga ou ainda pendente.
+function renderCaixaDiaristasPendentes(){
+  var wrap=document.getElementById('caixa-diaristas-wrap');
+  if(!wrap)return;
+  if(typeof colaboradores==='undefined'||!colaboradores){wrap.innerHTML='';return;}
+  var hoje=new Date();
+  var diaristas=colaboradores.filter(function(c){
+    return c.status!=='Inativo'&&configComissaoDoColab(c.id).modelo==='diario';
+  }).map(function(c){
+    var info=comissaoDiariaDoColab(c,hoje);
+    info.colab=c;
+    return info;
+  }).filter(function(x){return x.valor>0;});
+  if(!diaristas.length){wrap.innerHTML='';return;}
+  wrap.innerHTML='<div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px;text-transform:uppercase">Comissão diária (freelancers)</div>'
+    +diaristas.map(function(d){
+      if(d.pago){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5"><span style="font-size:13px">'+d.colab.nome+'</span><span style="font-size:12px;color:#15803d;font-weight:700">✅ Pago (R$ '+d.valor.toFixed(2).replace('.',',')+')</span></div>';
+      }
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5;gap:10px">'
+        +'<span style="font-size:13px;font-weight:700">Pagar '+d.colab.nome+': R$ '+d.valor.toFixed(2).replace('.',',')+'</span>'
+        +'<div style="display:flex;gap:6px">'
+        +'<select id="diaria-forma-'+d.colab.id+'" style="font-size:11px;padding:4px 6px;border:1px solid #ddd;border-radius:6px"><option value="dinheiro">💵 Dinheiro</option><option value="pix">📱 Pix</option></select>'
+        +'<button class="btn btn-primary btn-sm" onclick="pagarComissaoDiaria(\''+d.colab.id+'\',document.getElementById(\'diaria-forma-'+d.colab.id+'\').value)">Marcar como pago</button>'
+        +'</div></div>';
+    }).join('');
+}
 // "Fechar parcela" congela os valores atuais — depois disso, editar um
 // atendimento antigo desse período não muda mais o valor aqui (só fica
 // registrado como divergência, pra conferência manual).
@@ -16420,6 +16516,7 @@ function editarColab(idx){
             <option value="mensal_2x">Mensal em 2 parcelas</option>
             <option value="mensal_1x">Mensal em 1 parcela</option>
             <option value="personalizado">Personalizado</option>
+            <option value="diario">Diário (freelancer — paga no mesmo dia)</option>
           </select>
         </div>
         <div id="edit-pagto-wrap-quinzenal" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px">
@@ -18730,6 +18827,30 @@ function entrarComoColaborador(nome){
       }).join('');
     }
   }
+  // Pagamento diário (modelo "Diário" — freelancer): mostra "Você recebe
+  // hoje: R$X" com o valor ao vivo (ou já pago, se a dona marcou no
+  // fechamento do caixa); fica escondido pra quem não está nesse modelo.
+  var diariaWrap=document.getElementById('cv-diaria-wrap');
+  if(diariaWrap){
+    var cfgColabAtualDiaria=colab?configComissaoDoColab(colab.id):null;
+    if(colab&&cfgColabAtualDiaria&&cfgColabAtualDiaria.modelo==='diario'){
+      var infoDiariaCv=comissaoDiariaDoColab(colab,hojeCv);
+      diariaWrap.style.display='flex';
+      var elDiariaValor=document.getElementById('cv-diaria-valor');
+      if(elDiariaValor)elDiariaValor.textContent='R$ '+infoDiariaCv.valor.toFixed(2).replace('.',',');
+      var elDiariaStatus=document.getElementById('cv-diaria-status');
+      if(elDiariaStatus){
+        if(infoDiariaCv.pago){
+          var horaPg=infoDiariaCv.pagoEm?new Date(infoDiariaCv.pagoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';
+          elDiariaStatus.textContent='✅ Você recebeu hoje'+(horaPg?(' às '+horaPg):'');
+        }else{
+          elDiariaStatus.textContent='Você recebe hoje';
+        }
+      }
+    }else{
+      diariaWrap.style.display='none';
+    }
+  }
   // Comissões — por período (quinzena ou parcelas do mês, de acordo com o
   // modelo configurado pra esse colaborador). O período "em andamento" é
   // calculado ao vivo (agendamentos Concluído x %); os demais usam o
@@ -19751,6 +19872,7 @@ function fecharCaixaConfirmar(){
   html+='<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f5f5"><span style="color:#ef4444;font-weight:600">Total saidas</span><span style="font-weight:700;color:#ef4444">-'+fmtCaixa(saidas)+'</span></div>';
   html+='<div style="display:flex;justify-content:space-between;padding:16px 0"><span style="font-size:15px;font-weight:800">Saldo final</span><span style="font-size:20px;font-weight:800;color:'+(saldo>=0?'#22c55e':'#ef4444')+'">'+fmtCaixa(saldo)+'</span></div></div>';
   document.getElementById('caixa-resumo-detalhes').innerHTML=html;
+  if(typeof renderCaixaDiaristasPendentes==='function')renderCaixaDiaristasPendentes();
   document.getElementById('caixa-aberto-view').style.display='none';
   document.getElementById('caixa-fechamento-view').style.display='block';
 }
