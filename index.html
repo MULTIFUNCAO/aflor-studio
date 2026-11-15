@@ -12369,6 +12369,15 @@ function confirmarFechamentoPagamento(){
   var ctx=pagamentoCtx;
   var key=ctx.key;
   var valorTotalFmt='R$ '+ctx.total.toFixed(2).replace('.',',');
+  // Trava o(s) serviço(s) com o preço de AGORA, antes de "valor" virar o
+  // total da comanda (serviço+produtos+extras-desconto) logo abaixo — pra
+  // atendimento de serviço único (sem servicos_detalhe), o preço do serviço
+  // vinha de dados.valor, que o pagamento sobrescreve com o total; sem essa
+  // trava, reabrir a comanda paga contava o produto 2x (uma vez "escondido"
+  // no valor do serviço, outra na lista de produtos).
+  var servicosDetalheFinal=(ctx.dados.servicos_detalhe&&ctx.dados.servicos_detalhe.length)
+    ?ctx.dados.servicos_detalhe
+    :popupServicosDoAtendimento(ctx.dados);
 
   var agoraPg=new Date();
   var pagoEmIso=agoraPg.toISOString();
@@ -12376,7 +12385,7 @@ function confirmarFechamentoPagamento(){
 
   function finalizarLocal(){
     var a=agendaDiaAtual[key];
-    if(a){a.status='Concluído';a.sinalPago=true;a.sinal_status='pago';a.valor=valorTotalFmt;a.pagoEm=pagoEmIso;a.formaPagamentoFinal=forma;a.pagoPor=quemPagou;}
+    if(a){a.status='Concluído';a.sinalPago=true;a.sinal_status='pago';a.valor=valorTotalFmt;a.servicos_detalhe=servicosDetalheFinal;a.pagoEm=pagoEmIso;a.formaPagamentoFinal=forma;a.pagoPor=quemPagou;}
     var d=agendaDataAtual;
     var dataKey=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
     if(agendamentosPorData[dataKey]&&agendamentosPorData[dataKey][key]){
@@ -12384,6 +12393,7 @@ function confirmarFechamentoPagamento(){
       agendamentosPorData[dataKey][key].sinalPago=true;
       agendamentosPorData[dataKey][key].sinal_status='pago';
       agendamentosPorData[dataKey][key].valor=valorTotalFmt;
+      agendamentosPorData[dataKey][key].servicos_detalhe=servicosDetalheFinal;
       agendamentosPorData[dataKey][key].pagoEm=pagoEmIso;
       agendamentosPorData[dataKey][key].formaPagamentoFinal=forma;
       agendamentosPorData[dataKey][key].pagoPor=quemPagou;
@@ -12494,7 +12504,7 @@ function confirmarFechamentoPagamento(){
   if(ctx.supaId){
     _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
       return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{method:'PATCH',headers:h,
-        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null,pago_em:pagoEmIso,forma_pagamento_final:forma,pago_por:quemPagou})
+        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_detalhe:servicosDetalheFinal,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null,pago_em:pagoEmIso,forma_pagamento_final:forma,pago_por:quemPagou})
       });
     }).catch(function(e){console.warn('Supabase sync:',e);});
   }
