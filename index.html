@@ -17691,6 +17691,25 @@ function afSalvarAtendimento(){
   var tipo=document.getElementById('ag-tipo-val')?.value||'servico';
   if(!cliente||!dataBase){showAlert('Preencha cliente e data.');return;}
 
+  // Trava contra duplicata: achado real (Vanessa com 13 cópias do mesmo
+  // combo de 6 serviços em 14/11) — toda vez que alguém tentava "continuar"
+  // o atendimento dela, criava um NOVO em vez de abrir o existente pra
+  // editar (o "+ Agendar" sempre insere; só "Editar" atualiza). Esse aviso
+  // não bloqueia — só confirma, porque o mesmo cliente PODE ter dois
+  // atendimentos de verdade no mesmo dia.
+  var pDataChkDup=dataBase.split('-');
+  var dataKeyChkDup=parseInt(pDataChkDup[2],10)+'/'+parseInt(pDataChkDup[1],10)+'/'+parseInt(pDataChkDup[0],10);
+  var diaChkDup=agendamentosPorData[dataKeyChkDup]||{};
+  var jaExisteChk=null;
+  Object.keys(diaChkDup).some(function(kk){
+    var a=diaChkDup[kk];
+    if(a&&a.cliente&&a.cliente.trim().toLowerCase()===cliente.toLowerCase()){jaExisteChk=a;return true;}
+    return false;
+  });
+  if(jaExisteChk&&!confirm('⚠️ '+cliente+' já tem um atendimento hoje ('+(jaExisteChk.hora||'')+' — '+(jaExisteChk.servico||'')+').\n\nTem certeza que quer criar OUTRO atendimento, em vez de abrir o existente na Agenda pra editar (ex: "+ SERVIÇO"/"+ PACOTE" dentro da comanda dele)?')){
+    return;
+  }
+
   var obs=(document.getElementById('ag-obs')?.value||'').trim();
   var sinalAtivo=tipo!=='pacote'&&!!(document.getElementById('ag-sinal-ativo')?.checked);
   var sinalStatus=document.querySelector('input[name="ag-sinal-status"]:checked')?.value||'pendente';
