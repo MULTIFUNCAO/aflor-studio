@@ -10237,9 +10237,15 @@ async function carregarComissaoConfigColabSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
     var r=await supa.from('comissao_colaborador_config').select('*').eq('salao_id',window.SALAO_ID);
+    // Diferente das outras cargas deste arquivo, essa nunca conferia
+    // r.error — uma falha de policy/permissão do Supabase não lança
+    // exceção (não cai no catch), só volta {data:null,error:{...}}, e
+    // isso virava um mapa vazio sem nenhum aviso em lugar nenhum.
+    if(r.error){console.log('err carregar comissao_colaborador_config (response)',r.error);}
     var mapa={};
     (r.data||[]).forEach(function(row){mapa[row.colaborador_id]=row;});
     comissaoConfigPorColab=mapa;
+    console.log('comissao_colaborador_config: '+(r.data||[]).length+' linha(s) recebida(s)');
     if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
     if(typeof preencherFormPagamentoColabAberto==='function')preencherFormPagamentoColabAberto();
   }catch(e){console.log('err carregar comissao_colaborador_config',e);}
