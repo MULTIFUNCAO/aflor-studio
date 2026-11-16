@@ -10013,9 +10013,18 @@ function parcelasRelevantesColab(colab,refData){
   refData=refData||new Date();
   var cfg=configComissaoDoColab(colab.id);
   var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
-  var ano=refData.getFullYear(),mesIdx=refData.getMonth();
-  var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
-  var parcelasAnt=gerarParcelasDoMes(cfg,anoAnt,mesAnt),parcelasAtual=gerarParcelasDoMes(cfg,ano,mesIdx);
+  var parcelasAnt,parcelasAtual;
+  if(cfg.modelo==='quinzenal_personalizado'){
+    // Ciclo rolante com data-âncora própria (hoje só a Kauane) — não
+    // existe "mês anterior/atual" de calendário aqui, é tudo gerado de
+    // uma vez (ciclo anterior+atual+próximo) por gerarCiclosQuinzenalPersonalizado.
+    parcelasAnt=[];
+    parcelasAtual=gerarCiclosQuinzenalPersonalizado(cfg,refData);
+  }else{
+    var ano=refData.getFullYear(),mesIdx=refData.getMonth();
+    var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
+    parcelasAnt=gerarParcelasDoMes(cfg,anoAnt,mesAnt);parcelasAtual=gerarParcelasDoMes(cfg,ano,mesIdx);
+  }
   var brutos=parcelasAnt.concat(parcelasAtual);
   // Salário fixo (mensal) é dividido em partes iguais entre as parcelas
   // DO MESMO MÊS — 1 parcela (mensal_1x) leva o salário inteiro, 2
@@ -10064,9 +10073,14 @@ function periodosRelevantesColab(colab,refData){
   refData=refData||new Date();
   var cfg=configComissaoDoColab(colab.id);
   var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
-  var ano=refData.getFullYear(),mesIdx=refData.getMonth();
-  var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
-  var brutos=gerarParcelasDoMes(cfg,anoAnt,mesAnt).concat(gerarParcelasDoMes(cfg,ano,mesIdx));
+  var brutos;
+  if(cfg.modelo==='quinzenal_personalizado'){
+    brutos=gerarCiclosQuinzenalPersonalizado(cfg,refData);
+  }else{
+    var ano=refData.getFullYear(),mesIdx=refData.getMonth();
+    var mesAnt=mesIdx-1,anoAnt=ano;if(mesAnt<0){mesAnt=11;anoAnt=ano-1;}
+    brutos=gerarParcelasDoMes(cfg,anoAnt,mesAnt).concat(gerarParcelasDoMes(cfg,ano,mesIdx));
+  }
   var gruposMap={},ordem=[];
   brutos.forEach(function(p){
     var chave=dataIsoDe(p.inicio)+'_'+dataIsoDe(p.fim);
