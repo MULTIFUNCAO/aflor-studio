@@ -4775,7 +4775,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="form-grid">
       <div class="form-group full"><label>Cliente *</label><input id="cmd-cliente" list="cmd-cliente-lista" placeholder="Nome do cliente" autocomplete="off" oninput="if(document.getElementById('cmd-tipo-val')?.value==='pacote')cmdCarregarPacotes()"/><datalist id="cmd-cliente-lista"></datalist></div>
       <div class="form-group"><label>Data *</label><input type="date" id="cmd-data"/></div>
-      <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00" min="08:00" max="22:00"/></div>
+      <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00" min="08:00" max="21:30"/></div>
       <div class="form-group full">
         <label>Tipo de Atendimento</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -8652,7 +8652,7 @@ function afRenderServicoBlocos(){
       +'<div class="af-row">'
         +'<span class="material-symbols-outlined">schedule</span>'
         +'<div class="af-field'+(b.horario?' af-filled':'')+'">'
-          +'<input type="time" class="af-input af-input-time" value="'+(b.horario||'')+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+(window.SALAO_HORA_FECHAMENTO||'22:00')+'" placeholder=" " onchange="afBlocoCampo(\''+b.id+'\',\'horario\',this.value);afToggleFilled(this)"/>'
+          +'<input type="time" class="af-input af-input-time" value="'+(b.horario||'')+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+ultimoHorarioAgendavel()+'" placeholder=" " onchange="afBlocoCampo(\''+b.id+'\',\'horario\',this.value);afToggleFilled(this)"/>'
           +'<label>Horário</label>'
         +'</div>'
         +'<div class="af-field af-filled" style="margin-left:8px">'
@@ -12241,7 +12241,7 @@ function abrirAgendaPopup(key,dados,event){
           </div>
           <div id="popup-hora-edit-wrap" style="display:none;margin-top:4px">
             <div style="display:flex;align-items:center;gap:6px">
-              <input type="time" id="popup-hora-input" value="${dados.hora}" min="${window.SALAO_HORA_ABERTURA||'08:00'}" max="${window.SALAO_HORA_FECHAMENTO||'22:00'}" style="padding:4px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;outline:none"/>
+              <input type="time" id="popup-hora-input" value="${dados.hora}" min="${window.SALAO_HORA_ABERTURA||'08:00'}" max="${ultimoHorarioAgendavel()}" style="padding:4px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;outline:none"/>
               <button onclick="popupSalvarHora('${key}')" style="padding:4px 10px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">OK</button>
               <button onclick="popupToggleEditarHora('${key}')" style="padding:4px 8px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">✕</button>
             </div>
@@ -13333,7 +13333,7 @@ function popupAbrirFormExtra(key){
     +'</div>'
     +'<div style="display:flex;gap:6px;margin-bottom:4px">'
     +'<div style="flex:1"><label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Início</label>'
-    +'<input type="time" id="popup-add-svc-hora" value="'+horaSugerida+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+(window.SALAO_HORA_FECHAMENTO||'22:00')+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
+    +'<input type="time" id="popup-add-svc-hora" value="'+horaSugerida+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+ultimoHorarioAgendavel()+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
     +'<div style="flex:1"><label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Duração (min)</label>'
     +'<input type="number" id="popup-add-svc-dur" min="5" step="5" value="'+durSugerida+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
     +'</div>'
@@ -13852,8 +13852,18 @@ function horasGradeAgenda(){
   var inicioMin=parseInt(ab[0],10)*60+(parseInt(ab[1],10)||0);
   var fimMin=parseInt(fe[0],10)*60+(parseInt(fe[1],10)||0);
   var lista=[];
-  for(var m=inicioMin;m<=fimMin;m+=30)lista.push(minToHora(m));
+  // < fimMin, não <=: o salão fecha ÀS 22:00, então o ÚLTIMO horário
+  // marcável é 21:30 (meia hora antes), não 22:00 — senão um atendimento
+  // de 30min+ marcado às 22:00 só terminaria depois do salão já fechado.
+  for(var m=inicioMin;m<fimMin;m+=30)lista.push(minToHora(m));
   return lista.length?lista:['08:00'];
+}
+// Último horário que pode ser escolhido num seletor de horário (input
+// time) — mesma regra do horasGradeAgenda: fechamento menos 30min.
+function ultimoHorarioAgendavel(){
+  var fe=(window.SALAO_HORA_FECHAMENTO||'22:00').split(':');
+  var fimMin=Math.max(0,parseInt(fe[0],10)*60+(parseInt(fe[1],10)||0)-30);
+  return minToHora(fimMin);
 }
 // O salão não abre em todo dia da semana (window.SALAO_DIAS_FUNCIONAMENTO,
 // 0=domingo..6=sábado) — usado pelo indicador de Ocupação da Agenda pra
