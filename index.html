@@ -1243,6 +1243,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
     .cv-com-atend-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:12px}
     .cv-com-atend-cliente{font-weight:700;color:#111}
     .cv-com-atend-meta{color:#888;font-size:10.5px;margin-top:1px}
+    .cv-desemp-toggle{padding:5px 12px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;font-size:11px;font-weight:700;color:#888;cursor:pointer}
+    .cv-desemp-toggle.active{background:#111;color:#fff;border-color:#111}
+    .cv-desemp-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+    @media(max-width:640px){.cv-desemp-grid2{grid-template-columns:1fr}}
 
     .fdash-kpi-grid{grid-template-columns:repeat(6,1fr)}
     .fdash-kpi-card.kpi-purple{border-left-color:#7c3aed}
@@ -2549,9 +2553,14 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
         <!-- Agenda do dia -->
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:14px;font-weight:800">📅 Minha Agenda Hoje</div>
-            <span id="cv-data-agenda" style="font-size:11px;color:#888"></span>
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="font-size:14px;font-weight:800" id="cv-agenda-titulo">📅 Minha Agenda Hoje</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onclick="cvAgendaNavegar(-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#555">◀</button>
+              <button onclick="cvAgendaNavegar(0)" style="padding:0 10px;height:28px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:#555">Hoje</button>
+              <button onclick="cvAgendaNavegar(1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#555">▶</button>
+              <span id="cv-data-agenda" style="font-size:11px;color:#888;margin-left:4px;white-space:nowrap"></span>
+            </div>
           </div>
           <div id="cv-agenda" style="padding:14px"></div>
         </div>
@@ -2581,6 +2590,31 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div id="cv-data-comissoes" style="font-size:11px;color:#888;margin-top:2px"></div>
           </div>
           <div id="cv-comissoes" style="padding:14px"></div>
+        </div>
+
+        <!-- Meu Desempenho -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-top:16px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="font-size:14px;font-weight:800">📈 Meu Desempenho</div>
+            <div style="display:flex;gap:6px">
+              <button id="cv-desemp-btn-7d" class="cv-desemp-toggle active" onclick="cvDesempenhoModo('7d')">7 dias</button>
+              <button id="cv-desemp-btn-mensal" class="cv-desemp-toggle" onclick="cvDesempenhoModo('mensal')">Mensal</button>
+            </div>
+          </div>
+          <div style="padding:16px">
+            <div style="font-size:11px;color:#888;margin-bottom:8px">Faturamento e comissão — só dos serviços que você fez</div>
+            <div id="cv-desemp-trend"></div>
+            <div class="cv-desemp-grid2">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:10px">Meus procedimentos mais feitos (mês)</div>
+                <div id="cv-desemp-donut"></div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:10px">Top 5 serviços do mês</div>
+                <div id="cv-desemp-ranking"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -6097,11 +6131,22 @@ async function carregarAgendamentosSupa(){
           valorComissaoPrimario=Math.max(0,valorComissaoPrimario-somaProdCobradosRow);
         }
       }
+      // Nome do serviço que ESSE profissional (coluna "profissional" da
+      // linha) de fato executou — "servico" fica com o texto da comanda
+      // inteira ("Corte de Cabelo + Escova M + Pedicure", pra identificar
+      // a comanda em telas administrativas); servicoIndividual é só o
+      // dele (mesma fonte/suposição do valorComissaoPrimario: item[0] do
+      // combo é o do profissional principal).
+      var servicoIndividualPrimario=row.servico||'';
+      if(detalhes&&detalhes.length>1){
+        servicoIndividualPrimario=(detalhes[0]&&detalhes[0].nome)||svcPrimario;
+      }
       var apptEntry={
         id:row.id||null,
         cliente:row.cliente||'',
         tel:row.tel||'',
         servico:row.servico||'',
+        servicoIndividual:servicoIndividualPrimario,
         prof:profNome,
         // Id real do colaborador (coluna profissional_id) — quando existe,
         // é a fonte preferida pra bater comissão; nome vira reserva só
@@ -6138,7 +6183,7 @@ async function carregarAgendamentosSupa(){
           // principal — busca o profissional_id DESSE item específico,
           // não herda o do atendimento inteiro.
           var detalheItem=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:parseFloat(detalheItem&&detalheItem.valor)||0});
+          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:parseFloat(detalheItem&&detalheItem.valor)||0});
         });
       }
     });
@@ -10031,6 +10076,15 @@ function valorNumAgendamento(a){
   if(a&&typeof a.valorComissao==='number')return a.valorComissao;
   if(typeof a.valor_num==='number')return a.valor_num;
   return parseFloat(String(a.valor||'0').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
+}
+// Nome só do serviço que o profissional do card fez — "servico" guarda o
+// texto da comanda inteira (ex: "Corte de Cabelo + Escova M + Pedicure"),
+// servicoIndividual é só a parte dele (mesma ideia de valorComissao x
+// valor_num). Usado nas telas do colaborador (nunca mostrar o combo
+// inteiro como se fosse um serviço só dele).
+function nomeServicoIndividual(a){
+  if(a&&typeof a.servicoIndividual==='string'&&a.servicoIndividual)return a.servicoIndividual;
+  return (a&&a.servico)||'';
 }
 function dataKeyParaDate(dk){
   var p=String(dk||'').split('/');
@@ -14034,7 +14088,11 @@ function renderAgenda(){
               valorComissaoPrimRA=Math.max(0,valorComissaoPrimRA-somaProdCobradosRA);
             }
           }
-          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,valorComissao:valorComissaoPrimRA,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
+          var servicoIndividualPrimRA=a.servico||'';
+          if(detalhes&&detalhes.length>1){
+            servicoIndividualPrimRA=(detalhes[0]&&detalhes[0].nome)||svcPrimario;
+          }
+          var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',servicoIndividual:servicoIndividualPrimRA,prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,valorComissao:valorComissaoPrimRA,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
           obj[k]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
@@ -14044,7 +14102,7 @@ function renderAgenda(){
             timeline.slice(1).forEach(function(item){
               var pSd=agProfParaAgenda(item.prof);
               var detalheItemRA=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:parseFloat(detalheItemRA&&detalheItemRA.valor)||0});
+              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:parseFloat(detalheItemRA&&detalheItemRA.valor)||0});
             });
           }
         });
@@ -19004,6 +19062,216 @@ async function entrarComoColaboradorPorAuth(){
     showAlertOb('Erro ao entrar. Tente novamente.');
   }
 }
+// ---- Minha Agenda (painel do colaborador) — navegação por dia ----
+var cvAgendaDataAtual=new Date();
+function cvAgendaNavegar(delta){
+  var d=new Date(cvAgendaDataAtual.getTime());
+  if(delta===0)d=new Date();
+  else d.setDate(d.getDate()+delta);
+  cvAgendaDataAtual=d;
+  cvRenderAgendaDia();
+}
+function horaParaMinutosCv(h){
+  var p=String(h||'0:0').split(':');
+  return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
+}
+// Mesmo esquema de cores/prioridade do calendário principal
+// (corBlocoAgenda) — só traduz pra um rótulo de texto pro badge.
+function rotuloStatusAgendaCv(a){
+  if(agendaStatusCancelado(a))return (a.status||'').toLowerCase()==='faltou'?'Faltou':'Cancelada';
+  var st=(a.status||'').toLowerCase();
+  if(st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado')return 'Concluído';
+  if(!!a.sinalPago||(a.sinal_status||'')==='pago')return 'Sinal pago';
+  if(a.confirmado)return 'Confirmado';
+  return 'Agendado';
+}
+function cvRenderAgendaDia(){
+  var agenda=document.getElementById('cv-agenda');
+  if(!agenda)return;
+  var nome=colaboradorLogado;
+  var colab=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===nome;});
+  var d=cvAgendaDataAtual||new Date();
+  var diasSemanaCv=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  var mesesAbrevCv=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var hojeZ=new Date();hojeZ.setHours(0,0,0,0);
+  var dZ=new Date(d.getTime());dZ.setHours(0,0,0,0);
+  var ehHoje=dZ.getTime()===hojeZ.getTime();
+  var titEl=document.getElementById('cv-agenda-titulo');
+  if(titEl)titEl.textContent='📅 Minha Agenda'+(ehHoje?' Hoje':'');
+  var elAgCv=document.getElementById('cv-data-agenda');
+  if(elAgCv)elAgCv.textContent=diasSemanaCv[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'/'+mesesAbrevCv[d.getMonth()]+'/'+d.getFullYear();
+  var dataKeyCv=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  var apptsDia=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[dataKeyCv])||{};
+  var meusAppts;
+  if(colab&&temPermissao(colab,'agenda_visualizar_todas')){
+    meusAppts=Object.values(apptsDia);
+  }else{
+    // Prefere bater por profissional_id (à prova de apelido/nome
+    // trocado); profAgendaIgual (não comparação crua) cobre só os
+    // agendamentos antigos sem id ligado ainda.
+    meusAppts=Object.values(apptsDia).filter(function(a){
+      if(colab&&colab.id!=null&&a.profissionalId!=null)return a.profissionalId===colab.id;
+      return profAgendaIgual(a.prof,nome);
+    });
+  }
+  meusAppts.sort(function(a,b){return horaParaMinutosCv(a.hora)-horaParaMinutosCv(b.hora);});
+  if(!meusAppts.length){
+    agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento neste dia</div>';
+  } else {
+    agenda.innerHTML=meusAppts.map(function(a){
+      // a.valor é o total da COMANDA inteira (pode ter serviço de outro
+      // profissional + produtos); valorNumAgendamento(a) prefere
+      // valorComissao — o valor só do serviço que ESSE colaborador faz
+      // (ver carregarAgendamentosSupa) — é o que faz sentido mostrar aqui.
+      var valorCardCv=formatMoedaBR(valorNumAgendamento(a));
+      var corSt=corBlocoAgenda(a);
+      var txtSt=rotuloStatusAgendaCv(a);
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5">'
+        +'<div style="background:#111;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:800;min-width:50px;text-align:center">'+a.hora+'</div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:700">'+a.cliente+'</div><div style="font-size:11px;color:#888">'+nomeServicoIndividual(a)+'</div></div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-size:13px;font-weight:700">'+valorCardCv+'</div>'
+        +'<span style="display:inline-block;margin-top:2px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;background:'+corSt+'">'+txtSt+'</span>'
+        +(a.sinal?'<div style="font-size:10px;color:'+(a.sinalPago?'#22c55e':'#f59e0b')+';margin-top:2px">'+(a.sinalPago?'✅ Sinal pago':'⏳ Sinal pend.')+'</div>':'')
+        +'</div></div>';
+    }).join('');
+  }
+  if(ehHoje){
+    var elAtendHoje=document.getElementById('cv-atend-hoje');
+    if(elAtendHoje)elAtendHoje.textContent=meusAppts.length||'0';
+  }
+}
+// ---- Meu Desempenho (painel do colaborador) ----
+// Sempre e só os serviços em que ELE aparece no servicos_detalhe
+// (calcularComissaoPeriodo já filtra por colaboradorId/nome) — nunca o
+// faturamento/lucro do salão inteiro.
+var MESES_ABREV_CV=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var cvDesempenhoModoAtual='7d';
+function cvDesempenhoModo(modo){
+  cvDesempenhoModoAtual=modo;
+  var b7=document.getElementById('cv-desemp-btn-7d'),bm=document.getElementById('cv-desemp-btn-mensal');
+  if(b7)b7.classList.toggle('active',modo==='7d');
+  if(bm)bm.classList.toggle('active',modo==='mensal');
+  cvRenderDesempenho();
+}
+function cvDesempenhoDadosTrend(colab,modo){
+  var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+  var pontos=[];
+  if(modo==='mensal'){
+    var hoje=new Date();
+    for(var i=5;i>=0;i--){
+      var ref=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);
+      var inicio=new Date(ref.getFullYear(),ref.getMonth(),1);
+      var fim=new Date(ref.getFullYear(),ref.getMonth()+1,0);
+      var calc=calcularComissaoPeriodo(colab.nome,pct,inicio,fim,colab.id);
+      pontos.push({label:MESES_ABREV_CV[ref.getMonth()],faturamento:calc.totalBruto,comissao:calc.comissaoVal});
+    }
+  }else{
+    var hoje2=new Date();hoje2.setHours(0,0,0,0);
+    for(var j=6;j>=0;j--){
+      var d=new Date(hoje2.getTime());d.setDate(d.getDate()-j);
+      var calc2=calcularComissaoPeriodo(colab.nome,pct,d,d,colab.id);
+      pontos.push({label:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'),faturamento:calc2.totalBruto,comissao:calc2.comissaoVal});
+    }
+  }
+  return pontos;
+}
+function cvDesempenhoDadosServicos(colab){
+  var hoje=new Date();
+  var inicioMes=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  var fimMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0);
+  var pct=parseFloat(String(colab.comissao||'0').replace('%',''))||0;
+  var calc=calcularComissaoPeriodo(colab.nome,pct,inicioMes,fimMes,colab.id);
+  var porServicoCv={};
+  calc.itens.forEach(function(a){
+    var nomeServ=nomeServicoIndividual(a)||'Outros';
+    if(!porServicoCv[nomeServ])porServicoCv[nomeServ]={nome:nomeServ,qtd:0,valor:0};
+    porServicoCv[nomeServ].qtd++;
+    porServicoCv[nomeServ].valor+=valorNumAgendamento(a);
+  });
+  return Object.values(porServicoCv).sort(function(a,b){return b.valor-a.valor;});
+}
+function cvRenderTrendSvg(pontos){
+  if(!pontos||!pontos.length)return '<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Sem dados ainda</div>';
+  var W=360,H=150,PAD=26;
+  var maxVal=Math.max(1,Math.max.apply(null,pontos.map(function(p){return Math.max(p.faturamento,p.comissao);})));
+  var n=pontos.length;
+  var stepX=n>1?(W-PAD*2)/(n-1):0;
+  function xAt(i){return PAD+stepX*i;}
+  function yAt(v){return H-PAD-(v/maxVal)*(H-PAD*2-10);}
+  function pathFor(key){
+    return pontos.map(function(p,i){return (i===0?'M':'L')+xAt(i).toFixed(1)+','+yAt(p[key]).toFixed(1);}).join(' ');
+  }
+  function dotsFor(key,cor){
+    return pontos.map(function(p,i){
+      return '<circle cx="'+xAt(i).toFixed(1)+'" cy="'+yAt(p[key]).toFixed(1)+'" r="3" fill="'+cor+'"><title>'+p.label+': R$ '+p[key].toFixed(2).replace('.',',')+'</title></circle>';
+    }).join('');
+  }
+  var labelsX=pontos.map(function(p,i){
+    return '<text x="'+xAt(i).toFixed(1)+'" y="'+(H-6)+'" font-size="9" fill="#898781" text-anchor="middle">'+p.label+'</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;max-width:420px;display:block;margin:0 auto">'
+    +'<line x1="'+PAD+'" y1="'+(H-PAD)+'" x2="'+(W-PAD)+'" y2="'+(H-PAD)+'" stroke="#e1e0d9" stroke-width="1"/>'
+    +'<path d="'+pathFor('faturamento')+'" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+pathFor('comissao')+'" fill="none" stroke="#eb6834" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +dotsFor('faturamento','#2a78d6')+dotsFor('comissao','#eb6834')
+    +labelsX
+    +'</svg>'
+    +'<div style="display:flex;gap:16px;justify-content:center;margin-top:4px;font-size:11px;color:#555">'
+    +'<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#2a78d6"></span>Faturamento</span>'
+    +'<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#eb6834"></span>Comissão</span>'
+    +'</div>';
+}
+function cvRenderDonutSvg(lista){
+  if(!lista||!lista.length)return '<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Nenhum serviço registrado esse mês ainda</div>';
+  var totalValor=lista.reduce(function(s,x){return s+x.valor;},0);
+  var R=50,STROKE=18,C=2*Math.PI*R,GAP=3;
+  var cores=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4'];
+  var top=lista.slice(0,5),outros=lista.slice(5);
+  var slices=top.map(function(x,i){return {nome:x.nome,qtd:x.qtd,valor:x.valor,cor:cores[i]};});
+  var valorOutros=outros.reduce(function(s,x){return s+x.valor;},0);
+  var qtdOutros=outros.reduce(function(s,x){return s+x.qtd;},0);
+  if(valorOutros>0)slices.push({nome:'Outros',qtd:qtdOutros,valor:valorOutros,cor:'#898781'});
+  var offsetAcc=0;
+  var arcs=slices.map(function(s){
+    var frac=totalValor>0?s.valor/totalValor:0;
+    var dash=Math.max(0,frac*C-GAP);
+    var arc='<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+s.cor+'" stroke-width="'+STROKE+'" stroke-dasharray="'+dash.toFixed(2)+' '+(C-dash).toFixed(2)+'" stroke-dashoffset="'+(-offsetAcc).toFixed(2)+'" transform="rotate(-90 60 60)"><title>'+s.nome+': '+s.qtd+'x · R$ '+s.valor.toFixed(2).replace('.',',')+'</title></circle>';
+    offsetAcc+=frac*C;
+    return arc;
+  }).join('');
+  var legenda=slices.map(function(s){
+    return '<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:5px"><span style="width:9px;height:9px;border-radius:50%;background:'+s.cor+';flex-shrink:0"></span><span style="flex:1;color:#333">'+s.nome+'</span><span style="font-weight:700;color:#555;white-space:nowrap">'+s.qtd+'x · R$ '+s.valor.toFixed(0)+'</span></div>';
+  }).join('');
+  return '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
+    +'<svg width="120" height="120" viewBox="0 0 120 120" style="flex-shrink:0">'+arcs+'</svg>'
+    +'<div style="flex:1;min-width:140px">'+legenda+'</div>'
+    +'</div>';
+}
+function cvRenderRankingHtml(lista){
+  var top5=(lista||[]).slice(0,5);
+  if(!top5.length)return '<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Nenhum serviço registrado esse mês ainda</div>';
+  var maxValor=Math.max.apply(null,top5.map(function(x){return x.valor;}));
+  return top5.map(function(x,i){
+    var pctW=maxValor>0?Math.max(6,Math.round(x.valor/maxValor*100)):0;
+    return '<div style="margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;gap:8px"><span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(i+1)+'. '+x.nome+'</span><span style="color:#555;font-weight:700;white-space:nowrap">R$ '+x.valor.toFixed(0)+'</span></div>'
+      +'<div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pctW+'%;background:#2a78d6;border-radius:4px"></div></div>'
+      +'</div>';
+  }).join('');
+}
+function cvRenderDesempenho(){
+  var trendEl=document.getElementById('cv-desemp-trend');
+  var donutEl=document.getElementById('cv-desemp-donut');
+  var rankEl=document.getElementById('cv-desemp-ranking');
+  if(!trendEl||!donutEl||!rankEl)return;
+  var colab=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(c){return c.nome===colaboradorLogado;});
+  if(!colab)return;
+  trendEl.innerHTML=cvRenderTrendSvg(cvDesempenhoDadosTrend(colab,cvDesempenhoModoAtual));
+  var servicosCv=cvDesempenhoDadosServicos(colab);
+  donutEl.innerHTML=cvRenderDonutSvg(servicosCv);
+  rankEl.innerHTML=cvRenderRankingHtml(servicosCv);
+}
 function entrarComoColaborador(nome){
   // Preencher dados
   var colab=colaboradores.find(function(c){return c.nome===nome;});
@@ -19028,8 +19296,6 @@ function entrarComoColaborador(nome){
   var hojeCv=new Date();
   var elSaud=document.getElementById('cv-data-saudacao');
   if(elSaud)elSaud.textContent=diasSemanaCv[hojeCv.getDay()]+', '+hojeCv.getDate()+' de '+mesesCv[hojeCv.getMonth()]+' de '+hojeCv.getFullYear()+' · FLORA Studio';
-  var elAgCv=document.getElementById('cv-data-agenda');
-  if(elAgCv)elAgCv.textContent=String(hojeCv.getDate()).padStart(2,'0')+'/'+mesesAbrevCv[hojeCv.getMonth()]+'/'+hojeCv.getFullYear();
   var elComCv=document.getElementById('cv-data-comissoes');
   if(elComCv)elComCv.textContent=mesesCv[hojeCv.getMonth()]+' '+hojeCv.getFullYear();
   var elN=document.getElementById('cv-nome');if(elN)elN.textContent=nome;
@@ -19039,49 +19305,11 @@ function entrarComoColaborador(nome){
     if(colab&&colab.foto)elAv.innerHTML='<img src="'+colab.foto+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';
     else{elAv.textContent=ini;elAv.style.background=colab&&colab.cor?colab.cor:'#555';}
   }
-  // Agenda do colaborador
-  var agenda=document.getElementById('cv-agenda');
-  if(agenda){
-    // Lê direto de agendamentosPorData[hoje] em vez de agendaDiaAtual — essa
-    // variável global é reescrita por renderAgenda() toda vez que ela roda
-    // (inclusive de buscas assíncronas concorrentes disparadas por outros
-    // carregamentos, ex: carregarColaboradoresSupa), então podia ficar
-    // vazia de novo bem depois do carregarAgendamentosSupa() já ter
-    // preenchido os dados certos. agendamentosPorData[hoje] é a fonte
-    // direta que carregarAgendamentosSupa() de fato escreve.
-    var todayKeyCv=hojeCv.getDate()+'/'+(hojeCv.getMonth()+1)+'/'+hojeCv.getFullYear();
-    var apptsDia=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[todayKeyCv])||agendaDiaAtual||{};
-    var meusAppts;
-    if(colab&&temPermissao(colab,'agenda_visualizar_todas')){
-      meusAppts=Object.values(apptsDia);
-    }else{
-      // Prefere bater por profissional_id (à prova de apelido/nome
-      // trocado); profAgendaIgual (não comparação crua) cobre só os
-      // agendamentos antigos sem id ligado ainda.
-      meusAppts=Object.values(apptsDia).filter(function(a){
-        if(colab&&colab.id!=null&&a.profissionalId!=null)return a.profissionalId===colab.id;
-        return profAgendaIgual(a.prof,nome);
-      });
-    }
-    if(!meusAppts.length){
-      agenda.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">📭 Nenhum atendimento hoje</div>';
-    } else {
-      agenda.innerHTML=meusAppts.map(function(a){
-        // a.valor é o total da COMANDA inteira (pode ter serviço de outro
-        // profissional + produtos); valorNumAgendamento(a) prefere
-        // valorComissao — o valor só do serviço que ESSE colaborador faz
-        // (ver carregarAgendamentosSupa) — é o que faz sentido mostrar aqui.
-        var valorCardCv=formatMoedaBR(valorNumAgendamento(a));
-        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5">'
-          +'<div style="background:#111;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:800;min-width:50px;text-align:center">'+a.hora+'</div>'
-          +'<div style="flex:1"><div style="font-size:13px;font-weight:700">'+a.cliente+'</div><div style="font-size:11px;color:#888">'+a.servico+' · '+a.duracao+'</div></div>'
-          +'<div style="text-align:right"><div style="font-size:13px;font-weight:700">'+valorCardCv+'</div>'
-          +(a.sinal?'<div style="font-size:10px;color:'+(a.sinalPago?'#22c55e':'#f59e0b')+'">'+(a.sinalPago?'✅ Sinal pago':'⏳ Sinal pend.')+'</div>':'')
-          +'</div></div>';
-      }).join('');
-    }
-    document.getElementById('cv-atend-hoje').textContent=meusAppts.length||'0';
-  }
+  // Agenda do colaborador — com navegação de dia (cvAgendaNavegar); sempre
+  // reabre em "hoje" quando entra/reentra no painel.
+  cvAgendaDataAtual=new Date();
+  if(typeof cvRenderAgendaDia==='function')cvRenderAgendaDia();
+  if(typeof cvRenderDesempenho==='function')cvRenderDesempenho();
   // Metas do colaborador
   var metasEl=document.getElementById('cv-metas');
   if(metasEl){
@@ -19219,15 +19447,34 @@ function entrarComoColaborador(nome){
           +'<div style="font-size:11px;color:#888">'+info.txt+'</div></div>'
           +'<span style="font-size:14px;font-weight:800">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</span></div>';
       }).join('');
-      // Detalhamento: lista dos atendimentos do período atual
+      // Detalhamento: cards agrupados por dia (mostra só o nome do serviço
+      // que ELE fez, nomeServicoIndividual — nunca o combo inteiro da
+      // comanda, ex: Leila 14/11 era "Corte de Cabelo + Escova M +
+      // Pedicure", agora é só "Corte de Cabelo").
       if(atualP.itens&&atualP.itens.length){
         html+='<div class="cv-com-section-title" style="margin-top:14px">Atendimentos do período</div>';
-        html+=atualP.itens.map(function(a){
-          var comissaoItem=valorNumAgendamento(a)*atualP.comissaoPct/100;
-          return '<div class="cv-com-atend-item"><div><div class="cv-com-atend-cliente">'+(a.cliente||'—')+'</div>'
-            +'<div class="cv-com-atend-meta">'+fmtDataBRCurta(a._dataAgenda)+' · '+(a.servico||'')+'</div></div>'
-            +'<div style="text-align:right"><div style="font-weight:700">R$ '+valorNumAgendamento(a).toFixed(2).replace('.',',')+'</div>'
-            +'<div class="cv-com-atend-meta">comissão R$ '+comissaoItem.toFixed(2).replace('.',',')+'</div></div></div>';
+        var gruposPorDiaCv={},ordemDiasCv=[];
+        atualP.itens.forEach(function(a){
+          var chaveDiaCv=dataIsoDe(a._dataAgenda);
+          if(!gruposPorDiaCv[chaveDiaCv]){gruposPorDiaCv[chaveDiaCv]={data:a._dataAgenda,itens:[]};ordemDiasCv.push(chaveDiaCv);}
+          gruposPorDiaCv[chaveDiaCv].itens.push(a);
+        });
+        ordemDiasCv.sort(function(x,y){return gruposPorDiaCv[y].data-gruposPorDiaCv[x].data;});
+        html+=ordemDiasCv.map(function(chaveDiaCv){
+          var g=gruposPorDiaCv[chaveDiaCv];
+          var totalDiaCv=g.itens.reduce(function(s,a){return s+valorNumAgendamento(a);},0);
+          var linhasDiaCv=g.itens.map(function(a){
+            var comissaoItem=valorNumAgendamento(a)*atualP.comissaoPct/100;
+            return '<div class="cv-com-atend-item"><div><div class="cv-com-atend-cliente">'+(a.cliente||'—')+'</div>'
+              +'<div class="cv-com-atend-meta">'+nomeServicoIndividual(a)+'</div></div>'
+              +'<div style="text-align:right"><div style="font-weight:700">R$ '+valorNumAgendamento(a).toFixed(2).replace('.',',')+'</div>'
+              +'<div class="cv-com-atend-meta">comissão R$ '+comissaoItem.toFixed(2).replace('.',',')+'</div></div></div>';
+          }).join('');
+          return '<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
+            +'<span style="font-size:11.5px;font-weight:800;color:#555">'+fmtDataBRCurta(g.data)+'</span>'
+            +'<span style="font-size:12px;font-weight:800">R$ '+totalDiaCv.toFixed(2).replace('.',',')+'</span>'
+            +'</div>'+linhasDiaCv+'</div>';
         }).join('');
       }
       comEl.innerHTML=html;
