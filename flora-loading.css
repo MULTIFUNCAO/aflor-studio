@@ -1,0 +1,45 @@
+/* Componente de carregamento compartilhado — index.html, login.html,
+   equipe.html. Dois formatos: tela cheia (logo + spinner, pra tela
+   inicial/login) e spinner pequeno (pra dentro de botões/cards).
+   Nenhum dos 3 arquivos tem modo escuro hoje (sem data-theme nem
+   prefers-color-scheme em nenhum deles), então esse componente é só
+   claro, igual ao resto do app — se um modo escuro for adicionado depois,
+   ajustar aqui cobre os 3 lugares de uma vez. */
+
+.flora-loading-full{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:#f4f4f4;
+  gap:16px;
+}
+
+/* Spinner grande, de tela cheia */
+.flora-loading-spinner{
+  width:28px;
+  height:28px;
+  border:3px solid #e5e5e5;
+  border-top-color:#111;
+  border-radius:50%;
+  animation:flora-spin .7s linear infinite;
+}
+
+/* Spinner pequeno, pra usar dentro de botões/cards — cor segue o texto
+   do elemento (currentColor), então o mesmo spinner fica branco num
+   botão escuro e escuro num texto claro, sem precisar de variante. */
+.flora-spinner{
+  display:inline-block;
+  width:13px;
+  height:13px;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:flora-spin .7s linear infinite;
+  vertical-align:middle;
+  margin-right:6px;
+  opacity:.85;
+}
+
+@keyframes flora-spin{to{transform:rotate(360deg)}}

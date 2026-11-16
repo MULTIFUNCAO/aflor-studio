@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link rel="stylesheet" href="flora-loading.css">
 
 <style>
 /* ===== Material Symbols (ícones do formulário de Atendimento, estilo Salão99) ===== */
@@ -23,8 +24,6 @@
 #aflor-overlay.hidden{display:none}
 .ob-card{background:#fff;border-radius:22px;padding:28px 32px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
 .ob-loading{text-align:center}
-.ob-loading-spinner{width:28px;height:28px;border:3px solid #e5e5e5;border-top-color:#111;border-radius:50%;margin:18px auto 0;animation:ob-spin .7s linear infinite}
-@keyframes ob-spin{to{transform:rotate(360deg)}}
 .ob-card::-webkit-scrollbar{width:3px}.ob-card::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
 .ob-screen{display:none}.ob-screen.active{display:block}
 .tulip-wrap{text-align:center;margin-bottom:6px}
@@ -576,7 +575,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <path d="M50 77 C50 77 72 72 76 58 C63 58 50 69 50 77Z" fill="#111"/>
       </svg>
     </div>
-    <div class="ob-loading-spinner"></div>
+    <div class="flora-loading-spinner"></div>
   </div>
 
   <div class="ob-card" id="ob-card" style="display:none">
@@ -6374,7 +6373,7 @@ function lancarComissaoServico(profissional,nomeServico,clienteNome,valorServico
 }
 async function renderRemuneracoesHistorico(filtroProfValAtual){
   const tb=document.getElementById('remuneracoes-table');
-  tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Carregando histórico...</td></tr>';
+  tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:#888"><span class="flora-spinner"></span>Carregando histórico...</td></tr>';
   try{
     var resp=await supa.from('comissoes_pacote').select('*').eq('salao_id',window.SALAO_ID);
     if(resp.error){ tb.innerHTML='<tr><td colspan="6" style="color:red">Erro ao carregar histórico.</td></tr>'; return; }
@@ -7313,7 +7312,7 @@ async function uploadArquivoMaterial(fileInput){
   var file=fileInput.files[0];
   if(!file)return;
   var statusEl=document.getElementById('material-arquivo-status');
-  if(statusEl)statusEl.textContent='Enviando...';
+  if(statusEl)statusEl.innerHTML='<span class="flora-spinner"></span>Enviando...';
   try{
     if(!supa||!window.SALAO_ID)throw new Error('sem sessão');
     var path=window.SALAO_ID+'/'+(cursoConteudoCursoId||'sem-curso')+'/'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
@@ -8100,7 +8099,7 @@ async function criarAcessoAluno(alunoId){
     if(senhaProvisoria.length<8){alert('A senha provisória precisa ter pelo menos 8 caracteres.');return;}
   }
   var btn=document.getElementById('btn-criar-acesso-aluno');
-  if(btn){btn.disabled=true;btn.textContent='Criando...';}
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Criando...';}
   try{
     var sessao=await supa.auth.getSession();
     var token=sessao.data&&sessao.data.session?sessao.data.session.access_token:null;
@@ -10283,7 +10282,7 @@ function renderComissoesAPagar(){
   var tbEl=document.getElementById('comissoes-pagar-table');
   if(!resumoEl||!tbEl)return;
   if(!window._colabsSupaCarregados){
-    tbEl.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
+    tbEl.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:#aaa;font-size:13px"><span class="flora-spinner"></span>Carregando colaboradores...</td></tr>';
     return;
   }
   var parcelas=todasParcelasAPagar();
@@ -10878,7 +10877,7 @@ async function calcularSugestaoMeta(){
   resultado.style.display='block';
   var metaFmt='R$ '+metaVal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
   document.getElementById('meta-resultado-titulo').textContent='Para atingir '+metaFmt+', venda aproximadamente:';
-  document.getElementById('meta-resultado-lista').innerHTML='<div style="font-size:12px;color:#9ca3af;padding:6px 0">Calculando sugestao...</div>';
+  document.getElementById('meta-resultado-lista').innerHTML='<div style="font-size:12px;color:#9ca3af;padding:6px 0"><span class="flora-spinner"></span>Calculando sugestao...</div>';
   document.getElementById('meta-resultado-total').textContent='...';
   var proporcoes={};var metodo='igual';
   try{
@@ -11333,7 +11332,7 @@ function renderRemuneracoes(){
   var _norm=function(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();};
   var tb=document.getElementById('remuneracoes-table');
   if(!window._colabsSupaCarregados){
-    if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Carregando colaboradores...</td></tr>';
+    if(tb)tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:#aaa;font-size:13px"><span class="flora-spinner"></span>Carregando colaboradores...</td></tr>';
     return;
   }
   var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo';});
@@ -13557,7 +13556,7 @@ async function popupSalvarAtendimento(key){
   }));
 
   var btn=document.querySelector('#popup-salvar-atendimento-wrap button');
-  if(btn){btn.disabled=true;btn.textContent='Salvando...';}
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Salvando...';}
 
   try{
     var h=await _authHeaders({'Content-Type':'application/json'});
@@ -17734,7 +17733,7 @@ async function afSalvarEdicaoBlocos(){
   // afInserirAtendimentoUmaData.
   var patch={cliente:cliente,data:dataBase,hora:hora,profissional:blocosValidos[0].profissional,profissional_id:colaboradorIdPorNome(blocosValidos[0].profissional),servico:servico,valor:valorFmt,servicos_detalhe:servicosDetalhe,obs:obs,produtos_usados:produtosUsados};
   var btn=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='SALVANDO...';}
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>SALVANDO...';}
   try{
     var h=await _authHeaders({'Content-Type':'application/json'});
     var resp=await fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+dados.id+'&salao_id=eq.'+window.SALAO_ID,{method:'PATCH',headers:h,body:JSON.stringify(patch)});
@@ -17985,7 +17984,7 @@ function afSalvarAtendimento(){
     // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
     // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
     var btnPac=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
-    if(btnPac){btnPac.disabled=true;btnPac.textContent='SALVANDO...';}
+    if(btnPac){btnPac.disabled=true;btnPac.innerHTML='<span class="flora-spinner"></span>SALVANDO...';}
     afInserirAtendimentoUmaData(dataBase,ctxPac).then(function(){
       if(btnPac){btnPac.disabled=false;btnPac.textContent='SALVAR';}
       afFinalizarSalvamento(cliente,[dataBase]);
@@ -18036,7 +18035,7 @@ function afSalvarAtendimento(){
   // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
   // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
   var btnServ=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
-  if(btnServ){btnServ.disabled=true;btnServ.textContent='SALVANDO...';}
+  if(btnServ){btnServ.disabled=true;btnServ.innerHTML='<span class="flora-spinner"></span>SALVANDO...';}
   var prom=Promise.resolve();
   datas.forEach(function(d){
     prom=prom.then(function(){return afInserirAtendimentoUmaData(d,ctxServ);});
