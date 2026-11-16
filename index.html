@@ -947,10 +947,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
       Controle de Caixa
     </div>
-    <div class="nav-item" onclick="showPage('remuneracoes')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      Remunerações
-    </div>
     <div class="nav-item" onclick="showPage('comissoes-pagar')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       Comissões a Pagar
@@ -9863,6 +9859,20 @@ function gerarParcelasDoMes(cfg,ano,mesIdx){
     var pagUnica=nEsimoDiaUtilComissao(anoSeg,mesSeg,cfg.mensal_dia_util_parcela1||5,sab);
     return [{num:1,inicio:inicio1,fim:fim1,pct:100,pagamento:pagUnica}];
   }
+  // "Diário" (freelancer): sem isso cai no quinzenal padrão (período de 15
+  // dias), que é errado pra quem é pago no mesmo dia — cada dia do mês é
+  // o próprio período (início=fim=pagamento), 1 parcela de 100%. num
+  // sempre 1 (cada dia só tem 1 parcela possível), igual ao que
+  // pagarComissaoDiaria() grava em comissao_parcelas.
+  if(cfg.modelo==='diario'){
+    var ultimoDiaDiario=new Date(ano,mesIdx+1,0).getDate();
+    var parcelasDiario=[];
+    for(var ddDiario=1;ddDiario<=ultimoDiaDiario;ddDiario++){
+      var diaDiario=new Date(ano,mesIdx,ddDiario);
+      parcelasDiario.push({num:1,inicio:diaDiario,fim:diaDiario,pct:100,pagamento:diaDiario});
+    }
+    return parcelasDiario;
+  }
   // quinzenal (padrão)
   var fechQ1=cfg.quinz_fechamento_dia1||15;
   var diasPagQ1=cfg.quinz_dias_pagamento_q1!=null?cfg.quinz_dias_pagamento_q1:2;
@@ -10228,7 +10238,7 @@ function renderComissoesAPagar(){
     }
     return '<tr>'
       +'<td>'+p.colaboradorNome+'</td>'
-      +'<td>'+fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)+(p.pct<100?' ('+p.pct+'%)':'')+'</td>'
+      +'<td>'+(dataIsoDe(p.inicio)===dataIsoDe(p.fim)?fmtDataBRCurta(p.inicio):(fmtDataBRCurta(p.inicio)+' a '+fmtDataBRCurta(p.fim)))+(p.pct<100?' ('+p.pct+'%)':'')+'</td>'
       +'<td>'+p.qtd+'</td>'
       +'<td>R$ '+p.totalBruto.toFixed(2).replace('.',',')+'</td>'
       +'<td>'+p.comissaoPct+'%</td>'
