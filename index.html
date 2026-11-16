@@ -9973,6 +9973,36 @@ function gerarParcelasDoMes(cfg,ano,mesIdx){
     {num:2,inicio:q2Inicio,fim:q2Fim,pct:100,pagamento:pagQ2}
   ];
 }
+// Modelo "quinzenal_personalizado": ciclos de N dias corridos rolando a
+// partir de uma data-âncora própria do colaborador (cfg.ciclo_data_ancora),
+// em vez dos dias fixos 1-15/16-fim do mês do modelo "quinzenal" padrão.
+// Hoje só a Kauane usa isso: ciclos de 15 dias desde 11/11/2026 (11/11-
+// 25/11, 26/11-10/12, 11/12-25/12...), fecha no último dia do ciclo, paga
+// ciclo_dias_pagamento dias corridos depois — mesma função de ajuste de
+// fim de semana/feriado (ehDiaUtilComissao/diaUtilAnteriorComissao) já
+// usada hoje pro Eduardo.
+function gerarCiclosQuinzenalPersonalizado(cfg,refData){
+  var sab=!!cfg.sabado_conta_dia_util;
+  var pAncora=String(cfg.ciclo_data_ancora).split('-');
+  var ancora=new Date(parseInt(pAncora[0],10),parseInt(pAncora[1],10)-1,parseInt(pAncora[2],10));
+  var cicloDias=cfg.ciclo_dias||15;
+  var diasPag=cfg.ciclo_dias_pagamento!=null?cfg.ciclo_dias_pagamento:2;
+  var refZ=new Date(refData.getFullYear(),refData.getMonth(),refData.getDate());
+  var diffDias=Math.round((refZ-ancora)/86400000);
+  var numCicloAtual=Math.floor(diffDias/cicloDias);
+  var ciclos=[];
+  // ciclo anterior + atual + próximo — mesma janela de "mês atual + mês
+  // anterior" que os outros modelos mostram, só que em ciclos.
+  for(var i=-1;i<=1;i++){
+    var n=numCicloAtual+i;
+    var inicio=new Date(ancora.getFullYear(),ancora.getMonth(),ancora.getDate()+n*cicloDias);
+    var fim=new Date(inicio.getFullYear(),inicio.getMonth(),inicio.getDate()+cicloDias-1);
+    var pagamento=new Date(fim.getFullYear(),fim.getMonth(),fim.getDate()+diasPag);
+    if(!ehDiaUtilComissao(pagamento,sab))pagamento=diaUtilAnteriorComissao(pagamento,sab);
+    ciclos.push({num:1,inicio:inicio,fim:fim,pct:100,pagamento:pagamento});
+  }
+  return ciclos;
+}
 // Lista as parcelas "relevantes pra mostrar agora" de um colaborador: as
 // do mês atual + as do mês anterior (cobre o caso comum de uma parcela
 // do mês passado ainda não paga, ou vencendo agora), ordenadas por
@@ -19672,12 +19702,17 @@ function carregarDadosDoSalao(){
   carregarServicosSupa();
   carregarProdutosSupa();
   carregarComissaoConfigSalaoSupa();
-  carregarComissaoConfigColabSupa();
+  // Precisa estar no Promise.all — sem isso, entrarComoColaborador() podia
+  // rodar antes do modelo de comissão (diário/quinzenal/etc.) de cada
+  // colaborador ter chegado do banco, e caía no padrão do salão por
+  // engano (bug real: Tiena, modelo Diário, aparecendo com período
+  // quinzenal quando essa busca demorava mais que as outras).
+  var pComissaoConfigColab=carregarComissaoConfigColabSupa();
   carregarComissaoParcelasSupa();
   var pColabs=carregarColaboradoresSupa();
   var pAgenda=carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
-  return Promise.all([pColabs,pAgenda]);
+  return Promise.all([pColabs,pAgenda,pComissaoConfigColab]);
 }
 async function carregarClientesSupa(){
   try{
