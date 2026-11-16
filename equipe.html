@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso da Equipe — Flora Gestão</title>
+<meta name="theme-color" content="#7c3aed">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(135deg,#f5f3ff 0%,#ecfdf5 100%);display:flex;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+
+.card{background:#fff;border-radius:24px;padding:36px 32px 32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(124,58,237,.12),0 4px 16px rgba(0,0,0,.06)}
+
+/* Logo */
+.logo-wrap{text-align:center;margin-bottom:28px}
+.logo-icon{width:64px;height:64px;background:linear-gradient(135deg,#7c3aed,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.brand-name{font-size:26px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#7c3aed,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:12px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+
+.form-title{font-size:18px;font-weight:800;color:#111;text-align:center;margin-bottom:4px}
+.form-sub{font-size:12px;color:#888;text-align:center;margin-bottom:22px}
+
+/* Inputs */
+.field{position:relative;margin-bottom:13px}
+.field-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none;display:flex}
+.field-label{font-size:11px;font-weight:700;color:#555;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+.inp{width:100%;padding:12px 12px 12px 40px;border:1.5px solid #e5e5e5;border-radius:12px;font-size:14px;color:#111;outline:none;transition:.2s;font-family:inherit;background:#fafafa}
+.inp:focus{border-color:#7c3aed;background:#fff;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.inp::placeholder{color:#bbb}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;padding:0;line-height:1}
+
+/* Botão */
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;font-family:inherit;margin-top:4px;transition:.15s}
+.btn-main:hover{background:linear-gradient(135deg,#6d28d9,#5b21b6)}
+.btn-main:disabled{opacity:.6;cursor:not-allowed}
+
+/* Alert */
+.alert{border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;text-align:center}
+.alert.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.alert.ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.alert.show{display:block}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){
+  body{padding:16px;align-items:flex-start;padding-top:24px}
+  .card{padding:28px 20px 24px}
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg width="34" height="40" viewBox="0 0 100 115" fill="none">
+        <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="white" opacity="0.92"/>
+        <path d="M50 62 C50 62 36 49 36 30 C36 14 50 5 50 5 C50 5 64 14 64 30 C64 49 50 62 50 62Z" fill="white" opacity="0.6"/>
+        <path d="M50 62 L50 102" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M50 85 C50 85 28 80 24 66 C37 66 50 77 50 85Z" fill="white"/>
+        <path d="M50 77 C50 77 72 72 76 58 C63 58 50 69 50 77Z" fill="white"/>
+      </svg>
+    </div>
+    <div class="brand-name">FLORA</div>
+    <div class="brand-sub">Sistema para salões de beleza</div>
+  </div>
+
+  <div class="form-title">Acesso da Equipe</div>
+  <div class="form-sub">Entre com seu usuário e senha</div>
+
+  <div class="alert" id="alert"></div>
+
+  <form id="form-login" onsubmit="handleLogin(event)" novalidate>
+
+    <div class="field">
+      <label class="field-label" for="f-usuario">Usuário</label>
+      <span class="field-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0114 0v1"/></svg>
+      </span>
+      <input id="f-usuario" class="inp" type="text" placeholder="seu usuário" autocomplete="username" required/>
+    </div>
+
+    <div class="field" style="margin-bottom:8px">
+      <label class="field-label" for="f-senha">Senha</label>
+      <span class="field-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </span>
+      <input id="f-senha" class="inp" type="password" placeholder="Sua senha" autocomplete="current-password" required/>
+      <button type="button" class="eye-btn" onclick="toggleVis()" tabindex="-1">👁</button>
+    </div>
+
+    <button class="btn-main" type="submit" id="btn-entrar" style="margin-top:14px">Entrar</button>
+
+  </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://nqwzbpinhkgxfboeursu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xd3picGluaGtneGZib2V1cnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTE2MTMsImV4cCI6MjA5NTcyNzYxM30.ASni8j7rfDxjhWYrDxbwidacJaV51eDzzY7XbdGQCEk';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// Se já tem sessão ativa, vai direto para o app
+supa.auth.getSession().then(function(r){
+  if(r.data&&r.data.session)window.location.replace('index.html');
+});
+
+function val(id){return(document.getElementById(id)||{}).value||'';}
+
+function showAlert(msg,type){
+  var el=document.getElementById('alert');
+  el.textContent=msg;el.className='alert '+type+' show';
+}
+function hideAlert(){document.getElementById('alert').className='alert';}
+
+function toggleVis(){
+  var inp=document.getElementById('f-senha');
+  var btn=document.querySelector('.eye-btn');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  hideAlert();
+  var entrada=val('f-usuario').trim();
+  var senha=val('f-senha');
+  if(!entrada){showAlert('Informe seu usuário.','err');document.getElementById('f-usuario').focus();return;}
+  if(!senha){showAlert('Informe sua senha.','err');document.getElementById('f-senha').focus();return;}
+
+  // Sem "@": login por usuário — completa com o domínio interno
+  // (usuario@flora.local). Com "@" (a dona tentando entrar por aqui por
+  // engano): segue com o email normal, mesmo fluxo de sempre.
+  var email=entrada.indexOf('@')>=0?entrada:(entrada.toLowerCase()+'@flora.local');
+
+  var btn=document.getElementById('btn-entrar');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Entrando…';
+
+  try{
+    var res=await supa.auth.signInWithPassword({email:email,password:senha});
+    if(res.error){
+      var em=(res.error.message||'').toLowerCase();
+      if(em.includes('invalid')||em.includes('credentials')||em.includes('password')){
+        showAlert('Usuário ou senha incorretos.','err');
+      }else{
+        showAlert('Não foi possível entrar: '+(res.error.message||''),'err');
+      }
+      btn.disabled=false;btn.innerHTML='Entrar';
+      return;
+    }
+    var user=res.data.user;
+
+    // 1) Dona do salão tentando entrar por aqui — entra normalmente,
+    //    mesmo fluxo do login.html.
+    var r=await supa.from('saloes').select('id').eq('id',user.id).maybeSingle();
+    if((!r||!r.data)&&user.email){
+      var re=await supa.from('saloes').select('id').eq('email',user.email).maybeSingle();
+      if(re&&re.data)r=re;
+    }
+    if(r&&r.data){
+      try{sessionStorage.setItem('flora_salao_id',r.data.id);}catch(e){}
+      window.location.replace('index.html');
+      return;
+    }
+
+    // 2) Colaborador — quem decide o que ele vê é o index.html (o guard
+    //    em ativarApp() já resolve isso a partir do auth_user_id); aqui
+    //    só barramos o inativo.
+    var rc;
+    try{
+      rc=await supa.from('colaboradores').select('id,status').eq('auth_user_id',user.id).maybeSingle();
+    }catch(errColab){
+      await supa.auth.signOut();
+      showAlert('Erro ao verificar seu acesso: '+(errColab&&errColab.message?errColab.message:errColab),'err');
+      btn.disabled=false;btn.innerHTML='Entrar';
+      return;
+    }
+    if(rc&&rc.data){
+      if(rc.data.status==='Inativo'){
+        await supa.auth.signOut();
+        showAlert('Seu acesso foi desativado. Fale com a administração do salão.','err');
+        btn.disabled=false;btn.innerHTML='Entrar';
+        return;
+      }
+      window.location.replace('index.html');
+      return;
+    }
+
+    // 3) Nem dona, nem colaborador — conta sem vínculo nenhum. Diferente
+    //    do login.html, aqui não existe "criar conta": é a dona que
+    //    cadastra o acesso de cada colaborador.
+    await supa.auth.signOut();
+    showAlert('Acesso não encontrado. Fale com a administração do salão.','err');
+    btn.disabled=false;btn.innerHTML='Entrar';
+  }catch(err){
+    showAlert('Erro inesperado: '+(err&&err.message?err.message:err),'err');
+    console.error('login error:',err);
+    btn.disabled=false;btn.innerHTML='Entrar';
+  }
+}
+</script>
+</body>
+</html>

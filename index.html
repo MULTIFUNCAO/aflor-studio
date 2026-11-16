@@ -22,6 +22,9 @@
 #aflor-overlay *{box-sizing:border-box}
 #aflor-overlay.hidden{display:none}
 .ob-card{background:#fff;border-radius:22px;padding:28px 32px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.ob-loading{text-align:center}
+.ob-loading-spinner{width:28px;height:28px;border:3px solid #e5e5e5;border-top-color:#111;border-radius:50%;margin:18px auto 0;animation:ob-spin .7s linear infinite}
+@keyframes ob-spin{to{transform:rotate(360deg)}}
 .ob-card::-webkit-scrollbar{width:3px}.ob-card::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
 .ob-screen{display:none}.ob-screen.active{display:block}
 .tulip-wrap{text-align:center;margin-bottom:6px}
@@ -558,7 +561,25 @@ tr.row-retorno-retornou td{background:#f0fff4}
 <div id="aflor-overlay">
 
 <div id="sidebar-overlay" onclick="closeSidebar()" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:498;background:rgba(0,0,0,.4);display:none;cursor:pointer"></div>
-  <div class="ob-card">
+
+  <!-- Tela neutra enquanto decide se quem logou é a dona ou um
+       colaborador — visível por padrão (antes de saber qual é qual, pra
+       nunca deixar a Página Principal da dona aparecer pra colaborador
+       nem o formulário de login flashar pra quem já tem sessão). -->
+  <div class="ob-loading" id="ob-loading">
+    <div class="tulip-wrap">
+      <svg width="38" height="44" viewBox="0 0 100 115" fill="none">
+        <path d="M50 62 C50 62 26 53 20 30 C14 8 36 2 50 24 C64 2 86 8 80 30 C74 53 50 62 50 62Z" fill="#111" opacity="0.92"/>
+        <path d="M50 62 C50 62 36 49 36 30 C36 14 50 5 50 5 C50 5 64 14 64 30 C64 49 50 62 50 62Z" fill="#111" opacity="0.6"/>
+        <path d="M50 62 L50 102" stroke="#111" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M50 85 C50 85 28 80 24 66 C37 66 50 77 50 85Z" fill="#111"/>
+        <path d="M50 77 C50 77 72 72 76 58 C63 58 50 69 50 77Z" fill="#111"/>
+      </svg>
+    </div>
+    <div class="ob-loading-spinner"></div>
+  </div>
+
+  <div class="ob-card" id="ob-card" style="display:none">
 
     <!-- TELA 1: LOGIN -->
     <div class="ob-screen active" id="obs-login">
@@ -16554,6 +16575,28 @@ function colabSendoEditado(){
   }
   return colaboradores[colabEditIdx];
 }
+var LINK_ACESSO_EQUIPE='https://floragestao.com.br/equipe.html';
+function copiarLinkEquipe(){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(LINK_ACESSO_EQUIPE).then(function(){
+      showAlert('✅ Link copiado!');
+    }).catch(function(){
+      showAlert('Não foi possível copiar. Link: '+LINK_ACESSO_EQUIPE);
+    });
+  }else{
+    showAlert('Copie manualmente: '+LINK_ACESSO_EQUIPE);
+  }
+}
+// Mensagem pronta pro colaborador — NUNCA inclui a senha, só usuário +
+// link. Sem telefone cadastrado pro colaborador, abre o WhatsApp com a
+// mensagem pronta e deixa a dona escolher o contato (wa.me sem número).
+function enviarWhatsappAcessoEquipe(){
+  var c=colabSendoEditado();
+  if(!c){showAlert('Não foi possível identificar o colaborador.');return;}
+  if(!c.usuario){showAlert('Esse colaborador ainda não tem usuário de acesso cadastrado.');return;}
+  var msg='Olá '+c.nome+', seu acesso ao sistema do salão: '+LINK_ACESSO_EQUIPE+' — usuário: '+c.usuario;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
 function editarColab(idx){
   colabEditIdx=idx;
   var c=colaboradores[idx];
@@ -16629,6 +16672,17 @@ function editarColab(idx){
         <div style="font-size:11px;color:#888;margin-bottom:4px">Login do colaborador no sistema (sem e-mail) — ex: eduardo. Precisa ser único entre todos os salões.</div>
         <input id="edit-usuario" value="${c.usuario||''}" placeholder="Ex: eduardo" autocomplete="off"/>
       </div>
+      ${c.usuario?(
+        '<div class="form-group full" style="background:#f0fdf4;border-radius:10px;padding:12px">'
+        +'<label style="margin-bottom:6px;display:block">🔗 Link de acesso da equipe</label>'
+        +'<div style="font-size:11px;color:#888;margin-bottom:8px">Mande esse link + o usuário pra '+c.nome+' entrar. A senha NUNCA vai nessa mensagem — avise por fora.</div>'
+        +'<input readonly value="https://floragestao.com.br/equipe.html" style="width:100%;margin-bottom:8px;background:#fff;box-sizing:border-box;padding:8px 10px;border:1px solid #d1fae5;border-radius:8px;font-size:12px"/>'
+        +'<div style="display:flex;gap:8px">'
+        +'<button type="button" class="btn btn-outline btn-sm" style="flex:1" onclick="copiarLinkEquipe()">📋 Copiar link</button>'
+        +'<button type="button" class="btn btn-sm" style="flex:1;background:#22c55e;color:#fff;border:none" onclick="enviarWhatsappAcessoEquipe()">📱 Enviar no WhatsApp</button>'
+        +'</div>'
+        +'</div>'
+      ):''}
       <!-- Senha de acesso -->
       <div class="form-group full">
         <label>🔐 Alterar senha de acesso</label>
@@ -18896,16 +18950,23 @@ function irParaInicio(){
 // administrador já tenha aberto o app ali antes (diferente do fluxo antigo
 // de selecionar o nome, que depende de window.SALAO_ID já estar definido).
 function ativarAppComoColaborador(colab){
-  var overlay=document.getElementById('aflor-overlay');
-  if(overlay)overlay.classList.add('hidden');
+  // colaboradorLogado precisa estar setado ANTES de qualquer carregamento
+  // — é o que faz renderDashboardCards() (chamado de dentro de showPage()
+  // em toda navegação, inclusive aqui) nunca buscar/renderizar faturamento,
+  // caixa ou comissões a pagar da dona numa sessão de colaborador.
+  colaboradorLogado=colab.nome;
   window.SALAO_ID=colab.salao_id;
   window.SALAO_RESPONSAVEL=colab.nome;
-  colaboradorLogado=colab.nome;
   try{
     localStorage.setItem('aflor_logado','colab_'+colab.nome);
     localStorage.setItem('aflor_ultimo_salao_id',window.SALAO_ID);
     sessionStorage.setItem('flora_salao_id',window.SALAO_ID);
   }catch(e){}
+  // Defensivo: já troca pra colaborador-view AGORA, antes dos dados
+  // carregarem — o que fica "por baixo" do overlay de carregamento nunca
+  // é a Página Principal da dona, mesmo que algo destrave o overlay antes
+  // da hora.
+  if(typeof showPage==='function')showPage('colaborador-view');
   carregarDadosDoSalao().then(function(){
     // Recarrega de novo, já esperado, depois de tudo mais resolver: a
     // própria renderAgenda() dispara sua própria busca assíncrona separada
@@ -18917,7 +18978,14 @@ function ativarAppComoColaborador(colab){
     // já depois desse Promise.all, garante que a última escrita antes de
     // montar o painel seja a certa.
     return carregarAgendamentosSupa();
-  }).then(function(){entrarComoColaborador(colab.nome);});
+  }).then(function(){
+    entrarComoColaborador(colab.nome);
+    // Só agora — com o painel do colaborador já montado e a Página
+    // Principal nunca tendo sido a tela visível — some com a tela de
+    // carregamento.
+    var overlay=document.getElementById('aflor-overlay');
+    if(overlay)overlay.classList.add('hidden');
+  });
 }
 async function entrarComoColaboradorPorAuth(){
   try{
@@ -19453,6 +19521,17 @@ function copiarLinkCadastroCliente(){
   }).catch(function(){
     if(!_appAtivo)desativarApp();
   });
+  // Rede de segurança: se depois de 10s nada decidiu nem admin nem
+  // colaborador nem redirecionou pro login (erro inesperado no meio do
+  // caminho), mostra o formulário de login em vez de deixar a pessoa
+  // presa pra sempre na tela de carregamento.
+  setTimeout(function(){
+    if(_appAtivo)return;
+    var ld=document.getElementById('ob-loading');
+    var cd=document.getElementById('ob-card');
+    if(ld)ld.style.display='none';
+    if(cd)cd.style.display='block';
+  },10000);
 })();
 // ===== FIM ONBOARDING =====
 
@@ -20277,6 +20356,11 @@ function removerMovimentoHistorico(histIdx,movIdx,ev){
 }
 
 async function renderDashboardCards(){
+  // "Página Principal" é só da dona — nunca busca/renderiza faturamento,
+  // caixa ou comissões a pagar do salão numa sessão de colaborador, mesmo
+  // com a página escondida (showPage() chama isso em TODA navegação,
+  // inclusive pra colaborador-view).
+  if(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)return;
   if(typeof atualizarAvisoComissaoDashboard==='function')atualizarAvisoComissaoDashboard();
   try{
     var agora=new Date();
