@@ -18472,7 +18472,14 @@ function abrirModalComanda(editIdx){
   if(!isVer){
     document.getElementById('cmd-cliente').value='';
     document.getElementById('cmd-data').value=iso;
-    document.getElementById('cmd-hora').value='09:00';
+    var cmdHoraEl=document.getElementById('cmd-hora');
+    cmdHoraEl.value='09:00';
+    // Segue o horário de funcionamento configurado (Perfil do Negócio),
+    // não mais o 08:00-22:00 fixo do HTML — só pra comanda NOVA; uma
+    // comanda já existente com hora fora desse intervalo (antiga) não é
+    // tocada aqui.
+    cmdHoraEl.min=window.SALAO_HORA_ABERTURA||'08:00';
+    cmdHoraEl.max=(typeof ultimoHorarioAgendavel==='function')?ultimoHorarioAgendavel():'21:30';
     document.getElementById('cmd-obs').value='';
     document.getElementById('cmd-pgto').value='PIX';
     document.getElementById('cmd-servicos-extra-list').innerHTML='';
