@@ -19436,7 +19436,12 @@ function entrarComoColaborador(nome){
   }else if(comEl&&colab){
     var periodosCv=periodosRelevantesColab(colab,hojeCv).sort(function(a,b){return a.inicio-b.inicio;});
     var atualP=periodosCv.filter(function(p){return p.emAndamento;}).pop()||periodosCv[periodosCv.length-1];
-    document.getElementById('cv-comissao-mes').textContent=atualP?('R$ '+atualP.totalComissao.toFixed(2).replace('.',',')):'R$ 0';
+    // "Comissão do Mês" precisa somar o MÊS inteiro (as 2 quinzenas, ou o
+    // mês cheio no modelo mensal) — usar só atualP.totalComissao mostrava
+    // apenas o período ATUAL (ex: R$0 logo no 1º dia da 2ª quinzena, mesmo
+    // já tendo comissão ganha na 1ª quinzena do mesmo mês).
+    var totalMesCv=periodosCv.filter(function(p){return p.inicio.getMonth()===hojeCv.getMonth()&&p.inicio.getFullYear()===hojeCv.getFullYear();}).reduce(function(s,p){return s+p.totalComissao;},0);
+    document.getElementById('cv-comissao-mes').textContent='R$ '+totalMesCv.toFixed(2).replace('.',',');
     if(!atualP){
       comEl.innerHTML='<div style="text-align:center;padding:14px;color:#aaa;font-size:13px">Nenhum período de comissão configurado ainda.</div>';
     }else{
