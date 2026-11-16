@@ -1325,10 +1325,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div class="fdash-kpi-value" id="dash-kpi-ticket-medio">R$ 0,00</div>
           <div class="fdash-kpi-sub" id="dash-kpi-ticket-medio-sub">do mês</div>
         </div>
-        <div class="fdash-kpi-card kpi-gray" style="cursor:default">
+        <div class="fdash-kpi-card kpi-gray" onclick="showPage('agenda')">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>Ocupação Agenda</div>
-          <div class="fdash-kpi-value" style="font-size:14px">Sem dados ainda</div>
-          <div class="fdash-kpi-sub">precisa de horário de funcionamento cadastrado</div>
+          <div class="fdash-kpi-value" id="dash-ocupacao-agenda" style="font-size:14px">Sem dados ainda</div>
+          <div class="fdash-kpi-sub" id="dash-ocupacao-agenda-sub">precisa de horário de funcionamento cadastrado</div>
         </div>
       </div>
 
@@ -2898,7 +2898,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div style="display:flex;flex-direction:column;gap:2px">
 
         <!-- Perfil do Negócio -->
-        <div class="config-item" onclick="openModal('modal-cfg-perfil')">
+        <div class="config-item" onclick="abrirModalPerfilNegocio()">
           <div class="config-icon" style="background:#e8f2ff">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007BFF" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
           </div>
@@ -3692,13 +3692,25 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group"><label>WhatsApp</label><input value="(11) 93943-7657"/></div>
       <div class="form-group full"><label>E-mail</label><input type="email" value="aflorschool@gmail.com"/></div>
       <div class="form-group full"><label>Endereço</label><input value="Rua Siqueira Campos, 283 - Jardim São Paulo - Guarulhos/SP"/></div>
-      <div class="form-group"><label>Horário de Abertura</label><input type="time" value="09:00"/></div>
-      <div class="form-group"><label>Horário de Fechamento</label><input type="time" value="19:00"/></div>
+      <div class="form-group"><label>Horário de Abertura</label><input type="time" id="cfgperfil-hora-abertura" value="08:00"/></div>
+      <div class="form-group"><label>Horário de Fechamento</label><input type="time" id="cfgperfil-hora-fechamento" value="22:00"/></div>
+      <div class="form-group full">
+        <label>Dias que o salão abre</label>
+        <div id="cfgperfil-dias-semana" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="0"/>Dom</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="1"/>Seg</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="2"/>Ter</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="3"/>Qua</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="4"/>Qui</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="5"/>Sex</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600"><input type="checkbox" class="cfgperfil-dia" value="6"/>Sáb</label>
+        </div>
+      </div>
       <div class="form-group full"><label>Descrição do Negócio</label><textarea>Studio de beleza especializado em cabelos, manicure e bronzeamento artificial.</textarea></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-cfg-perfil')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveModal('modal-cfg-perfil','Perfil do negócio atualizado!')">Salvar</button>
+      <button class="btn btn-primary" onclick="salvarPerfilNegocio()">Salvar</button>
     </div>
   </div>
 </div>
@@ -4763,7 +4775,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="form-grid">
       <div class="form-group full"><label>Cliente *</label><input id="cmd-cliente" list="cmd-cliente-lista" placeholder="Nome do cliente" autocomplete="off" oninput="if(document.getElementById('cmd-tipo-val')?.value==='pacote')cmdCarregarPacotes()"/><datalist id="cmd-cliente-lista"></datalist></div>
       <div class="form-group"><label>Data *</label><input type="date" id="cmd-data"/></div>
-      <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00"/></div>
+      <div class="form-group"><label>Horário *</label><input type="time" id="cmd-hora" value="09:00" min="08:00" max="22:00"/></div>
       <div class="form-group full">
         <label>Tipo de Atendimento</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -8640,7 +8652,7 @@ function afRenderServicoBlocos(){
       +'<div class="af-row">'
         +'<span class="material-symbols-outlined">schedule</span>'
         +'<div class="af-field'+(b.horario?' af-filled':'')+'">'
-          +'<input type="time" class="af-input af-input-time" value="'+(b.horario||'')+'" placeholder=" " onchange="afBlocoCampo(\''+b.id+'\',\'horario\',this.value);afToggleFilled(this)"/>'
+          +'<input type="time" class="af-input af-input-time" value="'+(b.horario||'')+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+(window.SALAO_HORA_FECHAMENTO||'22:00')+'" placeholder=" " onchange="afBlocoCampo(\''+b.id+'\',\'horario\',this.value);afToggleFilled(this)"/>'
           +'<label>Horário</label>'
         +'</div>'
         +'<div class="af-field af-filled" style="margin-left:8px">'
@@ -12229,7 +12241,7 @@ function abrirAgendaPopup(key,dados,event){
           </div>
           <div id="popup-hora-edit-wrap" style="display:none;margin-top:4px">
             <div style="display:flex;align-items:center;gap:6px">
-              <input type="time" id="popup-hora-input" value="${dados.hora}" style="padding:4px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;outline:none"/>
+              <input type="time" id="popup-hora-input" value="${dados.hora}" min="${window.SALAO_HORA_ABERTURA||'08:00'}" max="${window.SALAO_HORA_FECHAMENTO||'22:00'}" style="padding:4px 8px;border:1.5px solid #6366f1;border-radius:7px;font-size:13px;font-weight:700;outline:none"/>
               <button onclick="popupSalvarHora('${key}')" style="padding:4px 10px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer">OK</button>
               <button onclick="popupToggleEditarHora('${key}')" style="padding:4px 8px;background:#e5e5e5;color:#555;border:none;border-radius:7px;font-size:11px;cursor:pointer">✕</button>
             </div>
@@ -13321,7 +13333,7 @@ function popupAbrirFormExtra(key){
     +'</div>'
     +'<div style="display:flex;gap:6px;margin-bottom:4px">'
     +'<div style="flex:1"><label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Início</label>'
-    +'<input type="time" id="popup-add-svc-hora" value="'+horaSugerida+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
+    +'<input type="time" id="popup-add-svc-hora" value="'+horaSugerida+'" min="'+(window.SALAO_HORA_ABERTURA||'08:00')+'" max="'+(window.SALAO_HORA_FECHAMENTO||'22:00')+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
     +'<div style="flex:1"><label style="font-size:10px;color:#555;display:block;margin-bottom:3px">Duração (min)</label>'
     +'<input type="number" id="popup-add-svc-dur" min="5" step="5" value="'+durSugerida+'" oninput="popupFormExtraUpdateTermino()" style="width:100%;padding:7px 8px;border:1.5px solid #c7d7ff;border-radius:7px;font-size:12px;outline:none;background:#fff;box-sizing:border-box"/></div>'
     +'</div>'
@@ -13830,6 +13842,62 @@ function buscarApptAgenda(appts,profCol,hora,filtroProf){
   return null;
 }
 
+// Grade de horários (30 em 30 min) entre a abertura e o fechamento do
+// salão (Configurações > Perfil do Negócio, window.SALAO_HORA_*) — antes
+// era fixo 08:00-19:00 no código, por isso a agenda não mostrava as 20h/
+// 21h mesmo o salão funcionando até as 22h.
+function horasGradeAgenda(){
+  var ab=(window.SALAO_HORA_ABERTURA||'08:00').split(':');
+  var fe=(window.SALAO_HORA_FECHAMENTO||'22:00').split(':');
+  var inicioMin=parseInt(ab[0],10)*60+(parseInt(ab[1],10)||0);
+  var fimMin=parseInt(fe[0],10)*60+(parseInt(fe[1],10)||0);
+  var lista=[];
+  for(var m=inicioMin;m<=fimMin;m+=30)lista.push(minToHora(m));
+  return lista.length?lista:['08:00'];
+}
+// O salão não abre em todo dia da semana (window.SALAO_DIAS_FUNCIONAMENTO,
+// 0=domingo..6=sábado) — usado pelo indicador de Ocupação da Agenda pra
+// não contar "fechado" como "0% ocupado".
+function salaoAbreNoDia(date){
+  var dias=Array.isArray(window.SALAO_DIAS_FUNCIONAMENTO)?window.SALAO_DIAS_FUNCIONAMENTO:[0,1,2,3,4,5,6];
+  return dias.indexOf(date.getDay())>=0;
+}
+// Card "Ocupação Agenda" do painel: % de horários ocupados hoje, dentro
+// do horário de funcionamento, considerando só colaboradores ativos.
+// Antes era um texto estático fixo ("Sem dados ainda") — não calculava nada.
+function atualizarOcupacaoAgendaDashboard(){
+  var elVal=document.getElementById('dash-ocupacao-agenda');
+  var elSub=document.getElementById('dash-ocupacao-agenda-sub');
+  if(!elVal||!elSub)return;
+  var hoje=new Date();
+  if(!salaoAbreNoDia(hoje)){
+    elVal.textContent='Fechado hoje';
+    elSub.textContent='fora do horário de funcionamento';
+    return;
+  }
+  var profsAtivos=typeof colaboradoresAtivosOrdenados==='function'?colaboradoresAtivosOrdenados():[];
+  if(!profsAtivos.length){
+    elVal.textContent='Sem dados ainda';
+    elSub.textContent='cadastre colaboradores ativos';
+    return;
+  }
+  var horas=horasGradeAgenda();
+  var hojeKey=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
+  var diaObj=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[hojeKey])||{};
+  var totalSlots=profsAtivos.length*horas.length;
+  var ocupados=0;
+  profsAtivos.forEach(function(c){
+    var pAg=agProfParaAgenda(c.nome);
+    horas.forEach(function(h){
+      var a=diaObj[pAg+':'+h];
+      if(a&&a.status!=='Cancelada'&&a.status!=='Faltou')ocupados++;
+    });
+  });
+  var pct=totalSlots?Math.round(ocupados/totalSlots*100):0;
+  elVal.textContent=pct+'%';
+  elSub.textContent=ocupados+' de '+totalSlots+' horários hoje ('+(window.SALAO_HORA_ABERTURA||'08:00')+'–'+(window.SALAO_HORA_FECHAMENTO||'22:00')+')';
+}
+
 function renderAgenda(){
   const profCores={'Ana Flor':'#007BFF','Edu':'#555','Jenny':'#8b5cf6','Vi':'#ec4899','Lara':'#94a3b8','Angélica':'#14b8a6'};
   const agendaProfs=(typeof colaboradores!=='undefined'&&colaboradores&&colaboradores.length>0)
@@ -13851,7 +13919,7 @@ function renderAgenda(){
     }
   }
   const grid=document.getElementById('agenda-grid');
-  const hours=['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
+  const hours=horasGradeAgenda();
   const profs=profNames;
   if(!agendaMobileProfAtivo||profs.indexOf(agendaMobileProfAtivo)===-1)agendaMobileProfAtivo=profs[0]||null;
   const countAtendimentosProf=(nome)=>{
@@ -18604,6 +18672,9 @@ window.SALAO_NOME=null;
 window.SALAO_RESPONSAVEL=null;
 window.SALAO_CREATED_AT=null;
 window.SALAO_PLANO_ATIVO_DESDE=null;
+window.SALAO_HORA_ABERTURA='08:00';
+window.SALAO_HORA_FECHAMENTO='22:00';
+window.SALAO_DIAS_FUNCIONAMENTO=[0,1,2,3,4,5,6];
 async function carregarSalaoAtual(){
   try{
     if(!supa)return;
@@ -18629,6 +18700,11 @@ async function carregarSalaoAtual(){
       window.SALAO_PLANO=r.data.plano||'trial';
       window.SALAO_CREATED_AT=r.data.created_at||null;
       window.SALAO_PLANO_ATIVO_DESDE=r.data.plano_ativo_desde||null;
+      window.SALAO_HORA_ABERTURA=r.data.hora_abertura||'08:00';
+      window.SALAO_HORA_FECHAMENTO=r.data.hora_fechamento||'22:00';
+      window.SALAO_DIAS_FUNCIONAMENTO=Array.isArray(r.data.dias_funcionamento)?r.data.dias_funcionamento:[0,1,2,3,4,5,6];
+      if(typeof renderAgenda==='function')renderAgenda();
+      if(typeof atualizarOcupacaoAgendaDashboard==='function')atualizarOcupacaoAgendaDashboard();
     }else{
       // Antes de criar um salão novo pra esse auth.uid(), confirma que ele
       // não é na verdade um colaborador (login por usuário, sem e-mail) —
@@ -18673,6 +18749,41 @@ function aplicarDadosSalaoNaUI(){
       sidebarAvatar.textContent=iniciais;
     }
   }catch(e){}
+}
+
+// Abre o modal "Perfil do Negócio" já preenchido com o horário de
+// funcionamento atual (window.SALAO_HORA_*) — antes os campos de horário
+// eram só placeholder estático (09:00/19:00, sempre os mesmos, nunca
+// lidos nem salvos de verdade).
+function abrirModalPerfilNegocio(){
+  var elAb=document.getElementById('cfgperfil-hora-abertura');
+  if(elAb)elAb.value=window.SALAO_HORA_ABERTURA||'08:00';
+  var elFe=document.getElementById('cfgperfil-hora-fechamento');
+  if(elFe)elFe.value=window.SALAO_HORA_FECHAMENTO||'22:00';
+  var dias=Array.isArray(window.SALAO_DIAS_FUNCIONAMENTO)?window.SALAO_DIAS_FUNCIONAMENTO:[0,1,2,3,4,5,6];
+  document.querySelectorAll('.cfgperfil-dia').forEach(function(chk){
+    chk.checked=dias.indexOf(parseInt(chk.value,10))>=0;
+  });
+  openModal('modal-cfg-perfil');
+}
+async function salvarPerfilNegocio(){
+  if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
+  var horaAbertura=document.getElementById('cfgperfil-hora-abertura')?.value||'08:00';
+  var horaFechamento=document.getElementById('cfgperfil-hora-fechamento')?.value||'22:00';
+  var dias=Array.from(document.querySelectorAll('.cfgperfil-dia:checked')).map(function(chk){return parseInt(chk.value,10);});
+  if(!dias.length){showAlert('Selecione pelo menos 1 dia que o salão abre.');return;}
+  if(horaFechamento<=horaAbertura){showAlert('Horário de fechamento precisa ser depois do de abertura.');return;}
+  try{
+    var r=await supa.from('saloes').update({hora_abertura:horaAbertura,hora_fechamento:horaFechamento,dias_funcionamento:dias}).eq('id',window.SALAO_ID);
+    if(r.error){showAlert('Erro ao salvar: '+r.error.message);return;}
+    window.SALAO_HORA_ABERTURA=horaAbertura;
+    window.SALAO_HORA_FECHAMENTO=horaFechamento;
+    window.SALAO_DIAS_FUNCIONAMENTO=dias;
+    if(typeof renderAgenda==='function')renderAgenda();
+    if(typeof atualizarOcupacaoAgendaDashboard==='function')atualizarOcupacaoAgendaDashboard();
+    closeModal('modal-cfg-perfil');
+    showAlert('Perfil do negócio atualizado!');
+  }catch(e){showAlert('Erro ao salvar: '+(e&&e.message?e.message:e));}
 }
 
 function criarContaSalao(){
@@ -20234,6 +20345,7 @@ async function renderDashboardCards(){
     if(elTicket)elTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
     var elKpiTicket=document.getElementById('dash-kpi-ticket-medio');
     if(elKpiTicket)elKpiTicket.textContent='R$ '+ticketMedio.toFixed(2).replace('.',',');
+    if(typeof atualizarOcupacaoAgendaDashboard==='function')atualizarOcupacaoAgendaDashboard();
     var elHeaderAtend=document.getElementById('dash-header-atend-hoje');
     if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
 
