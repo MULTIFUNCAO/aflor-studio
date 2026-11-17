@@ -11601,8 +11601,8 @@ function abrirPerfilCliente(ci){
     pacotesHtml='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Você não tem permissão para ver o histórico de pacotes/procedimentos.</div>';
   } else if(grupos.length){
     pacotesHtml=grupos.map(function(g){
-      var minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
-      var maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+      var _progPerfil=calcularProgressoPacoteGrupo(g.itens);
+      var minTotal=_progPerfil.total,maxUsado=_progPerfil.usado;
       var pct=Math.min(100,Math.round((maxUsado/minTotal)*100));
       var ativo=maxUsado<minTotal;
       var statusHtml=ativo
@@ -14449,6 +14449,28 @@ function extrairMetaPacoteCatalogo(p){
   var partes=srv.split(/\s*\+\s*/).filter(Boolean);
   return{nome_servico:partes[0]||srv||p.nome,quantidade_total:Math.max(1,partes.length)};
 }
+// Progresso de um grupo de pacote (itens = linhas de pacotes_clientes com
+// o mesmo grupo_id, uma por serviço). Se todos os itens têm a MESMA
+// quantidade_total, é um pacote-combo — todo serviço é usado junto a cada
+// sessão, então o total certo é o menor (todos avançam iguais) e o usado
+// é o maior já registrado. Se as quantidades são diferentes (ex: Escova
+// 4 + Hidratação 4 + Coloração 1), é um pacote de serviços avulsos — cada
+// serviço é usado no seu próprio ritmo, então o total/usado certos são a
+// SOMA de cada item, não o menor/maior.
+function calcularProgressoPacoteGrupo(itens){
+  var totais=(itens||[]).map(function(it){return it.quantidade_total||1;});
+  var usados=(itens||[]).map(function(it){return it.quantidade_usada||0;});
+  var uniforme=totais.every(function(t){return t===totais[0];});
+  var total,usado;
+  if(uniforme){
+    total=Math.min.apply(null,totais);
+    usado=Math.max.apply(null,usados);
+  }else{
+    total=totais.reduce(function(s,t){return s+t;},0);
+    usado=usados.reduce(function(s,u){return s+u;},0);
+  }
+  return {total:total,usado:usado,restante:total-usado,uniforme:uniforme};
+}
 function salvarPacotesClientesLocal(){
   localStorage.setItem('aflor_pacotes_clientes',JSON.stringify(pacotesClientes));
   syncPacotesLegacyStorage();
@@ -14775,8 +14797,8 @@ function renderPacotes(){
   });
 
   gruposOrdem.forEach(function(g){
-    g.minTotal=Math.min.apply(null,g.itens.map(function(it){return it.quantidade_total||1;}));
-    g.maxUsado=Math.max.apply(null,g.itens.map(function(it){return it.quantidade_usada||0;}));
+    var _progDash=calcularProgressoPacoteGrupo(g.itens);
+    g.minTotal=_progDash.total;g.maxUsado=_progDash.usado;
     g.restante=g.minTotal-g.maxUsado;
   });
   window._pkgGruposAll=gruposOrdem;
