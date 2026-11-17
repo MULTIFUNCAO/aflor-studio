@@ -10179,7 +10179,26 @@ function calcularComissaoPeriodo(nomeColab,pct,dataInicio,dataFim,colaboradorId)
   var detalhamento=Object.keys(porCategoria).map(function(k){return{serv:k,val:porCategoria[k]};}).sort(function(a,b){return b.val-a.val;});
   return {qtd:itens.length,totalBruto:totalBruto,comissaoVal:totalBruto*pct/100,detalhamento:detalhamento,itens:itens};
 }
-function fmtDataBR(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+// Aceita Date, string ISO (com ou sem hora) e null/undefined — os dados
+// que vêm direto do Supabase (ex: curso_matricula_parcelas.vencimento,
+// curso_campanhas.data_inicio/data_fim/data_prevista_curso) chegam como
+// string, nunca como Date, e quebravam aqui (d.getDate is not a function).
+function fmtDataBR(d){
+  if(d==null||d==='')return '-';
+  var dt;
+  if(d instanceof Date){
+    dt=d;
+  }else if(typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)){
+    // Data "pura" (sem hora) do Postgres — sem o T00:00:00, new Date()
+    // interpreta como meia-noite UTC e no fuso do Brasil (UTC-3) voltava
+    // 1 dia (ex: "2026-12-15" virava 14/12).
+    dt=new Date(d+'T00:00:00');
+  }else{
+    dt=new Date(d);
+  }
+  if(!dt||isNaN(dt.getTime()))return '-';
+  return String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();
+}
 function fmtDataBRCurta(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
 function dataIsoDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
