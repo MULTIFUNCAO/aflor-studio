@@ -3346,7 +3346,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-pacote')">Cancelar</button>
-      <button class="btn btn-primary" onclick="addPacote()">✅ Salvar e Vender</button>
+      <button class="btn btn-primary" id="btn-addpacote-salvar" onclick="addPacote()">✅ Salvar e Vender</button>
     </div>
   </div>
 </div>
@@ -3380,7 +3380,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-vender-pacote')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarVendaPacote()">✅ Confirmar Venda</button>
+      <button class="btn btn-primary" id="btn-confirmar-venda-pacote" onclick="confirmarVendaPacote()">✅ Confirmar Venda</button>
     </div>
   </div>
 </div>
@@ -6285,6 +6285,10 @@ async function salvarPacoteClienteSupa(p){
       validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento,
       grupo_id:p.grupo_id||null,salao_id:window.SALAO_ID
     }]).select('id');
+    // Mesmo motivo do salvarPacoteCatalogoSupa — sem checar r.error, uma
+    // rejeição do banco (ex: pacote_id apontando pra um id que não existe
+    // ainda) virava sucesso silencioso.
+    if(r.error){console.log('err supa pacote cliente (response)',r.error);return null;}
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote cliente',e);return null;}
 }
@@ -11681,7 +11685,7 @@ function abrirVenderPacoteParaCliente(ci){
     +'</div></div>'
     +'<div style="display:flex;gap:8px;margin-top:4px">'
     +'<button onclick="document.getElementById(\'modal-vender-pkg-cliente\').classList.remove(\'open\')" style="flex:1;padding:12px;background:#f5f5f5;color:#555;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>'
-    +'<button onclick="confirmarVendaPacoteParaCliente('+ci+')" style="flex:2;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Confirmar Venda</button>'
+    +'<button id="btn-vpc-confirmar" onclick="confirmarVendaPacoteParaCliente('+ci+')" style="flex:2;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Confirmar Venda</button>'
     +'</div></div></div>';
   window._vpcForma='';
   m.classList.add('open');
@@ -11705,7 +11709,7 @@ function vpClienteSetForma(btn,forma){
   btn.style.background='#6366f1';btn.style.color='#fff';btn.style.borderColor='#6366f1';
 }
 
-function confirmarVendaPacoteParaCliente(ci){
+async function confirmarVendaPacoteParaCliente(ci){
   var c=clientes[ci];
   if(!c)return;
   var sel=document.getElementById('vpc-pacote');
@@ -11724,7 +11728,17 @@ function confirmarVendaPacoteParaCliente(ci){
       :[{servico:p.nome,qtd:sessoes}],
     preco:valor
   });
-  venderPacoteParaCliente(pacCopy,c.nome,forma,c.id||null);
+  var btn=document.getElementById('btn-vpc-confirmar');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Confirmando...';}
+  // Só mostra sucesso/fecha o modal depois de confirmar que salvou de
+  // verdade — antes disparava e já mostrava "vendido!" sem esperar nem
+  // checar o resultado do insert.
+  var resultado=await venderPacoteParaCliente(pacCopy,c.nome,forma,c.id||null);
+  if(btn){btn.disabled=false;btn.innerHTML='✅ Confirmar Venda';}
+  if(!resultado.ok){
+    showAlert('⚠️ Não consegui registrar a venda do pacote pra '+c.nome+'. Nada foi lançado no caixa. Tente de novo.');
+    return;
+  }
   document.getElementById('modal-vender-pkg-cliente').classList.remove('open');
   document.getElementById('modal-perfil-cliente').classList.remove('open');
   showAlert('✅ Pacote vendido para '+c.nome+'!');
@@ -14358,6 +14372,10 @@ async function salvarPacoteCatalogoSupa(p){
       nome:p.nome,servicos:p.servicos,servicos_itens:p.servicosItens||[],
       validade:p.validade,preco:p.preco,salao_id:window.SALAO_ID
     }]).select('id');
+    // Sem isso, um erro do Postgres (ex: violação de constraint) virava
+    // "sucesso" silencioso — r.data vinha vazio, a função só retornava
+    // null sem avisar ninguém.
+    if(r.error){console.log('err supa pacote catalogo (response)',r.error);return null;}
     return r.data&&r.data[0]?r.data[0].id:null;
   }catch(e){console.log('err supa pacote catalogo',e);return null;}
 }
@@ -14480,7 +14498,12 @@ function carregarPacotesClientesLocal(){
     sincronizarUsadoDeLegacy();
   }catch(e){pacotesClientes=[];}
 }
-function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
+// async — espera cada insert em pacotes_clientes confirmar antes de
+// lançar no caixa (lancarEntradaCaixaAuto). Antes disparava o insert e
+// já lançava a entrada no caixa em seguida, sem esperar nem checar se o
+// pacote tinha sido salvo de verdade — o caixa recebia o valor mesmo
+// quando o pacote não existia no banco.
+async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
   var hoje=new Date().toISOString().split('T')[0];
   var valor=parsePrecoPacote(pacoteCatalogo.preco);
   var validadeCalc=calcValidadePacote(pacoteCatalogo.validade,hoje);
@@ -14500,14 +14523,21 @@ function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
       valor_pago:valor,forma_pagamento:formaPag||'Pix'
     };
     pacotesClientes.unshift(reg);
-    salvarPacoteClienteSupa(reg).then(function(supaId){
-      if(supaId){reg.id=supaId;salvarPacotesClientesLocal();}
-    });
     return reg;
   });
   salvarPacotesClientesLocal();
-  lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
-  return regs[0];
+  var resultados=await Promise.all(regs.map(function(reg){
+    return salvarPacoteClienteSupa(reg).then(function(supaId){
+      if(supaId){reg.id=supaId;}
+      return !!supaId;
+    });
+  }));
+  salvarPacotesClientesLocal();
+  var todasSalvas=resultados.every(function(ok){return ok;});
+  if(todasSalvas){
+    lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
+  }
+  return {ok:todasSalvas,regs:regs};
 }
 function vendaPacoteSetForma(btn,forma){
   vendaPacoteCtx.forma=forma;
@@ -14538,7 +14568,7 @@ function abrirVenderPacote(idx){
   });
   openModal('modal-vender-pacote');
 }
-function confirmarVendaPacote(){
+async function confirmarVendaPacote(){
   var idx=vendaPacoteCtx.pacoteIdx;
   var p=typeof idx==='number'?pacotes[idx]:null;
   if(!p){showAlert('Pacote não encontrado.');return;}
@@ -14547,7 +14577,17 @@ function confirmarVendaPacote(){
   if(isNaN(ci)||!clientes[ci]){showAlert('Selecione um cliente.');return;}
   if(!vendaPacoteCtx.forma){showAlert('Selecione a forma de pagamento.');return;}
   var c=clientes[ci];
-  venderPacoteParaCliente(p,c.nome,vendaPacoteCtx.forma,c.id||null);
+  var btn=document.getElementById('btn-confirmar-venda-pacote');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Confirmando...';}
+  // Só mostra sucesso/fecha o modal depois de confirmar que salvou de
+  // verdade — antes disparava e já mostrava "vendido! Entrada registrada
+  // no caixa" sem esperar nem checar o resultado do insert.
+  var resultado=await venderPacoteParaCliente(p,c.nome,vendaPacoteCtx.forma,c.id||null);
+  if(btn){btn.disabled=false;btn.innerHTML='✅ Confirmar Venda';}
+  if(!resultado.ok){
+    showAlert('⚠️ Não consegui registrar a venda do pacote "'+p.nome+'" pra '+c.nome+'. Nada foi lançado no caixa. Tente de novo.');
+    return;
+  }
   closeModal('modal-vender-pacote');
   renderPacotes();
   showAlert('🎁 Pacote "'+p.nome+'" vendido para '+c.nome+'! Entrada registrada no caixa.');
@@ -15243,7 +15283,7 @@ function deletePacoteCliente(i){
   }
 }
 
-function addPacote(){
+async function addPacote(){
   var nome=(document.getElementById('novo-pacote-nome').value||'').trim();
   if(!nome){ alert('Informe o nome do pacote.'); return; }
   var precoNum=parseFloat(document.getElementById('novo-pacote-preco').value||0);
@@ -15261,6 +15301,12 @@ function addPacote(){
   });
   var servicosStr = servicosList2.map(function(s){ return s.servico+(s.qtd>1?' (x'+s.qtd+')':''); }).join(' + ');
 
+  // Trava contra duplo clique — sem isso, 2 cliques rápidos em "Salvar e
+  // Vender" criavam 2 registros idênticos em pacotes_catalogo (cada
+  // clique chamando addPacote() de novo, de forma independente).
+  var btn=document.getElementById('btn-addpacote-salvar');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Salvando...';}
+
   // Adicionar como template
   var novoItem={
     id:_pacoteIdSeq++,nome,servicos:servicosStr||'Serviços incluídos',
@@ -15269,23 +15315,42 @@ function addPacote(){
   };
   pacotes.unshift(novoItem);
   salvarPacotesCatalogoLocal();
-  salvarPacoteCatalogoSupa(novoItem).then(function(newId){
-    if(newId!=null){novoItem.id=newId;salvarPacotesCatalogoLocal();}
-  });
+  // Espera o id REAL do Supabase antes de seguir pra venda — antes disso
+  // disparava a venda em seguida, sem esperar, usando o id local
+  // (_pacoteIdSeq) que nunca existe em pacotes_catalogo, e o insert em
+  // pacotes_clientes era recusado pelo banco (silenciosamente).
+  var newId=await salvarPacoteCatalogoSupa(novoItem);
+  if(newId==null){
+    // Desfaz a adição otimista — não deixa um pacote "fantasma" na lista
+    // que não existe de fato no banco.
+    var idxOtim=pacotes.indexOf(novoItem);
+    if(idxOtim>=0)pacotes.splice(idxOtim,1);
+    salvarPacotesCatalogoLocal();
+    if(btn){btn.disabled=false;btn.textContent='✅ Salvar e Vender';}
+    showAlert('⚠️ Não consegui salvar o pacote no catálogo. Confira a conexão e tente de novo — nada foi lançado no caixa.');
+    return;
+  }
+  novoItem.id=newId;salvarPacotesCatalogoLocal();
 
   // Vender para cliente (opcional, no mesmo modal de cadastro)
   var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
   var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
 
+  var vendaOk=true;
   if(clienteNome && precoNum>0){
-    var novoPac=pacotes[0];
-    venderPacoteParaCliente(novoPac,clienteNome,formaPag,null);
+    var resultadoVenda=await venderPacoteParaCliente(novoItem,clienteNome,formaPag,null);
+    vendaOk=resultadoVenda.ok;
   }
 
+  if(btn){btn.disabled=false;btn.textContent='✅ Salvar e Vender';}
   closeModal('modal-pacote');
   renderPacotes();
   var msg='🎁 Pacote "'+nome+'" salvo!';
-  if(clienteNome) msg+=' Vendido para '+clienteNome+' e lançado no caixa!';
+  if(clienteNome){
+    msg+=vendaOk
+      ?(' Vendido para '+clienteNome+' e lançado no caixa!')
+      :(' Mas a venda pra '+clienteNome+' falhou — nada foi lançado no caixa. Tente vender de novo pela lista de pacotes.');
+  }
   showAlert(msg);
 }
 
