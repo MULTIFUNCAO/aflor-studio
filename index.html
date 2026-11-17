@@ -14943,7 +14943,7 @@ async function pkgAbrirDetalhe(gKey){
     +'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<button onclick="pkgToggleEditar(\''+gKeyEsc+'\')" style="flex:1;padding:8px;background:#e5e5e5;color:#555;border:none;border-radius:8px;font-size:12px;cursor:pointer">Cancelar</button>'
-    +'<button onclick="pkgSalvarEdicao(\''+gKeyEsc+'\')" style="flex:2;padding:8px;background:#3b5bdb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar Alterações</button>'
+    +'<button id="btn-pkg-salvar-edicao" onclick="pkgSalvarEdicao(\''+gKeyEsc+'\')" style="flex:2;padding:8px;background:#3b5bdb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Salvar Alterações</button>'
     +'</div></div>'
     // Info grid
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">'
@@ -14982,15 +14982,37 @@ async function pkgSalvarEdicao(gKey){
   var novoTotal=Math.max(1,parseInt(document.getElementById('pkg-edit-total')?.value)||g.minTotal);
   var novoUsado=Math.min(novoTotal,Math.max(0,parseInt(document.getElementById('pkg-edit-usadas')?.value)||0));
   var novoValor=parseFloat(document.getElementById('pkg-edit-valor')?.value)||0;
-  // Atualiza cada item do grupo em memória e no Supabase
+
+  var btn=document.getElementById('btn-pkg-salvar-edicao');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Salvando...';}
+
+  // Salva no Supabase PRIMEIRO (await + confere r.error) — antes disparava
+  // .catch() direto na chamada encadeada, que não tem esse método nessa
+  // versão (TypeError antes de qualquer coisa salvar) e nunca checava erro
+  // de verdade. Só atualiza a UI e fecha o painel depois de confirmar.
+  var itensComId=g.itens.filter(function(it){return it.id&&String(it.id).indexOf('loc_')!==0;});
+  var algumErro=false;
+  if(typeof supa!=='undefined'&&supa&&itensComId.length){
+    var resultados=await Promise.all(itensComId.map(function(it){
+      return supa.from('pacotes_clientes').update({pacote_nome:novoNome,quantidade_total:novoTotal,quantidade_usada:novoUsado,valor_pago:novoValor})
+        .eq('id',it.id).eq('salao_id',window.SALAO_ID);
+    }));
+    algumErro=resultados.some(function(r){
+      if(r&&r.error){console.log('err edit pkg',r.error);return true;}
+      return false;
+    });
+  }
+  if(btn){btn.disabled=false;btn.innerHTML='✅ Salvar Alterações';}
+  if(algumErro){
+    showAlert('⚠️ Não consegui salvar as alterações do pacote. Confira a conexão e tente de novo.');
+    return;
+  }
+
+  // Confirmado salvo — agora sim atualiza em memória/local e a UI.
   g.itens.forEach(function(it){
     it.pacote_nome=novoNome;it.quantidade_total=novoTotal;it.quantidade_usada=novoUsado;it.valor_pago=novoValor;
     var pc=pacotesClientes.find(function(p){return p.id===it.id;});
     if(pc){pc.pacote_nome=novoNome;pc.quantidade_total=novoTotal;pc.quantidade_usada=novoUsado;pc.valor_pago=novoValor;}
-    if(typeof supa!=='undefined'&&supa&&it.id&&String(it.id).indexOf('loc_')!==0){
-      supa.from('pacotes_clientes').update({pacote_nome:novoNome,quantidade_total:novoTotal,quantidade_usada:novoUsado,valor_pago:novoValor})
-        .eq('id',it.id).eq('salao_id',window.SALAO_ID).catch(function(e){console.log('err edit pkg',e);});
-    }
   });
   g.pacote_nome=novoNome;g.minTotal=novoTotal;g.maxUsado=novoUsado;g.restante=novoTotal-novoUsado;g.valor_pago=novoValor;
   salvarPacotesClientesLocal();
