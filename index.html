@@ -3351,6 +3351,18 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<!-- MODAL ESCOLHER CLIENTE PARECIDA (venda de pacote com nome digitado) -->
+<div class="modal-overlay" id="modal-escolher-cliente-pacote">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Cliente parecida encontrada</span>
+      <button class="modal-close" onclick="fecharEscolherClientePacote()">✕</button>
+    </div>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Encontramos cliente(s) com nome parecido — selecione quem é, ou cadastre como nova, pra não duplicar.</p>
+    <div id="escolher-cliente-pacote-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
 <!-- MODAL VENDER PACOTE PARA CLIENTE -->
 <div class="modal-overlay" id="modal-vender-pacote">
   <div class="modal" style="width:480px">
@@ -6057,7 +6069,16 @@ async function _authHeaders(extra){
 }
 let supa;
 try{supa=supabase.createClient(SUPA_URL,SUPA_KEY);}catch(e){}
-async function salvarClienteSupa(c){try{if(supa){var r=await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nasc:c.nascimento||null,cpf:c.cpf||null,obs:c.obs||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]);if(r.error)console.log('err supa cliente insert',r.error);}}catch(e){console.log('err supa cliente insert',e);}}
+// Retorna o id real do Supabase (ou null se falhar) — chamadores antigos
+// que não usam o retorno continuam funcionando igual.
+async function salvarClienteSupa(c){
+  try{
+    if(!supa)return null;
+    var r=await supa.from('clientes').insert([{nome:c.nome,tel:c.tel,ultima:c.ultima,total:c.total,salao_id:window.SALAO_ID,nasc:c.nascimento||null,cpf:c.cpf||null,obs:c.obs||null,cep:c.cep||null,endereco:c.endereco||null,como_conheceu:c.como_conheceu||null}]).select('id');
+    if(r.error){console.log('err supa cliente insert',r.error);return null;}
+    return r.data&&r.data[0]?r.data[0].id:null;
+  }catch(e){console.log('err supa cliente insert',e);return null;}
+}
 async function salvarAgendamentoSupa(a){try{if(supa)await supa.from('agendamentos').insert([Object.assign({},a,{salao_id:window.SALAO_ID})]);}catch(e){}}
 async function carregarAgendamentosSupa(){
   try{
@@ -14482,6 +14503,77 @@ function calcularProgressoPacoteGrupo(itens){
   }
   return {total:total,usado:usado,restante:total-usado,uniforme:uniforme};
 }
+// ---- Resolver/criar cliente ao vender pacote com nome digitado livre ----
+// (hoje só "Novo Pacote > Salvar e Vender" tem campo de nome livre — as
+// outras 2 telas de vender pacote usam <select> de cliente já cadastrada)
+function normalizarNomeCliente(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+}
+function capitalizarNomeCliente(s){
+  return String(s||'').toLowerCase().replace(/\s+/g,' ').trim().split(' ').map(function(w){
+    return w?w[0].toUpperCase()+w.slice(1):w;
+  }).join(' ');
+}
+// Só decide o que fazer — não grava nada no banco. Resolve com:
+//   {tipo:'existente',cliente:<obj de clientes>}  — nome bateu exato (ignorando
+//     maiúsculas/espaços) ou foi o que a dona escolheu no modal de parecidas.
+//   {tipo:'nova',nome,tel}                        — não achou nenhuma parecida,
+//     ou a dona escolheu "cadastrar como nova" no modal.
+//   null                                           — a dona fechou o modal sem escolher.
+function escolherClienteParaPacote(nomeDigitado,telDigitado){
+  return new Promise(function(resolve){
+    var nomeNorm=normalizarNomeCliente(nomeDigitado);
+    var nomeCap=capitalizarNomeCliente(nomeDigitado);
+    var listaClientesAtual=(typeof clientes!=='undefined'?clientes:[])||[];
+    var exato=listaClientesAtual.find(function(c){return normalizarNomeCliente(c.nome)===nomeNorm;});
+    if(exato){resolve({tipo:'existente',cliente:exato});return;}
+    var parecidas=listaClientesAtual.filter(function(c){
+      var cn=normalizarNomeCliente(c.nome);
+      return cn&&(cn.indexOf(nomeNorm)>=0||nomeNorm.indexOf(cn)>=0);
+    });
+    if(!parecidas.length){resolve({tipo:'nova',nome:nomeCap,tel:telDigitado||''});return;}
+    abrirModalEscolherClientePacote(parecidas,nomeCap,telDigitado||'',resolve);
+  });
+}
+var _resolveEscolherClientePacote=null;
+function abrirModalEscolherClientePacote(parecidas,nomeCap,tel,resolve){
+  _resolveEscolherClientePacote=resolve;
+  window._escolherClientePacoteCandidatas=parecidas;
+  window._escolherClientePacoteNova={nome:nomeCap,tel:tel||''};
+  var lista=document.getElementById('escolher-cliente-pacote-lista');
+  if(lista){
+    lista.innerHTML=parecidas.map(function(c,i){
+      return '<button type="button" onclick="_responderEscolherClientePacote('+i+')" style="text-align:left;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">👤 '+escHtml(c.nome)+(c.tel?' — '+escHtml(c.tel):'')+'</button>';
+    }).join('')
+    +'<button type="button" onclick="_responderEscolherClientePacote(-1)" style="text-align:left;padding:10px 12px;border:1.5px dashed #86b6ef;border-radius:8px;background:#f0f7ff;cursor:pointer;font-size:13px">➕ Nenhuma dessas — cadastrar "'+escHtml(nomeCap)+'" como nova cliente</button>';
+  }
+  openModal('modal-escolher-cliente-pacote');
+}
+function _responderEscolherClientePacote(idx){
+  closeModal('modal-escolher-cliente-pacote');
+  var resolve=_resolveEscolherClientePacote;_resolveEscolherClientePacote=null;
+  if(!resolve)return;
+  if(idx===-1)resolve({tipo:'nova',nome:window._escolherClientePacoteNova.nome,tel:window._escolherClientePacoteNova.tel});
+  else resolve({tipo:'existente',cliente:window._escolherClientePacoteCandidatas[idx]});
+}
+function fecharEscolherClientePacote(){
+  closeModal('modal-escolher-cliente-pacote');
+  var resolve=_resolveEscolherClientePacote;_resolveEscolherClientePacote=null;
+  if(resolve)resolve(null);
+}
+// Só é chamada DEPOIS que o pacote já foi confirmado no catálogo — nunca
+// cria cliente "adiantado" caso o insert do pacote falhe.
+async function criarClienteRapidoParaPacote(nome,tel){
+  var hoje=new Date();
+  var dataHoje=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+  var novaCliente={nome:nome,tel:tel||'',ultima:dataHoje,total:'R$ 0,00',atend:0,retornoStatus:'',retornoData:'',ultimoProc:'',email:'',nascimento:'',cep:'',endereco:'',como_conheceu:''};
+  var newId=await salvarClienteSupa(novaCliente);
+  if(newId==null)return null;
+  novaCliente.id=newId;
+  clientes.unshift(novaCliente);
+  if(typeof renderClientes==='function')renderClientes();
+  return novaCliente;
+}
 function salvarPacotesClientesLocal(){
   localStorage.setItem('aflor_pacotes_clientes',JSON.stringify(pacotesClientes));
   syncPacotesLegacyStorage();
@@ -15409,9 +15501,31 @@ async function addPacote(){
 
   // Trava contra duplo clique — sem isso, 2 cliques rápidos em "Salvar e
   // Vender" criavam 2 registros idênticos em pacotes_catalogo (cada
-  // clique chamando addPacote() de novo, de forma independente).
+  // clique chamando addPacote() de novo, de forma independente). O botão
+  // já desabilita AQUI, antes de qualquer await — por isso também cobre a
+  // etapa de escolher/criar cliente abaixo, sem duplicar cliente em
+  // clique duplo.
   var btn=document.getElementById('btn-addpacote-salvar');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Salvando...';}
+
+  // Vender para cliente (opcional, no mesmo modal de cadastro) — resolve
+  // QUEM é a cliente agora (só decide, não grava nada ainda): nome igual
+  // (ignorando maiúsculas/espaços) usa a cliente existente direto; nome
+  // parecido pergunta pra dona escolher; sem nenhuma parecida, prepara
+  // pra cadastrar como nova — só de fato cria no banco depois que a VENDA
+  // (pacotes_clientes) já tiver sido gravada com sucesso, mais abaixo.
+  var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
+  var clienteTelDigitado=(document.getElementById('pacote-cliente-tel')?.value||'').trim();
+  var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
+  var escolhaCliente=null;
+  if(clienteNome){
+    escolhaCliente=await escolherClienteParaPacote(clienteNome,clienteTelDigitado);
+    if(!escolhaCliente){
+      // Dona fechou o modal de escolha sem decidir — não salva nada.
+      if(btn){btn.disabled=false;btn.textContent='✅ Salvar e Vender';}
+      return;
+    }
+  }
 
   // Adicionar como template
   var novoItem={
@@ -15438,24 +15552,55 @@ async function addPacote(){
   }
   novoItem.id=newId;salvarPacotesCatalogoLocal();
 
-  // Vender para cliente (opcional, no mesmo modal de cadastro)
-  var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
-  var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
-
-  var vendaOk=true;
+  var vendaOk=true,cadastroClienteFalhou=false;
   if(clienteNome && precoNum>0){
-    var resultadoVenda=await venderPacoteParaCliente(novoItem,clienteNome,formaPag,null);
+    var clienteIdFinal=null,nomeParaVenda=clienteNome,clienteNovaPendente=null;
+    if(escolhaCliente.tipo==='existente'){
+      clienteIdFinal=escolhaCliente.cliente.id||null;
+      nomeParaVenda=escolhaCliente.cliente.nome;
+    }else{
+      nomeParaVenda=escolhaCliente.nome;
+      clienteNovaPendente=escolhaCliente; // {nome,tel} — só cria depois da venda gravada
+    }
+    // Grava a venda PRIMEIRO (cliente_id null se ainda não existe). Só depois
+    // que isso é confirmado é que a cliente nova é cadastrada — se a venda
+    // falhar, nenhuma cliente é criada.
+    var resultadoVenda=await venderPacoteParaCliente(novoItem,nomeParaVenda,formaPag,clienteIdFinal);
     vendaOk=resultadoVenda.ok;
+    if(vendaOk&&clienteNovaPendente){
+      var clienteCriada=await criarClienteRapidoParaPacote(clienteNovaPendente.nome,clienteNovaPendente.tel);
+      if(clienteCriada){
+        clienteIdFinal=clienteCriada.id;nomeParaVenda=clienteCriada.nome;
+        // A venda já foi gravada com cliente_id null — agora que a cliente
+        // existe, atualiza o cliente_id nas linhas de pacotes_clientes recém-criadas.
+        var idsParaAtualizar=(resultadoVenda.regs||[]).filter(function(r){return r.id&&String(r.id).indexOf('loc_')!==0;});
+        if(idsParaAtualizar.length&&typeof supa!=='undefined'&&supa){
+          await Promise.all(idsParaAtualizar.map(function(r){
+            return supa.from('pacotes_clientes').update({cliente_id:clienteCriada.id,cliente_nome:clienteCriada.nome}).eq('id',r.id).eq('salao_id',window.SALAO_ID);
+          }));
+          idsParaAtualizar.forEach(function(r){r.cliente_id=clienteCriada.id;r.cliente_nome=clienteCriada.nome;});
+          salvarPacotesClientesLocal();
+        }
+      }else{
+        // A venda já está gravada e fica assim — só o cadastro da cliente
+        // falhou. Não desfaz nada; só avisa pra cadastrar manualmente depois.
+        cadastroClienteFalhou=true;
+      }
+    }
   }
 
   if(btn){btn.disabled=false;btn.textContent='✅ Salvar e Vender';}
   closeModal('modal-pacote');
   renderPacotes();
   var msg='🎁 Pacote "'+nome+'" salvo!';
-  if(clienteNome){
+  if(clienteNome && precoNum>0){
+    var nomeExibicao=(typeof nomeParaVenda!=='undefined'&&nomeParaVenda)||clienteNome;
     msg+=vendaOk
-      ?(' Vendido para '+clienteNome+' e lançado no caixa!')
-      :(' Mas a venda pra '+clienteNome+' falhou — nada foi lançado no caixa. Tente vender de novo pela lista de pacotes.');
+      ?(' Vendido para '+nomeExibicao+' e lançado no caixa!')
+      :(' Mas a venda pra '+nomeExibicao+' falhou — nada foi lançado no caixa. Tente vender de novo pela lista de pacotes.');
+    if(cadastroClienteFalhou){
+      msg+=' ⚠️ A venda foi registrada, mas não consegui cadastrar "'+nomeExibicao+'" como cliente nova — cadastre ela manualmente em Clientes e, se quiser, vincule o pacote depois.';
+    }
   }
   showAlert(msg);
 }
