@@ -12505,7 +12505,7 @@ function abrirAgendaPopup(key,dados,event){
   agendaPopupAtivo=key;
   popupFormaSinal=null;
 }
-async function confirmarAgendamentoWpp(key){
+function confirmarAgendamentoWpp(key){
   var dados=agendaDiaAtual[key];
   if(!dados)return;
   var clienteObj=clientes.find(function(c){return c.nome===dados.cliente;});
@@ -12521,24 +12521,13 @@ async function confirmarAgendamentoWpp(key){
   }else{
     showAlert('⚠️ Telefone da cliente não cadastrado. Confirmação marcada manualmente.');
   }
-  var badge=document.getElementById('popup-confirmacao-badge');
-  // Guarda o selo pendente (com o próprio botão "Confirmar") antes de trocar,
-  // pra poder desfazer na tela se a gravação no Supabase falhar.
-  var badgeHtmlAnterior=badge?badge.innerHTML:'';
   dados.confirmado=true;
+  if(supa&&dados.id){
+    supa.from('agendamentos').update({confirmado:true}).eq('id',dados.id).eq('salao_id',window.SALAO_ID).catch(function(){});
+  }
+  var badge=document.getElementById('popup-confirmacao-badge');
   if(badge)badge.innerHTML='<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;display:inline-flex;align-items:center;gap:5px">✅ Confirmado via WhatsApp</span>';
   renderAgenda();
-  if(supa&&dados.id){
-    var r=await supa.from('agendamentos').update({confirmado:true}).eq('id',dados.id).eq('salao_id',window.SALAO_ID);
-    if(r.error){
-      console.log('err confirmar agendamento wpp',r.error);
-      dados.confirmado=false;
-      var badge2=document.getElementById('popup-confirmacao-badge');
-      if(badge2)badge2.innerHTML=badgeHtmlAnterior;
-      renderAgenda();
-      showAlert('⚠️ Não consegui salvar a confirmação. Tente novamente.');
-    }
-  }
 }
 var pagamentoCtx=null;
 var pgSplitAtivo=false;
@@ -14935,7 +14924,6 @@ async function pkgAbrirDetalhe(gKey){
     +'<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px">'+g.pacote_nome+'</div></div>'
     +'<div style="display:flex;gap:6px;flex-shrink:0">'
     +'<button onclick="pkgToggleEditar(\''+gKeyEsc+'\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:14px" title="Editar">✏️</button>'
-    +'<button id="btn-pkg-apagar" onclick="pkgApagarPacote(\''+gKeyEsc+'\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:14px" title="Apagar pacote">🗑️</button>'
     +'<button onclick="document.getElementById(\'modal-pkg-detalhe\').classList.remove(\'open\')" style="background:rgba(255,255,255,.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:#fff;font-size:16px">✕</button>'
     +'</div>'
     +'</div>'
@@ -15038,56 +15026,6 @@ async function pkgSalvarEdicao(gKey){
   var panel=document.getElementById('pkg-edit-panel');if(panel)panel.style.display='none';
   showAlert('✅ Pacote atualizado!');
   renderPacotes();
-}
-
-async function pkgApagarPacote(gKey){
-  var g=(window._pkgGruposAll||[]).find(function(x){return x.key===gKey;});
-  if(!g)return;
-  if(!confirm('Apagar o pacote de '+g.cliente_nome+' ("'+g.pacote_nome+'")?\n\nIsso remove '+g.itens.length+' linha(s) de pacotes_clientes e todo o histórico de sessões desse pacote (pacotes_sessoes). O valor já lançado no caixa (se houver) NÃO é apagado. Não pode ser desfeito.'))return;
-
-  var btn=document.getElementById('btn-pkg-apagar');
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>';}
-
-  var itensComId=g.itens.filter(function(it){return it.id&&String(it.id).indexOf('loc_')!==0;});
-  var algumErro=false;
-  if(typeof supa!=='undefined'&&supa&&window.SALAO_ID){
-    try{
-      // Mesmo filtro usado em pkgCarregarHistorico pra achar as sessões do
-      // grupo: por grupo_id quando existe, senão por pacote_cliente_id (só
-      // pacotes legados, sem grupo_id, caem nesse caso).
-      var qSessoes=supa.from('pacotes_sessoes').delete().eq('salao_id',window.SALAO_ID);
-      if(g.grupo_id){
-        qSessoes=qSessoes.eq('grupo_id',g.grupo_id);
-      }else{
-        var fid=itensComId[0]&&itensComId[0].id;
-        qSessoes=fid?qSessoes.eq('pacote_cliente_id',String(fid)):null;
-      }
-      if(qSessoes){
-        var rSess=await qSessoes;
-        if(rSess.error){console.log('err apagar pacotes_sessoes',rSess.error);algumErro=true;}
-      }
-      if(itensComId.length){
-        var resultados=await Promise.all(itensComId.map(function(it){
-          return supa.from('pacotes_clientes').delete().eq('id',it.id).eq('salao_id',window.SALAO_ID);
-        }));
-        resultados.forEach(function(r){if(r&&r.error){console.log('err apagar pacotes_clientes',r.error);algumErro=true;}});
-      }
-    }catch(e){console.log('err apagar pacote',e);algumErro=true;}
-  }
-
-  if(btn){btn.disabled=false;btn.innerHTML='🗑️';}
-  if(algumErro){
-    showAlert('⚠️ Não consegui apagar o pacote. Confira a conexão e tente de novo.');
-    return;
-  }
-
-  var idsGrupo=g.itens.map(function(it){return String(it.id);});
-  pacotesClientes=pacotesClientes.filter(function(p){return idsGrupo.indexOf(String(p.id))<0;});
-  salvarPacotesClientesLocal();
-  var modal=document.getElementById('modal-pkg-detalhe');
-  if(modal)modal.classList.remove('open');
-  renderPacotes();
-  showAlert('🗑️ Pacote apagado!');
 }
 
 async function pkgCarregarHistorico(g){
