@@ -259,10 +259,11 @@ textarea{resize:vertical;min-height:80px}
 
 /* PROF COLS */
 .agenda-cols-wrap{display:flex;align-items:flex-start;gap:14px;padding-bottom:4px}
-.agenda-timeaxis{flex-shrink:0;width:56px}
+.agenda-timeaxis{flex-shrink:0;width:56px;position:sticky;left:0;z-index:3;background:#fff}
 .agenda-timeaxis-spacer{height:74px;border-bottom:1px solid transparent;box-sizing:border-box}
-.agenda-prof-block{flex:1 1 170px;min-width:170px;max-width:300px;background:#fff;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-xs)}
-.agenda-prof-header{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:center;gap:10px;padding:14px;min-height:74px;box-sizing:border-box;border-bottom:1px solid var(--gray-100)}
+.agenda-prof-block{flex:1 1 170px;min-width:170px;max-width:300px;background:#fff;border:1px solid var(--gray-200);border-radius:14px;box-shadow:var(--shadow-xs)}
+.agenda-prof-header{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:center;gap:10px;padding:14px;min-height:74px;box-sizing:border-box;border-bottom:1px solid var(--gray-100);border-radius:14px 14px 0 0}
+.agenda-prof-timeline{overflow:hidden;border-radius:0 0 14px 14px}
 .agenda-mobile-tabs{display:none}
 
 @media(max-width:860px){
