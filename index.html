@@ -4785,7 +4785,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <label style="margin:0">Forma de pagamento do saldo</label>
         <span onclick="pgToggleSplit()" id="pg-split-toggle" style="font-size:11px;color:#d4af37;cursor:pointer;font-weight:700">➗ Dividir em 2 formas</span>
       </div>
-      <select id="pg-forma-pagamento" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
+      <select id="pg-forma-pagamento" onchange="pgAtualizarPrevisaoTaxa()" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
         <option value="">Selecione...</option>
         <option value="Pix">📱 Pix</option>
         <option value="Dinheiro">💵 Dinheiro</option>
@@ -4794,10 +4794,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <option value="Cartão de Crédito Parcelado">💳 Cartão de Crédito Parcelado</option>
         <option value="Cartão de Débito">💳 Cartão de Débito</option>
       </select>
+      <div id="pg-preview-taxa"></div>
       <div id="pg-split-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd">
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <input type="number" id="pg-split-valor1" min="0" step="0.01" oninput="pgRecalcularSplit()" placeholder="Valor" style="width:110px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:700;color:#111;outline:none"/>
-          <select id="pg-split-forma1" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
+          <select id="pg-split-forma1" onchange="pgAtualizarPrevisaoTaxa()" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
             <option value="">Selecione...</option>
             <option value="Pix">📱 Pix</option>
             <option value="Dinheiro">💵 Dinheiro</option>
@@ -4809,7 +4810,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <div id="pg-split-valor2-display" style="width:110px;padding:8px 10px;background:#f8f8f8;border-radius:8px;font-size:13px;font-weight:700;color:#111;text-align:right">R$ 0,00</div>
-          <select id="pg-split-forma2" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
+          <select id="pg-split-forma2" onchange="pgAtualizarPrevisaoTaxa()" style="flex:1;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;font-weight:600;color:#111;outline:none">
             <option value="">Selecione...</option>
             <option value="Pix">📱 Pix</option>
             <option value="Dinheiro">💵 Dinheiro</option>
@@ -4819,6 +4820,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option value="Cartão de Débito">💳 Cartão de Débito</option>
           </select>
         </div>
+        <div id="pg-split-preview-taxa"></div>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
@@ -5020,12 +5022,13 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
       <div class="form-group full">
         <label>Forma de Pagamento</label>
-        <select id="cmd-pgto">
+        <select id="cmd-pgto" onchange="cmdAtualizarPrevisaoTaxa()">
           <option>PIX</option>
           <option>Dinheiro</option>
           <option>Cartão de Crédito</option>
           <option>Cartão de Débito</option>
         </select>
+        <div id="cmd-preview-taxa"></div>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
@@ -10374,6 +10377,21 @@ function valorBaseComissao(sd){
   if(sd&&typeof sd.comissao_valor==='number')return sd.comissao_valor;
   return parseFloat(sd&&sd.valor)||0;
 }
+// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" usada
+// no Confirmar Pagamento e na Comanda — só exibição, não grava nada.
+// Vazio ("") pra Pix/Dinheiro/Link ou forma sem taxa cadastrada.
+function linhaPrevisaoTaxaCartao(forma,valor){
+  valor=parseFloat(valor)||0;
+  if(!forma||valor<=0)return '';
+  var r=calcularTaxaCartao(forma,valor);
+  if(!(r.pct>0&&r.taxa>0))return '';
+  var rotulo=forma==='Cartão de Débito'?'Taxa do débito'
+    :forma==='Cartão de Crédito Parcelado'?'Taxa do crédito parcelado'
+    :'Taxa do crédito';
+  var pctTxt=(Math.round(r.pct*100)/100).toString().replace('.',',');
+  return '<div style="font-size:11px;color:#9a3412;margin-top:6px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px">'
+    +rotulo+': '+pctTxt+'% (− '+fmtCaixa(r.taxa)+') · Você recebe: '+fmtCaixa(r.liquido)+'</div>';
+}
 async function carregarComissaoConfigSalaoSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
@@ -12739,6 +12757,32 @@ function pgRecalcularSaldo(){
   var areaForma=document.getElementById('pg-area-forma');
   if(areaForma)areaForma.style.display=restante>0?'block':'none';
   if(pgSplitAtivo)pgRecalcularSplit();
+  pgAtualizarPrevisaoTaxa();
+}
+// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" abaixo
+// da forma de pagamento — só exibição, não muda nada do que é gravado.
+// Some sozinha (linhaPrevisaoTaxaCartao devolve '') em Pix/Dinheiro/Link
+// ou forma sem taxa cadastrada.
+function pgAtualizarPrevisaoTaxa(){
+  if(!pagamentoCtx)return;
+  var elUnico=document.getElementById('pg-preview-taxa');
+  var elSplit=document.getElementById('pg-split-preview-taxa');
+  if(pgSplitAtivo){
+    if(elUnico)elUnico.innerHTML='';
+    if(elSplit){
+      var v1=parseFloat(document.getElementById('pg-split-valor1')?.value)||0;
+      var f1=document.getElementById('pg-split-forma1')?.value||'';
+      var v2=Math.max(0,pagamentoCtx.restante-v1);
+      var f2=document.getElementById('pg-split-forma2')?.value||'';
+      elSplit.innerHTML=linhaPrevisaoTaxaCartao(f1,v1)+linhaPrevisaoTaxaCartao(f2,v2);
+    }
+  }else{
+    if(elSplit)elSplit.innerHTML='';
+    if(elUnico){
+      var forma=document.getElementById('pg-forma-pagamento')?.value||'';
+      elUnico.innerHTML=linhaPrevisaoTaxaCartao(forma,pagamentoCtx.restante);
+    }
+  }
 }
 
 function abrirConfirmarPagamento(key){
@@ -12795,6 +12839,7 @@ function abrirConfirmarPagamento(key){
   if(elSplitF1)elSplitF1.value='';
   var elSplitF2=document.getElementById('pg-split-forma2');
   if(elSplitF2)elSplitF2.value='';
+  pgAtualizarPrevisaoTaxa();
   openModal('modal-confirmar-pagamento');
 }
 // Alterna entre "forma única" e "dividir o saldo em 2 formas de pagamento".
@@ -12815,6 +12860,7 @@ function pgToggleSplit(){
     if(selUnico)selUnico.style.display='';
     if(areaSplit)areaSplit.style.display='none';
   }
+  pgAtualizarPrevisaoTaxa();
 }
 // Valor da 2ª forma é sempre o restante do restante — nunca deixa a soma bater errado.
 function pgRecalcularSplit(){
@@ -12823,6 +12869,7 @@ function pgRecalcularSplit(){
   var v2=Math.max(0,pagamentoCtx.restante-v1);
   var elV2=document.getElementById('pg-split-valor2-display');
   if(elV2)elV2.textContent=fmtCaixa(v2);
+  pgAtualizarPrevisaoTaxa();
 }
 
 function lancarSinalCaixaSeNecessario(reg,valor,forma){
@@ -19040,11 +19087,22 @@ function cmdCalcTotal(){
   var tipo=document.getElementById('cmd-tipo-val')?.value||'servico';
   if(tipo==='pacote'){
     elTot.textContent='R$ 0,00';
+    // Pacote não cobra agora (já foi pago antes) — sem valor, sem taxa.
+    var elPrevPac=document.getElementById('cmd-preview-taxa');if(elPrevPac)elPrevPac.innerHTML='';
     return;
   }
   var total=cmdSomaServicos();
   elTot.textContent='R$ '+total.toFixed(2).replace('.',',');
   if(document.getElementById('cmd-sinal-ativo')?.checked)cmdCalcSinal();
+  cmdAtualizarPrevisaoTaxa();
+}
+// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" na
+// Comanda — mesmo helper do Confirmar Pagamento, só exibição.
+function cmdAtualizarPrevisaoTaxa(){
+  var el=document.getElementById('cmd-preview-taxa');
+  if(!el)return;
+  var forma=document.getElementById('cmd-pgto')?.value||'';
+  el.innerHTML=linhaPrevisaoTaxaCartao(forma,cmdSomaServicos());
 }
 function cmdSetFormReadonly(ro){
   ['cmd-cliente','cmd-data','cmd-hora','cmd-cat','cmd-servico','cmd-servico-prof','cmd-obs','cmd-pgto','cmd-pacote-sel','cmd-pacote-prof','cmd-sinal-ativo','cmd-sinal-pct','cmd-sinal-val'].forEach(function(id){
