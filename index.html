@@ -6150,6 +6150,13 @@ async function carregarAgendamentosSupa(){
       if(detalhes&&detalhes.length>1){
         var valorDetPrimario=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
         if(valorDetPrimario>0)valorComissaoPrimario=valorDetPrimario;
+      }else if(detalhes&&detalhes.length===1&&valNum===0&&(parseFloat(detalhes[0].valor)||0)>0){
+        // Atendimento de pacote: "valor" da comanda fica R$ 0,00 de propósito
+        // (o pacote já foi pago antes) — usa o preço avulso do serviço
+        // gravado em servicos_detalhe[0].valor como base da comissão.
+        // Serviço normal de 1 item nunca cai aqui porque o "valor" dele
+        // nunca é R$ 0,00.
+        valorComissaoPrimario=parseFloat(detalhes[0].valor)||0;
       }else{
         // valor_num de um atendimento de serviço único já inclui os produtos
         // cobrados do cliente (ver abrirConfirmarPagamento) — tira isso da
@@ -6339,6 +6346,13 @@ function descontarUsoPacoteCliente(pacoteClienteId,pacLegacy){
   pc.quantidade_usada=(pc.quantidade_usada||0)+1;
   salvarPacotesClientesLocal();
   atualizarUsoPacoteClienteSupa(pc.id,pc.quantidade_usada);
+}
+// Preço avulso do serviço no catálogo — mesma busca usada em
+// lancarComissaoPacote, pra servicos_detalhe de atendimento de pacote usar
+// a mesma base (preço avulso, não valor do pacote/sessões).
+function precoCatalogoServico(nomeServico){
+  var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
+  return srv?parseMoedaBR(srv.preco):0;
 }
 function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   // Busca o valor do serviço no catálogo
@@ -14208,6 +14222,9 @@ function renderAgenda(){
           if(detalhes&&detalhes.length>1){
             var valorDetPrimRA=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
             if(valorDetPrimRA>0)valorComissaoPrimRA=valorDetPrimRA;
+          }else if(detalhes&&detalhes.length===1&&valNum===0&&(parseFloat(detalhes[0].valor)||0)>0){
+            // Mesmo caso de pacote do loader principal (carregarAgendamentosSupa).
+            valorComissaoPrimRA=parseFloat(detalhes[0].valor)||0;
           }else{
             var comissionarProdutosCfgRA=!!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos);
             if(!comissionarProdutosCfgRA&&typeof atendimentoConcluido==='function'&&atendimentoConcluido({status:a.status})){
@@ -18297,6 +18314,10 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
     hora=ctx.pacote.hora;
     servico=ctx.pacote.servicoLabel;
     valorFmt='R$ 0,00';
+    // Só pra alimentar valorComissao (Comissões a Pagar/painel do
+    // colaborador) quando Concluído — "valor" da comanda continua R$ 0,00,
+    // não duplica faturamento (o pacote já foi pago antes).
+    servicosDetalhe=ctx.pacote.itens||[];
   }else{
     prof=ctx.blocosServico[0].profissional;
     hora=ctx.blocosServico[0].horario;
@@ -18311,7 +18332,7 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
   // profissional_id também vai junto, quando dá pra resolver — é a fonte
   // preferida do cálculo de comissão daqui pra frente.
   var obj={cliente:ctx.cliente,data:dataISO,hora:hora,profissional:prof,profissional_id:colaboradorIdPorNome(prof),servico:servico,valor:valorFmt,status:'Pendente',sinal:!!ctx.sinalAtivo,sinal_status:ctx.sinalStatus,sinal_valor:ctx.sinalValNum,obs:ctx.obs,salao_id:window.SALAO_ID};
-  if(!ehPacote)obj.servicos_detalhe=servicosDetalhe;
+  if(servicosDetalhe&&servicosDetalhe.length)obj.servicos_detalhe=servicosDetalhe;
   if(ctx.serieId)obj.serie_id=ctx.serieId;
   if(ctx.produtosUsados&&ctx.produtosUsados.length)obj.produtos_usados=ctx.produtosUsados;
   return _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
@@ -18336,12 +18357,17 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
       serie_id:ctx.serieId||null
     };
     var primeiroProf=null;
-    if(!ehPacote&&servicosDetalhe&&servicosDetalhe.length){
+    if(servicosDetalhe&&servicosDetalhe.length){
       servicosDetalhe.forEach(function(sd){
         var pAg=agProfParaAgenda(sd.profissional);
         if(!pAg)return;
         if(!primeiroProf)primeiroProf=pAg;
-        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,{prof:pAg,profissionalId:sd.profissional_id||null,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'});
+        var extra={prof:pAg,profissionalId:sd.profissional_id||null,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'};
+        // Só pacote precisa de valorComissao direto aqui — serviço normal
+        // já é recalculado certo no próximo load (carregarAgendamentosSupa),
+        // não mudo esse comportamento existente.
+        if(ehPacote)extra.valorComissao=sd.valor;
+        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,extra);
       });
     }else{
       primeiroProf=agProfParaAgenda(prof);
@@ -18433,17 +18459,26 @@ function afSalvarAtendimento(){
       if(vp.total-vp.usado<jaUsados){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
     }
     var nomesServ=[];
+    // Um item de servicos_detalhe por serviço/profissional redimido — mesmo
+    // formato do atendimento de serviço normal multi-profissional. valor é
+    // o preço avulso do catálogo (regra atual, igual a lancarComissaoPacote),
+    // NUNCA o valor do pacote — isso é só pra alimentar valorComissao/
+    // calcularComissaoPeriodo (Comissões a Pagar + painel do colaborador),
+    // não entra no "valor" da comanda (fica R$ 0,00, sem duplicar faturamento).
+    var servicosDetalhePacote=[];
     itensPacote.forEach(function(item){
       var pac=pacotes[item.idx];
       pac.usado=(pac.usado||0)+1;
       pacotes[item.idx]=pac;
       descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
       lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
-      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
+      var nomeServ=pac.servico||pac.nome;
+      nomesServ.push(nomeServ+' ('+item.prof+')');
+      servicosDetalhePacote.push({nome:nomeServ,valor:precoCatalogoServico(nomeServ),profissional:item.prof,profissional_id:colaboradorIdPorNome(item.prof),hora:'09:00',duracao_min:0});
     });
     syncPacotesLegacyStorage();
     var pacPrincipal=pacotes[idxPrincipal];
-    var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00'}});
+    var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00',itens:servicosDetalhePacote}});
     // Trava contra duplo-clique: sem isso, 2 cliques em SALVAR antes do 1º
     // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
     // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
