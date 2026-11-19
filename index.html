@@ -6354,6 +6354,28 @@ function precoCatalogoServico(nomeServico){
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
   return srv?parseMoedaBR(srv.preco):0;
 }
+// Base da comissão de uma sessão de pacote pra Comissões a Pagar/painel do
+// colaborador (regra B): rateia o valor PAGO pelo pacote (grupo_id) entre
+// as sessões, proporcional ao preço avulso de cada serviço — a soma de
+// todas as sessões do grupo bate exatamente com o valor pago.
+//   peso_i = preço avulso do serviço i × quantidade_total do serviço i
+//   totalTeorico = soma dos pesos de todos os serviços do grupo
+//   valor da sessão do serviço i = valor_pago × preço_avulso_i / totalTeorico
+// Pacote sem valor_pago (ou sem preço avulso cadastrado pra nenhum serviço
+// do grupo) não tem como ratear — devolve valor 0 e avisoSemPreco:true.
+function baseComissaoSessaoPacote(pacoteClienteId){
+  var linha=(typeof pacotesClientes!=='undefined'?pacotesClientes:[]).find(function(p){return p.id===pacoteClienteId;});
+  if(!linha)return{valor:0,avisoSemPreco:false};
+  var grupo=linha.grupo_id;
+  var doGrupo=grupo
+    ?(typeof pacotesClientes!=='undefined'?pacotesClientes:[]).filter(function(p){return p.grupo_id===grupo;})
+    :[linha];
+  var valorPago=parseFloat(linha.valor_pago)||0;
+  var totalTeorico=doGrupo.reduce(function(s,p){return s+precoCatalogoServico(p.nome_servico)*(parseInt(p.quantidade_total,10)||1);},0);
+  if(valorPago<=0||totalTeorico<=0)return{valor:0,avisoSemPreco:true};
+  var precoAvulsoLinha=precoCatalogoServico(linha.nome_servico);
+  return{valor:valorPago*precoAvulsoLinha/totalTeorico,avisoSemPreco:false};
+}
 function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   // Busca o valor do serviço no catálogo
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
@@ -18461,11 +18483,16 @@ function afSalvarAtendimento(){
     var nomesServ=[];
     // Um item de servicos_detalhe por serviço/profissional redimido — mesmo
     // formato do atendimento de serviço normal multi-profissional. valor é
-    // o preço avulso do catálogo (regra atual, igual a lancarComissaoPacote),
-    // NUNCA o valor do pacote — isso é só pra alimentar valorComissao/
-    // calcularComissaoPeriodo (Comissões a Pagar + painel do colaborador),
-    // não entra no "valor" da comanda (fica R$ 0,00, sem duplicar faturamento).
+    // o rateio do valor PAGO pelo pacote entre as sessões, proporcional ao
+    // preço avulso de cada serviço (baseComissaoSessaoPacote — regra B),
+    // NUNCA o preço avulso cru nem o valor do pacote inteiro — isso é só
+    // pra alimentar valorComissao/calcularComissaoPeriodo (Comissões a
+    // Pagar + painel do colaborador), não entra no "valor" da comanda
+    // (fica R$ 0,00, sem duplicar faturamento). lancarComissaoPacote
+    // (Remunerações, tela escondida) continua com a base antiga de
+    // propósito — fora do escopo deste pedido.
     var servicosDetalhePacote=[];
+    var avisoPacoteSemPreco=false;
     itensPacote.forEach(function(item){
       var pac=pacotes[item.idx];
       pac.usado=(pac.usado||0)+1;
@@ -18474,8 +18501,13 @@ function afSalvarAtendimento(){
       lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
       var nomeServ=pac.servico||pac.nome;
       nomesServ.push(nomeServ+' ('+item.prof+')');
-      servicosDetalhePacote.push({nome:nomeServ,valor:precoCatalogoServico(nomeServ),profissional:item.prof,profissional_id:colaboradorIdPorNome(item.prof),hora:'09:00',duracao_min:0});
+      var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId);
+      if(baseComissao.avisoSemPreco)avisoPacoteSemPreco=true;
+      servicosDetalhePacote.push({nome:nomeServ,valor:baseComissao.valor,profissional:item.prof,profissional_id:colaboradorIdPorNome(item.prof),hora:'09:00',duracao_min:0});
     });
+    if(avisoPacoteSemPreco){
+      showAlert('⚠️ Este pacote não tem valor pago registrado — a comissão dessa sessão ficou R$ 0,00. Confira o valor pago do pacote.');
+    }
     syncPacotesLegacyStorage();
     var pacPrincipal=pacotes[idxPrincipal];
     var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00',itens:servicosDetalhePacote}});
