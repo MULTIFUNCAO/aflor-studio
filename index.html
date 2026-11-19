@@ -2009,7 +2009,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     <div class="page" id="page-pacotes">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div style="font-size:16px;font-weight:800;color:#111">📦 Pacotes</div>
-        <button class="btn btn-primary btn-sm" onclick="openModal('modal-pacote')">
+        <button class="btn btn-primary btn-sm" onclick="abrirModalNovoPacote()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Novo Pacote
         </button>
@@ -3332,7 +3332,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div style="background:#f0fdf4;border-radius:10px;padding:14px;border:1px solid #bbf7d0">
           <div style="font-size:13px;font-weight:800;color:#15803d;margin-bottom:10px">💳 Vender para um cliente agora?</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-            <div class="form-group" style="margin:0"><label>Nome do Cliente</label><input id="pacote-cliente-nome" placeholder="Nome da cliente"/></div>
+            <div class="form-group" style="margin:0;position:relative">
+              <label>Nome do Cliente</label>
+              <input id="pacote-cliente-nome" placeholder="Nome da cliente" autocomplete="off" oninput="pkgSugerirClientePacote(this.value)" onfocus="pkgSugerirClientePacote(this.value)" onblur="pkgOcultarSugestoesClientePacote()"/>
+              <div id="pacote-cliente-nome-sugestoes" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1.5px solid #e5e5e5;border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.12)"></div>
+            </div>
             <div class="form-group" style="margin:0"><label>Telefone</label><input id="pacote-cliente-tel" placeholder="(11) 99999-9999"/></div>
           </div>
           <div class="form-group" style="margin-bottom:10px"><label>Forma de Pagamento</label>
@@ -14515,6 +14519,64 @@ function capitalizarNomeCliente(s){
     return w?w[0].toUpperCase()+w.slice(1):w;
   }).join(' ');
 }
+// ---- Autocomplete de cliente ao digitar o nome (Novo Pacote > Vender
+// para um cliente agora?) — só sugestão em lista; se a dona não tocar em
+// nenhuma, o fluxo de sempre (escolherClienteParaPacote, abaixo) decide.
+var _pkgSugestoesClienteAtual=[];
+var _pkgClienteEscolhidoId=null;
+var _pkgClienteEscolhidoNome=null;
+function pkgSugerirClientePacote(valorDigitado){
+  // Se a dona editar o nome depois de escolher uma sugestão, invalida a
+  // escolha — senão addPacote() ligaria o pacote a uma cliente errada.
+  if(_pkgClienteEscolhidoId!=null&&valorDigitado!==_pkgClienteEscolhidoNome){
+    _pkgClienteEscolhidoId=null;_pkgClienteEscolhidoNome=null;
+  }
+  var box=document.getElementById('pacote-cliente-nome-sugestoes');
+  if(!box)return;
+  var termo=normalizarNomeCliente(valorDigitado||'');
+  if(termo.length<2){box.style.display='none';box.innerHTML='';_pkgSugestoesClienteAtual=[];return;}
+  var listaClientesAtual=(typeof clientes!=='undefined'?clientes:[])||[];
+  _pkgSugestoesClienteAtual=listaClientesAtual.filter(function(c){
+    var palavras=normalizarNomeCliente(c.nome).split(' ');
+    return palavras.some(function(p){return p.indexOf(termo)===0;});
+  }).slice(0,6);
+  if(!_pkgSugestoesClienteAtual.length){box.style.display='none';box.innerHTML='';return;}
+  box.innerHTML=_pkgSugestoesClienteAtual.map(function(c,i){
+    return '<div onclick="pkgEscolherSugestaoClientePacote('+i+')" style="padding:11px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0">'
+      +'<div style="font-weight:700;color:#111">👤 '+escHtml(c.nome)+'</div>'
+      +(c.tel?'<div style="font-size:11px;color:#888;margin-top:2px">'+escHtml(c.tel)+'</div>':'')
+      +'</div>';
+  }).join('');
+  box.style.display='block';
+}
+function pkgEscolherSugestaoClientePacote(idx){
+  var c=_pkgSugestoesClienteAtual[idx];
+  if(!c)return;
+  var inpNome=document.getElementById('pacote-cliente-nome');
+  var inpTel=document.getElementById('pacote-cliente-tel');
+  if(inpNome)inpNome.value=c.nome;
+  if(inpTel)inpTel.value=c.tel||'';
+  _pkgClienteEscolhidoId=c.id!=null?c.id:null;
+  _pkgClienteEscolhidoNome=c.nome;
+  pkgOcultarSugestoesClientePacote();
+}
+// Delay pra dar tempo do clique/toque na sugestão rodar antes de esconder
+// a lista (blur dispara antes do click/touch terminar).
+function pkgOcultarSugestoesClientePacote(){
+  setTimeout(function(){
+    var box=document.getElementById('pacote-cliente-nome-sugestoes');
+    if(box){box.style.display='none';box.innerHTML='';}
+  },200);
+}
+// Reseta a sugestão/escolha ao abrir o modal de novo pacote — sem isso,
+// uma escolha de uma venda anterior (cliente_id guardado) poderia colar
+// numa venda seguinte, mesmo com o campo de nome vazio/outro.
+function abrirModalNovoPacote(){
+  _pkgClienteEscolhidoId=null;_pkgClienteEscolhidoNome=null;_pkgSugestoesClienteAtual=[];
+  var box=document.getElementById('pacote-cliente-nome-sugestoes');
+  if(box){box.style.display='none';box.innerHTML='';}
+  openModal('modal-pacote');
+}
 // Só decide o que fazer — não grava nada no banco. Resolve com:
 //   {tipo:'existente',cliente:<obj de clientes>}  — nome bateu exato (ignorando
 //     maiúsculas/espaços) ou foi o que a dona escolheu no modal de parecidas.
@@ -15519,7 +15581,14 @@ async function addPacote(){
   var clienteTelDigitado=(document.getElementById('pacote-cliente-tel')?.value||'').trim();
   var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
   var escolhaCliente=null;
-  if(clienteNome){
+  // Tocou numa sugestão do autocomplete e não editou o nome depois — usa
+  // essa cliente direto, sem buscar parecidas nem perguntar nada.
+  var clienteDaSugestao=(_pkgClienteEscolhidoId!=null&&clienteNome===_pkgClienteEscolhidoNome)
+    ?(typeof clientes!=='undefined'?clientes:[]).find(function(c){return c.id===_pkgClienteEscolhidoId;})
+    :null;
+  if(clienteDaSugestao){
+    escolhaCliente={tipo:'existente',cliente:clienteDaSugestao};
+  }else if(clienteNome){
     escolhaCliente=await escolherClienteParaPacote(clienteNome,clienteTelDigitado);
     if(!escolhaCliente){
       // Dona fechou o modal de escolha sem decidir — não salva nada.
@@ -15527,6 +15596,7 @@ async function addPacote(){
       return;
     }
   }
+  _pkgClienteEscolhidoId=null;_pkgClienteEscolhidoNome=null;
 
   // Adicionar como template
   var novoItem={
