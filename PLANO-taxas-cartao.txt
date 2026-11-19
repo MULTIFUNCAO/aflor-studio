@@ -1,0 +1,133 @@
+Taxas de Cartão — plano, arquivos e trechos (branch feat/taxas-cartao,
+nada commitado ainda). Todas as mudanças estão em index.html.
+
+ARQUIVOS NOVOS (texto, sem SQL rodado, sem commit)
+---------------------------------------------------
+- SQL-taxas-cartao.sql — comandos aditivos (create table if not exists /
+  add column if not exists), sem delete/update/drop. Mostrado pra você
+  revisar antes de rodar.
+- PLANO-taxas-cartao.txt — este arquivo.
+
+RESUMO DA REGRA
+----------------
+- "valor" de cada serviço (servicos_detalhe[i].valor) NUNCA é sobrescrito
+  — continua sendo sempre o preço cobrado de verdade, igual a hoje.
+- A base de comissão com a taxa já descontada vai num campo NOVO e
+  SEPARADO, "comissao_valor", só nos itens de servicos_detalhe de um
+  pagamento com cartão + taxa configurada + profissional com regra
+  'liquido'. Sem isso, o campo nem é criado.
+- Os loaders que calculam a comissão (Comissões a Pagar, painel do
+  colaborador) passam a preferir "comissao_valor" quando existe; senão
+  caem em "valor", exatamente como sempre fizeram.
+
+TRECHOS ALTERADOS EM index.html
+---------------------------------
+
+1) Configurações > novo item "Taxas de Cartão" (~linha 2999)
+   Novo <div class="config-item"> que abre o modal novo.
+
+2) Novo modal "Taxas de Cartão" (~linha 3924, logo após modal-cfg-comissoes)
+   3 campos: Débito (%), Crédito à vista (%), Crédito parcelado (%) —
+   todos vazios por padrão (placeholder, sem valor inicial).
+
+3) Novas funções de config do salão (~linha 10309, antes de
+   carregarComissaoConfigSalaoSupa):
+   - var taxasCartaoConfig=null (global, null até carregar)
+   - carregarTaxasCartaoSupa() — select em config_taxas_cartao
+   - preencherFormTaxasCartao() — preenche os 3 campos do modal
+   - salvarTaxasCartaoSupa() — upsert onConflict:'salao_id'
+   - valorBaseComissao(sd) — helper: usa sd.comissao_valor se existir
+     (number), senão sd.valor. Usado pelos loaders (itens 8 e 9).
+   - calcularTaxaCartao(forma,valor) — devolve {pct,taxa,liquido}.
+     Sem taxasCartaoConfig carregado ou sem % pra essa forma -> pct=0,
+     taxa=0, liquido=valor (sem mudança nenhuma).
+
+4) Campo por profissional "Comissão sobre" (Líquido/Bruto)
+   - HTML: novo <select id="edit-pagto-comissao-base"> no modal Editar
+     Colaborador (~linha 17451), logo após o campo de salário fixo.
+   - salvarComissaoConfigColab() (~linha 10452): inclui comissao_base no
+     upsert de comissao_colaborador_config.
+   - preencherFormPagamentoColab() (~linha 10473): lê cfg.comissao_base,
+     com fallback 'liquido' (nunca herda de comissaoConfigSalao/
+     CONFIG_COMISSAO_PADRAO, que nunca têm esse campo — é só por
+     profissional, sem padrão do salão, como combinado).
+
+5) Novas opções "Cartão de Crédito Parcelado" nos 3 seletores de forma de
+   pagamento do Registrar Pagamento (~linhas 4791, 4803, 4815):
+   pg-forma-pagamento, pg-split-forma1, pg-split-forma2.
+
+6) formaPagamentoParaCaixa() (~linha 21023): mapeia a nova forma pra
+   'cartao' (mesma categoria visual dos outros cartões).
+
+7) confirmarFechamentoPagamento() (~linha 12842) — o núcleo da mudança:
+   a) Logo após montar servicosDetalheFinal: calcula taxaTotal (soma da
+      taxa de cada parte de partesPagamento via calcularTaxaCartao) e
+      valorLiquido = ctx.total - taxaTotal. Resolve a regra do
+      profissional (comissaoBasePagto, via configComissaoDoColab).
+      Se taxaTotal>0 E a regra é 'liquido': cria (não sobrescreve)
+      sd.comissao_valor em cada item de servicosDetalheFinal, rateado
+      proporcionalmente ao peso de cada "valor" original — "valor" de
+      cada item continua intacto.
+   b) Dentro de finalizarLocal(), no bloco "Lançar saldo restante": se
+      taxaTotal>0 e o caixa está aberto, lança 1 saída "Taxa de Cartão"
+      via inserirMovimentoCaixa (mesmo padrão da receita do saldo).
+   c) No bloco de comissão (lancarComissaoServico): se taxaTotal>0 e a
+      regra é 'liquido', subtrai taxaTotal (em R$, direto) da
+      baseComissao antes de lançar em Remunerações.
+   d) No bloco de Fluxo com caixa fechado: se taxaTotal>0, lança a mesma
+      despesa "Taxa de Cartão" direto em fluxoLancamentos/Supabase (mesmo
+      caminho que a receita já usa quando o caixa está fechado).
+   e) No PATCH final pro Supabase: inclui valor_bruto/taxa_cartao_valor/
+      valor_liquido SÓ quando taxaTotal>0 — senão esses 3 campos nem são
+      enviados (ficam null no banco).
+
+8) carregarAgendamentosSupa() (~linha 6190): a cadeia que decide
+   valorComissaoPrimario agora:
+   - combo (>1 serviço): usa valorBaseComissao(detalhes[0]) em vez de só
+     detalhes[0].valor — prefere comissao_valor quando existe.
+   - pacote (valor=0, já existia): mesma troca pra valorBaseComissao.
+   - serviço único normal: ANTES de subtrair produtos cobrados, se
+     detalhes[0].comissao_valor existir (number), usa ele como ponto de
+     partida em vez de valNum (o valor cheio). A subtração de produtos
+     cobrados continua rodando normalmente em cima disso.
+   Item secundário de combo (~linha 6273): valorComissao agora usa
+   valorBaseComissao(detalheItem) em vez de só detalheItem.valor.
+
+9) Mesmo conjunto de mudanças, duplicado no loader do dia dentro de
+   renderAgenda() (~linhas 14406 e 14439) — é o mesmo padrão, só que essa
+   cópia já existia antes de eu mexer em comissão de pacote.
+
+10) carregarDadosDoSalao() (~linha 20358): chama carregarTaxasCartaoSupa()
+    e inclui no Promise.all, mesmo motivo do comissaoConfigColab (evitar
+    corrida com um pagamento feito logo no carregamento da página).
+
+O QUE ACONTECE COM TAXA VAZIA (ou não configurada)
+----------------------------------------------------
+- calcularTaxaCartao() devolve pct=0, taxa=0, liquido=valor cheio.
+- taxaTotal=0 em confirmarFechamentoPagamento -> nenhum sd.comissao_valor
+  é criado, nenhuma despesa "Taxa de Cartão" é lançada (nem caixa aberto
+  nem fechado), baseComissao não muda, e valor_bruto/taxa_cartao_valor/
+  valor_liquido nem são enviados no PATCH (ficam null).
+- Nos loaders, sem comissao_valor, valorBaseComissao(sd) cai direto em
+  sd.valor — exatamente a conta de hoje, sem nenhuma mudança.
+- Ou seja: com taxa vazia/0, o comportamento é idêntico ao de antes desta
+  mudança, em caixa, DRE, comissão e tudo mais.
+
+ESCOPO (o que NÃO muda)
+-------------------------
+- Só o fluxo "Registrar Pagamento" (confirmarFechamentoPagamento). Venda
+  de pacote, venda de produto avulso e o SINAL (se pago com cartão antes
+  desta tela) não entram nessa conta — a taxa só é calculada sobre o
+  saldo pago agora.
+- Pagamentos já registrados (antigos) e comissões já fechadas/pagas não
+  são tocados — comissao_valor só é gravado em servicos_detalhe de
+  pagamentos NOVOS; parcela de comissão já fechada lê valor congelado no
+  banco, nunca recalcula.
+
+PENDENTE PRA FUNCIONAR DE VERDADE
+------------------------------------
+Rodar SQL-taxas-cartao.sql no Supabase (3 colunas/tabela novas, tudo
+aditivo). Sem isso, as chamadas a config_taxas_cartao/comissao_base/
+valor_bruto só vão falhar silenciosamente ou não gravar nada — o app não
+quebra, mas as taxas não vão ter efeito nenhum até a tabela/colunas
+existirem.

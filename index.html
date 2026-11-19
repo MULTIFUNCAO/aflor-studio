@@ -2996,6 +2996,18 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div class="config-arrow">›</div>
         </div>
 
+        <!-- Taxas de Cartão -->
+        <div class="config-item" onclick="preencherFormTaxasCartao();openModal('modal-cfg-taxas-cartao')">
+          <div class="config-icon" style="background:#fef3c7">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div class="config-text">
+            <div class="config-title">Taxas de Cartão</div>
+            <div class="config-desc">Percentual de taxa de débito, crédito à vista e crédito parcelado — entra como custo no Fluxo de Caixa e no DRE</div>
+          </div>
+          <div class="config-arrow">›</div>
+        </div>
+
         <!-- Indisponibilidades de Horários -->
         <div class="config-item" onclick="openModal('modal-cfg-horarios')">
           <div class="config-icon" style="background:#fee2e2">
@@ -3909,6 +3921,32 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<!-- MODAL TAXAS DE CARTÃO -->
+<div class="modal-overlay" id="modal-cfg-taxas-cartao">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Taxas de Cartão</span>
+      <button class="modal-close" onclick="closeModal('modal-cfg-taxas-cartao')">✕</button>
+    </div>
+    <div class="form-card" style="padding:16px">
+      <div style="font-size:11px;color:#888;margin-bottom:12px">Deixe em branco a forma que não tiver taxa — Pix e Dinheiro não têm taxa (sempre 0%). A taxa entra como despesa "Taxa de Cartão" no Fluxo de Caixa e no DRE a cada pagamento com essa forma, e reduz a base da comissão do profissional que usar comissão sobre o valor líquido (configurável no cadastro de cada profissional).</div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label>Débito (%)</label>
+        <input type="number" id="cfgtaxas-debito" placeholder="Ex: 1,5" min="0" max="100" step="0.01"/>
+      </div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label>Crédito à vista (%)</label>
+        <input type="number" id="cfgtaxas-credito-vista" placeholder="Ex: 3,5" min="0" max="100" step="0.01"/>
+      </div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label>Crédito parcelado (%) — opcional</label>
+        <input type="number" id="cfgtaxas-credito-parcelado" placeholder="Ex: 5,5" min="0" max="100" step="0.01"/>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="salvarTaxasCartaoSupa()">Salvar taxas</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL HORÁRIOS -->
 <div class="modal-overlay" id="modal-cfg-horarios">
   <div class="modal" style="width:560px">
@@ -4753,6 +4791,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <option value="Dinheiro">💵 Dinheiro</option>
         <option value="Link de Pagamento">🔗 Link de Pagamento</option>
         <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+        <option value="Cartão de Crédito Parcelado">💳 Cartão de Crédito Parcelado</option>
         <option value="Cartão de Débito">💳 Cartão de Débito</option>
       </select>
       <div id="pg-split-area" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd">
@@ -4764,6 +4803,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option value="Dinheiro">💵 Dinheiro</option>
             <option value="Link de Pagamento">🔗 Link de Pagamento</option>
             <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+            <option value="Cartão de Crédito Parcelado">💳 Cartão de Crédito Parcelado</option>
             <option value="Cartão de Débito">💳 Cartão de Débito</option>
           </select>
         </div>
@@ -4775,6 +4815,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <option value="Dinheiro">💵 Dinheiro</option>
             <option value="Link de Pagamento">🔗 Link de Pagamento</option>
             <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+            <option value="Cartão de Crédito Parcelado">💳 Cartão de Crédito Parcelado</option>
             <option value="Cartão de Débito">💳 Cartão de Débito</option>
           </select>
         </div>
@@ -6148,16 +6189,22 @@ async function carregarAgendamentosSupa(){
       // esse campo quando ele existe, sem mexer no valor/valor_num "oficial" da comanda.
       var valorComissaoPrimario=valNum;
       if(detalhes&&detalhes.length>1){
-        var valorDetPrimario=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
+        var valorDetPrimario=valorBaseComissao(detalhes[0]);
         if(valorDetPrimario>0)valorComissaoPrimario=valorDetPrimario;
-      }else if(detalhes&&detalhes.length===1&&valNum===0&&(parseFloat(detalhes[0].valor)||0)>0){
+      }else if(detalhes&&detalhes.length===1&&valNum===0&&valorBaseComissao(detalhes[0])>0){
         // Atendimento de pacote: "valor" da comanda fica R$ 0,00 de propósito
-        // (o pacote já foi pago antes) — usa o preço avulso do serviço
-        // gravado em servicos_detalhe[0].valor como base da comissão.
-        // Serviço normal de 1 item nunca cai aqui porque o "valor" dele
-        // nunca é R$ 0,00.
-        valorComissaoPrimario=parseFloat(detalhes[0].valor)||0;
+        // (o pacote já foi pago antes) — usa a base de comissão gravada em
+        // servicos_detalhe[0] (comissao_valor ou valor — valorBaseComissao
+        // decide). Serviço normal de 1 item nunca cai aqui porque o "valor"
+        // dele nunca é R$ 0,00.
+        valorComissaoPrimario=valorBaseComissao(detalhes[0]);
       }else{
+        // Serviço único pago com taxa de cartão (regra 'líquido'): parte da
+        // base já com a taxa descontada (comissao_valor), não do valor
+        // cheio — "valor"/valNum nunca muda, só a base de comissão.
+        if(detalhes&&detalhes[0]&&typeof detalhes[0].comissao_valor==='number'){
+          valorComissaoPrimario=detalhes[0].comissao_valor;
+        }
         // valor_num de um atendimento de serviço único já inclui os produtos
         // cobrados do cliente (ver abrirConfirmarPagamento) — tira isso da
         // base de comissão, a menos que o salão opte por comissionar produtos.
@@ -6223,7 +6270,7 @@ async function carregarAgendamentosSupa(){
           // principal — busca o profissional_id DESSE item específico,
           // não herda o do atendimento inteiro.
           var detalheItem=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:parseFloat(detalheItem&&detalheItem.valor)||0});
+          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:valorBaseComissao(detalheItem)});
         });
       }
     });
@@ -10268,6 +10315,65 @@ function fmtDataBR(d){
 function fmtDataBRCurta(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
 function dataIsoDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
+// ---- Taxas de cartão (Configurações) ----
+// null = ainda não carregou OU salão nunca configurou nada — nos dois
+// casos calcularTaxaCartao() trata como "sem taxa" (0%), nunca trava o
+// pagamento nem muda o comportamento de hoje.
+var taxasCartaoConfig=null;
+async function carregarTaxasCartaoSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('config_taxas_cartao').select('*').eq('salao_id',window.SALAO_ID).maybeSingle();
+    if(r.error){console.log('err carregar config_taxas_cartao',r.error);return;}
+    taxasCartaoConfig=r.data||null;
+  }catch(e){console.log('err carregar config_taxas_cartao',e);}
+}
+function preencherFormTaxasCartao(){
+  var cfg=taxasCartaoConfig||{};
+  var elD=document.getElementById('cfgtaxas-debito');if(elD)elD.value=cfg.debito_pct!=null?cfg.debito_pct:'';
+  var elCV=document.getElementById('cfgtaxas-credito-vista');if(elCV)elCV.value=cfg.credito_vista_pct!=null?cfg.credito_vista_pct:'';
+  var elCP=document.getElementById('cfgtaxas-credito-parcelado');if(elCP)elCP.value=cfg.credito_parcelado_pct!=null?cfg.credito_parcelado_pct:'';
+}
+async function salvarTaxasCartaoSupa(){
+  if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
+  var lerPct=function(id){var v=document.getElementById(id)?.value;return v!==''&&v!=null?parseFloat(v):null;};
+  var novo={
+    salao_id:window.SALAO_ID,
+    debito_pct:lerPct('cfgtaxas-debito'),
+    credito_vista_pct:lerPct('cfgtaxas-credito-vista'),
+    credito_parcelado_pct:lerPct('cfgtaxas-credito-parcelado')
+  };
+  try{
+    var r=await supa.from('config_taxas_cartao').upsert(novo,{onConflict:'salao_id'});
+    if(r.error){showAlert('Erro ao salvar: '+r.error.message);return;}
+    taxasCartaoConfig=novo;
+    closeModal('modal-cfg-taxas-cartao');
+    showAlert('✅ Taxas de cartão salvas!');
+  }catch(e){showAlert('Erro ao salvar: '+(e&&e.message?e.message:e));}
+}
+// Resolve a taxa (%) e o valor líquido pra uma forma de pagamento e um
+// valor. Forma sem taxa configurada (ou config nunca carregada) -> 0%,
+// mesmo comportamento de hoje (nada muda).
+function calcularTaxaCartao(forma,valor){
+  valor=parseFloat(valor)||0;
+  var cfg=taxasCartaoConfig;
+  var pct=0;
+  if(cfg){
+    if(forma==='Cartão de Débito')pct=parseFloat(cfg.debito_pct)||0;
+    else if(forma==='Cartão de Crédito')pct=parseFloat(cfg.credito_vista_pct)||0;
+    else if(forma==='Cartão de Crédito Parcelado')pct=parseFloat(cfg.credito_parcelado_pct)||0;
+  }
+  var taxa=valor*(pct/100);
+  return{pct:pct,taxa:taxa,liquido:valor-taxa};
+}
+// Base de comissão de um item de servicos_detalhe: usa comissao_valor
+// quando existe (taxa de cartão já descontada, gravado em
+// confirmarFechamentoPagamento), senão cai no "valor" normal (preço
+// cobrado — comportamento de sempre, sem taxa ou regra 'bruto').
+function valorBaseComissao(sd){
+  if(sd&&typeof sd.comissao_valor==='number')return sd.comissao_valor;
+  return parseFloat(sd&&sd.valor)||0;
+}
 async function carregarComissaoConfigSalaoSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
@@ -10360,7 +10466,8 @@ async function salvarComissaoConfigColab(){
     mensal_dia_util_parcela1:parseInt(document.getElementById('edit-pagto-mensal-diautil1')?.value,10)||5,
     mensal_dia_fixo_parcela2:parseInt(document.getElementById('edit-pagto-mensal-diafixo2')?.value,10)||20,
     sabado_conta_dia_util:!!document.getElementById('edit-pagto-sabado')?.checked,
-    salario_fixo:(function(){var v=document.getElementById('edit-pagto-salario')?.value;return v?parseFloat(v):null;})()
+    salario_fixo:(function(){var v=document.getElementById('edit-pagto-salario')?.value;return v?parseFloat(v):null;})(),
+    comissao_base:document.getElementById('edit-pagto-comissao-base')?.value||'liquido'
   };
   try{
     var r=await supa.from('comissao_colaborador_config').upsert(novo,{onConflict:'colaborador_id'});
@@ -10380,6 +10487,11 @@ function preencherFormPagamentoColab(colab){
   var selAjuste=document.getElementById('edit-pagto-quinz-ajuste');if(selAjuste)selAjuste.value=cfg.quinz_ajuste_fim_semana;
   var chkSab=document.getElementById('edit-pagto-sabado');if(chkSab)chkSab.checked=!!cfg.sabado_conta_dia_util;
   var elSal=document.getElementById('edit-pagto-salario');if(elSal)elSal.value=cfg.salario_fixo||'';
+  // comissao_base só existe de verdade na linha PRÓPRIA do colaborador
+  // (comissao_colaborador_config) — nunca tem padrão do salão pra isso,
+  // de propósito. Sem config própria, cfg aqui vem de comissaoConfigSalao/
+  // CONFIG_COMISSAO_PADRAO, que nunca têm esse campo -> sempre 'liquido'.
+  var selBase=document.getElementById('edit-pagto-comissao-base');if(selBase)selBase.value=cfg.comissao_base||'liquido';
   if(typeof toggleCamposPagamentoModelo==='function')toggleCamposPagamentoModelo();
 }
 function toggleCamposPagamentoModelo(){
@@ -12788,6 +12900,33 @@ function confirmarFechamentoPagamento(){
     ?ctx.dados.servicos_detalhe
     :popupServicosDoAtendimento(ctx.dados);
 
+  // Taxa de cartão (Configurações > Taxas de Cartão) — só sobre o SALDO
+  // pago agora (partesPagamento); sinal já registrado antes não entra
+  // nessa conta. Taxa vazia/0 pra todas as partes -> taxaTotal=0, nada
+  // muda (mesmo comportamento de sempre).
+  var taxaTotal=partesPagamento.reduce(function(s,p){return s+calcularTaxaCartao(p.forma,p.valor).taxa;},0);
+  var valorLiquido=Math.max(0,ctx.total-taxaTotal);
+  // Regra do profissional: líquido (padrão) ou bruto — só por colaborador,
+  // sem padrão do salão pra isso (CONFIG_COMISSAO_PADRAO nunca tem
+  // comissao_base, então configComissaoDoColab cai em 'liquido' sozinho
+  // quando o profissional nunca configurou nada).
+  var profIdPagto=ctx.dados.profissionalId||(typeof colaboradorIdPorNome==='function'?colaboradorIdPorNome(ctx.dados.prof):null);
+  var comissaoBasePagto=(typeof configComissaoDoColab==='function'&&profIdPagto)?(configComissaoDoColab(profIdPagto).comissao_base||'liquido'):'liquido';
+  // "valor" de cada item continua sendo o preço cobrado de verdade (nunca
+  // sobrescrito) — a base de comissão com a taxa já descontada vai num
+  // campo separado, "comissao_valor", que valorBaseComissao() (loaders)
+  // prefere quando existe. Sem taxa ou regra 'bruto', esse campo nem é
+  // criado, e tudo lê "valor" exatamente como hoje.
+  if(taxaTotal>0&&comissaoBasePagto==='liquido'&&servicosDetalheFinal&&servicosDetalheFinal.length){
+    var _somaDetalheBruto=servicosDetalheFinal.reduce(function(s,sd){return s+(parseFloat(sd.valor)||0);},0);
+    if(_somaDetalheBruto>0){
+      servicosDetalheFinal=servicosDetalheFinal.map(function(sd){
+        var v=parseFloat(sd.valor)||0;
+        return Object.assign({},sd,{comissao_valor:Math.max(0,v-taxaTotal*(v/_somaDetalheBruto))});
+      });
+    }
+  }
+
   var agoraPg=new Date();
   var pagoEmIso=agoraPg.toISOString();
   var quemPagou=(typeof colaboradorLogado!=='undefined'&&colaboradorLogado)||window.SALAO_RESPONSAVEL||'Admin';
@@ -12841,6 +12980,12 @@ function confirmarFechamentoPagamento(){
       partesPagamento.forEach(function(parte){
         lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,parte.valor,parte.forma,ctx.supaId);
       });
+      // Taxa de cartão — caixa aberto: lança igual à receita acima, via
+      // inserirMovimentoCaixa (que já ignora sozinha se o caixa não
+      // estiver aberto). Caixa fechado: ver bloco do Fluxo mais abaixo.
+      if(taxaTotal>0&&caixaState.aberto){
+        inserirMovimentoCaixa({tipo:'saida',categoria:'Taxa de Cartão',descricao:'Taxa de cartão — '+svcNome+' — '+(ctx.dados.cliente||''),valor:taxaTotal,forma:formaPagamentoParaCaixa(forma),agendamentoId:ctx.supaId||null});
+      }
     }
     // Lançar comissão do colaborador
     // ctx.total já tem o desconto subtraído (é o valor líquido).
@@ -12856,6 +13001,12 @@ function confirmarFechamentoPagamento(){
       // comissionar produtos também (Configurações > Comissões).
       if(!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos)){
         baseComissao-=somaProdutosUsados(ctx.dados);
+      }
+      // Taxa de cartão: comissiona sobre o líquido por padrão (regra por
+      // profissional, configurável no cadastro dele) — subtrai o valor
+      // da taxa já calculado acima. Taxa 0/vazia ou regra 'bruto' -> nada muda.
+      if(taxaTotal>0&&comissaoBasePagto==='liquido'){
+        baseComissao-=taxaTotal;
       }
       baseComissao=Math.max(0,baseComissao);
       lancarComissaoServico(ctx.dados.prof,svcNomeComissao,ctx.dados.cliente,baseComissao);
@@ -12885,6 +13036,13 @@ function confirmarFechamentoPagamento(){
       }else{
         var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado',agendamento_id:ctx.supaId||null};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
       }
+      // Taxa de cartão — caixa fechado: mesmo caminho direto pro Fluxo
+      // que a receita acima já usa (sem isso, com o caixa fechado a
+      // despesa nunca seria registrada em lugar nenhum).
+      if(taxaTotal>0){
+        var _lancTaxa={tipo:'despesa',data:_dataFmt,desc:'Taxa de cartão — '+_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Taxa de Cartão',forma:forma||'',val:taxaTotal,status:'confirmado',agendamento_id:ctx.supaId||null};
+        fluxoLancamentos.push(_lancTaxa);fluxoInserirSupa(_lancTaxa);
+      }
     }
     closeModal('modal-confirmar-pagamento');
     renderAgenda();
@@ -12911,10 +13069,15 @@ function confirmarFechamentoPagamento(){
   finalizarLocal();
   // Tentar salvar no Supabase em paralelo (silencioso)
   if(ctx.supaId){
+    // valor_bruto/taxa_cartao_valor/valor_liquido só vão no PATCH quando
+    // teve taxa de verdade (taxaTotal>0) — sem isso, ficam null no banco,
+    // igual a todo pagamento sem cartão ou sem taxa configurada.
+    var patchBody=Object.assign(
+      {status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_detalhe:servicosDetalheFinal,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null,pago_em:pagoEmIso,forma_pagamento_final:forma,pago_por:quemPagou},
+      taxaTotal>0?{valor_bruto:ctx.total,taxa_cartao_valor:taxaTotal,valor_liquido:valorLiquido}:{}
+    );
     _authHeaders({'Content-Type':'application/json','Prefer':'return=representation'}).then(function(h){
-      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{method:'PATCH',headers:h,
-        body:JSON.stringify({status:'Concluído',sinal_status:'pago',valor:valorTotalFmt,servicos_detalhe:servicosDetalheFinal,servicos_extras:ctx.dados.servicos_extras||null,desconto_valor:ctx.descontoVal||null,desconto_tipo:ctx.descontoTipo||null,pago_em:pagoEmIso,forma_pagamento_final:forma,pago_por:quemPagou})
-      });
+      return fetch(SUPA_URL+'/rest/v1/agendamentos?id=eq.'+ctx.supaId,{method:'PATCH',headers:h,body:JSON.stringify(patchBody)});
     }).catch(function(e){console.warn('Supabase sync:',e);});
   }
 }
@@ -14242,12 +14405,17 @@ function renderAgenda(){
           // pra comissão não contar o total da comanda em cada card.
           var valorComissaoPrimRA=valNum;
           if(detalhes&&detalhes.length>1){
-            var valorDetPrimRA=parseFloat(detalhes[0]&&detalhes[0].valor)||0;
+            var valorDetPrimRA=valorBaseComissao(detalhes[0]);
             if(valorDetPrimRA>0)valorComissaoPrimRA=valorDetPrimRA;
-          }else if(detalhes&&detalhes.length===1&&valNum===0&&(parseFloat(detalhes[0].valor)||0)>0){
+          }else if(detalhes&&detalhes.length===1&&valNum===0&&valorBaseComissao(detalhes[0])>0){
             // Mesmo caso de pacote do loader principal (carregarAgendamentosSupa).
-            valorComissaoPrimRA=parseFloat(detalhes[0].valor)||0;
+            valorComissaoPrimRA=valorBaseComissao(detalhes[0]);
           }else{
+            // Mesmo caso de taxa de cartão do loader principal — prefere
+            // comissao_valor (taxa já descontada) quando existe.
+            if(detalhes&&detalhes[0]&&typeof detalhes[0].comissao_valor==='number'){
+              valorComissaoPrimRA=detalhes[0].comissao_valor;
+            }
             var comissionarProdutosCfgRA=!!(typeof comissaoConfigSalao!=='undefined'&&comissaoConfigSalao&&comissaoConfigSalao.comissionar_produtos);
             if(!comissionarProdutosCfgRA&&typeof atendimentoConcluido==='function'&&atendimentoConcluido({status:a.status})){
               var somaProdCobradosRA=(produtosUsadosRow||[]).filter(function(p){return p.cobrar!==false;}).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
@@ -14268,7 +14436,7 @@ function renderAgenda(){
             timeline.slice(1).forEach(function(item){
               var pSd=agProfParaAgenda(item.prof);
               var detalheItemRA=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:parseFloat(detalheItemRA&&detalheItemRA.valor)||0});
+              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:valorBaseComissao(detalheItemRA)});
             });
           }
         });
@@ -17307,6 +17475,13 @@ function editarColab(idx){
           <label style="font-size:11px">Salário fixo (opcional, R$/mês — somado à comissão)</label>
           <input type="number" id="edit-pagto-salario" placeholder="Deixe em branco se não tiver" min="0" step="0.01"/>
         </div>
+        <div class="form-group full" style="margin-bottom:8px">
+          <label style="font-size:11px">Comissão sobre (pagamento no cartão com taxa configurada)</label>
+          <select id="edit-pagto-comissao-base">
+            <option value="liquido">Valor líquido (padrão — desconta a taxa do cartão)</option>
+            <option value="bruto">Valor bruto (comissiona sobre o valor cheio)</option>
+          </select>
+        </div>
         <button class="btn btn-outline btn-sm" onclick="salvarComissaoConfigColab()">Salvar regra de pagamento</button>
       </div>
       <!-- Observações -->
@@ -20207,10 +20382,14 @@ function carregarDadosDoSalao(){
   // quinzenal quando essa busca demorava mais que as outras).
   var pComissaoConfigColab=carregarComissaoConfigColabSupa();
   carregarComissaoParcelasSupa();
+  // Mesmo motivo do pComissaoConfigColab acima: sem isso, um pagamento
+  // registrado logo no carregamento da página podia cair com taxaTotal=0
+  // (taxasCartaoConfig ainda null) mesmo com taxa configurada.
+  var pTaxasCartao=carregarTaxasCartaoSupa();
   var pColabs=carregarColaboradoresSupa();
   var pAgenda=carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
-  return Promise.all([pColabs,pAgenda,pComissaoConfigColab]);
+  return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao]);
 }
 async function carregarClientesSupa(){
   try{
@@ -20868,7 +21047,7 @@ function selecionarForma(btn){
   caixaState.formaAtual=btn.getAttribute('data-forma');
 }
 function formaPagamentoParaCaixa(forma){
-  var mapa={'Pix':'pix','pix':'pix','PIX':'pix','Cartão':'cartao','Cartão de Crédito':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
+  var mapa={'Pix':'pix','pix':'pix','PIX':'pix','Cartão':'cartao','Cartão de Crédito':'cartao','Cartão de Crédito Parcelado':'cartao','Cartão de Débito':'cartao','Dinheiro':'dinheiro','dinheiro':'dinheiro','Link':'link','Link de Pagamento':'link','link':'link'};
   return mapa[forma]||'pix';
 }
 function caixaCatDeServicoCatalogo(catServ){
