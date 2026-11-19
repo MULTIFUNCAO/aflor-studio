@@ -1500,6 +1500,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <select style="font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #ddd" id="agenda-prof-filtro" onchange="renderAgenda()">
             <option value="">TODOS PROFISSIONAIS</option>
           </select>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#6b7280;cursor:pointer;white-space:nowrap">
+            <input type="checkbox" id="agenda-mostrar-cancelados" onchange="mostrarCanceladosAgenda=this.checked;renderAgenda()"/>
+            Mostrar cancelados
+          </label>
           <button class="btn btn-primary" onclick="abrirModalAgendar()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Agendar
@@ -12239,6 +12243,7 @@ function renderColabs(){
 var agendaDataAtual = new Date();
 var agendaDiaAtual = {}; var agendaDataKeyAtual=''; // agendamentos do dia atual — global para o popup
 var agendaMobileProfAtivo = null; // profissional selecionado nas abas mobile
+var mostrarCanceladosAgenda = false; // "Mostrar cancelados" — desligado por padrão
 
 var diasSemana=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 var meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -14061,6 +14066,14 @@ function agendaStatusCancelado(a){
   var st=(a&&a.status||'').toLowerCase();
   return st==='cancelada'||st==='cancelado'||st==='faltou';
 }
+// Só Cancelado (nunca Falta) — usado pra esconder da Agenda por padrão,
+// tirar do contador "N atendimentos" e ignorar no aviso de "já tem
+// atendimento hoje". Falta continua visível/contado em tudo isso, só
+// Cancelado some. Nunca mexe no banco/caixa — é filtro de exibição.
+function agendaStatusRealmenteCancelado(a){
+  var st=(a&&a.status||'').toLowerCase();
+  return st==='cancelada'||st==='cancelado';
+}
 function corBlocoAgenda(a){
   if(!a) return '#111111';
   if(a.tipo==='aula') return '#8b5cf6';
@@ -14386,6 +14399,7 @@ function renderAgenda(){
     Object.keys(apptsDiaFull).forEach(function(k){
       var a=apptsDiaFull[k];
       if(!a||!a.cliente)return;
+      if(agendaStatusRealmenteCancelado(a))return;
       var ap=normalizeProfAgenda(a.prof||k.split(':')[0]);
       if(ap===pn)cnt++;
     });
@@ -14515,8 +14529,12 @@ function renderAgenda(){
   const profBlocksHtml=profs.map(p=>{
     const rowsHtml=hours.map(h=>{
       var slot=buscarApptAgenda(apptsDiaFull,p,h,filtro||null);
-      const a=slot?slot.a:null;
+      let a=slot?slot.a:null;
       const key=slot?slot.key:(normalizeProfAgenda(p)+':'+h);
+      // "Mostrar cancelados" desligado (padrão): trata o slot como vazio —
+      // mesma lógica de horário livre/bloqueado logo abaixo, sem duplicar
+      // nada. Não mexe no banco; Falta continua aparecendo normalmente.
+      if(a&&agendaStatusRealmenteCancelado(a)&&!mostrarCanceladosAgenda)a=null;
       if(!a){
         var pn=normalizeProfAgenda(p);
         var bloqueado=false;
@@ -18656,7 +18674,7 @@ function afSalvarAtendimento(){
   var jaExisteChk=null;
   Object.keys(diaChkDup).some(function(kk){
     var a=diaChkDup[kk];
-    if(a&&a.cliente&&a.cliente.trim().toLowerCase()===cliente.toLowerCase()){jaExisteChk=a;return true;}
+    if(a&&a.cliente&&!agendaStatusRealmenteCancelado(a)&&a.cliente.trim().toLowerCase()===cliente.toLowerCase()){jaExisteChk=a;return true;}
     return false;
   });
   if(jaExisteChk&&!confirm('⚠️ '+cliente+' já tem um atendimento hoje ('+(jaExisteChk.hora||'')+' — '+(jaExisteChk.servico||'')+').\n\nTem certeza que quer criar OUTRO atendimento, em vez de abrir o existente na Agenda pra editar (ex: "+ SERVIÇO"/"+ PACOTE" dentro da comanda dele)?')){
