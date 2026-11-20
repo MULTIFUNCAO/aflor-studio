@@ -13096,7 +13096,11 @@ function confirmarFechamentoPagamento(){
     // gravar direto aqui TAMBÉM duplicava toda receita de serviço sempre que o caixa
     // estava aberto no momento do pagamento (achado revisando o caixa de 23/09).
     if(ctx.total>0&&!caixaState.aberto){
-      var _now=new Date();
+      // Caixa fechado: usa a data do atendimento (agendaDataAtual, o dia
+      // aberto na Agenda) em vez de "agora" — permite registrar pagamento
+      // retroativo entrando no Fluxo na data certa. Caixa aberto continua
+      // sempre "hoje" (sessão física do dia, sem como backdatar).
+      var _now=agendaDataAtual||new Date();
       var _dd=String(_now.getDate()).padStart(2,'0');
       var _mm=String(_now.getMonth()+1).padStart(2,'0');
       var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
