@@ -20329,7 +20329,8 @@ function entrarComoColaborador(nome){
       anterioresP.slice(0,2).forEach(function(per){per.parcelas.forEach(function(p){linhas.push({periodo:per,parcela:p});});});
       html+=linhas.map(function(l){
         var p=l.parcela,per=l.periodo;
-        var info=per.emAndamento?{dot:'andamento',txt:'Em andamento'}:parcelaStatusInfo(p);
+        var info=parcelaStatusInfo(p);
+        if(per.emAndamento)info={dot:'andamento',txt:'Em andamento · '+info.txt};
         var tituloParcela=fmtDataBRCurta(per.inicio)+' a '+fmtDataBRCurta(per.fim)+(p.pct<100?' · parcela '+p.num+' ('+p.pct+'%)':'');
         return '<div class="cv-com-timeline-item"><span class="cv-com-timeline-dot '+info.dot+'"></span>'
           +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700">'+tituloParcela+' · <span style="font-weight:400;color:#888">'+info.txt+'</span></div></div>'
