@@ -3339,7 +3339,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
         </div>
         <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addPacoteServico()">+ Adicionar serviço</button>
       </div>
-      <div class="form-group"><label>Preço do Pacote (R$) *</label><input type="number" id="novo-pacote-preco" placeholder="0,00" min="0" step="0.01"/></div>
+      <div class="form-group"><label>Preço do Pacote (R$) *</label><input type="number" id="novo-pacote-preco" placeholder="0,00" min="0" step="0.01" oninput="pacoteAtualizarPrevisaoTaxa()"/></div>
       <div class="form-group"><label>Validade (dias)</label><input type="number" id="novo-pacote-validade" placeholder="30" value="30" min="0"/></div>
       <div class="form-group full"><label>Descrição</label><textarea id="novo-pacote-desc" placeholder="Descreva o que está incluído no pacote..." rows="2"></textarea></div>
 
@@ -3356,10 +3356,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div class="form-group" style="margin:0"><label>Telefone</label><input id="pacote-cliente-tel" placeholder="(11) 99999-9999"/></div>
           </div>
           <div class="form-group" style="margin-bottom:10px"><label>Forma de Pagamento</label>
-            <select id="pacote-forma-pag">
+            <select id="pacote-forma-pag" onchange="pacoteAtualizarPrevisaoTaxa()">
               <option>Pix</option><option>Dinheiro</option><option>Cartão de Crédito</option>
               <option>Cartão de Débito</option><option>Link de Pagamento</option>
             </select>
+            <div id="pacote-preview-taxa"></div>
           </div>
           <div style="font-size:11px;color:#166534">✅ Ao vender, o pacote entra no caixa como receita e fica disponível para uso nos agendamentos</div>
         </div>
@@ -3409,7 +3410,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <button type="button" onclick="vendaPacoteSetForma(this,'Pix')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">📱 Pix</button>
         <button type="button" onclick="vendaPacoteSetForma(this,'Dinheiro')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">💵 Dinheiro</button>
         <button type="button" onclick="vendaPacoteSetForma(this,'Link')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">🔗 Link</button>
+        <button type="button" onclick="vendaPacoteSetForma(this,'Cartão de Crédito')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">💳 Crédito</button>
+        <button type="button" onclick="vendaPacoteSetForma(this,'Cartão de Débito')" class="venda-pacote-forma-btn" style="padding:10px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#333">💳 Débito</button>
       </div>
+      <div id="venda-pacote-preview-taxa"></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
       <button class="btn btn-outline" onclick="closeModal('modal-vender-pacote')">Cancelar</button>
@@ -6370,7 +6374,10 @@ async function salvarPacoteClienteSupa(p){
       nome_servico:p.nome_servico,quantidade_total:p.quantidade_total,
       quantidade_usada:p.quantidade_usada||0,data_compra:p.data_compra,
       validade:p.validade,valor_pago:p.valor_pago,forma_pagamento:p.forma_pagamento,
-      grupo_id:p.grupo_id||null,salao_id:window.SALAO_ID
+      grupo_id:p.grupo_id||null,salao_id:window.SALAO_ID,
+      valor_bruto:p.valor_bruto!=null?p.valor_bruto:null,
+      taxa_cartao_valor:p.taxa_cartao_valor!=null?p.taxa_cartao_valor:null,
+      valor_liquido:p.valor_liquido!=null?p.valor_liquido:null
     }]).select('id');
     // Mesmo motivo do salvarPacoteCatalogoSupa — sem checar r.error, uma
     // rejeição do banco (ex: pacote_id apontando pra um id que não existe
@@ -6417,18 +6424,24 @@ function precoCatalogoServico(nomeServico){
 //   valor da sessão do serviço i = valor_pago × preço_avulso_i / totalTeorico
 // Pacote sem valor_pago (ou sem preço avulso cadastrado pra nenhum serviço
 // do grupo) não tem como ratear — devolve valor 0 e avisoSemPreco:true.
-function baseComissaoSessaoPacote(pacoteClienteId){
+function baseComissaoSessaoPacote(pacoteClienteId,comissaoBase){
   var linha=(typeof pacotesClientes!=='undefined'?pacotesClientes:[]).find(function(p){return p.id===pacoteClienteId;});
   if(!linha)return{valor:0,avisoSemPreco:false};
   var grupo=linha.grupo_id;
   var doGrupo=grupo
     ?(typeof pacotesClientes!=='undefined'?pacotesClientes:[]).filter(function(p){return p.grupo_id===grupo;})
     :[linha];
-  var valorPago=parseFloat(linha.valor_pago)||0;
+  // Base do rateio: valor líquido (taxa de cartão já descontada) quando a
+  // regra do profissional é 'liquido' (padrão) e a venda tem valor_liquido
+  // gravado (cartão com taxa configurada); senão, valor_pago (bruto) —
+  // igual sempre foi, inclusive pra toda venda sem taxa.
+  var valorBase=(comissaoBase==='liquido'&&linha.valor_liquido!=null)
+    ?(parseFloat(linha.valor_liquido)||0)
+    :(parseFloat(linha.valor_pago)||0);
   var totalTeorico=doGrupo.reduce(function(s,p){return s+precoCatalogoServico(p.nome_servico)*(parseInt(p.quantidade_total,10)||1);},0);
-  if(valorPago<=0||totalTeorico<=0)return{valor:0,avisoSemPreco:true};
+  if(valorBase<=0||totalTeorico<=0)return{valor:0,avisoSemPreco:true};
   var precoAvulsoLinha=precoCatalogoServico(linha.nome_servico);
-  return{valor:valorPago*precoAvulsoLinha/totalTeorico,avisoSemPreco:false};
+  return{valor:valorBase*precoAvulsoLinha/totalTeorico,avisoSemPreco:false};
 }
 function lancarComissaoPacote(profissional,nomeServico,clienteNome){
   // Busca o valor do serviço no catálogo
@@ -14847,7 +14860,18 @@ function abrirModalNovoPacote(){
   _pkgClienteEscolhidoId=null;_pkgClienteEscolhidoNome=null;_pkgSugestoesClienteAtual=[];
   var box=document.getElementById('pacote-cliente-nome-sugestoes');
   if(box){box.style.display='none';box.innerHTML='';}
+  var elPrevTaxa=document.getElementById('pacote-preview-taxa');if(elPrevTaxa)elPrevTaxa.innerHTML='';
   openModal('modal-pacote');
+}
+// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" no
+// Novo Pacote > Salvar e Vender — mesmo helper do Confirmar Pagamento,
+// só exibição, não muda o que é gravado.
+function pacoteAtualizarPrevisaoTaxa(){
+  var el=document.getElementById('pacote-preview-taxa');
+  if(!el)return;
+  var forma=document.getElementById('pacote-forma-pag')?.value||'';
+  var preco=parseFloat(document.getElementById('novo-pacote-preco')?.value)||0;
+  el.innerHTML=linhaPrevisaoTaxaCartao(forma,preco);
 }
 // Só decide o que fazer — não grava nada no banco. Resolve com:
 //   {tipo:'existente',cliente:<obj de clientes>}  — nome bateu exato (ignorando
@@ -14968,6 +14992,12 @@ async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clien
   var valor=parsePrecoPacote(pacoteCatalogo.preco);
   var validadeCalc=calcValidadePacote(pacoteCatalogo.validade,hoje);
   var grupoId='grp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  // Taxa de cartão (Configurações > Taxas de Cartão) — mesma base do
+  // Confirmar Pagamento. Pix/Dinheiro/Link ou forma sem taxa cadastrada:
+  // taxa=0, valor_bruto/taxa_cartao_valor/valor_liquido nem são gravados.
+  var taxaCalc=calcularTaxaCartao(formaPag,valor);
+  var taxaValor=taxaCalc.taxa;
+  var valorLiquido=taxaCalc.liquido;
   var itens=(pacoteCatalogo.servicosItens&&pacoteCatalogo.servicosItens.length)
     ? pacoteCatalogo.servicosItens
     : [extrairMetaPacoteCatalogo(pacoteCatalogo)].map(function(m){return{servico:m.nome_servico,qtd:m.quantidade_total};});
@@ -14982,6 +15012,11 @@ async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clien
       validade:validadeCalc,
       valor_pago:valor,forma_pagamento:formaPag||'Pix'
     };
+    if(taxaValor>0){
+      reg.valor_bruto=valor;
+      reg.taxa_cartao_valor=taxaValor;
+      reg.valor_liquido=valorLiquido;
+    }
     pacotesClientes.unshift(reg);
     return reg;
   });
@@ -14996,6 +15031,15 @@ async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clien
   var todasSalvas=resultados.every(function(ok){return ok;});
   if(todasSalvas){
     lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
+    // Taxa de cartão como despesa no Fluxo de Caixa — mesma categoria do
+    // Confirmar Pagamento. Só quando o caixa está aberto, igual à receita
+    // acima (lancarEntradaCaixaAuto/inserirMovimentoCaixa já só lançam com
+    // o caixa aberto — pacote vendido com o caixa fechado já não lança a
+    // própria receita em lugar nenhum hoje; limitação existente, fora
+    // deste pedido).
+    if(taxaValor>0){
+      inserirMovimentoCaixa({tipo:'saida',categoria:'Taxa de Cartão',descricao:'Taxa de cartão — Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor:taxaValor,forma:formaPagamentoParaCaixa(formaPag)});
+    }
   }
   return {ok:todasSalvas,regs:regs};
 }
@@ -15005,6 +15049,18 @@ function vendaPacoteSetForma(btn,forma){
     b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
   });
   btn.style.background='#111';btn.style.color='#fff';btn.style.borderColor='#111';
+  vendaPacoteAtualizarPrevisaoTaxa();
+}
+// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" no
+// Vender Pacote para Cliente — mesmo helper do Confirmar Pagamento, só
+// exibição, não muda o que é gravado.
+function vendaPacoteAtualizarPrevisaoTaxa(){
+  var el=document.getElementById('venda-pacote-preview-taxa');
+  if(!el)return;
+  var idx=vendaPacoteCtx?vendaPacoteCtx.pacoteIdx:null;
+  var p=typeof idx==='number'?pacotes[idx]:null;
+  var preco=p?parsePrecoPacote(p.preco):0;
+  el.innerHTML=linhaPrevisaoTaxaCartao(vendaPacoteCtx?vendaPacoteCtx.forma:'',preco);
 }
 function abrirVenderPacote(idx){
   var p=pacotes[idx];
@@ -15026,6 +15082,7 @@ function abrirVenderPacote(idx){
   document.querySelectorAll('.venda-pacote-forma-btn').forEach(function(b){
     b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
   });
+  var elPrevVenda=document.getElementById('venda-pacote-preview-taxa');if(elPrevVenda)elPrevVenda.innerHTML='';
   openModal('modal-vender-pacote');
 }
 async function confirmarVendaPacote(){
@@ -18741,9 +18798,11 @@ function afSalvarAtendimento(){
       lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
       var nomeServ=pac.servico||pac.nome;
       nomesServ.push(nomeServ+' ('+item.prof+')');
-      var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId);
+      var profIdPac=colaboradorIdPorNome(item.prof);
+      var comissaoBasePac=(typeof configComissaoDoColab==='function'&&profIdPac)?(configComissaoDoColab(profIdPac).comissao_base||'liquido'):'liquido';
+      var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId,comissaoBasePac);
       if(baseComissao.avisoSemPreco)avisoPacoteSemPreco=true;
-      servicosDetalhePacote.push({nome:nomeServ,valor:baseComissao.valor,profissional:item.prof,profissional_id:colaboradorIdPorNome(item.prof),hora:'09:00',duracao_min:0});
+      servicosDetalhePacote.push({nome:nomeServ,valor:baseComissao.valor,profissional:item.prof,profissional_id:profIdPac,hora:'09:00',duracao_min:0});
     });
     if(avisoPacoteSemPreco){
       showAlert('⚠️ Este pacote não tem valor pago registrado — a comissão dessa sessão ficou R$ 0,00. Confira o valor pago do pacote.');
