@@ -20319,7 +20319,7 @@ function entrarComoColaborador(nome){
       // Linha do tempo: parcelas do período atual + períodos anteriores (até 2)
       html+='<div class="cv-com-section-title">Recebimentos</div>';
       function parcelaStatusInfo(p){
-        if(p.status==='paga')return{dot:'pago',txt:'✅ Pago em '+fmtDataBRCurta(new Date(p.pagoEm))};
+        if(p.status==='paga')return{dot:'pago',txt:'✅ Pago em '+fmtDataBR(new Date(p.pagoEm))};
         var hojeZ=new Date();hojeZ.setHours(0,0,0,0);
         if(p.pagamento<hojeZ)return{dot:'atrasado',txt:'⚠ Atrasado — devia pagar em '+fmtDataBR(p.pagamento)};
         return{dot:'pendente',txt:'⏳ A pagar em '+fmtDataBR(p.pagamento)};
@@ -20330,9 +20330,9 @@ function entrarComoColaborador(nome){
       html+=linhas.map(function(l){
         var p=l.parcela,per=l.periodo;
         var info=per.emAndamento?{dot:'andamento',txt:'Em andamento'}:parcelaStatusInfo(p);
+        var tituloParcela=fmtDataBRCurta(per.inicio)+' a '+fmtDataBRCurta(per.fim)+(p.pct<100?' · parcela '+p.num+' ('+p.pct+'%)':'');
         return '<div class="cv-com-timeline-item"><span class="cv-com-timeline-dot '+info.dot+'"></span>'
-          +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700">'+fmtDataBRCurta(per.inicio)+' a '+fmtDataBRCurta(per.fim)+(p.pct<100?' · parcela '+p.num+' ('+p.pct+'%)':'')+'</div>'
-          +'<div style="font-size:11px;color:#888">'+info.txt+'</div></div>'
+          +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700">'+tituloParcela+' · <span style="font-weight:400;color:#888">'+info.txt+'</span></div></div>'
           +'<span style="font-size:14px;font-weight:800">R$ '+p.comissaoVal.toFixed(2).replace('.',',')+'</span></div>';
       }).join('');
       comEl.innerHTML=html;
