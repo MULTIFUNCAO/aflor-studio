@@ -4550,6 +4550,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <label>Profissional que vai executar</label>
           </div>
         </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;margin:8px 0 0 30px;cursor:pointer">
+          <input type="checkbox" id="ag-pacote-sem-comissao"/>
+          Não comissionar esta sessão
+        </label>
         <button type="button" class="af-link" style="margin:10px 0 0 30px" onclick="agAddPacoteExtra()"><span class="material-symbols-outlined" style="font-size:16px">add</span>Adicionar serviço do pacote</button>
         <div id="ag-pacote-extra-list" style="margin:10px 0 0 30px;display:flex;flex-direction:column;gap:8px"></div>
         <div style="font-size:10px;color:#aaa;margin:8px 0 0 30px">⚠️ Usar pacote não gera cobrança na comanda do cliente, mas o profissional recebe normalmente pelo serviço</div>
@@ -8558,6 +8562,7 @@ function resetFormAgendar(){
   if((el=get('ag-produtos-list')))el.innerHTML='';
   if((el=get('ag-pacote-extra-list')))el.innerHTML='';
   if((el=get('ag-pacote-info')))el.style.display='none';
+  if((el=get('ag-pacote-sem-comissao')))el.checked=false;
   if((el=get('af-repetir-ativo'))){el.checked=false;}
   if((el=get('af-repetir-area')))el.style.display='none';
   afFecharPicker('af-picker-cliente');
@@ -9165,6 +9170,7 @@ function agAddPacoteExtra(listId,clienteInputId){
     +'<select onchange="agAtualizarProfPacoteExtra(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="" selected>— Selecione o pacote —</option>'+opts.join('')+'</select>'
     +'<select onchange="agAtualizarProfPacoteExtraDetalhe(this)" style="padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"><option value="">— Selecione o serviço acima —</option></select>'
     +'<div class="ag-pacote-extra-detalhe" style="display:none;background:#fffbea;border:1px solid #fde68a;border-radius:8px;padding:8px;font-size:12px;color:#374151"></div>'
+    +'<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;cursor:pointer"><input type="checkbox" class="ag-pacote-extra-sem-comissao"/>Não comissionar esta sessão</label>'
     +'</div>'
     +'<button style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer">✕</button>';
   row.querySelector('button').onclick=function(){row.remove();};
@@ -12812,7 +12818,14 @@ function abrirConfirmarPagamento(key){
   fecharAgendaPopup();
   var extrasTotal=popupServicosExtras.reduce(function(s,e){return s+e.valor+(e.produtos||[]).reduce(function(ps,p){return ps+p.valor;},0);},0);
   var descontoVal=popupDescontoValor||0;
-  var total=somaServicosAtendimento(dados)+extrasTotal+somaProdutosUsados(dados)-descontoVal;
+  // Atendimento de pacote: servicos_detalhe[i].valor guarda a BASE DE
+  // COMISSÃO (regra B), não um valor a cobrar — a sessão já foi paga
+  // quando o pacote foi vendido. Sem esse desvio, "Registrar Pagamento"
+  // somaria esse valor como se fosse uma cobrança nova e lançaria caixa
+  // de novo por algo já pago. Extras/produtos adicionados por cima (se
+  // houver) continuam cobrando normalmente.
+  var baseServicosPg=agendamentoEhPacote(dados)?0:somaServicosAtendimento(dados);
+  var total=baseServicosPg+extrasTotal+somaProdutosUsados(dados)-descontoVal;
   total=Math.max(0,total);
   var sinalInput=lerSinalAgendamento(dados).valor;
   var sinalPago=(dados.sinal_status||'')==='pago'||!!dados.sinalPago;
@@ -14086,6 +14099,14 @@ function agendaStatusCancelado(a){
 function agendaStatusRealmenteCancelado(a){
   var st=(a&&a.status||'').toLowerCase();
   return st==='cancelada'||st==='cancelado';
+}
+// Detecta atendimento de pacote de forma confiável mesmo depois de um
+// reload — "ehPacote" só existe no estado local logo após criar (nunca é
+// gravado no banco), então depois de recarregar a página isso some. O
+// sufixo " (Pacote)" no campo "servico" É gravado e sobrevive — mesma
+// convenção já usada em pkgCarregarHistorico pra achar sessões de pacote.
+function agendamentoEhPacote(dados){
+  return !!(dados&&(dados.ehPacote===true||/\(Pacote\)\s*$/.test(dados.servico||'')));
 }
 function corBlocoAgenda(a){
   if(!a) return '#111111';
@@ -18765,11 +18786,13 @@ function afSalvarAtendimento(){
     var selPac=document.getElementById('ag-pacote-sel');
     var idxPrincipal=parseInt(selPac?.value);
     if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
-    itensPacote.push({idx:idxPrincipal,prof:profPac});
+    var semComissaoPrincipal=!!document.getElementById('ag-pacote-sem-comissao')?.checked;
+    itensPacote.push({idx:idxPrincipal,prof:profPac,semComissao:semComissaoPrincipal});
     document.querySelectorAll('#ag-pacote-extra-list > div').forEach(function(row){
       var sels=row.querySelectorAll('select');
       var idx=parseInt(sels[0]?.value);
-      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac});
+      var semComissaoExtra=!!row.querySelector('.ag-pacote-extra-sem-comissao')?.checked;
+      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac,semComissao:semComissaoExtra});
     });
     for(var vi=0;vi<itensPacote.length;vi++){
       var vp=pacotes[itensPacote[vi].idx];
@@ -18795,14 +18818,23 @@ function afSalvarAtendimento(){
       pac.usado=(pac.usado||0)+1;
       pacotes[item.idx]=pac;
       descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
-      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
-      var nomeServ=pac.servico||pac.nome;
-      nomesServ.push(nomeServ+' ('+item.prof+')');
+      // "Não comissionar esta sessão": pula lancarComissaoPacote (Remunerações)
+      // E zera a base da regra B (servicos_detalhe[i].valor) — sem isso,
+      // mesmo pulando o Remunerações, a sessão ainda apareceria com
+      // comissão em Comissões a Pagar quando o atendimento for concluído.
       var profIdPac=colaboradorIdPorNome(item.prof);
-      var comissaoBasePac=(typeof configComissaoDoColab==='function'&&profIdPac)?(configComissaoDoColab(profIdPac).comissao_base||'liquido'):'liquido';
-      var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId,comissaoBasePac);
-      if(baseComissao.avisoSemPreco)avisoPacoteSemPreco=true;
-      servicosDetalhePacote.push({nome:nomeServ,valor:baseComissao.valor,profissional:item.prof,profissional_id:profIdPac,hora:'09:00',duracao_min:0});
+      var nomeServ=pac.servico||pac.nome;
+      var valorComissaoItem=0,avisoItem=false;
+      if(!item.semComissao){
+        lancarComissaoPacote(item.prof,nomeServ,cliente);
+        var comissaoBasePac=(typeof configComissaoDoColab==='function'&&profIdPac)?(configComissaoDoColab(profIdPac).comissao_base||'liquido'):'liquido';
+        var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId,comissaoBasePac);
+        valorComissaoItem=baseComissao.valor;
+        avisoItem=baseComissao.avisoSemPreco;
+      }
+      nomesServ.push(nomeServ+' ('+item.prof+')');
+      if(avisoItem)avisoPacoteSemPreco=true;
+      servicosDetalhePacote.push({nome:nomeServ,valor:valorComissaoItem,profissional:item.prof,profissional_id:profIdPac,hora:'09:00',duracao_min:0});
     });
     if(avisoPacoteSemPreco){
       showAlert('⚠️ Este pacote não tem valor pago registrado — a comissão dessa sessão ficou R$ 0,00. Confira o valor pago do pacote.');
