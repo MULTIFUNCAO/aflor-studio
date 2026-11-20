@@ -20544,7 +20544,7 @@ function carregarDadosDoSalao(){
   carregarRemuneracoesSupa();
   carregarPacotesCatalogoSupa();
   carregarPacotesClientesSupa();
-  carregarServicosSupa();
+  var pServicos=carregarServicosSupa();
   carregarProdutosSupa();
   carregarComissaoConfigSalaoSupa();
   // Precisa estar no Promise.all — sem isso, entrarComoColaborador() podia
@@ -20559,7 +20559,12 @@ function carregarDadosDoSalao(){
   // (taxasCartaoConfig ainda null) mesmo com taxa configurada.
   var pTaxasCartao=carregarTaxasCartaoSupa();
   var pColabs=carregarColaboradoresSupa();
-  var pAgenda=carregarAgendamentosSupa().then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
+  // Agenda monta a timeline de serviços extras usando a duração do catálogo
+  // (durFromServico, que lê o array "servicos"); sem esperar o catálogo
+  // carregar primeiro, toda duração cai no fallback de 60min e gera cards
+  // fantasmas duplicados em agendamentosPorData (achado real: comanda com
+  // vários serviços tendo um serviço extra contado 2x na comissão).
+  var pAgenda=pServicos.then(function(){return carregarAgendamentosSupa();}).then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
   return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao]);
 }
