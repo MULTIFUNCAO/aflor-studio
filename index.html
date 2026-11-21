@@ -2544,7 +2544,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <div style="font-size:28px;font-weight:900;color:#22c55e" id="cv-comissao-mes">R$ 0</div>
           </div>
           <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e5e5;border-left:4px solid #f59e0b">
-            <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:6px">Metas Ativas</div>
+            <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;margin-bottom:6px">Metas Batidas</div>
             <div style="font-size:28px;font-weight:900" id="cv-metas-count">0</div>
           </div>
         </div>
@@ -20306,22 +20306,25 @@ function entrarComoColaborador(nome){
   cvAgendaDataAtual=new Date();
   if(typeof cvRenderAgendaDia==='function')cvRenderAgendaDia();
   if(typeof cvRenderDesempenho==='function')cvRenderDesempenho();
-  // "Metas Ativas" (card resumo do topo) continua contando metasList, só
-  // não existe mais a lista "Minhas Metas e Tarefas" — virou "Minhas
-  // Metas do Mês" (metas_individuais_colab), mais abaixo.
-  var minhasMetas=metasList.filter(function(m){return m.colab&&m.colab.includes(nome);});
-  var elMetasCount=document.getElementById('cv-metas-count');
-  if(elMetasCount)elMetasCount.textContent=minhasMetas.filter(function(m){return m.status!=='concluida';}).length;
   // Minhas Metas Individuais (faturamento/serviços/pacotes vendidos — metas_individuais_colab)
   var metasIndEl=document.getElementById('cv-metas-individuais');
+  var elMetasCount=document.getElementById('cv-metas-count');
   if(metasIndEl&&colab){
     var metaInd=metaIndividualDoMes(colab.id);
     if(!metaInd||(!metaInd.meta_faturamento&&!metaInd.meta_servicos_qtd&&!metaInd.meta_pacotes_qtd)){
       metasIndEl.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">🎯 Nenhuma meta definida pra este mês ainda</div>';
+      if(elMetasCount)elMetasCount.textContent='Sem metas';
     } else {
       var realFat=calcularRealizadoMesAtual(nome,colab.id);
       var realSvc=qtdServicosRealizadosMes(nome,colab.id);
       var realPac=qtdPacotesVendidosMes(colab.id);
+      var defsMeta=[
+        {meta:metaInd.meta_faturamento,real:realFat},
+        {meta:metaInd.meta_servicos_qtd,real:realSvc},
+        {meta:metaInd.meta_pacotes_qtd,real:realPac}
+      ].filter(function(d){return !!d.meta;});
+      var batidasMeta=defsMeta.filter(function(d){return d.real>=d.meta;}).length;
+      if(elMetasCount)elMetasCount.textContent=batidasMeta+'/'+defsMeta.length;
       var barraMeta=function(label,real,meta,unidade,fmt){
         if(!meta)return '';
         var pct=Math.min(100,Math.round(real/meta*100));
@@ -20337,6 +20340,8 @@ function entrarComoColaborador(nome){
         +barraMeta('✂️ Serviços',realSvc,metaInd.meta_servicos_qtd,'serv.')
         +barraMeta('📦 Pacotes vendidos',realPac,metaInd.meta_pacotes_qtd,'pacote(s)');
     }
+  } else if(elMetasCount){
+    elMetasCount.textContent='Sem metas';
   }
   // Pagamento diário (modelo "Diário" — freelancer): mostra "Você recebe
   // hoje: R$X" com o valor ao vivo (ou já pago, se a dona marcou no
