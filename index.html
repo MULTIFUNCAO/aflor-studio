@@ -2564,6 +2564,15 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="cv-comissoes" style="padding:14px"></div>
         </div>
 
+        <!-- Minhas Metas Individuais -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
+            <div style="font-size:14px;font-weight:800">🎯 Minhas Metas do Mês</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">Faturamento, serviços e pacotes vendidos</div>
+          </div>
+          <div id="cv-metas-individuais" style="padding:14px"></div>
+        </div>
+
         <!-- Meu Desempenho -->
         <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -3215,7 +3224,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Pacotes vendidos (quantidade)</label>
             <input type="number" id="meta-ind-pacotes-qtd" placeholder="Ex: 15" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
           </div>
-          <button class="btn btn-primary" style="width:100%" onclick="salvarMetaIndividual()">Salvar Meta Individual</button>
+          <button class="btn btn-primary" id="btn-salvar-meta-individual" style="width:100%" onclick="salvarMetaIndividual()">Salvar Meta Individual</button>
         </div>
         </div>
       </div>
@@ -10512,6 +10521,37 @@ async function carregarComissaoParcelasSupa(){
     if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
   }catch(e){console.log('err carregar comissao_parcelas',e);}
 }
+var metasIndividuaisColab=[];
+function mesRefAtual(){
+  var hoje=new Date();
+  return hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-01';
+}
+async function carregarMetasIndividuaisColabSupa(){
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('metas_individuais_colab').select('*').eq('salao_id',window.SALAO_ID);
+    metasIndividuaisColab=r.data||[];
+  }catch(e){console.log('err carregar metas_individuais_colab',e);}
+}
+function metaIndividualDoMes(colaboradorId){
+  var mesRef=mesRefAtual();
+  return metasIndividuaisColab.find(function(m){return m.colaborador_id===colaboradorId&&m.mes_ref===mesRef;})||null;
+}
+async function salvarMetaIndividualColabSupa(colaboradorId,metaFaturamento,metaServicosQtd,metaPacotesQtd){
+  if(!supa||!window.SALAO_ID)return false;
+  var mesRef=mesRefAtual();
+  try{
+    var r=await supa.from('metas_individuais_colab').upsert({
+      salao_id:window.SALAO_ID,colaborador_id:colaboradorId,mes_ref:mesRef,
+      meta_faturamento:metaFaturamento||null,meta_servicos_qtd:metaServicosQtd||null,meta_pacotes_qtd:metaPacotesQtd||null,
+      updated_at:new Date().toISOString()
+    },{onConflict:'colaborador_id,mes_ref'}).select('*').single();
+    if(r.error)return false;
+    var idx=metasIndividuaisColab.findIndex(function(m){return m.colaborador_id===colaboradorId&&m.mes_ref===mesRef;});
+    if(idx>=0)metasIndividuaisColab[idx]=r.data;else metasIndividuaisColab.push(r.data);
+    return true;
+  }catch(e){console.log('err salvar meta individual colab',e);return false;}
+}
 // Lê os campos de "Pagamento" do modal Editar Colaborador (colabEditId
 // já resolvido por colabSendoEditado) e salva a regra dele.
 async function salvarComissaoConfigColab(){
@@ -11115,15 +11155,13 @@ function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]).join('').
 var metasVendas = JSON.parse(localStorage.getItem('aflor_metas_vendas')||'{}');
 
 function lerMetaIndividualColabModal(){
-  var nome=document.getElementById('meta-colab-select-modal').value;
-  var individuais=metasVendas.individuais||{};
-  var individuaisServicos=metasVendas.individuaisServicos||{};
-  var individuaisPacotes=metasVendas.individuaisPacotes||{};
+  var colabId=document.getElementById('meta-colab-select-modal').value;
   var campos=document.getElementById('meta-colab-campos');
-  if(campos)campos.style.display=nome?'flex':'none';
-  document.getElementById('meta-individual-valor').value=nome?(individuais[nome]||''):'';
-  document.getElementById('meta-ind-servicos-qtd').value=nome?(individuaisServicos[nome]||''):'';
-  document.getElementById('meta-ind-pacotes-qtd').value=nome?(individuaisPacotes[nome]||''):'';
+  if(campos)campos.style.display=colabId?'flex':'none';
+  var atual=colabId?metaIndividualDoMes(colabId):null;
+  document.getElementById('meta-individual-valor').value=atual&&atual.meta_faturamento!=null?atual.meta_faturamento:'';
+  document.getElementById('meta-ind-servicos-qtd').value=atual&&atual.meta_servicos_qtd!=null?atual.meta_servicos_qtd:'';
+  document.getElementById('meta-ind-pacotes-qtd').value=atual&&atual.meta_pacotes_qtd!=null?atual.meta_pacotes_qtd:'';
 }
 async function abrirModalMetas(){
   await carregarColaboradoresSupa();
@@ -11133,7 +11171,7 @@ async function abrirModalMetas(){
   if(selModal){
     selModal.innerHTML='<option value="">Selecione...</option>'
       +colaboradores.filter(function(c){return c.status!=='Inativo';})
-        .map(function(c){return '<option>'+c.nome+'</option>';}).join('');
+        .map(function(c){return '<option value="'+c.id+'">'+c.nome+'</option>';}).join('');
     selModal.value='';
   }
   document.getElementById('meta-individual-valor').value='';
@@ -11166,24 +11204,17 @@ function salvarMetaSalao(){
   renderMetasCards();
   showAlert('✅ Meta do salão salva!');
 }
-function salvarMetaIndividual(){
-  var colabSel=document.getElementById('meta-colab-select-modal').value;
-  if(!colabSel){showAlert('Selecione um colaborador.');return;}
+async function salvarMetaIndividual(){
+  var colabId=document.getElementById('meta-colab-select-modal').value;
+  if(!colabId){showAlert('Selecione um colaborador.');return;}
   var indVal=parseFloat(document.getElementById('meta-individual-valor').value)||0;
   var indSvcVal=parseInt(document.getElementById('meta-ind-servicos-qtd').value)||0;
   var indPacVal=parseInt(document.getElementById('meta-ind-pacotes-qtd').value)||0;
-  var individuais=Object.assign({},metasVendas.individuais||{});
-  var individuaisServicos=Object.assign({},metasVendas.individuaisServicos||{});
-  var individuaisPacotes=Object.assign({},metasVendas.individuaisPacotes||{});
-  individuais[colabSel]=indVal;
-  if(indSvcVal>0)individuaisServicos[colabSel]=indSvcVal;else delete individuaisServicos[colabSel];
-  if(indPacVal>0)individuaisPacotes[colabSel]=indPacVal;else delete individuaisPacotes[colabSel];
-  metasVendas=Object.assign({},metasVendas,{
-    individuais: individuais,
-    individuaisServicos: individuaisServicos,
-    individuaisPacotes: individuaisPacotes
-  });
-  localStorage.setItem('aflor_metas_vendas', JSON.stringify(metasVendas));
+  var btn=document.getElementById('btn-salvar-meta-individual');
+  if(btn){btn.disabled=true;btn.textContent='Salvando...';}
+  var ok=await salvarMetaIndividualColabSupa(colabId,indVal,indSvcVal,indPacVal);
+  if(btn){btn.disabled=false;btn.textContent='Salvar Meta Individual';}
+  if(!ok){showAlert('⚠️ Não consegui salvar a meta individual. Tente de novo.');return;}
   if(typeof renderMetasColabSelecionado==='function')renderMetasColabSelecionado();
   showAlert('✅ Meta individual salva!');
 }
@@ -11451,11 +11482,11 @@ async function renderMetasColabSelecionado(){
   if(!nome){el.innerHTML='<div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div>';return;}
   el.innerHTML='<div style="padding:20px;text-align:center;color:#bbb;font-size:12px">Calculando...</div>';
   var mv=metasVendas;
-  var individuais=mv.individuais||{};
-  if(!mv.individuais&&mv.colab&&mv.individual)individuais[mv.colab]=mv.individual;
-  var metaManual=individuais[nome]||0;
   var metaGeral=mv.geral||0;
   var colabsAtivos=colaboradores.filter(function(c){return c.id!=null&&c.status!=='Inativo';});
+  var colabObjSel=colabsAtivos.find(function(c){return c.nome===nome;});
+  var metaIndSupa=colabObjSel?metaIndividualDoMes(colabObjSel.id):null;
+  var metaManual=(metaIndSupa&&metaIndSupa.meta_faturamento)||0;
   var hist=await buscarHistoricoColaboradores();
   var metaCalculada=0;var metodo=hist.metodo;var pctContrib=0;
   var histValor=hist.totalPorColab[nome]||0;
@@ -11477,15 +11508,12 @@ async function renderMetasColabSelecionado(){
   }
   var metaQtd=(precoMedio>0&&metaC>0)?Math.ceil(metaC/precoMedio):0;
   var realC=calcularRealizadoMesAtual(nome);
-  var colabObjSel=colabsAtivos.find(function(c){return c.nome===nome;});
   var svcC=qtdServicosRealizadosMes(nome,colabObjSel?colabObjSel.id:null);
   var prodC=qtdPacotesVendidosMes(colabObjSel?colabObjSel.id:null);
   var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
   var faltaC=Math.max(0,metaC-realC);
-  var individuaisServicos=mv.individuaisServicos||{};
-  var individuaisPacotes=mv.individuaisPacotes||{};
-  var metaSvcC=individuaisServicos[nome]>0?individuaisServicos[nome]:metaQtd>0?metaQtd:null;
-  var metaProdC=individuaisPacotes[nome]>0?individuaisPacotes[nome]:null;
+  var metaSvcC=(metaIndSupa&&metaIndSupa.meta_servicos_qtd>0)?metaIndSupa.meta_servicos_qtd:(metaQtd>0?metaQtd:null);
+  var metaProdC=(metaIndSupa&&metaIndSupa.meta_pacotes_qtd>0)?metaIndSupa.meta_pacotes_qtd:null;
   var pctSC=metaSvcC>0?Math.min(100,Math.round(svcC/metaSvcC*100)):0;
   var pctPC=metaProdC>0?Math.min(100,Math.round(prodC/metaProdC*100)):0;
   var metodoLabel=usandoManual
@@ -20304,6 +20332,32 @@ function entrarComoColaborador(nome){
       }).join('');
     }
   }
+  // Minhas Metas Individuais (faturamento/serviços/pacotes vendidos — metas_individuais_colab)
+  var metasIndEl=document.getElementById('cv-metas-individuais');
+  if(metasIndEl&&colab){
+    var metaInd=metaIndividualDoMes(colab.id);
+    if(!metaInd||(!metaInd.meta_faturamento&&!metaInd.meta_servicos_qtd&&!metaInd.meta_pacotes_qtd)){
+      metasIndEl.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">🎯 Nenhuma meta definida pra este mês ainda</div>';
+    } else {
+      var realFat=calcularRealizadoMesAtual(nome);
+      var realSvc=qtdServicosRealizadosMes(nome,colab.id);
+      var realPac=qtdPacotesVendidosMes(colab.id);
+      var barraMeta=function(label,real,meta,unidade,fmt){
+        if(!meta)return '';
+        var pct=Math.min(100,Math.round(real/meta*100));
+        var falta=Math.max(0,meta-real);
+        return '<div style="margin-bottom:14px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:4px"><span>'+label+'</span><span>'+(fmt?fmt(real):real)+' / '+(fmt?fmt(meta):meta)+' '+unidade+'</span></div>'
+          +'<div style="background:#f0f0f0;border-radius:20px;height:6px;overflow:hidden"><div style="background:'+(pct>=100?'#22c55e':'#6366f1')+';height:6px;border-radius:20px;width:'+pct+'%"></div></div>'
+          +'<div style="font-size:11px;color:#888;margin-top:3px">'+(pct>=100?'Meta batida! ✅':'Falta '+(fmt?fmt(falta):falta)+' '+unidade)+'</div>'
+          +'</div>';
+      };
+      metasIndEl.innerHTML=
+        barraMeta('💰 Faturamento',realFat,metaInd.meta_faturamento,'',fmtCaixa)
+        +barraMeta('✂️ Serviços',realSvc,metaInd.meta_servicos_qtd,'serv.')
+        +barraMeta('📦 Pacotes vendidos',realPac,metaInd.meta_pacotes_qtd,'pacote(s)');
+    }
+  }
   // Pagamento diário (modelo "Diário" — freelancer): mostra "Você recebe
   // hoje: R$X" com o valor ao vivo (ou já pago, se a dona marcou no
   // fechamento do caixa); fica escondido pra quem não está nesse modelo.
@@ -20637,6 +20691,7 @@ function carregarDadosDoSalao(){
   // quinzenal quando essa busca demorava mais que as outras).
   var pComissaoConfigColab=carregarComissaoConfigColabSupa();
   carregarComissaoParcelasSupa();
+  var pMetasIndColab=carregarMetasIndividuaisColabSupa();
   // Mesmo motivo do pComissaoConfigColab acima: sem isso, um pagamento
   // registrado logo no carregamento da página podia cair com taxaTotal=0
   // (taxasCartaoConfig ainda null) mesmo com taxa configurada.
@@ -20649,7 +20704,7 @@ function carregarDadosDoSalao(){
   // vários serviços tendo um serviço extra contado 2x na comissão).
   var pAgenda=pServicos.then(function(){return carregarAgendamentosSupa();}).then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
-  return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao]);
+  return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao,pMetasIndColab]);
 }
 async function carregarClientesSupa(){
   try{
