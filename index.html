@@ -10530,6 +10530,7 @@ async function carregarMetasIndividuaisColabSupa(){
   try{
     if(!supa||!window.SALAO_ID)return;
     var r=await supa.from('metas_individuais_colab').select('*').eq('salao_id',window.SALAO_ID);
+    if(r.error){console.error('⚠️ metas_individuais_colab não carregou (painel vai mostrar "sem meta" mesmo que exista):',r.error);return;}
     metasIndividuaisColab=r.data||[];
   }catch(e){console.log('err carregar metas_individuais_colab',e);}
 }
