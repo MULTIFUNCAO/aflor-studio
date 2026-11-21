@@ -1008,6 +1008,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       Colaboradores
     </div>
+    <div class="nav-item" onclick="showPage('mensagens')" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Mensagens
+      <span id="nav-msg-badge" style="display:none;position:absolute;top:6px;left:26px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span>
+    </div>
     <div class="nav-item" data-perm-mod="metas" onclick="showPage('metas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
       Metas e Tarefas
@@ -2128,6 +2133,25 @@ tr.row-retorno-retornou td{background:#f0fff4}
       </div>
     </div>
 
+    <!-- MENSAGENS -->
+    <div class="page" id="page-mensagens">
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 160px)">
+        <div class="table-card" style="overflow-y:auto;padding:8px">
+          <div id="msg-lista-colabs"></div>
+        </div>
+        <div class="table-card" style="display:flex;flex-direction:column;overflow:hidden">
+          <div id="msg-thread-header" style="padding:14px 18px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13px;color:#aaa">Selecione um colaborador</div>
+          </div>
+          <div id="msg-thread" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px"></div>
+          <div id="msg-input-wrap" style="display:none;padding:12px;border-top:1px solid #f0f0f0;gap:8px">
+            <textarea id="msg-texto-input" rows="2" maxlength="2000" placeholder="Escreva uma mensagem..." style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;resize:none;outline:none"></textarea>
+            <button class="btn btn-primary" onclick="enviarMensagemDona()" style="align-self:flex-end">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- METAS E TAREFAS -->
     <div class="page" id="page-metas">
       <!-- Header -->
@@ -2514,9 +2538,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <div id="cv-user-info" style="text-align:right">
-            <div style="font-size:12px;font-weight:700;color:#fff" id="cv-nome">Colaborador</div>
-            <div style="font-size:10px;color:rgba(255,255,255,.5)" id="cv-cargo">Cargo</div>
+          <div id="cv-user-info" style="text-align:right;display:flex;align-items:center;gap:8px">
+            <span style="position:relative;font-size:16px">🔔<span id="cv-msg-badge-topo" style="display:none;position:absolute;top:-2px;right:-3px;width:8px;height:8px;border-radius:50%;background:#ef4444"></span></span>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#fff" id="cv-nome">Colaborador</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.5)" id="cv-cargo">Cargo</div>
+            </div>
           </div>
           <div id="cv-avatar" style="width:34px;height:34px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">?</div>
           <button onclick="sairColaborador()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer">Sair</button>
@@ -2530,6 +2557,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div>
             <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:3px">Olá, <span id="cv-ola-nome">Colaborador</span>!</div>
             <div id="cv-data-saudacao" style="font-size:13px;color:rgba(255,255,255,.6)">FLORA Studio</div>
+          </div>
+        </div>
+
+        <!-- Mensagens -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:20px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:14px;font-weight:800">💬 Mensagens</div>
+            <span id="cv-msg-selo-nova" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px">Nova</span>
+          </div>
+          <div id="cv-msg-thread" style="padding:14px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+          <div style="padding:12px;border-top:1px solid #f5f5f5;display:flex;gap:8px">
+            <textarea id="cv-msg-input" rows="2" maxlength="2000" placeholder="Escreva uma mensagem..." style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;resize:none;outline:none"></textarea>
+            <button class="btn btn-primary" onclick="enviarMensagemColab()" style="align-self:flex-end">Enviar</button>
           </div>
         </div>
 
@@ -8455,6 +8495,7 @@ const pages = {
   'remuneracoes':'Remunerações','comissoes-pagar':'Comissões a Pagar','despesas':'Despesas','finpessoal':'💝 Financeiro Pessoal',
   'servicos':'Serviços','produtos':'Produtos','pacotes':'Pacotes','cursos':'🎓 Cursos',
   'clientes':'Clientes','retornos':'Lembretes de Retorno','colaboradores':'Colaboradores',
+  'mensagens':'Mensagens',
   'metas':'Metas e Tarefas',
   'ia':'🧠 IA Estratégica','marketing':'📣 Marketing & Campanhas',
   'treinamentos':'📚 Treinamentos','influenciadoras':'✨ Influenciadoras & Permutas',
@@ -8547,6 +8588,7 @@ function showPage(id){
     if(id==='vendas'){renderVendas();renderMetasCards();}
     if(id==='comandas')renderComandas();
     if(id==='comissoes-pagar')renderComissoesAPagar();
+    if(id==='mensagens')renderMensagensDona();
   },10);
 }
 
@@ -10526,6 +10568,194 @@ async function carregarMetasIndividuaisColabSupa(){
     metasIndividuaisColab=r.data||[];
   }catch(e){console.log('err carregar metas_individuais_colab',e);}
 }
+// ===== Mensagens entre a dona e cada colaborador (mensagens_equipe) =====
+var mensagensEquipe=[];
+var msgColabSelecionadoId=null;
+var _msgCvUltimaQtd=-1;
+var _msgDonaUltimaQtd={};
+// Escapa texto de usuário antes de ir pro innerHTML — textContent faz o
+// browser escapar & < > " ' sozinho, sem precisar listar cada caractere.
+function esc(s){
+  var d=document.createElement('div');
+  d.textContent=String(s==null?'':s);
+  return d.innerHTML;
+}
+// Acha o colaborador logado pelo auth_user_id quando existir (mais
+// confiável — nome pode ter homônimo/edição); cai pro nome só como
+// reserva (ex: impersonação via entrarComoColaborador(), que não tem
+// sessão de auth própria).
+function colaboradorAtual(){
+  if(window._colaboradorAuthUserId){
+    var porAuth=colaboradores.find(function(c){return c.auth_user_id===window._colaboradorAuthUserId;});
+    if(porAuth)return porAuth;
+  }
+  return colaboradores.find(function(c){return c.nome===colaboradorLogado;});
+}
+async function carregarMensagensEquipeSupa(){
+  mensagensEquipe=[];
+  try{
+    if(!supa||!window.SALAO_ID)return;
+    var r=await supa.from('mensagens_equipe').select('*').eq('salao_id',window.SALAO_ID).order('criada_em');
+    if(r.error){console.error('⚠️ mensagens_equipe não carregou:',r.error);return;}
+    mensagensEquipe=r.data||[];
+  }catch(e){console.log('err carregar mensagens_equipe',e);}
+  // Bolinhas atualizam sempre, independente de qual página/tela está
+  // aberta no momento — não só quando "Mensagens" está em foco.
+  atualizarBadgesMensagens();
+  if(typeof renderMensagensDona==='function'&&document.getElementById('page-mensagens')&&document.getElementById('page-mensagens').classList.contains('active'))renderMensagensDona();
+  if(typeof cvRenderMensagens==='function'&&colaboradorLogado)cvRenderMensagens();
+  iniciarPollingMensagens();
+}
+function atualizarBadgesMensagens(){
+  var navBadge=document.getElementById('nav-msg-badge');
+  if(navBadge){
+    var totalNaoLidasDona=mensagensEquipe.filter(function(m){return m.remetente==='colaborador'&&!m.lida_em;}).length;
+    navBadge.style.display=totalNaoLidasDona>0?'block':'none';
+  }
+  if(colaboradorLogado){
+    var colab=colaboradorAtual();
+    if(colab){
+      var naoLidasColab=naoLidasPorColab(colab.id,'dona');
+      var seloEl=document.getElementById('cv-msg-selo-nova');
+      var badgeTopoEl=document.getElementById('cv-msg-badge-topo');
+      if(seloEl)seloEl.style.display=naoLidasColab>0?'inline-block':'none';
+      if(badgeTopoEl)badgeTopoEl.style.display=naoLidasColab>0?'block':'none';
+    }
+  }
+}
+function mensagensDoColab(colaboradorId){
+  return mensagensEquipe.filter(function(m){return m.colaborador_id===colaboradorId;});
+}
+function naoLidasPorColab(colaboradorId,remetenteEsperado){
+  return mensagensEquipe.filter(function(m){return m.colaborador_id===colaboradorId&&m.remetente===remetenteEsperado&&!m.lida_em;}).length;
+}
+async function enviarMensagemEquipeSupa(colaboradorId,remetente,texto){
+  if(!supa||!window.SALAO_ID||!texto)return false;
+  try{
+    var r=await supa.from('mensagens_equipe').insert({salao_id:window.SALAO_ID,colaborador_id:colaboradorId,remetente:remetente,texto:texto}).select('*').single();
+    if(r.error)return false;
+    mensagensEquipe.push(r.data);
+    return true;
+  }catch(e){console.log('err enviar mensagem equipe',e);return false;}
+}
+// Colaborador só tem RLS de UPDATE pra marcar mensagens remetente='dona'
+// como lidas (mensagens_equipe_update_colab); a dona marca as
+// remetente='colaborador' (a policy dela cobre qualquer remetente,
+// dentro do próprio salão) — cada lado só chama isso com o remetente
+// que tem permissão de atualizar.
+async function marcarMensagensLidasSupa(colaboradorId,remetente){
+  var naoLidas=mensagensEquipe.filter(function(m){return m.colaborador_id===colaboradorId&&m.remetente===remetente&&!m.lida_em;});
+  if(!naoLidas.length||!supa)return;
+  var agora=new Date().toISOString();
+  naoLidas.forEach(function(m){m.lida_em=agora;});
+  try{
+    await supa.from('mensagens_equipe').update({lida_em:agora}).eq('colaborador_id',colaboradorId).eq('remetente',remetente).is('lida_em',null);
+  }catch(e){console.log('err marcar mensagens lidas',e);}
+}
+function iniciarPollingMensagens(){
+  if(window._mensagensPollingAtivo)return;
+  window._mensagensPollingAtivo=true;
+  setInterval(function(){
+    if(!document.hidden)carregarMensagensEquipeSupa();
+  },45000);
+}
+// ---- Mensagens: tela da dona ----
+function renderMensagensDona(){
+  var listaEl=document.getElementById('msg-lista-colabs');
+  if(!listaEl)return;
+  var ativos=colaboradores.filter(function(c){return c.status!=='Inativo';});
+  listaEl.innerHTML=ativos.map(function(c){
+    var naoLidas=naoLidasPorColab(c.id,'colaborador');
+    var sel=c.id===msgColabSelecionadoId;
+    return '<div onclick="abrirConversaMensagens(\''+c.id+'\')" style="padding:10px 12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;background:'+(sel?'#f0f0f0':'transparent')+'">'
+      +'<span style="font-size:13px;font-weight:'+(sel?'800':'600')+'">'+esc(c.nome)+'</span>'
+      +(naoLidas>0?'<span style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 7px">'+naoLidas+'</span>':'')
+      +'</div>';
+  }).join('');
+  if(msgColabSelecionadoId!=null)renderThreadMensagensDona();
+}
+function abrirConversaMensagens(colaboradorId){
+  msgColabSelecionadoId=colaboradorId;
+  _msgDonaUltimaQtd[colaboradorId]=-1; // força redesenho ao trocar de conversa
+  renderMensagensDona();
+  marcarMensagensLidasSupa(colaboradorId,'colaborador').then(function(){
+    atualizarBadgesMensagens();
+    renderMensagensDona();
+  });
+}
+function renderThreadMensagensDona(){
+  var c=colaboradores.find(function(x){return x.id===msgColabSelecionadoId;});
+  var headerEl=document.getElementById('msg-thread-header');
+  var threadEl=document.getElementById('msg-thread');
+  var inputWrap=document.getElementById('msg-input-wrap');
+  if(!c||!headerEl||!threadEl)return;
+  headerEl.innerHTML='<div style="font-size:14px;font-weight:800">'+esc(c.nome)+'</div>'
+    +'<button class="btn btn-outline btn-sm" onclick="avisarWhatsappMensagem()">📱 Avisar no WhatsApp</button>';
+  if(inputWrap)inputWrap.style.display='flex';
+  var msgs=mensagensDoColab(msgColabSelecionadoId);
+  var qtdAnterior=_msgDonaUltimaQtd[msgColabSelecionadoId];
+  if(qtdAnterior===undefined)qtdAnterior=-1;
+  if(msgs.length!==qtdAnterior){
+    var scrollAntes=threadEl.scrollTop;
+    var pertoDoFim=(threadEl.scrollTop+threadEl.clientHeight)>=(threadEl.scrollHeight-40);
+    threadEl.innerHTML=msgs.length?msgs.map(function(m){
+      var minha=m.remetente==='dona';
+      return '<div style="align-self:'+(minha?'flex-end':'flex-start')+';max-width:75%;background:'+(minha?'#111':'#f0f0f0')+';color:'+(minha?'#fff':'#111')+';border-radius:12px;padding:8px 12px;font-size:13px;white-space:pre-wrap">'
+        +esc(m.texto)
+        +'<div style="font-size:10px;opacity:.6;margin-top:4px">'+new Date(m.criada_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div></div>';
+    }).join('') : '<div style="text-align:center;color:#aaa;font-size:13px;padding:20px">Nenhuma mensagem ainda</div>';
+    if(pertoDoFim||qtdAnterior===-1)threadEl.scrollTop=threadEl.scrollHeight;
+    else threadEl.scrollTop=scrollAntes;
+    _msgDonaUltimaQtd[msgColabSelecionadoId]=msgs.length;
+  }
+}
+async function enviarMensagemDona(){
+  var input=document.getElementById('msg-texto-input');
+  var texto=(input&&input.value||'').trim();
+  if(!texto||msgColabSelecionadoId==null)return;
+  var ok=await enviarMensagemEquipeSupa(msgColabSelecionadoId,'dona',texto);
+  if(ok){input.value='';renderThreadMensagensDona();}
+  else showAlert('⚠️ Não consegui enviar a mensagem. Tente de novo.');
+}
+// wa.me sem número — mesmo padrão já usado em enviarWhatsappAcessoEquipe(),
+// porque não existe telefone de colaborador cadastrado em lugar nenhum hoje.
+function avisarWhatsappMensagem(){
+  var c=colaboradores.find(function(x){return x.id===msgColabSelecionadoId;});
+  if(!c)return;
+  var msg='Oi '+c.nome+', te mandei uma mensagem no sistema — dá uma olhada quando puder 🙂';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+// ---- Mensagens: painel do colaborador ----
+function cvRenderMensagens(){
+  var colab=colaboradorAtual();
+  var threadEl=document.getElementById('cv-msg-thread');
+  if(!colab||!threadEl)return;
+  var msgs=mensagensDoColab(colab.id);
+  if(msgs.length!==_msgCvUltimaQtd){
+    var scrollAntes=threadEl.scrollTop;
+    var pertoDoFim=(threadEl.scrollTop+threadEl.clientHeight)>=(threadEl.scrollHeight-40);
+    threadEl.innerHTML=msgs.length?msgs.map(function(m){
+      var minha=m.remetente==='colaborador';
+      return '<div style="align-self:'+(minha?'flex-end':'flex-start')+';max-width:80%;background:'+(minha?'#111':'#f0f0f0')+';color:'+(minha?'#fff':'#111')+';border-radius:12px;padding:8px 12px;font-size:13px;white-space:pre-wrap">'
+        +esc(m.texto)
+        +'<div style="font-size:10px;opacity:.6;margin-top:4px">'+new Date(m.criada_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div></div>';
+    }).join('') : '<div style="text-align:center;color:#aaa;font-size:13px;padding:20px">Nenhuma mensagem ainda</div>';
+    if(pertoDoFim||_msgCvUltimaQtd===-1)threadEl.scrollTop=threadEl.scrollHeight;
+    else threadEl.scrollTop=scrollAntes;
+    _msgCvUltimaQtd=msgs.length;
+  }
+  marcarMensagensLidasSupa(colab.id,'dona').then(atualizarBadgesMensagens);
+}
+async function enviarMensagemColab(){
+  var colab=colaboradorAtual();
+  var input=document.getElementById('cv-msg-input');
+  var texto=(input&&input.value||'').trim();
+  if(!texto||!colab)return;
+  var ok=await enviarMensagemEquipeSupa(colab.id,'colaborador',texto);
+  if(ok){input.value='';cvRenderMensagens();}
+  else showAlert('⚠️ Não consegui enviar a mensagem. Tente de novo.');
+}
+// ===== FIM Mensagens entre a dona e cada colaborador =====
 function metaIndividualDoMes(colaboradorId){
   var mesRef=mesRefAtual();
   return metasIndividuaisColab.find(function(m){return m.colaborador_id===colaboradorId&&m.mes_ref===mesRef;})||null;
@@ -20038,6 +20268,7 @@ async function entrarComoColaboradorPorAuth(){
     var sessao=await supa.auth.getSession();
     var user=sessao.data&&sessao.data.session?sessao.data.session.user:null;
     if(!user){showAlertOb('Não foi possível confirmar sua sessão.');return;}
+    window._colaboradorAuthUserId=user.id;
     var r=await supa.from('colaboradores').select('*').eq('auth_user_id',user.id).maybeSingle();
     if(!r||!r.data||r.data.status==='Inativo'){
       showAlertOb('Seu acesso não está ativo. Fale com a administração do salão.');
@@ -20306,6 +20537,7 @@ function entrarComoColaborador(nome){
   cvAgendaDataAtual=new Date();
   if(typeof cvRenderAgendaDia==='function')cvRenderAgendaDia();
   if(typeof cvRenderDesempenho==='function')cvRenderDesempenho();
+  if(typeof cvRenderMensagens==='function')cvRenderMensagens();
   // Minhas Metas Individuais (faturamento/serviços/pacotes vendidos — metas_individuais_colab)
   var metasIndEl=document.getElementById('cv-metas-individuais');
   var elMetasCount=document.getElementById('cv-metas-count');
@@ -20564,12 +20796,16 @@ function fazerLogout(){
   if(typeof cursoAlunos!=='undefined')cursoAlunos=[];
   if(typeof cursoMatriculas!=='undefined')cursoMatriculas=[];
   if(typeof cursoMatriculaParcelas!=='undefined')cursoMatriculaParcelas=[];
+  if(typeof mensagensEquipe!=='undefined')mensagensEquipe=[];
   try{sessionStorage.removeItem('flora_salao_id');}catch(e){}
   if(supa)supa.auth.signOut().then(function(){window.location.replace('login.html');}).catch(function(){window.location.replace('login.html');});
   else window.location.replace('login.html');
 }
 function sairColaborador(){
   colaboradorLogado=null;
+  window._colaboradorAuthUserId=null;
+  mensagensEquipe=[];
+  _msgCvUltimaQtd=-1;
   try{localStorage.removeItem('aflor_logado');}catch(e){}
   if(supa)supa.auth.signOut();
   window.SALAO_ID=null;window.SALAO_NOME=null;
@@ -20679,6 +20915,7 @@ function carregarDadosDoSalao(){
   var pComissaoConfigColab=carregarComissaoConfigColabSupa();
   carregarComissaoParcelasSupa();
   var pMetasIndColab=carregarMetasIndividuaisColabSupa();
+  var pMensagens=carregarMensagensEquipeSupa();
   // Mesmo motivo do pComissaoConfigColab acima: sem isso, um pagamento
   // registrado logo no carregamento da página podia cair com taxaTotal=0
   // (taxasCartaoConfig ainda null) mesmo com taxa configurada.
@@ -20691,7 +20928,7 @@ function carregarDadosDoSalao(){
   // vários serviços tendo um serviço extra contado 2x na comissão).
   var pAgenda=pServicos.then(function(){return carregarAgendamentosSupa();}).then(function(){if(typeof atualizarTotaisCaixa==='function')atualizarTotaisCaixa();});
   carregarCaixaSupa();
-  return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao,pMetasIndColab]);
+  return Promise.all([pColabs,pAgenda,pComissaoConfigColab,pTaxasCartao,pMetasIndColab,pMensagens]);
 }
 async function carregarClientesSupa(){
   try{
