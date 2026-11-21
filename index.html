@@ -11457,7 +11457,7 @@ function qtdServicosRealizadosMes(nomeColab,colaboradorId){
   });
   return qtd;
 }
-function calcularRealizadoMesAtual(nomeColab){
+function calcularRealizadoMesAtual(nomeColab,colaboradorId){
   var hoje=new Date();var mesA=hoje.getMonth();var anoA=hoje.getFullYear();
   var total=0;
   try{
@@ -11468,7 +11468,8 @@ function calcularRealizadoMesAtual(nomeColab){
       var dia=agendamentosPorData[dk];
       Object.keys(dia).forEach(function(k){
         var ag=dia[k];
-        if(ag.prof!==nomeColab)return;
+        var bate=(colaboradorId!=null&&ag.profissionalId===colaboradorId)||profAgendaIgual(ag.prof,nomeColab);
+        if(!bate)return;
         var st=(ag.status||'').toLowerCase();
         if(st==='concluido'||st==='concluído'||st==='pago'||st==='finalizado')total+=(ag.valor_num||0);
       });
@@ -11508,7 +11509,7 @@ async function renderMetasColabSelecionado(){
     if(svcs.length>0)precoMedio=svcs.reduce(function(acc,s){return acc+parseMoedaBR(s.preco);},0)/svcs.length;
   }
   var metaQtd=(precoMedio>0&&metaC>0)?Math.ceil(metaC/precoMedio):0;
-  var realC=calcularRealizadoMesAtual(nome);
+  var realC=calcularRealizadoMesAtual(nome,colabObjSel?colabObjSel.id:null);
   var svcC=qtdServicosRealizadosMes(nome,colabObjSel?colabObjSel.id:null);
   var prodC=qtdPacotesVendidosMes(colabObjSel?colabObjSel.id:null);
   var pctC=metaC>0?Math.min(100,Math.round(realC/metaC*100)):0;
@@ -20340,7 +20341,7 @@ function entrarComoColaborador(nome){
     if(!metaInd||(!metaInd.meta_faturamento&&!metaInd.meta_servicos_qtd&&!metaInd.meta_pacotes_qtd)){
       metasIndEl.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">🎯 Nenhuma meta definida pra este mês ainda</div>';
     } else {
-      var realFat=calcularRealizadoMesAtual(nome);
+      var realFat=calcularRealizadoMesAtual(nome,colab.id);
       var realSvc=qtdServicosRealizadosMes(nome,colab.id);
       var realPac=qtdPacotesVendidosMes(colab.id);
       var barraMeta=function(label,real,meta,unidade,fmt){
