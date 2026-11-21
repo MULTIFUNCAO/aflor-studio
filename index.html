@@ -951,7 +951,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
     </div>
     <div class="nav-item" onclick="showPage('vendas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 01-8 0"/></svg>
-      Vendas
+      Metas e Vendas
     </div>
     <div class="nav-item" data-perm-mod="comandas" onclick="showPage('comandas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
@@ -3182,8 +3182,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
         </div>
         <div>
-          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Produtos (quantidade)</label>
-          <input type="number" id="meta-produtos-qtd" placeholder="Ex: 30" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Meta de Pacotes (quantidade)</label>
+          <input type="number" id="meta-pacotes-qtd" placeholder="Ex: 30" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
           <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:6px">Colaborador</label>
@@ -8427,7 +8427,7 @@ function abrirInfoTurmaAgenda(key){
 }
 
 const pages = {
-  'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Vendas',
+  'dashboard':'Página Principal','agenda':'Atendimentos','vendas':'Metas e Vendas',
   'comandas':'Comandas','fluxo':'Fluxo de Caixa','caixa':'Controle de Caixa',
   'remuneracoes':'Remunerações','comissoes-pagar':'Comissões a Pagar','despesas':'Despesas','finpessoal':'💝 Financeiro Pessoal',
   'servicos':'Serviços','produtos':'Produtos','pacotes':'Pacotes','cursos':'🎓 Cursos',
@@ -11106,7 +11106,7 @@ function lerMetaIndividualColabModal(){
 async function abrirModalMetas(){
   await carregarColaboradoresSupa();
   document.getElementById('meta-geral-valor').value = metasVendas.geral||'';
-  document.getElementById('meta-produtos-qtd').value = metasVendas.produtos||'';
+  document.getElementById('meta-pacotes-qtd').value = metasVendas.pacotes||'';
   var selModal=document.getElementById('meta-colab-select-modal');
   if(selModal){
     selModal.innerHTML='<option value="">Selecione...</option>'
@@ -11148,7 +11148,7 @@ function salvarMetasVendas(){
   metasVendas = {
     geral: metaVal,
     servicos: totalAtend,
-    produtos: parseInt(document.getElementById('meta-produtos-qtd').value)||0,
+    pacotes: parseInt(document.getElementById('meta-pacotes-qtd').value)||0,
     individuais: individuais,
     individuaisServicos: individuaisServicos,
     individuaisProdutos: individuaisProdutos,
@@ -11264,11 +11264,11 @@ async function renderizarCheckboxServicos(){
 }
 
 function _metasBarraClara(pct,cor){return '<div style="background:rgba(255,255,255,.25);border-radius:20px;height:6px;overflow:hidden;margin-top:8px"><div style="background:'+cor+';height:6px;border-radius:20px;width:'+pct+'%;transition:width .5s ease"></div></div>';}
-function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPorNome){
+function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdPacotes,realizadoPorNome){
   var pctG=mv.geral>0?Math.min(100,Math.round(totalRealizado/mv.geral*100)):0;
   var faltaG=Math.max(0,(mv.geral||0)-totalRealizado);
   var pctS=mv.servicos>0?Math.min(100,Math.round(qtdServicos/mv.servicos*100)):0;
-  var pctP=mv.produtos>0?Math.min(100,Math.round(qtdProdutos/mv.produtos*100)):0;
+  var pctP=mv.pacotes>0?Math.min(100,Math.round(qtdPacotes/mv.pacotes*100)):0;
   return '<div style="display:flex;flex-direction:column;gap:10px">'
     +'<div style="font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px">Metas do Salão</div>'
     +'<div style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:16px;padding:20px 22px;color:#fff">'
@@ -11300,9 +11300,9 @@ function _metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPor
     +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctS+'% atingido</div></div>'
     +'<div style="background:linear-gradient(135deg,#d97706,#b45309);border-radius:14px;padding:16px 18px;color:#fff">'
     +'<div style="font-size:20px;margin-bottom:5px">📦</div>'
-    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Produtos</div>'
-    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdProdutos+' unid.</div>'
-    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.produtos||0)+' unid.</div>'
+    +'<div style="font-size:10px;font-weight:800;opacity:.8;text-transform:uppercase;letter-spacing:.5px">Pacotes</div>'
+    +'<div style="font-size:22px;font-weight:900;margin-top:4px">'+qtdPacotes+' vendido(s)</div>'
+    +'<div style="font-size:11px;opacity:.7;margin-top:2px">meta: '+(mv.pacotes||0)+' vendido(s)</div>'
     +_metasBarraClara(pctP,'rgba(255,255,255,.9)')
     +'<div style="font-size:10px;opacity:.7;margin-top:4px">'+pctP+'% atingido</div></div>'
     +'</div></div>';
@@ -11314,7 +11314,7 @@ async function renderMetasCards(){
   var movs=caixaState.movimentos||[];
   var totalRealizado=movs.filter(function(m){return m.tipo==='entrada';}).reduce(function(s,m){return s+m.valor;},0);
   var qtdServicos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Servico de cabelo';}).length;
-  var qtdProdutos=movs.filter(function(m){return m.tipo==='entrada'&&m.categoria==='Produto vendido';}).length;
+  var qtdPacotes=qtdPacotesVendidosMes();
   var realizadoPorNome={};
   try{
     if(typeof supa!=='undefined'&&supa&&window.SALAO_ID&&mv.sugestoesPorNome&&Object.keys(mv.sugestoesPorNome).length>0){
@@ -11333,7 +11333,7 @@ async function renderMetasCards(){
     +'<div id="meta-colab-resultado"><div style="padding:24px;text-align:center;color:#bbb;font-size:13px">Selecione um colaborador acima.</div></div>'
     +'</div>';
   el.style.cssText='display:flex;flex-direction:column;gap:20px';
-  el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdProdutos,realizadoPorNome)+blocoIndividual;
+  el.innerHTML=_metasBlocoSalao(mv,totalRealizado,qtdServicos,qtdPacotes,realizadoPorNome)+blocoIndividual;
 }
 var _cacheHistColab=null,_cacheHistTs=0;
 async function buscarHistoricoColaboradores(){
@@ -11362,6 +11362,22 @@ async function buscarHistoricoColaboradores(){
   }catch(e){console.log('hist colab err',e);}
   _cacheHistColab=res;_cacheHistTs=agora;
   return res;
+}
+// Pacotes vendidos no mês — conta grupo_id DISTINTO (um pacote com vários
+// serviços grava várias linhas em pacotes_clientes com o mesmo grupo_id;
+// contar linha dobraria/triplicaria). Sem colaboradorId, conta o salão
+// inteiro; com colaboradorId, só os vendidos por ele.
+function qtdPacotesVendidosMes(colaboradorId){
+  var hoje=new Date();
+  var ini=new Date(hoje.getFullYear(),hoje.getMonth(),1).toISOString().slice(0,10);
+  var fim=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).toISOString().slice(0,10);
+  var grupos={};
+  (pacotesClientes||[]).forEach(function(pc){
+    if(pc.data_compra<ini||pc.data_compra>fim)return;
+    if(colaboradorId&&pc.vendido_por_colaborador_id!==colaboradorId)return;
+    if(pc.grupo_id)grupos[pc.grupo_id]=true;
+  });
+  return Object.keys(grupos).length;
 }
 function calcularRealizadoMesAtual(nomeColab){
   var hoje=new Date();var mesA=hoje.getMonth();var anoA=hoje.getFullYear();
