@@ -2560,19 +2560,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
         </div>
 
-        <!-- Mensagens -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:20px;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:14px;font-weight:800">💬 Mensagens</div>
-            <span id="cv-msg-selo-nova" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px">Nova</span>
-          </div>
-          <div id="cv-msg-thread" style="padding:14px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
-          <div style="padding:12px;border-top:1px solid #f5f5f5;display:flex;gap:8px">
-            <textarea id="cv-msg-input" rows="2" maxlength="2000" placeholder="Escreva uma mensagem..." style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;resize:none;outline:none"></textarea>
-            <button class="btn btn-primary" onclick="enviarMensagemColab()" style="align-self:flex-end">Enviar</button>
-          </div>
-        </div>
-
         <!-- Cards resumo do dia -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
           <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e5e5;border-left:4px solid #111">
@@ -2668,6 +2655,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
             <span id="cv-atendimentos-periodo-seta" style="font-size:12px;color:#888">▶</span>
           </div>
           <div id="cv-atendimentos-periodo" style="padding:14px;display:none"></div>
+        </div>
+
+        <!-- Mensagens -->
+        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:20px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:14px;font-weight:800">💬 Mensagens</div>
+            <span id="cv-msg-selo-nova" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px">Nova</span>
+          </div>
+          <div id="cv-msg-thread" style="padding:14px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+          <div style="padding:12px;border-top:1px solid #f5f5f5;display:flex;gap:8px">
+            <textarea id="cv-msg-input" rows="2" maxlength="2000" placeholder="Escreva uma mensagem..." style="flex:1;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;resize:none;outline:none"></textarea>
+            <button class="btn btn-primary" onclick="enviarMensagemColab()" style="align-self:flex-end">Enviar</button>
+          </div>
         </div>
       </div>
     </div>
