@@ -2612,15 +2612,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div id="cv-agenda" style="padding:14px"></div>
         </div>
 
-        <!-- Minhas metas -->
-        <div style="background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
-            <div style="font-size:14px;font-weight:800">🎯 Minhas Metas e Tarefas</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">Definidas pelo administrador</div>
-          </div>
-          <div id="cv-metas" style="padding:14px"></div>
-        </div>
-
         <!-- Caixa de Hoje -->
         <div id="cv-caixa-section" style="display:none;background:#fff;border-radius:14px;border:1px solid #e5e5e5;margin-bottom:16px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
@@ -2632,10 +2623,11 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
         <!-- Atendimentos do período -->
         <div id="cv-atendimentos-periodo-wrap" style="display:none;background:#fff;border-radius:14px;border:1px solid #e5e5e5;overflow:hidden">
-          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5">
-            <div style="font-size:14px;font-weight:800">Atendimentos do período</div>
+          <div style="padding:14px 18px;border-bottom:1px solid #f5f5f5;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="cvToggleAtendimentosPeriodo()">
+            <div style="font-size:14px;font-weight:800" id="cv-atendimentos-periodo-titulo">Atendimentos do período</div>
+            <span id="cv-atendimentos-periodo-seta" style="font-size:12px;color:#888">▶</span>
           </div>
-          <div id="cv-atendimentos-periodo" style="padding:14px"></div>
+          <div id="cv-atendimentos-periodo" style="padding:14px;display:none"></div>
         </div>
       </div>
     </div>
@@ -20067,6 +20059,14 @@ function cvAgendaNavegar(delta){
   cvAgendaDataAtual=d;
   cvRenderAgendaDia();
 }
+function cvToggleAtendimentosPeriodo(){
+  var el=document.getElementById('cv-atendimentos-periodo');
+  var seta=document.getElementById('cv-atendimentos-periodo-seta');
+  if(!el)return;
+  var aberto=el.style.display!=='none';
+  el.style.display=aberto?'none':'';
+  if(seta)seta.textContent=aberto?'▶':'▼';
+}
 function horaParaMinutosCv(h){
   var p=String(h||'0:0').split(':');
   return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
@@ -20306,34 +20306,12 @@ function entrarComoColaborador(nome){
   cvAgendaDataAtual=new Date();
   if(typeof cvRenderAgendaDia==='function')cvRenderAgendaDia();
   if(typeof cvRenderDesempenho==='function')cvRenderDesempenho();
-  // Metas do colaborador
-  var metasEl=document.getElementById('cv-metas');
-  if(metasEl){
-    var minhasMetas=metasList.filter(function(m){return m.colab&&m.colab.includes(nome);});
-    document.getElementById('cv-metas-count').textContent=minhasMetas.filter(function(m){return m.status!=='concluida';}).length;
-    if(!minhasMetas.length){
-      metasEl.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:13px">🎯 Nenhuma meta atribuída</div>';
-    } else {
-      metasEl.innerHTML=minhasMetas.map(function(m){
-        var pct=getPct(m);
-        var sl={pendente:{txt:'Pendente',cor:'#888'},andamento:{txt:'Em andamento',cor:'#f59e0b'},concluida:{txt:'Concluída ✅',cor:'#22c55e'},atrasada:{txt:'Atrasada ⚠️',cor:'#ef4444'}};
-        var s=sl[m.status]||sl.pendente;
-        return '<div style="background:#f8f8f8;border-radius:10px;padding:14px;margin-bottom:8px;border-left:4px solid '+(m.status==='concluida'?'#22c55e':m.status==='atrasada'?'#ef4444':'#111')+'">'
-          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-          +'<div style="font-size:13px;font-weight:700">'+(m.tipo==='meta'?'🎯':'✅')+' '+m.titulo+'</div>'
-          +'<span style="font-size:10px;font-weight:700;color:'+s.cor+'">'+s.txt+'</span></div>'
-          +(m.desc?'<div style="font-size:11px;color:#666;margin-bottom:8px">'+m.desc+'</div>':'')
-          +(m.tipo==='meta'?'<div style="height:6px;background:#e5e5e5;border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:'+pct+'%;background:'+(pct>=100?'#22c55e':'#111')+';border-radius:3px"></div></div>'
-            +'<div style="font-size:10px;color:#888;margin-bottom:6px">'+m.atual+' / '+m.alvo+' '+m.unidade+' · '+pct+'%</div>':'')
-          +'<div style="display:flex;align-items:center;justify-content:space-between">'
-          +'<span style="font-size:10px;color:#888">📅 Prazo: '+m.prazo+'</span>'
-          +(m.recompensa?'<span style="font-size:10px;color:#f59e0b;font-weight:600">🏆 '+m.recompensa+'</span>':'')
-          +'</div>'
-          +(m.tipo==='tarefa'&&m.status!=='concluida'?'<button onclick="colabConcluirTarefa('+m.id+')" style="margin-top:8px;width:100%;padding:7px;background:#111;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✓ Marcar como concluída</button>':'')
-          +'</div>';
-      }).join('');
-    }
-  }
+  // "Metas Ativas" (card resumo do topo) continua contando metasList, só
+  // não existe mais a lista "Minhas Metas e Tarefas" — virou "Minhas
+  // Metas do Mês" (metas_individuais_colab), mais abaixo.
+  var minhasMetas=metasList.filter(function(m){return m.colab&&m.colab.includes(nome);});
+  var elMetasCount=document.getElementById('cv-metas-count');
+  if(elMetasCount)elMetasCount.textContent=minhasMetas.filter(function(m){return m.status!=='concluida';}).length;
   // Minhas Metas Individuais (faturamento/serviços/pacotes vendidos — metas_individuais_colab)
   var metasIndEl=document.getElementById('cv-metas-individuais');
   if(metasIndEl&&colab){
@@ -20489,6 +20467,8 @@ function entrarComoColaborador(nome){
   if(atendPeriodoWrapEl&&atendPeriodoEl){
     if(typeof atualP!=='undefined'&&atualP&&atualP.itens&&atualP.itens.length){
       atendPeriodoWrapEl.style.display='';
+      var elTituloAtendPeriodo=document.getElementById('cv-atendimentos-periodo-titulo');
+      if(elTituloAtendPeriodo)elTituloAtendPeriodo.textContent='Atendimentos do período ('+atualP.itens.length+' atend. · '+fmtCaixa(atualP.totalComissao)+')';
       var gruposPorDiaCv={},ordemDiasCv=[];
       atualP.itens.forEach(function(a){
         var chaveDiaCv=dataIsoDe(a._dataAgenda);
