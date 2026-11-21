@@ -3374,6 +3374,9 @@ tr.row-retorno-retornou td{background:#f0fff4}
             </select>
             <div id="pacote-preview-taxa"></div>
           </div>
+          <div class="form-group" style="margin-bottom:10px"><label>Vendido por</label>
+            <select id="pacote-vendedor"><option value="">— Opcional —</option></select>
+          </div>
           <div style="font-size:11px;color:#166534">✅ Ao vender, o pacote entra no caixa como receita e fica disponível para uso nos agendamentos</div>
         </div>
       </div>
@@ -3414,6 +3417,12 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <label>Cliente *</label>
       <select id="venda-pacote-cliente" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
         <option value="">— Selecione o cliente —</option>
+      </select>
+    </div>
+    <div class="form-group full" style="margin-bottom:14px">
+      <label>Vendido por</label>
+      <select id="venda-pacote-vendedor" style="width:100%;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;color:#111;outline:none">
+        <option value="">— Opcional —</option>
       </select>
     </div>
     <div class="form-group full">
@@ -6393,7 +6402,8 @@ async function salvarPacoteClienteSupa(p){
       grupo_id:p.grupo_id||null,salao_id:window.SALAO_ID,
       valor_bruto:p.valor_bruto!=null?p.valor_bruto:null,
       taxa_cartao_valor:p.taxa_cartao_valor!=null?p.taxa_cartao_valor:null,
-      valor_liquido:p.valor_liquido!=null?p.valor_liquido:null
+      valor_liquido:p.valor_liquido!=null?p.valor_liquido:null,
+      vendido_por_colaborador_id:p.vendido_por_colaborador_id||null
     }]).select('id');
     // Mesmo motivo do salvarPacoteCatalogoSupa — sem checar r.error, uma
     // rejeição do banco (ex: pacote_id apontando pra um id que não existe
@@ -11937,6 +11947,11 @@ function abrirVenderPacoteParaCliente(ci){
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">PACOTE</label>'
     +'<select id="vpc-pacote" onchange="vpClienteAtualizarCampos()" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none">'
     +'<option value="">— Selecione —</option>'+pkgOpts+'</select></div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">VENDIDO POR</label>'
+    +'<select id="vpc-vendedor" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none">'
+    +'<option value="">— Opcional —</option>'
+    +(colaboradores||[]).filter(function(cc){return cc.status!=='Inativo';}).map(function(cc){return '<option value="'+cc.id+'">'+cc.nome+'</option>';}).join('')
+    +'</select></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
     +'<div><label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:5px">SESSÕES</label>'
     +'<input type="number" id="vpc-sessoes" min="1" placeholder="10" style="width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:10px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box"/></div>'
@@ -11988,6 +12003,7 @@ async function confirmarVendaPacoteParaCliente(ci){
   var valor=parseFloat(document.getElementById('vpc-valor')?.value)||0;
   var forma=window._vpcForma||'';
   if(!forma){showAlert('Selecione a forma de pagamento.');return;}
+  var vendedorId=document.getElementById('vpc-vendedor')?.value||null;
   // Cria cópia do pacote com sessões e valor customizados para esta venda
   var pacCopy=Object.assign({},p,{
     servicosItens:p.servicosItens&&p.servicosItens.length
@@ -12000,7 +12016,7 @@ async function confirmarVendaPacoteParaCliente(ci){
   // Só mostra sucesso/fecha o modal depois de confirmar que salvou de
   // verdade — antes disparava e já mostrava "vendido!" sem esperar nem
   // checar o resultado do insert.
-  var resultado=await venderPacoteParaCliente(pacCopy,c.nome,forma,c.id||null);
+  var resultado=await venderPacoteParaCliente(pacCopy,c.nome,forma,c.id||null,vendedorId);
   if(btn){btn.disabled=false;btn.innerHTML='✅ Confirmar Venda';}
   if(!resultado.ok){
     showAlert('⚠️ Não consegui registrar a venda do pacote pra '+c.nome+'. Nada foi lançado no caixa. Tente de novo.');
@@ -14938,6 +14954,12 @@ function abrirModalNovoPacote(){
   var box=document.getElementById('pacote-cliente-nome-sugestoes');
   if(box){box.style.display='none';box.innerHTML='';}
   var elPrevTaxa=document.getElementById('pacote-preview-taxa');if(elPrevTaxa)elPrevTaxa.innerHTML='';
+  var selVendPac=document.getElementById('pacote-vendedor');
+  if(selVendPac){
+    selVendPac.innerHTML='<option value="">— Opcional —</option>'
+      +colaboradores.filter(function(c){return c.status!=='Inativo';})
+        .map(function(c){return '<option value="'+c.id+'">'+c.nome+'</option>';}).join('');
+  }
   openModal('modal-pacote');
 }
 // Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" no
@@ -15064,7 +15086,7 @@ function carregarPacotesClientesLocal(){
 // já lançava a entrada no caixa em seguida, sem esperar nem checar se o
 // pacote tinha sido salvo de verdade — o caixa recebia o valor mesmo
 // quando o pacote não existia no banco.
-async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId){
+async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clienteId,vendidoPorColaboradorId){
   var hoje=new Date().toISOString().split('T')[0];
   var valor=parsePrecoPacote(pacoteCatalogo.preco);
   var validadeCalc=calcValidadePacote(pacoteCatalogo.validade,hoje);
@@ -15087,7 +15109,8 @@ async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clien
       nome_servico:item.servico,quantidade_total:parseInt(item.qtd,10)||1,
       quantidade_usada:0,data_compra:hoje,
       validade:validadeCalc,
-      valor_pago:valor,forma_pagamento:formaPag||'Pix'
+      valor_pago:valor,forma_pagamento:formaPag||'Pix',
+      vendido_por_colaborador_id:vendidoPorColaboradorId||null
     };
     if(taxaValor>0){
       reg.valor_bruto=valor;
@@ -15156,6 +15179,12 @@ function abrirVenderPacote(idx){
         return '<option value="'+i+'">'+c.nome+(c.tel?' — '+c.tel:'')+'</option>';
       }).join('');
   }
+  var selVend=document.getElementById('venda-pacote-vendedor');
+  if(selVend){
+    selVend.innerHTML='<option value="">— Opcional —</option>'
+      +colaboradores.filter(function(c){return c.status!=='Inativo';})
+        .map(function(c){return '<option value="'+c.id+'">'+c.nome+'</option>';}).join('');
+  }
   document.querySelectorAll('.venda-pacote-forma-btn').forEach(function(b){
     b.style.background='#fff';b.style.color='#333';b.style.borderColor='#ddd';
   });
@@ -15171,12 +15200,13 @@ async function confirmarVendaPacote(){
   if(isNaN(ci)||!clientes[ci]){showAlert('Selecione um cliente.');return;}
   if(!vendaPacoteCtx.forma){showAlert('Selecione a forma de pagamento.');return;}
   var c=clientes[ci];
+  var vendedorId=document.getElementById('venda-pacote-vendedor')?.value||null;
   var btn=document.getElementById('btn-confirmar-venda-pacote');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="flora-spinner"></span>Confirmando...';}
   // Só mostra sucesso/fecha o modal depois de confirmar que salvou de
   // verdade — antes disparava e já mostrava "vendido! Entrada registrada
   // no caixa" sem esperar nem checar o resultado do insert.
-  var resultado=await venderPacoteParaCliente(p,c.nome,vendaPacoteCtx.forma,c.id||null);
+  var resultado=await venderPacoteParaCliente(p,c.nome,vendaPacoteCtx.forma,c.id||null,vendedorId);
   if(btn){btn.disabled=false;btn.innerHTML='✅ Confirmar Venda';}
   if(!resultado.ok){
     showAlert('⚠️ Não consegui registrar a venda do pacote "'+p.nome+'" pra '+c.nome+'. Nada foi lançado no caixa. Tente de novo.');
@@ -15986,6 +16016,7 @@ async function addPacote(){
   var clienteNome=(document.getElementById('pacote-cliente-nome').value||'').trim();
   var clienteTelDigitado=(document.getElementById('pacote-cliente-tel')?.value||'').trim();
   var formaPag=(document.getElementById('pacote-forma-pag')?.value||'Pix');
+  var vendedorId=document.getElementById('pacote-vendedor')?.value||null;
   var escolhaCliente=null;
   // Tocou numa sugestão do autocomplete e não editou o nome depois — usa
   // essa cliente direto, sem buscar parecidas nem perguntar nada.
@@ -16042,7 +16073,7 @@ async function addPacote(){
     // Grava a venda PRIMEIRO (cliente_id null se ainda não existe). Só depois
     // que isso é confirmado é que a cliente nova é cadastrada — se a venda
     // falhar, nenhuma cliente é criada.
-    var resultadoVenda=await venderPacoteParaCliente(novoItem,nomeParaVenda,formaPag,clienteIdFinal);
+    var resultadoVenda=await venderPacoteParaCliente(novoItem,nomeParaVenda,formaPag,clienteIdFinal,vendedorId);
     vendaOk=resultadoVenda.ok;
     if(vendaOk&&clienteNovaPendente){
       var clienteCriada=await criarClienteRapidoParaPacote(clienteNovaPendente.nome,clienteNovaPendente.tel);
