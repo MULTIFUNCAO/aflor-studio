@@ -3999,7 +3999,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <button class="modal-close" onclick="closeModal('modal-cfg-taxas-cartao')">✕</button>
     </div>
     <div class="form-card" style="padding:16px">
-      <div style="font-size:11px;color:#888;margin-bottom:12px">Deixe em branco a forma que não tiver taxa — Pix e Dinheiro não têm taxa (sempre 0%). A taxa entra como despesa "Taxa de Cartão" no Fluxo de Caixa e no DRE a cada pagamento com essa forma, e reduz a base da comissão do profissional que usar comissão sobre o valor líquido (configurável no cadastro de cada profissional).</div>
+      <div style="font-size:11px;color:#888;margin-bottom:12px">Deixe em branco a forma que não tiver taxa — Dinheiro nunca tem taxa. Com taxa cadastrada, o pagamento gera uma única entrada no caixa pelo valor líquido (a taxa já descontada), sem saída separada, e reduz a base da comissão do profissional que usar comissão sobre o valor líquido (configurável no cadastro de cada profissional).</div>
       <div class="form-group full" style="margin-bottom:10px">
         <label>Débito (%)</label>
         <input type="number" id="cfgtaxas-debito" placeholder="Ex: 1,5" min="0" max="100" step="0.01"/>
@@ -4011,6 +4011,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
       <div class="form-group full" style="margin-bottom:10px">
         <label>Crédito parcelado (%) — opcional</label>
         <input type="number" id="cfgtaxas-credito-parcelado" placeholder="Ex: 5,5" min="0" max="100" step="0.01"/>
+      </div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label>Pix (%) — opcional</label>
+        <input type="number" id="cfgtaxas-pix" placeholder="Ex: 0,99" min="0" max="100" step="0.01"/>
       </div>
       <button class="btn btn-primary btn-sm" onclick="salvarTaxasCartaoSupa()">Salvar taxas</button>
     </div>
@@ -10424,6 +10428,7 @@ function preencherFormTaxasCartao(){
   var elD=document.getElementById('cfgtaxas-debito');if(elD)elD.value=cfg.debito_pct!=null?cfg.debito_pct:'';
   var elCV=document.getElementById('cfgtaxas-credito-vista');if(elCV)elCV.value=cfg.credito_vista_pct!=null?cfg.credito_vista_pct:'';
   var elCP=document.getElementById('cfgtaxas-credito-parcelado');if(elCP)elCP.value=cfg.credito_parcelado_pct!=null?cfg.credito_parcelado_pct:'';
+  var elPix=document.getElementById('cfgtaxas-pix');if(elPix)elPix.value=cfg.pix_pct!=null?cfg.pix_pct:'';
 }
 async function salvarTaxasCartaoSupa(){
   if(!window.SALAO_ID||!supa){showAlert('Sessão do salão não encontrada.');return;}
@@ -10432,7 +10437,8 @@ async function salvarTaxasCartaoSupa(){
     salao_id:window.SALAO_ID,
     debito_pct:lerPct('cfgtaxas-debito'),
     credito_vista_pct:lerPct('cfgtaxas-credito-vista'),
-    credito_parcelado_pct:lerPct('cfgtaxas-credito-parcelado')
+    credito_parcelado_pct:lerPct('cfgtaxas-credito-parcelado'),
+    pix_pct:lerPct('cfgtaxas-pix')
   };
   try{
     var r=await supa.from('config_taxas_cartao').upsert(novo,{onConflict:'salao_id'});
@@ -10444,7 +10450,9 @@ async function salvarTaxasCartaoSupa(){
 }
 // Resolve a taxa (%) e o valor líquido pra uma forma de pagamento e um
 // valor. Forma sem taxa configurada (ou config nunca carregada) -> 0%,
-// mesmo comportamento de hoje (nada muda).
+// mesmo comportamento de hoje (nada muda). Conta em centavos (inteiro)
+// pra nunca sobrar fração de centavo — ex: R$100 a 1,61% = taxa R$1,61
+// exata, líquido R$98,39.
 function calcularTaxaCartao(forma,valor){
   valor=parseFloat(valor)||0;
   var cfg=taxasCartaoConfig;
@@ -10453,9 +10461,12 @@ function calcularTaxaCartao(forma,valor){
     if(forma==='Cartão de Débito')pct=parseFloat(cfg.debito_pct)||0;
     else if(forma==='Cartão de Crédito')pct=parseFloat(cfg.credito_vista_pct)||0;
     else if(forma==='Cartão de Crédito Parcelado')pct=parseFloat(cfg.credito_parcelado_pct)||0;
+    else if(forma==='Pix')pct=parseFloat(cfg.pix_pct)||0;
   }
-  var taxa=valor*(pct/100);
-  return{pct:pct,taxa:taxa,liquido:valor-taxa};
+  var valorCent=Math.round(valor*100);
+  var taxaCent=Math.round(valorCent*(pct/100));
+  var liquidoCent=valorCent-taxaCent;
+  return{pct:pct,taxa:taxaCent/100,liquido:liquidoCent/100};
 }
 // Base de comissão de um item de servicos_detalhe: usa comissao_valor
 // quando existe (taxa de cartão já descontada, gravado em
@@ -10465,9 +10476,9 @@ function valorBaseComissao(sd){
   if(sd&&typeof sd.comissao_valor==='number')return sd.comissao_valor;
   return parseFloat(sd&&sd.valor)||0;
 }
-// Prévia "Taxa do débito/crédito: X% (− R$ Y) · Você recebe: R$ Z" usada
+// Prévia "Taxa do débito/crédito/Pix: X% (− R$ Y) · Você recebe: R$ Z" usada
 // no Confirmar Pagamento e na Comanda — só exibição, não grava nada.
-// Vazio ("") pra Pix/Dinheiro/Link ou forma sem taxa cadastrada.
+// Vazio ("") pra Dinheiro/Link ou forma sem taxa cadastrada.
 function linhaPrevisaoTaxaCartao(forma,valor){
   valor=parseFloat(valor)||0;
   if(!forma||valor<=0)return '';
@@ -10475,6 +10486,7 @@ function linhaPrevisaoTaxaCartao(forma,valor){
   if(!(r.pct>0&&r.taxa>0))return '';
   var rotulo=forma==='Cartão de Débito'?'Taxa do débito'
     :forma==='Cartão de Crédito Parcelado'?'Taxa do crédito parcelado'
+    :forma==='Pix'?'Taxa do Pix'
     :'Taxa do crédito';
   var pctTxt=(Math.round(r.pct*100)/100).toString().replace('.',',');
   return '<div style="font-size:11px;color:#9a3412;margin-top:6px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px">'
@@ -13234,7 +13246,12 @@ function lancarSinalCaixaSeNecessario(reg,valor,forma){
   reg.formaSinal=forma;
   var nomeSvc=nomeServicoAgendamento(reg);
   var descricao='Sinal · '+(nomeSvc||reg.servico||'Serviço')+' · '+((reg.cliente||'').trim()||'Cliente');
-  var mov=inserirMovimentoCaixa({tipo:'entrada',categoria:'Sinal/Reserva',descricao:descricao,valor:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''});
+  // Sinal pago com forma que tem taxa configurada segue a mesma regra do
+  // saldo: 1 entrada só, pelo líquido, com bruto/taxa/líquido na linha.
+  var rSinal=calcularTaxaCartao(forma,valor);
+  var optsMov={tipo:'entrada',categoria:'Sinal/Reserva',descricao:descricao,valor:rSinal.taxa>0?rSinal.liquido:valor,forma:formaPagamentoParaCaixa(forma),profissional:reg.prof||''};
+  if(rSinal.taxa>0){optsMov.valorBruto=valor;optsMov.taxaPercentual=rSinal.pct;optsMov.taxaValor=rSinal.taxa;optsMov.valorLiquido=rSinal.liquido;}
+  var mov=inserirMovimentoCaixa(optsMov);
   if(mov){reg.sinalMovId=mov.id;reg.sinalLancadoCaixa=true;return mov.id;}
   return null;
 }
@@ -13246,9 +13263,11 @@ function sincronizarFormaSinalAgenda(key,forma){
     agendamentosPorData[dataKey][key].formaSinal=forma;
   }
 }
-function lancarEntradaCaixaAuto(desc,valor,forma,agendamentoId){
+function lancarEntradaCaixaAuto(desc,valor,forma,agendamentoId,taxaInfo){
   if(!caixaState.aberto)return null;
-  return inserirMovimentoCaixa({categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaPagamentoParaCaixa(forma),agendamentoId:agendamentoId||null});
+  var opts={categoria:'Servico de cabelo',descricao:desc,valor:valor,forma:formaPagamentoParaCaixa(forma),agendamentoId:agendamentoId||null};
+  if(taxaInfo){opts.valorBruto=taxaInfo.valorBruto;opts.taxaPercentual=taxaInfo.taxaPercentual;opts.taxaValor=taxaInfo.taxaValor;opts.valorLiquido=taxaInfo.valorLiquido;}
+  return inserirMovimentoCaixa(opts);
 }
 
 function confirmarFechamentoPagamento(){
@@ -13372,18 +13391,18 @@ function confirmarFechamentoPagamento(){
         agendamentosPorData[dataKey][key].formaSinal=ctx.dados.formaSinal;
       }
     }
-    // Lançar saldo restante da comanda — 1 lançamento por parte do pagamento (1 ou 2 se dividido)
+    // Lançar saldo restante da comanda — 1 lançamento por parte do pagamento (1 ou 2 se dividido).
+    // Forma com taxa configurada: a entrada já sai pelo valor líquido, com
+    // bruto/taxa%/taxa R$/líquido gravados na MESMA linha — sem saída
+    // separada de "Taxa de Cartão" (pagamentos antigos, já lançados assim,
+    // não são tocados).
     if(ctx.restante>0){
       var svcNome=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico;
       partesPagamento.forEach(function(parte){
-        lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,parte.valor,parte.forma,ctx.supaId);
+        var rParte=calcularTaxaCartao(parte.forma,parte.valor);
+        var taxaInfoParte=rParte.taxa>0?{valorBruto:parte.valor,taxaPercentual:rParte.pct,taxaValor:rParte.taxa,valorLiquido:rParte.liquido}:null;
+        lancarEntradaCaixaAuto(svcNome+' — '+ctx.dados.cliente,rParte.taxa>0?rParte.liquido:parte.valor,parte.forma,ctx.supaId,taxaInfoParte);
       });
-      // Taxa de cartão — caixa aberto: lança igual à receita acima, via
-      // inserirMovimentoCaixa (que já ignora sozinha se o caixa não
-      // estiver aberto). Caixa fechado: ver bloco do Fluxo mais abaixo.
-      if(taxaTotal>0&&caixaState.aberto){
-        inserirMovimentoCaixa({tipo:'saida',categoria:'Taxa de Cartão',descricao:'Taxa de cartão — '+svcNome+' — '+(ctx.dados.cliente||''),valor:taxaTotal,forma:formaPagamentoParaCaixa(forma),agendamentoId:ctx.supaId||null});
-      }
     }
     // Lançar comissão do colaborador
     // ctx.total já tem o desconto subtraído (é o valor líquido).
@@ -13426,24 +13445,28 @@ function confirmarFechamentoPagamento(){
       var _dataFmt=_dd+'/'+_mm+'/'+_now.getFullYear();
       var _svcFluxo=nomeServicoAgendamento(ctx.dados)||ctx.dados.servico||'Serviço';
       if(pgSplitAtivo&&partesPagamento.length){
-        // Sinal (se houver) + 1 linha por parte do saldo dividido — mantém a soma igual a ctx.total
+        // Sinal (se houver) + 1 linha por parte do saldo dividido — mantém a soma igual a ctx.total.
+        // Forma com taxa: cada linha já sai pelo líquido, com bruto/taxa/líquido gravados nela.
         if(ctx.sinalAbate>0){
-          var _lancSinal={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||'')+' (sinal)',cat:'Serviço',forma:(ctx.dados&&ctx.dados.formaSinal)||'',val:ctx.sinalAbate,status:'confirmado',agendamento_id:ctx.supaId||null};
+          var formaSinalFluxo=(ctx.dados&&ctx.dados.formaSinal)||'';
+          var rSinalFluxo=calcularTaxaCartao(formaSinalFluxo,ctx.sinalAbate);
+          var _lancSinal={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||'')+' (sinal)',cat:'Serviço',forma:formaSinalFluxo,val:rSinalFluxo.taxa>0?rSinalFluxo.liquido:ctx.sinalAbate,status:'confirmado',agendamento_id:ctx.supaId||null};
+          if(rSinalFluxo.taxa>0){_lancSinal.valor_bruto=ctx.sinalAbate;_lancSinal.taxa_percentual=rSinalFluxo.pct;_lancSinal.taxa_valor=rSinalFluxo.taxa;_lancSinal.valor_liquido=rSinalFluxo.liquido;}
           fluxoLancamentos.push(_lancSinal);fluxoInserirSupa(_lancSinal);
         }
         partesPagamento.forEach(function(parte){
-          var _lancParte={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:parte.forma,val:parte.valor,status:'confirmado',agendamento_id:ctx.supaId||null};
+          var rParteFluxo=calcularTaxaCartao(parte.forma,parte.valor);
+          var _lancParte={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:parte.forma,val:rParteFluxo.taxa>0?rParteFluxo.liquido:parte.valor,status:'confirmado',agendamento_id:ctx.supaId||null};
+          if(rParteFluxo.taxa>0){_lancParte.valor_bruto=parte.valor;_lancParte.taxa_percentual=rParteFluxo.pct;_lancParte.taxa_valor=rParteFluxo.taxa;_lancParte.valor_liquido=rParteFluxo.liquido;}
           fluxoLancamentos.push(_lancParte);fluxoInserirSupa(_lancParte);
         });
       }else{
-        var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:ctx.total,status:'confirmado',agendamento_id:ctx.supaId||null};fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
-      }
-      // Taxa de cartão — caixa fechado: mesmo caminho direto pro Fluxo
-      // que a receita acima já usa (sem isso, com o caixa fechado a
-      // despesa nunca seria registrada em lugar nenhum).
-      if(taxaTotal>0){
-        var _lancTaxa={tipo:'despesa',data:_dataFmt,desc:'Taxa de cartão — '+_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Taxa de Cartão',forma:forma||'',val:taxaTotal,status:'confirmado',agendamento_id:ctx.supaId||null};
-        fluxoLancamentos.push(_lancTaxa);fluxoInserirSupa(_lancTaxa);
+        // taxaTotal/valorLiquido já calculados antes (só sobre o saldo pago agora, partesPagamento) —
+        // mesma base usada no bloco do caixa aberto, nenhuma despesa separada é mais lançada aqui.
+        var _brutoFluxo=valorLiquido+taxaTotal;
+        var _lancFluxo={tipo:'receita',data:_dataFmt,desc:_svcFluxo+' — '+(ctx.dados.cliente||''),cat:'Serviço',forma:forma||'',val:taxaTotal>0?valorLiquido:ctx.total,status:'confirmado',agendamento_id:ctx.supaId||null};
+        if(taxaTotal>0){_lancFluxo.valor_bruto=_brutoFluxo;_lancFluxo.taxa_percentual=calcularTaxaCartao(forma,_brutoFluxo).pct;_lancFluxo.taxa_valor=taxaTotal;_lancFluxo.valor_liquido=valorLiquido;}
+        fluxoLancamentos.push(_lancFluxo);fluxoInserirSupa(_lancFluxo);
       }
     }
     closeModal('modal-confirmar-pagamento');
@@ -15382,16 +15405,13 @@ async function venderPacoteParaCliente(pacoteCatalogo,clienteNome,formaPag,clien
   salvarPacotesClientesLocal();
   var todasSalvas=resultados.every(function(ok){return ok;});
   if(todasSalvas){
-    lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor,formaPag||'Pix');
-    // Taxa de cartão como despesa no Fluxo de Caixa — mesma categoria do
-    // Confirmar Pagamento. Só quando o caixa está aberto, igual à receita
-    // acima (lancarEntradaCaixaAuto/inserirMovimentoCaixa já só lançam com
-    // o caixa aberto — pacote vendido com o caixa fechado já não lança a
-    // própria receita em lugar nenhum hoje; limitação existente, fora
-    // deste pedido).
-    if(taxaValor>0){
-      inserirMovimentoCaixa({tipo:'saida',categoria:'Taxa de Cartão',descricao:'Taxa de cartão — Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,valor:taxaValor,forma:formaPagamentoParaCaixa(formaPag)});
-    }
+    // Forma com taxa: 1 entrada só, pelo líquido, com bruto/taxa/líquido na
+    // mesma linha — sem saída separada de "Taxa de Cartão" (só quando o
+    // caixa está aberto, igual sempre foi; caixa fechado na venda de pacote
+    // já não lança a própria receita em lugar nenhum hoje — limitação
+    // existente, fora deste pedido).
+    var taxaInfoPac=taxaValor>0?{valorBruto:valor,taxaPercentual:taxaCalc.pct,taxaValor:taxaValor,valorLiquido:valorLiquido}:null;
+    lancarEntradaCaixaAuto('Pacote — '+pacoteCatalogo.nome+' — '+clienteNome,taxaValor>0?valorLiquido:valor,formaPag||'Pix',null,taxaInfoPac);
   }
   return {ok:todasSalvas,regs:regs};
 }
@@ -18090,7 +18110,7 @@ function diaComercialStr(date){
   var d=diaComercialDate(date);
   return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
 }
-async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status,agendamento_id:lanc.agendamento_id||null});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
+async function fluxoInserirSupa(lanc){try{if(!supa||!window.SALAO_ID)return;var _dm=(lanc.data||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);var _dataIso=_dm?_dm[3]+'-'+_dm[2].padStart(2,'0')+'-'+_dm[1].padStart(2,'0'):lanc.data;var r=await supa.from('fluxo_lancamentos').insert({salao_id:window.SALAO_ID,data:_dataIso,descricao:lanc.desc,categoria:lanc.cat,forma_pagamento:lanc.forma,valor:lanc.val,tipo:lanc.tipo,status:lanc.status,agendamento_id:lanc.agendamento_id||null,valor_bruto:lanc.valor_bruto!=null?lanc.valor_bruto:null,taxa_percentual:lanc.taxa_percentual!=null?lanc.taxa_percentual:null,taxa_valor:lanc.taxa_valor!=null?lanc.taxa_valor:null,valor_liquido:lanc.valor_liquido!=null?lanc.valor_liquido:null});if(r.error)throw r.error;}catch(e){console.error('Erro ao salvar lançamento:',e);}}
 async function carregarFluxoLancamentosSupa(){
   try{
     if(!window.SALAO_ID)return;
@@ -21305,7 +21325,10 @@ async function sincronizarMovimentoCaixaSupa(mov){
     var r=await supa.from('caixa_movimentos').insert([{
       salao_id:window.SALAO_ID,tipo:mov.tipo,categoria:mov.categoria,descricao:mov.descricao,
       valor:mov.valor,forma:mov.forma,hora:mov.hora,colaborador:(colaboradorLogado||'Admin'),
-      profissional:mov.profissional||null,agendamento_id:mov.agendamentoId||null
+      profissional:mov.profissional||null,agendamento_id:mov.agendamentoId||null,
+      valor_bruto:mov.valorBruto!=null?mov.valorBruto:null,taxa_percentual:mov.taxaPercentual!=null?mov.taxaPercentual:null,
+      taxa_valor:mov.taxaValor!=null?mov.taxaValor:null,valor_liquido:mov.valorLiquido!=null?mov.valorLiquido:null,
+      operadora:mov.operadora||null
     }]).select('id');
     if(r.data&&r.data[0])mov.supaId=r.data[0].id;
   }catch(e){
@@ -21361,7 +21384,13 @@ async function sincronizarFechamentoCaixaSupa(){
           forma_pagamento:m.forma||'',
           valor:m.valor,
           tipo:m.tipo==='entrada'?'receita':'despesa',
-          status:'confirmado'
+          status:'confirmado',
+          agendamento_id:m.agendamento_id||null,
+          valor_bruto:m.valor_bruto!=null?m.valor_bruto:null,
+          taxa_percentual:m.taxa_percentual!=null?m.taxa_percentual:null,
+          taxa_valor:m.taxa_valor!=null?m.taxa_valor:null,
+          valor_liquido:m.valor_liquido!=null?m.valor_liquido:null,
+          operadora:m.operadora||null
         };
       });
       // Grava e CONFIRMA antes de apagar: se a gravação falhar ou vier
@@ -21601,7 +21630,8 @@ function inserirMovimentoCaixa(opts){
   if(!caixaState.movimentos)caixaState.movimentos=[];
   var agora=new Date();
   var horaStr=agora.getHours().toString().padStart(2,'0')+':'+agora.getMinutes().toString().padStart(2,'0');
-  var mov={id:movIdCounter++,tipo:opts.tipo||caixaState.tipoAtual||'entrada',categoria:opts.categoria||'Outros',descricao:opts.descricao||'',valor:parseFloat(opts.valor)||0,forma:opts.forma||'pix',hora:horaStr,profissional:opts.profissional||'',agendamentoId:opts.agendamentoId||null,supaId:null};
+  var mov={id:movIdCounter++,tipo:opts.tipo||caixaState.tipoAtual||'entrada',categoria:opts.categoria||'Outros',descricao:opts.descricao||'',valor:parseFloat(opts.valor)||0,forma:opts.forma||'pix',hora:horaStr,profissional:opts.profissional||'',agendamentoId:opts.agendamentoId||null,supaId:null,
+    valorBruto:opts.valorBruto!=null?opts.valorBruto:null,taxaPercentual:opts.taxaPercentual!=null?opts.taxaPercentual:null,taxaValor:opts.taxaValor!=null?opts.taxaValor:null,valorLiquido:opts.valorLiquido!=null?opts.valorLiquido:null,operadora:opts.operadora||null};
   caixaState.movimentos.push(mov);
   atualizarTotaisCaixa();
   sincronizarMovimentoCaixaSupa(mov).catch(function(e){console.log(e);});
