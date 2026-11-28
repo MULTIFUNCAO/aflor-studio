@@ -1330,10 +1330,10 @@ tr.row-retorno-retornou td{background:#f0fff4}
 
       <!-- KPI CARDS -->
       <div class="fdash-kpi-grid">
-        <div class="fdash-kpi-card kpi-green" onclick="showPage('fluxo')">
+        <div class="fdash-kpi-card kpi-green" onclick="abrirFaturamentoPrevistoHoje()">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Faturamento Previsto</div>
           <div class="fdash-kpi-value" id="dash-faturamento-previsto">R$ 0,00</div>
-          <div class="fdash-kpi-sub">ainda por vir hoje</div>
+          <div class="fdash-kpi-sub">total do dia</div>
         </div>
         <div class="fdash-kpi-card kpi-blue" onclick="showPage('agenda')">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Atendimentos</div>
@@ -1344,11 +1344,6 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>A Receber</div>
           <div class="fdash-kpi-value" id="dash-a-receber">R$ 0,00</div>
           <div class="fdash-kpi-sub">hoje, ainda não pago</div>
-        </div>
-        <div class="fdash-kpi-card kpi-red" onclick="showPage('agenda')">
-          <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Pendências</div>
-          <div class="fdash-kpi-value" id="dash-pendencias">0</div>
-          <div class="fdash-kpi-sub">confirmações em aberto</div>
         </div>
         <div class="fdash-kpi-card kpi-purple" onclick="showPage('fluxo')">
           <div class="fdash-kpi-label"><span class="fdash-kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>Ticket Médio</div>
@@ -1440,21 +1435,8 @@ tr.row-retorno-retornou td{background:#f0fff4}
           </div>
         </div>
 
-        <!-- Coluna lateral: Atenção + Resumo financeiro -->
+        <!-- Coluna lateral: Equipe Hoje + Resumo financeiro -->
         <div class="fdash-side">
-          <div class="fdash-section" id="dash-atencao-card">
-            <div class="fdash-section-head">
-              <div class="fdash-section-title">Atenção</div>
-            </div>
-            <div class="fdash-atencao-body">
-              <div class="fdash-atencao-icon" id="dash-atencao-icon" style="background:#FEF3E2;color:#9A5B13">🔔</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:600;color:var(--ink);line-height:1.4" id="dash-atencao-texto">Carregando...</div>
-                <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="showPage('agenda')" id="dash-atencao-btn">Ver agenda</button>
-              </div>
-            </div>
-          </div>
-
           <div class="fdash-section">
             <div class="fdash-section-head"><div class="fdash-section-title">Equipe Hoje</div></div>
             <div id="dash-equipe-hoje" style="padding:12px 20px;display:flex;flex-direction:column;gap:8px"></div>
@@ -1648,6 +1630,7 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <button class="tab" id="fluxo-tab-mensal" onclick="switchFluxoTab('mensal',this)">📊 Semanal</button>
           <button class="tab" id="fluxo-tab-categorias" onclick="switchFluxoTab('categorias',this)">🏷 Categorias</button>
           <button class="tab" id="fluxo-tab-dre" onclick="switchFluxoTab('dre',this)">📑 DRE</button>
+          <button class="tab" id="fluxo-tab-taxascartao" onclick="switchFluxoTab('taxascartao',this)">💳 Taxas de Maquininha</button>
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-lancamento-caixa');(function(){var h=new Date();document.getElementById('lanc-data').value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');})()">+ Lançamento</button>
         </div>
       </div>
@@ -1747,6 +1730,41 @@ tr.row-retorno-retornou td{background:#f0fff4}
           <table style="width:100%;border-collapse:collapse">
             <tbody id="fluxo-dre-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- TAB TAXAS DE MAQUININHA -->
+      <div id="fluxo-view-taxascartao" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e5e5;border-left:4px solid #ef4444">
+            <div style="font-size:10px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Total de taxas hoje</div>
+            <div id="taxascartao-total-dia" style="font-size:22px;font-weight:900;color:#ef4444">R$ 0,00</div>
+          </div>
+          <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e5e5e5;border-left:4px solid #9a3412">
+            <div style="font-size:10px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px" id="taxascartao-periodo-label">Total de taxas no período</div>
+            <div id="taxascartao-total-periodo" style="font-size:22px;font-weight:900;color:#9a3412">R$ 0,00</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:12px;border:1px solid #e5e5e5;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid #f5f5f5;font-size:13px;font-weight:800">Detalhe por transação</div>
+          <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr style="background:#f8f8f8">
+              <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Data</th>
+              <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Cliente</th>
+              <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Serviço</th>
+              <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Valor original</th>
+              <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Taxa</th>
+              <th style="padding:9px 14px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Líquido</th>
+              <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Forma/Operadora</th>
+            </tr></thead>
+            <tbody id="taxascartao-tbody"></tbody>
+          </table>
+          </div>
+          <div style="padding:12px 16px;border-top:2px solid #111;display:flex;justify-content:space-between;background:#f8f8f8">
+            <span style="font-size:13px;font-weight:800">Total de taxas no período</span>
+            <span style="font-size:13px;font-weight:900;color:#ef4444" id="taxascartao-total-periodo-rodape">R$ 0,00</span>
+          </div>
         </div>
       </div>
     </div><!-- /page-fluxo -->
@@ -4021,6 +4039,36 @@ tr.row-retorno-retornou td{background:#f0fff4}
   </div>
 </div>
 
+<!-- MODAL FATURAMENTO PREVISTO (HOJE) -->
+<div class="modal-overlay" id="modal-faturamento-previsto-hoje">
+  <div class="modal" style="width:760px;max-width:95vw">
+    <div class="modal-header">
+      <span class="modal-title">Faturamento Previsto — Hoje</span>
+      <button class="modal-close" onclick="closeModal('modal-faturamento-previsto-hoje')">✕</button>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">Só leitura — não grava nada no caixa. Clique numa linha para abrir a comanda.</div>
+    <div style="overflow-x:auto;max-height:60vh">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f8f8f8">
+          <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Cliente</th>
+          <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Serviço</th>
+          <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Profissional</th>
+          <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Total</th>
+          <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Sinal</th>
+          <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">A receber</th>
+          <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">Status</th>
+        </tr></thead>
+        <tbody id="fatprevisto-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:12px 4px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:2px solid #111;margin-top:4px">
+      <span style="font-size:12px;font-weight:700;color:#888">Total dos serviços <b id="fatprevisto-total-servicos" style="color:#111">R$ 0,00</b></span>
+      <span style="font-size:12px;font-weight:700;color:#888">Sinais recebidos <b id="fatprevisto-total-sinais" style="color:#15803d">R$ 0,00</b></span>
+      <span style="font-size:12px;font-weight:700;color:#888">Total a receber <b id="fatprevisto-total-areceber" style="color:#9A5B13">R$ 0,00</b></span>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL HORÁRIOS -->
 <div class="modal-overlay" id="modal-cfg-horarios">
   <div class="modal" style="width:560px">
@@ -4611,11 +4659,19 @@ tr.row-retorno-retornou td{background:#f0fff4}
         <div class="af-row" style="margin-top:10px">
           <span class="material-symbols-outlined">face</span>
           <div class="af-field">
-            <select class="af-input" id="ag-pacote-prof" onchange="agVerPacote()">
+            <select class="af-input" id="ag-pacote-prof" onchange="agVerPacote();agSugerirHorarioPacoteSeVazio()">
             </select>
             <label>Profissional que vai executar</label>
           </div>
         </div>
+        <div class="af-row" style="margin-top:10px">
+          <span class="material-symbols-outlined">schedule</span>
+          <div class="af-field">
+            <input class="af-input" type="time" id="ag-pacote-hora"/>
+            <label>Horário</label>
+          </div>
+        </div>
+        <div id="ag-pacote-hora-aviso" style="font-size:11px;color:#9a3412;margin:4px 0 0 30px;display:none"></div>
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;margin:8px 0 0 30px;cursor:pointer">
           <input type="checkbox" id="ag-pacote-sem-comissao"/>
           Não comissionar esta sessão
@@ -6269,8 +6325,23 @@ async function carregarAgendamentosSupa(){
       // específico (lido de servicos_detalhe[i].valor), e valorNumAgendamento() prefere
       // esse campo quando ele existe, sem mexer no valor/valor_num "oficial" da comanda.
       var valorComissaoPrimario=valNum;
+      // Monta a timeline UMA vez aqui (reaproveitada abaixo, na criação dos
+      // cards extras) — precisa saber, já aqui, quais itens de servicos_detalhe
+      // caem na MESMA chave profissional:hora do card principal (ex: pacote
+      // com 2 serviços pro mesmo profissional, ambos com a mesma hora
+      // gravada) pra somar os dois no card principal, em vez de só o
+      // item[0] — sem isso, um 2º card seria criado com a chave IDÊNTICA à
+      // do principal e sobrescreveria ele, sumindo com um dos serviços da
+      // Agenda/painel/comissão (achado real: visita do Eduardo com Escova P
+      // + Hidratação, só a Hidratação sobrevivia, Escova P desaparecia).
+      var timelineMes=null;
       if(detalhes&&detalhes.length>1){
-        var valorDetPrimario=valorBaseComissao(detalhes[0]);
+        timelineMes=construirTimelineAtendimento(horaSlot,durMinPrimario,row.servico||'',profNome,detalhes);
+        var valorDetPrimario=0;
+        timelineMes.forEach(function(item,idx){
+          var pItem=agProfParaAgenda(item.prof);
+          if(idx===0||(pItem===profNome&&item.hora===horaSlot))valorDetPrimario+=valorBaseComissao(detalhes[idx]);
+        });
         if(valorDetPrimario>0)valorComissaoPrimario=valorDetPrimario;
       }else if(detalhes&&detalhes.length===1&&valNum===0&&valorBaseComissao(detalhes[0])>0){
         // Atendimento de pacote: "valor" da comanda fica R$ 0,00 de propósito
@@ -6339,19 +6410,42 @@ async function carregarAgendamentosSupa(){
         servicos_detalhe:detalhes||undefined,
         produtosUsados:produtosUsadosRow||[]
       };
-      agendamentosPorData[dataKey][k]=apptEntry;
+      // Dois AGENDAMENTOS DIFERENTES (ids diferentes, ex: clientes
+      // diferentes) podem cair na mesma chave profissional:hora — sem essa
+      // checagem, o que fosse processado depois sobrescrevia o anterior,
+      // escondendo ele da Agenda e zerando a comissão dele (achado real:
+      // Cristiane/Lidiane/Adriana, todas no Eduardo às 09:00). Se a chave já
+      // tiver outro id, usa uma chave só-pra-guardar disambiguada — o
+      // buscarApptAgenda() já sabe achar o card pelo campo .prof/.hora
+      // quando a chave direta não bate, então a Agenda continua encontrando;
+      // painel/comissão (que iteram todas as chaves direto) sempre contam
+      // os dois, sem exceção.
+      var chaveFinalPrimario=k;
+      if(agendamentosPorData[dataKey][chaveFinalPrimario]&&agendamentosPorData[dataKey][chaveFinalPrimario].id!==row.id){
+        chaveFinalPrimario=k+'#'+row.id;
+      }
+      agendamentosPorData[dataKey][chaveFinalPrimario]=apptEntry;
       // Mesma separação por profissional/horário usada na busca do dia em renderAgenda —
       // sem isso, essa pré-carga (mais ampla, roda antes) "vencia a corrida" e escondia
       // os serviços extras adicionados a um atendimento existente.
-      if(detalhes&&detalhes.length>1){
-        var timelineMes=construirTimelineAtendimento(horaSlot,durMinPrimario,row.servico||'',profNome,detalhes);
-        timelineMes.slice(1).forEach(function(item){
+      if(timelineMes){
+        timelineMes.slice(1).forEach(function(item,idxOffset){
+          var idx=idxOffset+1;
           var pSdMes=agProfParaAgenda(item.prof);
-          // Cada serviço extra pode ter um profissional diferente do
-          // principal — busca o profissional_id DESSE item específico,
-          // não herda o do atendimento inteiro.
-          var detalheItem=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-          agendamentosPorData[dataKey][pSdMes+':'+item.hora]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:valorBaseComissao(detalheItem)});
+          // Mesmo profissional+hora do card principal (k) — esse item já
+          // foi somado em valorComissaoPrimario acima; criar um card aqui
+          // usaria a MESMA chave e sobrescreveria o card principal.
+          if(pSdMes===profNome&&item.hora===horaSlot)return;
+          // Item[idx] corresponde 1:1 à posição em timelineMes (mesma ordem
+          // de construirTimelineAtendimento) — mais seguro que buscar por
+          // nome+profissional, que pode bater errado se 2 itens tiverem o
+          // mesmo nome de serviço.
+          var detalheItem=detalhes[idx];
+          var chaveExtra=pSdMes+':'+item.hora;
+          if(agendamentosPorData[dataKey][chaveExtra]&&agendamentosPorData[dataKey][chaveExtra].id!==row.id){
+            chaveExtra=chaveExtra+'#'+row.id;
+          }
+          agendamentosPorData[dataKey][chaveExtra]=Object.assign({},apptEntry,{prof:pSdMes,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItem&&detalheItem.profissional_id)||null,valorComissao:valorBaseComissao(detalheItem)});
         });
       }
     });
@@ -6479,11 +6573,28 @@ function descontarUsoPacoteCliente(pacoteClienteId,pacLegacy){
   salvarPacotesClientesLocal();
   atualizarUsoPacoteClienteSupa(pc.id,pc.quantidade_usada);
 }
+// Normaliza nome pra comparação tolerante (minúsculo, sem acento, sem
+// espaço nas pontas) — usado onde o nome do serviço/colaborador gravado no
+// pacote pode ter uma variação pequena (ex: "Hidratação" vs "Hidratação -
+// Lavatório", "Edu" vs "Eduardo") do nome exato cadastrado no catálogo/
+// colaboradores. Comparação exata (===) nesses casos devolvia 0/null
+// silenciosamente — achado real (sessão de pacote do Eduardo com valor
+// R$0 e sem profissional_id).
+function normNomeComparacao(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+}
 // Preço avulso do serviço no catálogo — mesma busca usada em
 // lancarComissaoPacote, pra servicos_detalhe de atendimento de pacote usar
 // a mesma base (preço avulso, não valor do pacote/sessões).
 function precoCatalogoServico(nomeServico){
   var srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){return s.nome===nomeServico;});
+  if(!srv){
+    var alvo=normNomeComparacao(nomeServico);
+    srv=(typeof servicos!=='undefined'?servicos:[]).find(function(s){
+      var sNorm=normNomeComparacao(s.nome);
+      return sNorm===alvo||sNorm.indexOf(alvo)>=0||alvo.indexOf(sNorm)>=0;
+    });
+  }
   return srv?parseMoedaBR(srv.preco):0;
 }
 // Base da comissão de uma sessão de pacote pra Comissões a Pagar/painel do
@@ -6512,6 +6623,13 @@ function baseComissaoSessaoPacote(pacoteClienteId,comissaoBase){
   var totalTeorico=doGrupo.reduce(function(s,p){return s+precoCatalogoServico(p.nome_servico)*(parseInt(p.quantidade_total,10)||1);},0);
   if(valorBase<=0||totalTeorico<=0)return{valor:0,avisoSemPreco:true};
   var precoAvulsoLinha=precoCatalogoServico(linha.nome_servico);
+  // Preço avulso zerado SÓ desta linha (catálogo sem esse serviço cadastrado,
+  // mesmo com o nome tolerante do precoCatalogoServico) — sem esse aviso
+  // separado, o totalTeorico>0 (por causa de OUTRA linha do grupo) escondia
+  // o problema: a conta rodava, dava 0 pra essa linha, e nenhum alerta
+  // aparecia (achado real: sessão do Eduardo com Hidratação em R$0, sem
+  // aviso nenhum na hora de registrar).
+  if(precoAvulsoLinha<=0)return{valor:0,avisoSemPreco:true};
   return{valor:valorBase*precoAvulsoLinha/totalTeorico,avisoSemPreco:false};
 }
 function lancarComissaoPacote(profissional,nomeServico,clienteNome){
@@ -6750,7 +6868,20 @@ async function carregarPacotesClientesSupa(){
           nome_servico:row.nome_servico,quantidade_total:row.quantidade_total||1,
           quantidade_usada:row.quantidade_usada||0,data_compra:row.data_compra,
           validade:row.validade,valor_pago:parseFloat(row.valor_pago)||0,
-          forma_pagamento:row.forma_pagamento||'Pix'
+          forma_pagamento:row.forma_pagamento||'Pix',
+          // grupo_id: SEM isso, baseComissaoSessaoPacote() nunca encontra as
+          // outras linhas do mesmo pacote (doGrupo cai sempre no fallback
+          // "só esta linha"), dobrando o rateio por serviço — achado real
+          // (pacote RAIZ da Cristiane: cada serviço ficou com o valor do
+          // pacote inteiro ÷ sessões, em vez do valor dividido entre os
+          // serviços). valor_bruto/taxa_cartao_valor/valor_liquido: sem
+          // isso, a regra "comissão sobre o líquido" nunca via o valor com
+          // a taxa de cartão já descontada (sempre caía no bruto).
+          grupo_id:row.grupo_id||null,
+          valor_bruto:row.valor_bruto!=null?parseFloat(row.valor_bruto):null,
+          taxa_cartao_valor:row.taxa_cartao_valor!=null?parseFloat(row.taxa_cartao_valor):null,
+          valor_liquido:row.valor_liquido!=null?parseFloat(row.valor_liquido):null,
+          vendido_por_colaborador_id:row.vendido_por_colaborador_id||null
         };
       });
       salvarPacotesClientesLocal();
@@ -8632,6 +8763,8 @@ function resetFormAgendar(){
   if((el=get('ag-pacote-extra-list')))el.innerHTML='';
   if((el=get('ag-pacote-info')))el.style.display='none';
   if((el=get('ag-pacote-sem-comissao')))el.checked=false;
+  if((el=get('ag-pacote-hora')))el.value='';
+  if((el=get('ag-pacote-hora-aviso'))){el.style.display='none';el.textContent='';}
   if((el=get('af-repetir-ativo'))){el.checked=false;}
   if((el=get('af-repetir-area')))el.style.display='none';
   afFecharPicker('af-picker-cliente');
@@ -9066,7 +9199,18 @@ function colaboradoresAtivosOrdenados(){
 // na hora de gravar agendamentos.profissional_id junto com o nome.
 function colaboradorIdPorNome(nome){
   if(!nome)return null;
-  var c=(typeof colaboradores!=='undefined'?colaboradores:[]).find(function(x){return x.nome===nome;});
+  var lista=typeof colaboradores!=='undefined'?colaboradores:[];
+  var c=lista.find(function(x){return x.nome===nome;});
+  if(!c){
+    // Fallback tolerante — mesmo problema do precoCatalogoServico: nome
+    // selecionado na tela (ex: apelido curto da Agenda, "Edu") pode não
+    // bater exatamente com o nome completo cadastrado ("Eduardo").
+    var alvo=normNomeComparacao(nome);
+    c=lista.find(function(x){
+      var xNorm=normNomeComparacao(x.nome);
+      return xNorm===alvo||xNorm.indexOf(alvo)>=0||alvo.indexOf(xNorm)>=0;
+    });
+  }
   return c?c.id:null;
 }
 function colaboradoresOptionsHtml(valorSelecionado){
@@ -9171,9 +9315,26 @@ function agVerificarConflitoHorarioAgenda(data,hora,profs,excludeId){
   for(var i=0;i<profs.length;i++){
     var pAg=agProfParaAgenda(profs[i]);
     var ocupante=appts[pAg+':'+hora];
+    // Atendimento cancelado/falta não deveria travar o horário pra um novo
+    // agendamento — mas essa checagem nunca filtrava por status (o registro
+    // nunca sai do dicionário, só o status muda). Achado real: duas sessões
+    // de pacote diferentes, ambas Canceladas, continuavam "ocupando" as
+    // 09:00 do Eduardo pra sempre.
+    if(ocupante&&typeof agendaStatusCancelado==='function'&&agendaStatusCancelado(ocupante))continue;
     if(ocupante&&(!excludeId||ocupante.id!==excludeId))return {prof:profs[i],ocupado:ocupante};
   }
   return null;
+}
+// Sugere o primeiro horário da grade sem conflito pra esse profissional
+// nesse dia — usado só pra PRÉ-PREENCHER o campo de horário da sessão de
+// pacote (o usuário ainda vê e pode mudar antes de salvar; nunca troca
+// sozinho depois de já ter um valor digitado).
+function agSugerirHorarioLivre(dataISO,profNome){
+  var horas=typeof horasGradeAgenda==='function'?horasGradeAgenda():['09:00'];
+  for(var i=0;i<horas.length;i++){
+    if(!profNome||!agVerificarConflitoHorarioAgenda(dataISO,horas[i],[profNome],null))return horas[i];
+  }
+  return horas[0]||'09:00';
 }
 
 function agNormalizarNome(s){
@@ -9283,6 +9444,17 @@ function agVerPacote(selId,infoId,detId,profId){
   det.innerHTML = '<b>'+p.nome+'</b>'+(p.servico?' — <b>'+p.servico+'</b>':'')+' para <b>'+p.cliente+'</b><br>'
     +'Sessões: <b>'+p.usado+' usadas</b> de <b>'+p.total+'</b> — Restante: <b style="color:'+(restante>0?'#15803d':'#ef4444')+'">'+restante+' sessão(ões)</b>'
     +(selProf?(' — Profissional: <b>'+(selProf.value||'—')+'</b>'):'');
+}
+// Pré-preenche "Horário" da sessão de pacote com o primeiro horário livre
+// do profissional selecionado — só se o campo ainda estiver vazio (nunca
+// troca um valor que o usuário já escolheu, mesmo trocando o profissional
+// depois). O usuário sempre vê e pode mudar antes de salvar.
+function agSugerirHorarioPacoteSeVazio(){
+  var elHora=document.getElementById('ag-pacote-hora');
+  var elProf=document.getElementById('ag-pacote-prof');
+  var elData=document.getElementById('ag-data');
+  if(!elHora||elHora.value||!elProf||!elProf.value||!elData||!elData.value)return;
+  elHora.value=agSugerirHorarioLivre(elData.value,elProf.value);
 }
 // ===== FIM AGENDAMENTO MELHORADO =====
 
@@ -11363,6 +11535,13 @@ async function carregarColaboradoresSupa(){
       if(typeof renderComissoesAPagar==='function')renderComissoesAPagar();
       if(typeof atualizarTodosSelectsDeProfissional==='function')atualizarTodosSelectsDeProfissional();
       if(typeof renderAgenda==='function'&&document.getElementById('agenda-grid'))renderAgenda();
+      // Ocupação da Agenda (home) usa o array `colaboradores` pra montar a
+      // grade — sem redesenhar aqui, se essa busca terminar depois do
+      // primeiro render do dashboard, a Ocupação fica presa usando o array
+      // de demonstração inicial (mais colaboradores "Ativo" do que o time
+      // real) pro resto da carga da página, mesmo depois do time real já
+      // ter chegado.
+      if(typeof renderDashboardCards==='function')renderDashboardCards();
     }else if(Array.isArray(data)&&data.length===0){
       // Primeira vez: semeia colaborador padrão (proprietário) no Supabase
       colaboradores=COLABORADORES_PADRAO.map(function(c){
@@ -11379,6 +11558,7 @@ async function carregarColaboradoresSupa(){
       try{localStorage.setItem('aflor_colabs_cache_'+window.SALAO_ID,JSON.stringify(colaboradores));}catch(e){}
       window._colabsSupaCarregados=true;
       if(typeof renderColabs==='function')renderColabs();
+      if(typeof renderDashboardCards==='function')renderDashboardCards();
     }
   }catch(e){console.log('err carregar colaboradores',e);}
 }
@@ -11809,6 +11989,10 @@ function comandaStatusAgendamento(dados){
   if(!dados)return 'Em aberto';
   var st=(dados.status||'').toLowerCase();
   if(st==='cancelada')return 'Cancelada';
+  // Sessão de pacote já foi paga na venda do pacote, não agora — mostra
+  // isso em vez de "Paga"/"Em aberto", com a receber sempre R$0 (ver
+  // listarFaturamentoPrevistoHoje/renderDashProximos).
+  if(typeof agendamentoEhPacote==='function'&&agendamentoEhPacote(dados))return 'Pago no pacote';
   if(st==='concluído'||st==='concluido'||st==='fechado'||st==='finalizado')return 'Paga';
   return 'Em aberto';
 }
@@ -11881,6 +12065,90 @@ function listarComandasDeAgendamentos(){
   });
   lista.forEach(function(item,i){item.n='AG-'+(i+1);});
   return lista;
+}
+// ---- Faturamento Previsto (card da home "total do dia" + lista ao clicar) ----
+// Uma linha por serviço (servicos_detalhe), sem repetir sinal/a receber nas
+// linhas seguintes da mesma comanda — só na primeira. Combo dividido entre
+// profissionais (mesmo id, várias chaves no grid) é deduplicado por id, igual
+// ao card da home. Agendamento de hoje sem serviço definido ainda entra como
+// "Sem comanda". Cancelado e Faltou ficam de fora. Só leitura: não grava nada.
+function listarFaturamentoPrevistoHoje(){
+  var hoje=new Date();
+  var hojeKey=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
+  var diaObj=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[hojeKey])||{};
+  var chaves=Object.keys(diaObj).filter(function(k){return diaObj[k]&&diaObj[k].cliente;}).sort();
+  var vistosPorId={};
+  var linhas=[];
+  chaves.forEach(function(k){
+    var a=diaObj[k];
+    var stLower=(a.status||'').toLowerCase();
+    if(stLower==='cancelada'||stLower==='cancelado'||stLower==='faltou')return;
+    if(a.id){
+      if(vistosPorId[a.id])return; // combo dividido entre profissionais — já processado via outra chave
+      vistosPorId[a.id]=true;
+    }
+    var temServico=(a.servico||'').trim()||(a.servicos_detalhe&&a.servicos_detalhe.length);
+    if(!temServico){
+      linhas.push({dataKey:hojeKey,key:k,cliente:a.cliente,servico:'—',profissional:a.prof||'',valor:null,sinal:null,aReceber:null,status:'Sem comanda',contaFaturamento:true});
+      return;
+    }
+    var servicos=popupServicosDoAtendimento(a);
+    var statusRow=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
+    var ehPacoteRow=statusRow==='Pago no pacote';
+    var sinalInfo=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{abate:0,valor:0};
+    var totalComanda=servicos.reduce(function(s,sd){return s+(sd.valor||0);},0);
+    var aReceberComanda=(statusRow==='Paga'||ehPacoteRow)?0:Math.max(0,totalComanda-(sinalInfo.abate||0));
+    servicos.forEach(function(sd,idx){
+      linhas.push({
+        dataKey:hojeKey,key:k,
+        cliente:a.cliente,servico:sd.nome||'',profissional:sd.profissional||a.prof||'',
+        valor:sd.valor||0,
+        sinal:idx===0?(sinalInfo.valor||0):null,
+        aReceber:idx===0?aReceberComanda:null,
+        status:statusRow,
+        // Sessão de pacote: o dinheiro já entrou na venda do pacote, não
+        // hoje — mostra o valor da sessão na linha, mas não soma no card
+        // "Faturamento Previsto" nem no total do rodapé (contaFaturamento).
+        contaFaturamento:!ehPacoteRow
+      });
+    });
+  });
+  return linhas;
+}
+function abrirFaturamentoPrevistoHoje(){
+  renderFaturamentoPrevistoHojeModal();
+  openModal('modal-faturamento-previsto-hoje');
+}
+function renderFaturamentoPrevistoHojeModal(){
+  var tbody=document.getElementById('fatprevisto-tbody');
+  if(!tbody)return;
+  var linhas=listarFaturamentoPrevistoHoje();
+  if(!linhas.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Nenhum agendamento hoje ainda.</td></tr>';
+  }else{
+    tbody.innerHTML=linhas.map(function(l){
+      var badgeColor=l.status==='Paga'?'#888':l.status==='Sem comanda'?'#9a3412':'#15803d';
+      var badgeBg=l.status==='Paga'?'#f3f4f6':l.status==='Sem comanda'?'#fff7ed':'#dcfce7';
+      return '<tr style="border-top:1px solid #f5f5f5;cursor:pointer" onclick="closeModal(\'modal-faturamento-previsto-hoje\');abrirComandaAgendamentoLista(\''+l.dataKey+'\',\''+l.key+'\')">'
+        +'<td style="padding:9px 12px;font-size:12px;font-weight:600">'+(l.cliente||'')+'</td>'
+        +'<td style="padding:9px 12px;font-size:12px;color:#555">'+(l.servico||'')+'</td>'
+        +'<td style="padding:9px 12px;font-size:12px;color:#555">'+(l.profissional||'')+'</td>'
+        +'<td style="padding:9px 12px;font-size:12px;text-align:right">'+(l.valor!=null?fmtCaixa(l.valor):'—')+'</td>'
+        +'<td style="padding:9px 12px;font-size:12px;text-align:right">'+(l.sinal!=null?(l.sinal>0?fmtCaixa(l.sinal):'—'):'')+'</td>'
+        +'<td style="padding:9px 12px;font-size:12px;text-align:right;font-weight:700">'+(l.aReceber!=null?fmtCaixa(l.aReceber):'')+'</td>'
+        +'<td style="padding:9px 12px"><span style="font-size:10px;font-weight:700;color:'+badgeColor+';background:'+badgeBg+';padding:2px 8px;border-radius:20px">'+l.status+'</span></td>'
+        +'</tr>';
+    }).join('');
+  }
+  // Sessão de pacote (contaFaturamento:false) aparece na linha com seu valor,
+  // mas não entra nesse total — o dinheiro já foi reconhecido na venda do
+  // pacote, não de novo agora.
+  var totalServicos=linhas.reduce(function(s,l){return s+(l.contaFaturamento===false?0:(l.valor||0));},0);
+  var totalSinais=linhas.reduce(function(s,l){return s+(l.sinal||0);},0);
+  var totalAReceber=linhas.reduce(function(s,l){return s+(l.aReceber||0);},0);
+  var elTS=document.getElementById('fatprevisto-total-servicos');if(elTS)elTS.textContent=fmtCaixa(totalServicos);
+  var elTSin=document.getElementById('fatprevisto-total-sinais');if(elTSin)elTSin.textContent=fmtCaixa(totalSinais);
+  var elTAR=document.getElementById('fatprevisto-total-areceber');if(elTAR)elTAR.textContent=fmtCaixa(totalAReceber);
 }
 function abrirComandaAgendamentoLista(dataKey,key){
   var dia=agendamentosPorData&&agendamentosPorData[dataKey];
@@ -13270,7 +13538,7 @@ function lancarEntradaCaixaAuto(desc,valor,forma,agendamentoId,taxaInfo){
   return inserirMovimentoCaixa(opts);
 }
 
-function confirmarFechamentoPagamento(){
+async function confirmarFechamentoPagamento(){
   if(!colabPermitido('fin_receber_pagamentos')){showAlert('Você não tem permissão para receber pagamentos.');return;}
   if(!pagamentoCtx){return;}
   // Trava contra pagamento em dobro — mesmo se o botão "Registrar
@@ -13282,6 +13550,26 @@ function confirmarFechamentoPagamento(){
     closeModal('modal-confirmar-pagamento');
     pagamentoCtx=null;
     return;
+  }
+  // Mesma trava, mas perguntando ao SERVIDOR — a de cima só olha o cache
+  // local desta aba, que pode estar desatualizado (ex: outra aba/sessão já
+  // registrou esse pagamento e esta não recarregou ainda). Achado real:
+  // atendimento pago 2x, uma vez com o caixa fechado (foi direto pro
+  // fluxo_lancamentos) e de novo minutos depois com o caixa aberto (foi pro
+  // caixa_movimentos), porque a trava local não pegou a segunda vez. Só
+  // roda quando o atendimento já está sincronizado (supaId) — sem isso não
+  // tem o que checar no servidor, mesma limitação de hoje.
+  if(pagamentoCtx.supaId&&supa){
+    try{
+      var rCheckStatus=await supa.from('agendamentos').select('status').eq('id',pagamentoCtx.supaId).maybeSingle();
+      var stServidor=(rCheckStatus.data&&rCheckStatus.data.status||'').toLowerCase();
+      if(stServidor==='concluído'||stServidor==='concluido'||stServidor==='fechado'||stServidor==='finalizado'){
+        showAlert('⚠️ Este atendimento já foi pago (confirmado agora com o servidor). Reabra a comanda antes de registrar de novo.');
+        closeModal('modal-confirmar-pagamento');
+        pagamentoCtx=null;
+        return;
+      }
+    }catch(e){console.log('err checar status atual do agendamento antes do pagamento',e);}
   }
   pgRecalcularSaldo();
   // partesPagamento: 1 parte (forma única) ou 2 (split), sempre somando ctx.restante —
@@ -14439,6 +14727,26 @@ function agendaStatusCancelado(a){
   var st=(a&&a.status||'').toLowerCase();
   return st==='cancelada'||st==='cancelado'||st==='faltou';
 }
+// Chaves de comandas ÚNICAS de um dia (agendamentosPorData[dia]) — comanda
+// com 2+ serviços ou dividida entre profissionais vira 2+ chaves no grid
+// compartilhando o mesmo `id`; sem deduplicar aqui, toda contagem de
+// "atendimentos" (card da home, Ticket Médio, confirmações pendentes)
+// contava a mesma visita mais de uma vez. Exclui cancelado/faltou e exige
+// cliente, igual aos filtros que já existiam espalhados pelo código.
+function chavesComandasUnicas(diaObj){
+  if(!diaObj)return[];
+  var vistosPorId={};
+  return Object.keys(diaObj).filter(function(k){
+    var a=diaObj[k];
+    if(!a||!a.cliente)return false;
+    if(agendaStatusCancelado(a))return false;
+    if(a.id){
+      if(vistosPorId[a.id])return false;
+      vistosPorId[a.id]=true;
+    }
+    return true;
+  });
+}
 // Só Cancelado (nunca Falta) — usado pra esconder da Agenda por padrão,
 // tirar do contador "N atendimentos" e ignorar no aviso de "já tem
 // atendimento hoje". Falta continua visível/contado em tudo isso, só
@@ -14729,25 +15037,66 @@ function atualizarOcupacaoAgendaDashboard(){
   }
   var profsAtivos=typeof colaboradoresAtivosOrdenados==='function'?colaboradoresAtivosOrdenados():[];
   if(!profsAtivos.length){
-    elVal.textContent='Sem dados ainda';
+    elVal.textContent='-';
     elSub.textContent='cadastre colaboradores ativos';
     return;
   }
-  var horas=horasGradeAgenda();
+  // Disponível = jornada do salão (Configurações > Horário de Funcionamento)
+  // × cada profissional ativo. Não existe jornada individual nem bloqueio
+  // de verdade no sistema hoje (a tela "Indisponibilidades de Horários" é
+  // decorativa — salvarModal() nunca grava nada) — então "menos bloqueios"
+  // da regra original não tem dado real pra subtrair ainda.
+  var ab=(window.SALAO_HORA_ABERTURA||'08:00').split(':');
+  var fe=(window.SALAO_HORA_FECHAMENTO||'22:00').split(':');
+  var abrMin=parseInt(ab[0],10)*60+(parseInt(ab[1],10)||0);
+  var fecMin=parseInt(fe[0],10)*60+(parseInt(fe[1],10)||0);
+  var janelaMin=Math.max(0,fecMin-abrMin);
+  if(janelaMin<=0){
+    elVal.textContent='-';
+    elSub.textContent='sem expediente configurado';
+    return;
+  }
+  var disponivelMin=profsAtivos.length*janelaMin;
   var hojeKey=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
   var diaObj=(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[hojeKey])||{};
-  var totalSlots=profsAtivos.length*horas.length;
-  var ocupados=0;
-  profsAtivos.forEach(function(c){
-    var pAg=agProfParaAgenda(c.nome);
-    horas.forEach(function(h){
-      var a=diaObj[pAg+':'+h];
-      if(a&&a.status!=='Cancelada'&&a.status!=='Faltou')ocupados++;
-    });
+  // Ocupado = duração real (minutos) de cada atendimento não cancelado,
+  // recortada pra dentro da jornada, mesclando sobreposições por
+  // profissional — sem isso, 2 chaves do mesmo atendimento (combo/sessão
+  // de pacote) ou um horário duplicado contavam o mesmo intervalo 2x.
+  var intervalosPorProf={};
+  Object.keys(diaObj).forEach(function(k){
+    var a=diaObj[k];
+    if(!a||!a.cliente)return;
+    if(typeof agendaStatusCancelado==='function'&&agendaStatusCancelado(a))return;
+    var nomeProf=a.prof;
+    if(!nomeProf)return;
+    var ehAtivo=profsAtivos.some(function(c){return typeof profAgendaIgual==='function'?profAgendaIgual(c.nome,nomeProf):c.nome===nomeProf;});
+    if(!ehAtivo)return;
+    var hp=String(a.hora||'00:00').split(':');
+    var iniMin=parseInt(hp[0],10)*60+(parseInt(hp[1],10)||0);
+    var durMin=parseInt(String(a.duracao||'').replace(/[^\d]/g,''),10)||60;
+    var fimMin=Math.min(iniMin+durMin,fecMin);
+    iniMin=Math.max(iniMin,abrMin);
+    if(fimMin<=iniMin)return;
+    if(!intervalosPorProf[nomeProf])intervalosPorProf[nomeProf]=[];
+    intervalosPorProf[nomeProf].push([iniMin,fimMin]);
   });
-  var pct=totalSlots?Math.round(ocupados/totalSlots*100):0;
+  var ocupadoMin=0;
+  Object.keys(intervalosPorProf).forEach(function(nomeProf){
+    var merged=[];
+    intervalosPorProf[nomeProf].sort(function(x,y){return x[0]-y[0];}).forEach(function(iv){
+      if(merged.length&&iv[0]<=merged[merged.length-1][1]){
+        merged[merged.length-1][1]=Math.max(merged[merged.length-1][1],iv[1]);
+      }else{
+        merged.push(iv.slice());
+      }
+    });
+    merged.forEach(function(iv){ocupadoMin+=(iv[1]-iv[0]);});
+  });
+  var pct=disponivelMin>0?Math.min(100,Math.round(ocupadoMin/disponivelMin*100)):0;
   elVal.textContent=pct+'%';
-  elSub.textContent=ocupados+' de '+totalSlots+' horários hoje ('+(window.SALAO_HORA_ABERTURA||'08:00')+'–'+(window.SALAO_HORA_FECHAMENTO||'22:00')+')';
+  var fmtH=function(min){var h=min/60;return (Math.round(h*10)/10).toString().replace('.',',')+'h';};
+  elSub.textContent=fmtH(ocupadoMin)+' de '+fmtH(disponivelMin)+' hoje ('+(window.SALAO_HORA_ABERTURA||'08:00')+'–'+(window.SALAO_HORA_FECHAMENTO||'22:00')+')';
 }
 
 function renderAgenda(){
@@ -14846,8 +15195,20 @@ function renderAgenda(){
           // cada card de uma comanda com vários serviços guarda o valor individual DELE,
           // pra comissão não contar o total da comanda em cada card.
           var valorComissaoPrimRA=valNum;
+          // Mesmo fix do loader principal (carregarAgendamentosSupa): soma
+          // os itens que caem no MESMO profissional+hora do card principal
+          // (ex: pacote com 2 serviços pro mesmo profissional, mesma hora)
+          // em vez de só o item[0] — sem isso dobrava/faltava valor de
+          // comissão quando esse loader (em vez do principal) "vencia a
+          // corrida" e montava o dia.
+          var timelineRA=null;
           if(detalhes&&detalhes.length>1){
-            var valorDetPrimRA=valorBaseComissao(detalhes[0]);
+            timelineRA=construirTimelineAtendimento(horaSlot,durMinPrimario,a.servico||'',profNome,detalhes);
+            var valorDetPrimRA=0;
+            timelineRA.forEach(function(item,idx){
+              var pItemRA=agProfParaAgenda(item.prof);
+              if(idx===0||(pItemRA===profNome&&item.hora===horaSlot))valorDetPrimRA+=valorBaseComissao(detalhes[idx]);
+            });
             if(valorDetPrimRA>0)valorComissaoPrimRA=valorDetPrimRA;
           }else if(detalhes&&detalhes.length===1&&valNum===0&&valorBaseComissao(detalhes[0])>0){
             // Mesmo caso de pacote do loader principal (carregarAgendamentosSupa).
@@ -14869,16 +15230,27 @@ function renderAgenda(){
             servicoIndividualPrimRA=(detalhes[0]&&detalhes[0].nome)||svcPrimario;
           }
           var apptRow={id:a.id||null,cliente:a.cliente||'',tel:'',servico:a.servico||'',servicoIndividual:servicoIndividualPrimRA,prof:profNome,profissionalId:a.profissional_id||null,pagoEm:a.pago_em||null,formaPagamentoFinal:a.forma_pagamento_final||null,pagoPor:a.pago_por||null,hora:horaSlot,duracao:durMinPrimario+' min',valor:valFmt,valor_num:valNum,valorComissao:valorComissaoPrimRA,status:a.status||'Pendente',sinal:!!a.sinal,sinalPago:(a.sinal_status||'')==='pago',sinal_status:a.sinal_status||'pendente',sinal_valor:sinalNum,sinalValor:sinalFmt,confirmado:!!a.confirmado,servicos_detalhe:detalhes||null,serie_id:a.serie_id||null,produtosUsados:produtosUsadosRow||[]};
-          obj[k]=apptRow;
+          // Dois agendamentos DIFERENTES (ids diferentes) na mesma chave
+          // profissional:hora — mesmo fix do loader principal: nunca
+          // sobrescreve, usa chave disambiguada (id garante exclusividade);
+          // buscarApptAgenda() acha pelo campo .prof/.hora mesmo assim.
+          var kFinalRA=k;
+          if(obj[kFinalRA]&&obj[kFinalRA].id!==a.id)kFinalRA=k+'#'+a.id;
+          obj[kFinalRA]=apptRow;
           // Multi-prof: criar entradas sequenciais para profissionais secundários
           // (sd.hora explícito tem prioridade — permite horários com intervalo entre serviços;
           // sem sd.hora, cai no comportamento antigo de encadear direto após o anterior)
-          if(detalhes&&detalhes.length>1){
-            var timeline=construirTimelineAtendimento(horaSlot,durMinPrimario,a.servico||'',profNome,detalhes);
-            timeline.slice(1).forEach(function(item){
+          if(timelineRA){
+            timelineRA.slice(1).forEach(function(item,idxOffsetRA){
+              var idxRA=idxOffsetRA+1;
               var pSd=agProfParaAgenda(item.prof);
-              var detalheItemRA=(detalhes||[]).find(function(d){return d.nome===item.nome&&d.profissional===item.prof;});
-              obj[pSd+':'+item.hora]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:valorBaseComissao(detalheItemRA)});
+              // Mesmo profissional+hora do card principal — já somado em
+              // valorComissaoPrimRA, não cria card colidindo.
+              if(pSd===profNome&&item.hora===horaSlot)return;
+              var detalheItemRA=detalhes[idxRA];
+              var kExtraRA=pSd+':'+item.hora;
+              if(obj[kExtraRA]&&obj[kExtraRA].id!==a.id)kExtraRA=kExtraRA+'#'+a.id;
+              obj[kExtraRA]=Object.assign({},apptRow,{prof:pSd,hora:item.hora,servico:item.nome,servicoIndividual:item.nome,duracao:item.duracao_min+' min',profissionalId:(detalheItemRA&&detalheItemRA.profissional_id)||null,valorComissao:valorBaseComissao(detalheItemRA)});
             });
           }
         });
@@ -16007,8 +16379,9 @@ function pkgRenderHistoricoRows(){
       +'<td style="padding:8px 8px;font-size:12px;color:#555;white-space:nowrap">'+df+(s.hora?' '+s.hora:'')+'</td>'
       +'<td style="padding:8px 8px;font-size:12px;color:#111;font-weight:600">'+(s.servicos||'—')+srcBadge+'</td>'
       +'<td style="padding:8px 8px;font-size:11px;color:#888">'+(s.profissional||'—')+'</td>'
-      +'<td style="padding:4px 6px;text-align:center">'
+      +'<td style="padding:4px 6px;text-align:center;white-space:nowrap">'
       +'<button onclick="pkgEditarSessao('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:13px;padding:2px" title="Editar sessão">✏️</button>'
+      +'<button onclick="pkgExcluirSessao('+i+')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:13px;padding:2px" title="Excluir uso">🗑️</button>'
       +'</td>'
       +'</tr>';
   }).join('');
@@ -16131,6 +16504,101 @@ async function pkgSalvarSessao(i){
   }
   pkgRenderHistoricoRows();
   showAlert('✅ Sessão atualizada!');
+}
+
+// Excluir um uso do histórico do pacote — com confirmação. Devolve +1 em
+// TODAS as linhas de pacotes_clientes do mesmo grupo_id (uma vez cada,
+// nunca mais de uma vez por linha, mesmo que o uso tenha vários serviços
+// dela), apaga o registro (agendamentos ou pacotes_sessoes) e NUNCA toca
+// caixa/fluxo (uso de pacote nunca escreveu lá). Bloqueia se já existir
+// parcela de comissão fechada/paga cobrindo essa data+profissional —
+// nesse caso o profissional já foi remunerado por essa sessão, apagar
+// sem reverter a parcela deixaria a comissão paga sem o atendimento por
+// trás dela.
+function pkgExcluirSessao(i){
+  var s=(window._pkgHistoricoDedup||[])[i];
+  var g=window._pkgGrupoAtual;
+  if(!s||!g){showAlert('Sessão não encontrada.');return;}
+  if(!s.id){showAlert('Essa sessão não tem um registro no banco pra excluir.');return;}
+  var profId=typeof colaboradorIdPorNome==='function'?colaboradorIdPorNome(s.profissional):null;
+  var dataSessao=s.data; // YYYY-MM-DD
+  var parcelaBloqueando=(typeof comissaoParcelas!=='undefined'?comissaoParcelas:[]).find(function(cp){
+    if(!profId||cp.colaborador_id!==profId)return false;
+    var ini=cp.periodo_inicio,fim=cp.periodo_fim;
+    return ini&&fim&&dataSessao>=ini&&dataSessao<=fim;
+  });
+  if(parcelaBloqueando){
+    showAlert('⚠️ A comissão desse período ('+fmtDataBR(new Date(parcelaBloqueando.periodo_inicio+'T12:00:00'))+' a '+fmtDataBR(new Date(parcelaBloqueando.periodo_fim+'T12:00:00'))+') já foi fechada'+(parcelaBloqueando.status==='paga'?' e paga':'')+' para '+(s.profissional||'esse profissional')+'. Não é possível excluir esse uso — reabra o fechamento antes, se precisar.');
+    return;
+  }
+  showConfirmBotoes('Excluir este uso do pacote? Isso devolve 1 sessão em cada serviço do grupo, apaga o atendimento e a comissão dessa sessão. Não afeta o caixa.',[
+    {label:'Sim, excluir',valor:'sim',primario:true},
+    {label:'Cancelar',valor:'nao'}
+  ],function(resp){
+    if(resp==='sim')executarExcluirSessaoPacote(i);
+  });
+}
+async function executarExcluirSessaoPacote(i){
+  var s=(window._pkgHistoricoDedup||[])[i];
+  var g=window._pkgGrupoAtual;
+  if(!s||!g)return;
+  try{
+    if(typeof supa==='undefined'||!supa){showAlert('Sem conexão com o banco.');return;}
+    // Confere que o registro AINDA existe no banco antes de devolver
+    // qualquer sessão — sem isso, clicar "Excluir" de novo no mesmo item
+    // (duplo clique, ou lista do histórico desatualizada depois de já ter
+    // excluído, ou o atendimento já estar Cancelada e alguém excluir de
+    // novo) devolveria +1 sessão pra um atendimento que já não existe mais
+    // ou já teve a sessão devolvida — dando uma sessão de cortesia que o
+    // pacote não tem.
+    var tabelaOrigemExc=s.origem==='sessao'?'pacotes_sessoes':'agendamentos';
+    var aindaExisteExc=await supa.from(tabelaOrigemExc).select('id').eq('id',s.id).maybeSingle();
+    if(!aindaExisteExc.data){
+      showAlert('Esse uso já foi excluído antes — nenhuma sessão devolvida de novo.');
+      window._pkgHistoricoDedup.splice(i,1);
+      pkgRenderHistoricoRows();
+      return;
+    }
+    // Devolve 1 sessão em cada linha do grupo — uma vez por linha, sempre,
+    // independente de quais serviços essa sessão específica listava.
+    var itensGrupo=g.itens||[];
+    for(var gi=0;gi<itensGrupo.length;gi++){
+      var pc=itensGrupo[gi];
+      var novoUsado=Math.max(0,(pc.quantidade_usada||0)-1);
+      var r=await supa.from('pacotes_clientes').update({quantidade_usada:novoUsado}).eq('id',pc.id).eq('salao_id',window.SALAO_ID);
+      if(r.error){showAlert('Erro ao devolver sessão: '+r.error.message);return;}
+      pc.quantidade_usada=novoUsado;
+      var pcMem=(typeof pacotesClientes!=='undefined'?pacotesClientes:[]).find(function(x){return x.id===pc.id;});
+      if(pcMem)pcMem.quantidade_usada=novoUsado;
+    }
+    // Apaga o registro do atendimento — com log, mesmo padrão já usado na
+    // remoção de lançamentos de caixa (auditoria de operação crítica).
+    if(s.origem==='agendamento'){
+      try{
+        var antes=await supa.from('agendamentos').select('*').eq('id',s.id).maybeSingle();
+        if(antes.data){
+          await supa.from('log_operacoes_criticas').insert([{salao_id:window.SALAO_ID,tabela:'agendamentos',operacao:'excluir_uso_pacote',quantidade_linhas:1,dados_antes:[antes.data]}]);
+        }
+      }catch(eLog){console.log('err log excluir uso pacote',eLog);}
+      await supa.from('agendamentos').delete().eq('id',s.id);
+      // Some do grid da Agenda também, se estiver carregado em memória.
+      if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+        Object.keys(agendamentosPorData).forEach(function(dk){
+          var dia=agendamentosPorData[dk];
+          if(!dia)return;
+          Object.keys(dia).forEach(function(k){if(dia[k]&&dia[k].id===s.id)delete dia[k];});
+        });
+      }
+    }else if(s.origem==='sessao'){
+      await supa.from('pacotes_sessoes').delete().eq('id',s.id);
+    }
+    syncPacotesLegacyStorage();
+    window._pkgHistoricoDedup.splice(i,1);
+    pkgRenderHistoricoRows();
+    if(typeof renderPacotes==='function')renderPacotes();
+    if(typeof renderAgenda==='function'&&document.getElementById('agenda-grid'))renderAgenda();
+    showAlert('✅ Uso excluído e sessão devolvida ao pacote.');
+  }catch(e){console.log('err excluir uso pacote',e);showAlert('Erro ao excluir. Tente novamente.');}
 }
 
 // keep old card functions below (now unused but referenced nowhere, safe to leave)
@@ -18123,7 +18591,13 @@ async function carregarFluxoLancamentosSupa(){
       var ts=row.data||row.created_at||'';
       var isoM=ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
       var d=isoM?isoM[3]+'/'+isoM[2]+'/'+isoM[1]:(ts.match(/^\d{2}\/\d{2}\/\d{4}/)?ts:hjFmt);
-      return{id:row.id,tipo:row.tipo||'receita',data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma_pagamento||'',val:parseFloat(row.valor)||0,status:row.status||'confirmado',prof:row.profissional||''};
+      return{id:row.id,tipo:row.tipo||'receita',data:d,desc:row.descricao||'',cat:row.categoria||'',forma:row.forma_pagamento||'',val:parseFloat(row.valor)||0,status:row.status||'confirmado',prof:row.profissional||'',
+        agendamento_id:row.agendamento_id||null,
+        valor_bruto:row.valor_bruto!=null?parseFloat(row.valor_bruto):null,
+        taxa_percentual:row.taxa_percentual!=null?parseFloat(row.taxa_percentual):null,
+        taxa_valor:row.taxa_valor!=null?parseFloat(row.taxa_valor):null,
+        valor_liquido:row.valor_liquido!=null?parseFloat(row.valor_liquido):null,
+        operadora:row.operadora||null};
     });
     renderFluxo();
     if(typeof renderDashboardCards==='function')renderDashboardCards();
@@ -18347,8 +18821,121 @@ function renderFluxoDRE(){
   var tb=document.getElementById('fluxo-dre-tbody');
   if(tb)tb.innerHTML=html;
 }
+// ---- Relatório "Taxas de Maquininha" ----
+// Mesma fonte que fluxoLancamentosDoMes() usa (fluxo_lancamentos + caixa de
+// hoje se estiver aberto), mas sem descartar os campos de taxa — é só pra
+// esse relatório, não reaproveita fluxoLancamentosDoMes() porque ela joga
+// fora valor_bruto/taxa_percentual/taxa_valor/valor_liquido/operadora/
+// agendamento_id na hora de montar a linha do caixa de hoje.
+function taxaCartaoFonteCombinada(){
+  var lista=fluxoLancamentos.slice();
+  if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto&&caixaState.movimentos&&caixaState.movimentos.length){
+    var hoje=new Date();
+    var dataFmtHoje=String(hoje.getDate()).padStart(2,'0')+'/'+String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+    lista=lista.concat(caixaState.movimentos.map(function(m){
+      return{tipo:m.tipo==='entrada'?'receita':'despesa',data:dataFmtHoje,desc:m.descricao||'',cat:m.categoria||'Outros',forma:m.forma||'',val:m.valor||0,status:'confirmado',
+        agendamento_id:m.agendamentoId||null,
+        valor_bruto:m.valorBruto!=null?m.valorBruto:null,
+        taxa_percentual:m.taxaPercentual!=null?m.taxaPercentual:null,
+        taxa_valor:m.taxaValor!=null?m.taxaValor:null,
+        valor_liquido:m.valorLiquido!=null?m.valorLiquido:null,
+        operadora:m.operadora||null};
+    }));
+  }
+  return lista;
+}
+// "Taxa de cartão — Serviço — Cliente" (pagamento) ou "Taxa de cartão —
+// Pacote — NomePacote — Cliente" (venda de pacote) — nos dois casos o
+// último pedaço é o cliente; o resto (menos o "Taxa de cartão" inicial)
+// é o "serviço" exibido. Só usado nas despesas antigas pra exibição —
+// pagamentos novos já têm cliente/serviço fora da descrição.
+function taxaCartaoParseDescAntiga(desc){
+  var partes=String(desc||'').split(' — ').map(function(s){return s.trim();}).filter(Boolean);
+  if(partes.length<2)return{servico:'',cliente:desc||''};
+  var cliente=partes[partes.length-1];
+  var servico=partes.slice(1,partes.length-1).join(' — ');
+  return{servico:servico,cliente:cliente};
+}
+// Lista normalizada de transações com taxa de cartão, sem contar nada em
+// dobro: pagamentos novos (1 linha, taxa_valor>0) e, pro período de
+// transição, os pares antigos receita bruta + despesa "Taxa de Cartão"
+// (achados pelo mesmo agendamento_id) virando 1 transação só — nunca as
+// duas pontas contadas separado. Despesa antiga sem agendamento_id (ou
+// sem a receita correspondente) mantém a taxa (é o valor da própria
+// despesa) mas valor original/líquido ficam "não disponível".
+function taxaCartaoListarTransacoes(soMes){
+  var todas=taxaCartaoFonteCombinada();
+  var receitas=todas.filter(function(l){return l.tipo==='receita';});
+  // Quantas despesas "Taxa de Cartão" existem pro MESMO agendamento_id —
+  // normal ter 1 só (pagamento único ou dividido, 1 despesa somando a
+  // taxa de todas as partes). Mais de 1 é sinal de pagamento duplicado
+  // (ex: registrado 2x, uma vez com o caixa fechado — foi direto pro
+  // fluxo_lancamentos — e de novo com o caixa aberto — foi pro
+  // caixa_movimentos). Nesse caso NÃO dá pra saber com certeza qual
+  // receita pertence a qual despesa, então em vez de somar todas as
+  // receitas do id (o que conta a MESMA receita mais de uma vez, uma por
+  // despesa) cada linha mostra "não disponível" — igual já fazemos
+  // quando não tem agendamento_id nenhum.
+  var despesasTaxaPorId={};
+  todas.forEach(function(l){
+    if(l.tipo==='despesa'&&l.cat==='Taxa de Cartão'&&l.agendamento_id){
+      despesasTaxaPorId[l.agendamento_id]=(despesasTaxaPorId[l.agendamento_id]||0)+1;
+    }
+  });
+  var lista=[];
+  todas.forEach(function(l){
+    var d=fluxoParseData(l.data);
+    if(soMes&&(!d||d.getMonth()!==fluxoMes.getMonth()||d.getFullYear()!==fluxoMes.getFullYear()))return;
+    if(l.tipo==='receita'&&l.taxa_valor>0){
+      var pcNovo=taxaCartaoParseDescAntiga(l.desc);
+      lista.push({data:l.data,dataObj:d,cliente:pcNovo.cliente,servico:pcNovo.servico,bruto:l.valor_bruto,taxa:l.taxa_valor,liquido:l.valor_liquido,forma:l.forma,operadora:l.operadora||'',disponivel:true});
+    }else if(l.tipo==='despesa'&&l.cat==='Taxa de Cartão'){
+      var pcAntigo=taxaCartaoParseDescAntiga(l.desc);
+      var ambiguo=l.agendamento_id&&despesasTaxaPorId[l.agendamento_id]>1;
+      var match=(l.agendamento_id&&!ambiguo)?receitas.filter(function(r){return r.agendamento_id===l.agendamento_id&&r.cat!=='Taxa de Cartão';}):[];
+      var bruto=match.length?match.reduce(function(s,r){return s+(r.val||0);},0):null;
+      lista.push({data:l.data,dataObj:d,cliente:pcAntigo.cliente,servico:pcAntigo.servico,bruto:bruto,taxa:l.val,liquido:bruto!=null?Math.max(0,bruto-l.val):null,forma:l.forma,operadora:'',disponivel:bruto!=null});
+    }
+  });
+  lista.sort(function(a,b){return (b.dataObj?b.dataObj.getTime():0)-(a.dataObj?a.dataObj.getTime():0);});
+  return lista;
+}
+function renderTaxasCartao(){
+  fluxoAtualizarMesUI();
+  var elPeriodoLabel=document.getElementById('taxascartao-periodo-label');
+  if(elPeriodoLabel){
+    var m=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    elPeriodoLabel.textContent='Total de taxas em '+m[fluxoMes.getMonth()]+' '+fluxoMes.getFullYear();
+  }
+  var lista=taxaCartaoListarTransacoes(true);
+  var hoje=new Date();
+  var totalDia=lista.filter(function(t){return t.dataObj&&t.dataObj.getDate()===hoje.getDate()&&t.dataObj.getMonth()===hoje.getMonth()&&t.dataObj.getFullYear()===hoje.getFullYear();}).reduce(function(s,t){return s+(t.taxa||0);},0);
+  var totalPeriodo=lista.reduce(function(s,t){return s+(t.taxa||0);},0);
+  var elDia=document.getElementById('taxascartao-total-dia');if(elDia)elDia.textContent=fmtCaixa(totalDia);
+  var elPeriodo=document.getElementById('taxascartao-total-periodo');if(elPeriodo)elPeriodo.textContent=fmtCaixa(totalPeriodo);
+  var elPeriodoRodape=document.getElementById('taxascartao-total-periodo-rodape');if(elPeriodoRodape)elPeriodoRodape.textContent=fmtCaixa(totalPeriodo);
+  var tbody=document.getElementById('taxascartao-tbody');
+  if(!tbody)return;
+  if(!lista.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:#aaa;font-size:13px">Nenhuma taxa de cartão neste período.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=lista.map(function(t){
+    var brutoTxt=t.disponivel?fmtCaixa(t.bruto):'<span style="color:#aaa">não disponível</span>';
+    var liquidoTxt=t.disponivel?fmtCaixa(t.liquido):'<span style="color:#aaa">não disponível</span>';
+    return '<tr style="border-top:1px solid #f5f5f5">'
+      +'<td style="padding:9px 14px;font-size:12px">'+t.data+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;font-weight:600">'+(t.cliente||'')+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;color:#555">'+(t.servico||'')+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;text-align:right">'+brutoTxt+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;text-align:right;color:#ef4444;font-weight:700">'+fmtCaixa(t.taxa)+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;text-align:right">'+liquidoTxt+'</td>'
+      +'<td style="padding:9px 14px;font-size:12px;color:#555">'+(t.forma||'')+(t.operadora?' · '+t.operadora:'')+'</td>'
+      +'</tr>';
+  }).join('');
+}
 function switchFluxoTab(tab,el){
-  ['lancamentos','mensal','categorias','dre'].forEach(function(t){
+  ['lancamentos','mensal','categorias','dre','taxascartao'].forEach(function(t){
     var v=document.getElementById('fluxo-view-'+t);
     var b=document.getElementById('fluxo-tab-'+t);
     if(v)v.style.display=t===tab?'block':'none';
@@ -18358,6 +18945,7 @@ function switchFluxoTab(tab,el){
   if(tab==='mensal')renderFluxoSemanal();
   if(tab==='categorias')renderFluxoCategorias();
   if(tab==='dre')renderFluxoDRE();
+  if(tab==='taxascartao')renderTaxasCartao();
 }
 function fluxoRenderAbaAtiva(){
   var vM=document.getElementById('fluxo-view-mensal');
@@ -18366,6 +18954,8 @@ function fluxoRenderAbaAtiva(){
   if(vC&&vC.style.display!=='none')renderFluxoCategorias();
   var vD=document.getElementById('fluxo-view-dre');
   if(vD&&vD.style.display!=='none')renderFluxoDRE();
+  var vT=document.getElementById('fluxo-view-taxascartao');
+  if(vT&&vT.style.display!=='none')renderTaxasCartao();
 }
 function calcularComissoesMes(lancsMes){
   var colabsAtivos=colaboradores.filter(function(c){return c.status!=='Inativo';});
@@ -19057,16 +19647,33 @@ function afInserirAtendimentoUmaData(dataISO,ctx){
     };
     var primeiroProf=null;
     if(servicosDetalhe&&servicosDetalhe.length){
+      // Agrupa por profissional+hora ANTES de criar os cards — 2 serviços
+      // do MESMO profissional gravados na MESMA hora (ex: pacote com 2
+      // serviços pro mesmo profissional) iam pra chave idêntica, um
+      // sobrescrevendo o outro no instante da criação (achado real: visita
+      // do Eduardo com Escova P + Hidratação, só a Hidratação sobrevivia
+      // na Agenda). Soma o valorComissao dos que colidem num card só, em
+      // vez de criar 2 cards na mesma chave.
+      var gruposPorChaveNovo={};
+      var ordemChavesNovo=[];
       servicosDetalhe.forEach(function(sd){
         var pAg=agProfParaAgenda(sd.profissional);
         if(!pAg)return;
         if(!primeiroProf)primeiroProf=pAg;
-        var extra={prof:pAg,profissionalId:sd.profissional_id||null,hora:sd.hora,servico:sd.nome,duracao:sd.duracao_min+' min'};
+        var chave=pAg+':'+sd.hora;
+        if(!gruposPorChaveNovo[chave]){gruposPorChaveNovo[chave]={prof:pAg,hora:sd.hora,itens:[]};ordemChavesNovo.push(chave);}
+        gruposPorChaveNovo[chave].itens.push(sd);
+      });
+      ordemChavesNovo.forEach(function(chave){
+        var grupoNovo=gruposPorChaveNovo[chave];
+        var primeiroItemNovo=grupoNovo.itens[0];
+        var nomesJuntosNovo=grupoNovo.itens.map(function(sd){return sd.nome;}).join(' + ');
+        var extra={prof:grupoNovo.prof,profissionalId:primeiroItemNovo.profissional_id||null,hora:grupoNovo.hora,servico:nomesJuntosNovo,duracao:primeiroItemNovo.duracao_min+' min'};
         // Só pacote precisa de valorComissao direto aqui — serviço normal
         // já é recalculado certo no próximo load (carregarAgendamentosSupa),
         // não mudo esse comportamento existente.
-        if(ehPacote)extra.valorComissao=sd.valor;
-        agendamentosPorData[dataKey][pAg+':'+sd.hora]=Object.assign({},apptBase,extra);
+        if(ehPacote)extra.valorComissao=grupoNovo.itens.reduce(function(s,sd){return s+(sd.valor||0);},0);
+        agendamentosPorData[dataKey][chave]=Object.assign({},apptBase,extra);
       });
     }else{
       primeiroProf=agProfParaAgenda(prof);
@@ -19159,6 +19766,21 @@ function afSalvarAtendimento(){
       var jaUsados=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
       if(vp.total-vp.usado<jaUsados){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
     }
+    // Horário escolhido na tela (nunca mais fixo em "09:00") — bloqueia se
+    // algum profissional envolvido já tem outro atendimento (não cancelado)
+    // nesse horário. Sem essa checagem, 2 clientes diferentes com sessão de
+    // pacote pro mesmo profissional na mesma hora colidiam na mesma chave
+    // da Agenda e um sobrescrevia o outro silenciosamente (achado real:
+    // Cristiane/Lidiane/Adriana, Eduardo, 09:00).
+    var horaPac=normalizarHoraAgenda(document.getElementById('ag-pacote-hora')?.value||'');
+    if(!horaPac){showAlert('Escolha o horário da sessão de pacote.');return;}
+    for(var vc=0;vc<itensPacote.length;vc++){
+      var confPac=agVerificarConflitoHorarioAgenda(dataBase,horaPac,[itensPacote[vc].prof],null);
+      if(confPac){
+        showAlert('⚠️ '+itensPacote[vc].prof+' já tem '+(confPac.ocupado.cliente||'outro atendimento')+' marcado às '+horaPac+'. Escolha outro horário.');
+        return;
+      }
+    }
     var nomesServ=[];
     // Um item de servicos_detalhe por serviço/profissional redimido — mesmo
     // formato do atendimento de serviço normal multi-profissional. valor é
@@ -19172,20 +19794,17 @@ function afSalvarAtendimento(){
     // propósito — fora do escopo deste pedido.
     var servicosDetalhePacote=[];
     var avisoPacoteSemPreco=false;
+    // Monta os itens e calcula a comissão ANTES de descontar qualquer
+    // sessão — descontarUsoPacoteCliente só roda depois que o agendamento
+    // for criado com sucesso (.then abaixo). Sem isso, uma falha ao salvar
+    // (erro de rede, etc.) consumia a sessão do pacote sem nenhum
+    // atendimento ter sido criado, sem jeito de desfazer.
     itensPacote.forEach(function(item){
       var pac=pacotes[item.idx];
-      pac.usado=(pac.usado||0)+1;
-      pacotes[item.idx]=pac;
-      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
-      // "Não comissionar esta sessão": pula lancarComissaoPacote (Remunerações)
-      // E zera a base da regra B (servicos_detalhe[i].valor) — sem isso,
-      // mesmo pulando o Remunerações, a sessão ainda apareceria com
-      // comissão em Comissões a Pagar quando o atendimento for concluído.
       var profIdPac=colaboradorIdPorNome(item.prof);
       var nomeServ=pac.servico||pac.nome;
       var valorComissaoItem=0,avisoItem=false;
       if(!item.semComissao){
-        lancarComissaoPacote(item.prof,nomeServ,cliente);
         var comissaoBasePac=(typeof configComissaoDoColab==='function'&&profIdPac)?(configComissaoDoColab(profIdPac).comissao_base||'liquido'):'liquido';
         var baseComissao=baseComissaoSessaoPacote(pac.pacoteClienteId,comissaoBasePac);
         valorComissaoItem=baseComissao.valor;
@@ -19193,20 +19812,34 @@ function afSalvarAtendimento(){
       }
       nomesServ.push(nomeServ+' ('+item.prof+')');
       if(avisoItem)avisoPacoteSemPreco=true;
-      servicosDetalhePacote.push({nome:nomeServ,valor:valorComissaoItem,profissional:item.prof,profissional_id:profIdPac,hora:'09:00',duracao_min:0});
+      // pacote_cliente_id/grupo_id: necessários pra editar/excluir esse uso
+      // depois (achar com certeza quais linhas de pacotes_clientes devolver).
+      servicosDetalhePacote.push({nome:nomeServ,valor:valorComissaoItem,profissional:item.prof,profissional_id:profIdPac,hora:horaPac,duracao_min:0,pacote_cliente_id:pac.pacoteClienteId||null,grupo_id:pac.grupo_id||null,sem_comissao:!!item.semComissao});
     });
     if(avisoPacoteSemPreco){
       showAlert('⚠️ Este pacote não tem valor pago registrado — a comissão dessa sessão ficou R$ 0,00. Confira o valor pago do pacote.');
     }
-    syncPacotesLegacyStorage();
     var pacPrincipal=pacotes[idxPrincipal];
-    var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:'09:00',itens:servicosDetalhePacote}});
+    var ctxPac=Object.assign({},ctxBase,{tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)',hora:horaPac,itens:servicosDetalhePacote}});
     // Trava contra duplo-clique: sem isso, 2 cliques em SALVAR antes do 1º
     // terminar disparavam 2 inserts separados (mesma causa das 13 cópias
     // da Vanessa). Mesmo padrão de afSalvarEdicaoBlocos().
     var btnPac=document.querySelector('#modal-agendar .af-footer .af-btn-primary');
     if(btnPac){btnPac.disabled=true;btnPac.innerHTML='<span class="flora-spinner"></span>SALVANDO...';}
     afInserirAtendimentoUmaData(dataBase,ctxPac).then(function(){
+      // Agendamento criado com sucesso — SÓ AGORA desconta as sessões e
+      // lança a comissão legada (Remunerações).
+      itensPacote.forEach(function(item){
+        var pac=pacotes[item.idx];
+        pac.usado=(pac.usado||0)+1;
+        pacotes[item.idx]=pac;
+        descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
+        if(!item.semComissao){
+          var nomeServ=pac.servico||pac.nome;
+          lancarComissaoPacote(item.prof,nomeServ,cliente);
+        }
+      });
+      syncPacotesLegacyStorage();
       if(btnPac){btnPac.disabled=false;btnPac.textContent='SALVAR';}
       afFinalizarSalvamento(cliente,[dataBase]);
     }).catch(function(){
@@ -19752,6 +20385,13 @@ function criarComanda(){
   }
   var servicoStr,servicosDetalhe,totalFmt,ehPacote=false;
   if(tipo==='pacote'){
+    // Uso de sessão de pacote via "Nova Comanda" — passa a criar um
+    // agendamento de verdade (mesmo caminho de afInserirAtendimentoUmaData
+    // usado pelo "Agendar"), em vez de gravar na tabela legada `comandas`.
+    // Antes disso: servicos_detalhe ficava vazio (sem profissional nenhum),
+    // o registro nem aparecia na Agenda, e a comissão só ia pra
+    // "Remunerações" (tela escondida) — achado real (uso do pacote RAIZ
+    // da Cristiane pelo Eduardo).
     ehPacote=true;
     var profPac=document.getElementById('cmd-pacote-prof')?.value||'';
     if(!profPac){showAlert('Selecione o profissional do pacote.');return;}
@@ -19760,11 +20400,13 @@ function criarComanda(){
     var selPac=document.getElementById('cmd-pacote-sel');
     var idxPrincipal=parseInt(selPac?.value);
     if(isNaN(idxPrincipal)||idxPrincipal<0){showAlert('Selecione um pacote.');return;}
-    itensPacote.push({idx:idxPrincipal,prof:profPac});
+    var semComissaoPrincipalCmd=!!document.getElementById('cmd-pacote-sem-comissao')?.checked;
+    itensPacote.push({idx:idxPrincipal,prof:profPac,semComissao:semComissaoPrincipalCmd});
     document.querySelectorAll('#cmd-pacote-extra-list > div').forEach(function(row){
       var sels=row.querySelectorAll('select');
       var idx=parseInt(sels[0]?.value);
-      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac});
+      var semComissaoExtraCmd=!!row.querySelector('.cmd-pacote-extra-sem-comissao')?.checked;
+      if(!isNaN(idx)&&idx>=0)itensPacote.push({idx:idx,prof:sels[1]?.value||profPac,semComissao:semComissaoExtraCmd});
     });
     for(var vi=0;vi<itensPacote.length;vi++){
       var vp=pacotes[itensPacote[vi].idx];
@@ -19772,20 +20414,60 @@ function criarComanda(){
       var jaUsadosNeste=itensPacote.filter(function(it){return it.idx===itensPacote[vi].idx;}).length;
       if(vp.total-vp.usado<jaUsadosNeste){showAlert('O pacote "'+vp.nome+(vp.servico?' — '+vp.servico:'')+'" não tem sessões restantes suficientes!');return;}
     }
-    var nomesServ=[];
+    // Bloqueia se algum profissional envolvido já tem outro atendimento
+    // (não cancelado) nesse horário — mesmo problema do "Agendar": 2
+    // clientes diferentes com sessão de pacote pro mesmo profissional na
+    // mesma hora colidiam na mesma chave da Agenda, um sobrescrevendo o
+    // outro silenciosamente.
+    for(var vc=0;vc<itensPacote.length;vc++){
+      var confPacCmd=agVerificarConflitoHorarioAgenda(data,hora,[itensPacote[vc].prof],null);
+      if(confPacCmd){
+        showAlert('⚠️ '+itensPacote[vc].prof+' já tem '+(confPacCmd.ocupado.cliente||'outro atendimento')+' marcado às '+hora+'. Escolha outro horário.');
+        return;
+      }
+    }
+    var nomesServCmd=[];
+    var servicosDetalhePacoteCmd=[];
+    var avisoPacoteSemPrecoCmd=false;
     itensPacote.forEach(function(item){
       var pac=pacotes[item.idx];
-      pac.usado=(pac.usado||0)+1;
-      pacotes[item.idx]=pac;
-      descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
-      lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
-      nomesServ.push((pac.servico||pac.nome)+' ('+item.prof+')');
+      var profIdPacCmd=colaboradorIdPorNome(item.prof);
+      var nomeServCmd=pac.servico||pac.nome;
+      var valorComissaoItemCmd=0,avisoItemCmd=false;
+      if(!item.semComissao){
+        var comissaoBasePacCmd=(typeof configComissaoDoColab==='function'&&profIdPacCmd)?(configComissaoDoColab(profIdPacCmd).comissao_base||'liquido'):'liquido';
+        var baseComissaoCmd=baseComissaoSessaoPacote(pac.pacoteClienteId,comissaoBasePacCmd);
+        valorComissaoItemCmd=baseComissaoCmd.valor;
+        avisoItemCmd=baseComissaoCmd.avisoSemPreco;
+      }
+      nomesServCmd.push(nomeServCmd+' ('+item.prof+')');
+      if(avisoItemCmd)avisoPacoteSemPrecoCmd=true;
+      servicosDetalhePacoteCmd.push({nome:nomeServCmd,valor:valorComissaoItemCmd,profissional:item.prof,profissional_id:profIdPacCmd,hora:hora,duracao_min:0,pacote_cliente_id:pac.pacoteClienteId||null,grupo_id:pac.grupo_id||null,sem_comissao:!!item.semComissao});
     });
-    syncPacotesLegacyStorage();
-    var pacPrincipal=pacotes[idxPrincipal];
-    servicoStr=pacPrincipal.nome+' — '+nomesServ.join(' + ')+' (Pacote)';
-    totalFmt='R$ 0,00';
-    servicosDetalhe=[];
+    if(avisoPacoteSemPrecoCmd){
+      showAlert('⚠️ Este pacote não tem valor pago registrado — a comissão dessa sessão ficou R$ 0,00. Confira o valor pago do pacote.');
+    }
+    var pacPrincipalCmd=pacotes[idxPrincipal];
+    var ctxPacCmd={cliente:cliente,obs:(document.getElementById('cmd-obs')?.value||'').trim(),sinalAtivo:false,sinalStatus:'pendente',sinalValNum:0,produtosUsados:[],tipo:'pacote',pacote:{prof:profPac,servicoLabel:pacPrincipalCmd.nome+' — '+nomesServCmd.join(' + ')+' (Pacote)',hora:hora,itens:servicosDetalhePacoteCmd}};
+    afInserirAtendimentoUmaData(data,ctxPacCmd).then(function(){
+      // Agendamento criado com sucesso — só agora desconta as sessões e
+      // lança a comissão legada (Remunerações).
+      itensPacote.forEach(function(item){
+        var pac=pacotes[item.idx];
+        pac.usado=(pac.usado||0)+1;
+        pacotes[item.idx]=pac;
+        descontarUsoPacoteCliente(pac.pacoteClienteId,pac);
+        if(!item.semComissao)lancarComissaoPacote(item.prof,pac.servico||pac.nome,cliente);
+      });
+      syncPacotesLegacyStorage();
+      closeModal('modal-comanda');
+      if(typeof renderAgenda==='function')renderAgenda();
+      if(typeof renderDashboardCards==='function')renderDashboardCards();
+      showAlert('Sessão de pacote registrada para '+cliente+'! 🎁');
+    }).catch(function(){
+      showAlert('Erro ao registrar o uso do pacote. Tente novamente.');
+    });
+    return;
   }else{
     servicosDetalhe=cmdColetarServicosDetalhe();
     if(!servicosDetalhe.length){
@@ -21214,7 +21896,13 @@ async function carregarCaixaSupa(){
           caixaState.movimentos.push({
             id:localId,supaId:mrow.id,tipo:mrow.tipo,categoria:mrow.categoria||'',
             descricao:mrow.descricao||'',valor:parseFloat(mrow.valor)||0,forma:mrow.forma||'',
-            hora:mrow.hora||'00:00',profissional:mrow.profissional||''
+            hora:mrow.hora||'00:00',profissional:mrow.profissional||'',
+            agendamentoId:mrow.agendamento_id||null,
+            valorBruto:mrow.valor_bruto!=null?parseFloat(mrow.valor_bruto):null,
+            taxaPercentual:mrow.taxa_percentual!=null?parseFloat(mrow.taxa_percentual):null,
+            taxaValor:mrow.taxa_valor!=null?parseFloat(mrow.taxa_valor):null,
+            valorLiquido:mrow.valor_liquido!=null?parseFloat(mrow.valor_liquido):null,
+            operadora:mrow.operadora||null
           });
         });
         movIdCounter=maxLocalId+1;
@@ -21484,6 +22172,12 @@ function atualizarTotaisCaixa(){
   document.getElementById('caixa-saldo-atual').style.color=saldo>=0?'var(--dark)':'#ef4444';
   var lista=document.getElementById('caixa-movimentos-lista');
   document.getElementById('caixa-mov-count').textContent=caixaState.movimentos.length+' registros';
+  // "0 registros" fixo embaixo dos cards Entradas/Saídas — nunca era
+  // atualizado por nenhum código, ficava sempre zerado mesmo com lançamentos.
+  var elCntEnt=document.getElementById('card-count-entradas');
+  if(elCntEnt)elCntEnt.textContent=caixaState.movimentos.filter(function(m){return m.tipo==='entrada';}).length+' registros';
+  var elCntSai=document.getElementById('card-count-saidas');
+  if(elCntSai)elCntSai.textContent=caixaState.movimentos.filter(function(m){return m.tipo==='saida';}).length+' registros';
   if(caixaState.movimentos.length===0){lista.innerHTML='<div style="padding:48px;text-align:center;color:var(--gray-400);font-size:13px">Nenhuma movimentacao ainda.</div>';return;}
   var html='<div style="padding:10px 20px;background:#f9fafb;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--gray-400)">Sinal inicial</span><span style="font-size:13px;font-weight:700;color:#f59e0b">'+fmtCaixa(caixaState.troco)+'</span></div>';
   caixaState.movimentos.slice().reverse().forEach(function(m){
@@ -21939,7 +22633,7 @@ async function renderDashboardCards(){
         var partes=dk.split('/');
         if(partes.length===3){
           var mesDk=parseInt(partes[1],10)-1, anoDk=parseInt(partes[2],10);
-          var qtd=Object.keys(agendamentosPorData[dk]||{}).filter(function(k){return agendamentosPorData[dk][k]&&agendamentosPorData[dk][k].cliente&&!agendaStatusCancelado(agendamentosPorData[dk][k]);}).length;
+          var qtd=chavesComandasUnicas(agendamentosPorData[dk]).length;
           if(mesDk===mesAtual&&anoDk===anoAtual) atendimentosMes+=qtd;
           if(dk===diaKeyHoje){atendimentosHoje=qtd;diaDataHoje=agendamentosPorData[dk];}
         }
@@ -21979,7 +22673,47 @@ async function renderDashboardCards(){
     if(typeof clientes!=='undefined'&&clientes){
       clientesAtivos=clientes.filter(function(c){return c.retornoStatus==='retornou'||!c.retornoStatus;}).length;
     }
-    var ticketMedio=atendimentosMes>0?(receitaMes/atendimentosMes):0;
+    // Ticket Médio = faturamento realizado (bruto) / atendimentos concluídos
+    // do mês. "Bruto" porque a Etapa 1 definiu Faturamento realizado = valor
+    // bruto pago pela cliente — receitaMes (usado no card "Recebido") é o
+    // líquido do Fluxo de Caixa, métrica diferente, não a uso aqui. Soma
+    // valor_bruto quando existe (taxa de cartão já descontada na mesma
+    // linha); sem taxa, valor_bruto é null e cai no valor normal (idêntico).
+    // Sessão de pacote nunca escreve em caixa/fluxo, então nunca entra
+    // aqui — exatamente a regra "não soma no faturamento realizado".
+    var faturamentoRealizadoMes=0;
+    if(typeof fluxoLancamentos!=='undefined'&&fluxoLancamentos){
+      fluxoLancamentos.forEach(function(l){
+        var m=String(l.data||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if(m){
+          var mesL=parseInt(m[2],10)-1,anoL=parseInt(m[3],10);
+          if(l.tipo==='receita'&&mesL===mesAtual&&anoL===anoAtual)faturamentoRealizadoMes+=(l.valor_bruto!=null?l.valor_bruto:(l.val||0));
+        }
+      });
+    }
+    if(typeof caixaState!=='undefined'&&caixaState&&caixaState.aberto&&caixaState.movimentos&&agora.getMonth()===mesAtual&&agora.getFullYear()===anoAtual){
+      caixaState.movimentos.forEach(function(mv){
+        if(mv.tipo==='entrada')faturamentoRealizadoMes+=(mv.valorBruto!=null?mv.valorBruto:(mv.valor||0));
+      });
+    }
+    // "Atendimentos concluídos" de verdade (status Concluído/Fechado/
+    // Finalizado) — não qualquer não-cancelado (isso incluía Pendente/Em
+    // aberto, inflando o denominador e diluindo o ticket médio pra baixo).
+    // 1 por comanda (chavesComandasUnicas já deduplica por id).
+    var atendimentosConcluidosMes=0;
+    if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData){
+      Object.keys(agendamentosPorData).forEach(function(dk){
+        var partes=dk.split('/');
+        if(partes.length!==3)return;
+        var mesDk=parseInt(partes[1],10)-1, anoDk=parseInt(partes[2],10);
+        if(mesDk!==mesAtual||anoDk!==anoAtual)return;
+        var diaObjMes=agendamentosPorData[dk];
+        chavesComandasUnicas(diaObjMes).forEach(function(k){
+          if(typeof atendimentoConcluido==='function'&&atendimentoConcluido(diaObjMes[k]))atendimentosConcluidosMes++;
+        });
+      });
+    }
+    var ticketMedio=atendimentosConcluidosMes>0?(faturamentoRealizadoMes/atendimentosConcluidosMes):0;
     var elReceita=document.getElementById('dash-receita-mes');
     var elAtend=document.getElementById('dash-atendimentos-hoje');
     var elClientes=document.getElementById('dash-clientes-ativos');
@@ -21995,58 +22729,46 @@ async function renderDashboardCards(){
     if(elHeaderAtend)elHeaderAtend.textContent=atendimentosHoje+' atendimento'+(atendimentosHoje!==1?'s':'')+' hoje';
 
     // ===== Faturamento Previsto, A Receber e Pendências (dados reais de hoje) =====
-    var faturamentoPrevisto=0, aReceberHoje=0, pendenciasConfirmacao=0;
+    // Faturamento Previsto e A Receber usam a MESMA função que monta a lista
+    // do card (listarFaturamentoPrevistoHoje) — nunca podem divergir dela.
+    // Antes, esse cálculo tinha sua própria lógica de "dividido entre
+    // profissionais" (contagemIdFatHoje/dividoEntreProfs) pra não somar a
+    // comanda inteira mais de uma vez quando ela virava 2+ "cards" no grid
+    // (mesmo id). Só que QUALQUER comanda com vários serviços — não só a
+    // dividida entre profissionais — vira 2+ cards com o mesmo id, e cada
+    // card carrega o valor da comanda inteira (não a fatia de 1 serviço) em
+    // lerValorServicoAgendamento(a). Resultado: toda comanda de 2+ serviços
+    // (ex: Rose Irene) tinha seu valor somado uma vez por serviço, inflando
+    // Faturamento Previsto e A Receber. listarFaturamentoPrevistoHoje() não
+    // tem esse problema: ela deduplica por id e usa servicos_detalhe (o
+    // valor de cada serviço de verdade), igual a lista que abre no clique.
+    var linhasFatPrevHoje=typeof listarFaturamentoPrevistoHoje==='function'?listarFaturamentoPrevistoHoje():[];
+    // contaFaturamento:false = sessão de pacote — o valor já foi reconhecido
+    // na venda do pacote, não entra de novo no total do dia.
+    var faturamentoPrevisto=linhasFatPrevHoje.reduce(function(s,l){return s+(l.contaFaturamento===false?0:(l.valor||0));},0);
+    var aReceberHoje=linhasFatPrevHoje.reduce(function(s,l){return s+(l.aReceber||0);},0);
+    // Pendências de confirmação: 1 por comanda (não por chave/card) e
+    // nunca conta quem já está concluído/pago — só quem de fato ainda
+    // precisa confirmar presença.
+    var pendenciasConfirmacao=0;
     if(diaDataHoje){
-      var keysFatHoje=Object.keys(diaDataHoje).filter(function(k){return diaDataHoje[k]&&diaDataHoje[k].cliente;});
-      // Um atendimento dividido entre profissionais (ex: Botox com a Ana Flor + Manicure com a
-      // Jenny no mesmo horário/cliente) vira 2+ slots aqui, mas todos compartilham o mesmo id e
-      // o mesmo servicos_detalhe (comanda combinada). Conta quantos slots cada id ocupa hoje para
-      // não somar a comanda inteira uma vez por profissional envolvido.
-      var contagemIdFatHoje={};
-      keysFatHoje.forEach(function(k){
-        var idAt=diaDataHoje[k].id;
-        if(idAt)contagemIdFatHoje[idAt]=(contagemIdFatHoje[idAt]||0)+1;
-      });
-      keysFatHoje.forEach(function(k){
+      chavesComandasUnicas(diaDataHoje).forEach(function(k){
         var a=diaDataHoje[k];
-        var dividoEntreProfs=a.id&&contagemIdFatHoje[a.id]>1;
-        var totalServ=dividoEntreProfs
-          ?(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0))
-          :(typeof somaServicosAtendimento==='function'?somaServicosAtendimento(a):(typeof lerValorServicoAgendamento==='function'?lerValorServicoAgendamento(a):(parseFloat(a.valor)||0)));
-        var stCalc=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
-        // Faturamento Previsto: só o que ainda vai entrar hoje — exclui
-        // Cancelada (não vai acontecer) e Paga/Concluído (já entrou, já
-        // conta em "Recebido"). Sobra "Em aberto" = agendado/confirmado,
-        // ainda não atendido nem pago.
-        if(stCalc==='Em aberto')faturamentoPrevisto+=totalServ;
-        if(stCalc!=='Paga'){
-          var sinalInfoCalc=typeof lerSinalAgendamento==='function'?lerSinalAgendamento(a):{abate:0};
-          aReceberHoje+=Math.max(0,totalServ-(sinalInfoCalc.abate||0));
-        }
-        if(!a.confirmado) pendenciasConfirmacao++;
+        var statusComanda=typeof comandaStatusAgendamento==='function'?comandaStatusAgendamento(a):'Em aberto';
+        if(!a.confirmado&&statusComanda!=='Paga') pendenciasConfirmacao++;
       });
     }
     var elFatPrev=document.getElementById('dash-faturamento-previsto');
     var elAReceber=document.getElementById('dash-a-receber');
-    var elPendencias=document.getElementById('dash-pendencias');
     var elFinPrev=document.getElementById('dash-fin-previsto');
     var elFinAReceber=document.getElementById('dash-fin-areceber');
     if(elFatPrev)elFatPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
     if(elAReceber)elAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
-    if(elPendencias)elPendencias.textContent=pendenciasConfirmacao;
     if(elFinPrev)elFinPrev.textContent='R$ '+faturamentoPrevisto.toFixed(2).replace('.',',');
     if(elFinAReceber)elFinAReceber.textContent='R$ '+aReceberHoje.toFixed(2).replace('.',',');
-    var elAtencaoTexto=document.getElementById('dash-atencao-texto');
-    var elAtencaoIcon=document.getElementById('dash-atencao-icon');
-    if(elAtencaoTexto){
-      if(pendenciasConfirmacao>0){
-        elAtencaoTexto.innerHTML='<b>'+pendenciasConfirmacao+'</b> cliente'+(pendenciasConfirmacao!==1?'s':'')+' ainda '+(pendenciasConfirmacao!==1?'não confirmaram':'não confirmou')+' o atendimento de hoje.';
-        if(elAtencaoIcon){elAtencaoIcon.style.background='#FEF3E2';elAtencaoIcon.style.color='#9A5B13';elAtencaoIcon.textContent='🔔';}
-      } else {
-        elAtencaoTexto.innerHTML='Tudo certo por aqui! Nenhuma pendência para hoje.';
-        if(elAtencaoIcon){elAtencaoIcon.style.background='#EAF7EE';elAtencaoIcon.style.color='#15803d';elAtencaoIcon.textContent='✅';}
-      }
-    }
+    // Indicador "Pendências" (card + banner "Atenção") removido da home —
+    // pendenciasConfirmacao continua calculado (nenhum dado foi apagado),
+    // só não é mais exibido aqui.
 
     var tbodyAtend=document.getElementById('dash-atend-hoje-tbody');
     if(tbodyAtend){
@@ -22292,10 +23014,22 @@ async function renderDashProximos(){
   var items=[];
   if(typeof agendamentosPorData!=='undefined'&&agendamentosPorData[dataKeyHoje]){
     var dayData=agendamentosPorData[dataKeyHoje];
-    Object.keys(dayData).forEach(function(k){
+    // 1 linha por comanda (não por chave/card) — comanda de 2+ serviços ou
+    // dividida entre profissionais compartilha o mesmo `id` em várias
+    // chaves; sem deduplicar, cada uma aparecia como linha própria com o
+    // valor TOTAL da comanda repetido (achado real: noemi 100/100, Rose
+    // Irene 200/200). Serviços de servicos_detalhe entram juntos numa só
+    // célula, e o valor é a soma real dos serviços, não a chave repetida.
+    chavesComandasUnicas(dayData).forEach(function(k){
       var a=dayData[k];
-      if(!a||!a.cliente)return;
-      items.push({key:k,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:a.servico||'',valor:a.valor||'',status:a.status||'Pendente'});
+      var servicosItem=typeof popupServicosDoAtendimento==='function'?popupServicosDoAtendimento(a):null;
+      var nomesServicos=(servicosItem&&servicosItem.length)
+        ?servicosItem.map(function(sd){return sd.nome;}).filter(Boolean).join(' + ')
+        :(a.servico||'');
+      var valorTotal=(servicosItem&&servicosItem.length)
+        ?servicosItem.reduce(function(s,sd){return s+(sd.valor||0);},0)
+        :(parseFloat(a.valor)||0);
+      items.push({key:k,hora:a.hora||k.split(':')[1]||'',cliente:a.cliente,servico:nomesServicos||a.servico||'',valor:valorTotal>0?(typeof formatMoedaBR==='function'?formatMoedaBR(valorTotal):('R$ '+valorTotal.toFixed(2).replace('.',','))):(a.valor||''),status:a.status||'Pendente'});
     });
   }
   // Fallback: agendamentos com salao_id NULL (legado) — sem key local confiável,
