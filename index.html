@@ -15029,6 +15029,18 @@ function atualizarOcupacaoAgendaDashboard(){
   var elVal=document.getElementById('dash-ocupacao-agenda');
   var elSub=document.getElementById('dash-ocupacao-agenda-sub');
   if(!elVal||!elSub)return;
+  // Sem o time real carregado ainda, colaboradoresAtivosOrdenados() cai no
+  // array de demonstração (mais gente "Ativo" do que o time de verdade),
+  // inflando "disponível" (achado real: 112h = 8×14h em vez de 70h =
+  // 5×14h). Em vez de calcular com esse array errado — não importa quantas
+  // vezes essa função rodar antes da hora — mostra "Carregando..." e sai;
+  // carregarColaboradoresSupa() já chama renderDashboardCards() de novo
+  // quando o time real chega, o que recalcula certo nessa mesma função.
+  if(!window._colabsSupaCarregados){
+    elVal.textContent='Carregando...';
+    elSub.textContent='aguardando dados da equipe';
+    return;
+  }
   var hoje=new Date();
   if(!salaoAbreNoDia(hoje)){
     elVal.textContent='Fechado hoje';
@@ -20746,7 +20758,13 @@ async function carregarSalaoAtual(){
       window.SALAO_HORA_FECHAMENTO=r.data.hora_fechamento||'22:00';
       window.SALAO_DIAS_FUNCIONAMENTO=Array.isArray(r.data.dias_funcionamento)?r.data.dias_funcionamento:[0,1,2,3,4,5,6];
       if(typeof renderAgenda==='function')renderAgenda();
-      if(typeof atualizarOcupacaoAgendaDashboard==='function')atualizarOcupacaoAgendaDashboard();
+      // NÃO chama atualizarOcupacaoAgendaDashboard() aqui — carregarSalaoAtual()
+      // termina ANTES de carregarColaboradoresSupa() nem começar (ela só
+      // dispara depois, dentro de carregarDadosDoSalao()), então `colaboradores`
+      // ainda seria o array de demonstração (8 fixos) nesse instante, não o
+      // time real (achado real: Ocupação mostrando 112h = 8×14h em vez de
+      // 70h = 5×14h). A Ocupação já é recalculada certo mais adiante, quando
+      // o time real termina de carregar (renderDashboardCards).
     }else{
       // Antes de criar um salão novo pra esse auth.uid(), confirma que ele
       // não é na verdade um colaborador (login por usuário, sem e-mail) —
@@ -22952,7 +22970,16 @@ function renderDashMetaMensal(){
     var hoje=new Date();
     var dk=hoje.getDate()+'/'+(hoje.getMonth()+1)+'/'+hoje.getFullYear();
     var dia=typeof agendamentosPorData!=='undefined'?agendamentosPorData[dk]:null;
-    if(dia)concluidosHoje=Object.keys(dia).filter(function(k){return (dia[k].status||'').toLowerCase().indexOf('conclu')>=0;}).length;
+    // 1 por comanda (chavesComandasUnicas dedup por id) — antes contava por
+    // chave/card, então uma comanda de 2 serviços concluída contava 2x
+    // (achado real: resumo mostrando "12" enquanto o card "Atendimentos",
+    // já deduplicado, mostrava 7 — mesmo esse 7 sendo "agendados", não
+    // "concluídos", outra métrica).
+    if(dia&&typeof chavesComandasUnicas==='function'){
+      chavesComandasUnicas(dia).forEach(function(k){
+        if(typeof atendimentoConcluido==='function'&&atendimentoConcluido(dia[k]))concluidosHoje++;
+      });
+    }
   }catch(e){}
   if(elResumo){
     var txtConcl='Seu estúdio teve <strong>'+concluidosHoje+' atendimento'+(concluidosHoje===1?'':'s')+' concluído'+(concluidosHoje===1?'':'s')+'</strong> hoje.';
